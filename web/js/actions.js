@@ -167,10 +167,8 @@ export function onClick(e) {
     case 'phone-menu': openSheet({ type: 'rows', rows: phoneMenu() }); break;
     case 'empty-trash': emptyTrash(); break;
     case 'new-folder': newFolder(null); break;
-    case 'tab': { const to = a.dataset.tab; if (ui.tab === to) break; const go = () => { ui.tab = to; store.set('tab', to); render(); };
-      if (document.startViewTransition && !reduce()) { const sel = document.querySelector('.ptab[aria-selected="true"]'); if (sel) sel.style.viewTransitionName = 'ptab';
-        document.startViewTransition(() => { go(); const n = document.querySelector('.ptab[aria-selected="true"]'); if (n) n.style.viewTransitionName = 'ptab'; }).finished.finally(() => document.querySelectorAll('.ptab').forEach(e => { e.style.viewTransitionName = ''; })); }
-      else go(); break; }
+    case 'tab': { const to = a.dataset.tab; if (ui.tab === to) break; ui.tab = to; store.set('tab', to); render();
+      if (!reduce()) { const bd = document.querySelector('#pmain .bd'); if (bd) bd.classList.add('tab-in'); } break; }
     case 'folders-toggle': { const go = () => { ui.foldersOpen = !ui.foldersOpen; render(); };
       if (document.startViewTransition && !reduce()) { document.querySelectorAll('#pmain .ftile[data-ftile]').forEach(el => { el.style.viewTransitionName = 'f' + el.dataset.ftile; });
         document.startViewTransition(() => { go(); document.querySelectorAll('#pmain .ftile[data-ftile]').forEach(el => { el.style.viewTransitionName = 'f' + el.dataset.ftile; }); })

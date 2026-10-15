@@ -523,12 +523,14 @@ body.phone{background:var(--screen);min-height:100vh;min-height:100dvh}
 /* start screen tabs: only the chosen one carries a shape; the shape travels on switch */
 .precent+.ptbar.tabs{margin-top:34px}
 .ptbar.tabs{height:48px;padding-left:calc(var(--gut) - 14px)}
-.ptabs{display:flex;gap:4px;height:44px;align-items:center}
-.ptab{display:flex;align-items:center;gap:7px;height:40px;padding:0 16px 0 14px;border-radius:20px;font:600 15px/1 var(--sans);color:var(--ink-weak);transition:color 200ms var(--ease-out)}
-.ptab[aria-selected="true"]{color:var(--ink);background:var(--surface-up);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 0 0 1px var(--line-2),0 6px 16px -8px rgba(0,0,0,.8)}
-.ptab-n{font:500 12px/1 var(--mono);color:var(--ink-weak);font-variant-numeric:tabular-nums}
-.ptab[aria-selected="true"] .ptab-n{padding:3px 7px;border-radius:9px;background:color-mix(in srgb,var(--accent) 22%,transparent);color:var(--accent-soft)}
-::view-transition-group(ptab){animation-duration:260ms;animation-timing-function:var(--ease-out)}
+.ptabs{position:relative;display:flex;gap:4px;height:44px;align-items:center}
+.ptab-ind{position:absolute;left:0;top:2px;width:0;height:40px;border-radius:20px;background:var(--surface-up);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 0 0 1px var(--line-2),0 6px 16px -8px rgba(0,0,0,.8);transition:transform 320ms var(--ease-out),width 320ms var(--ease-out);pointer-events:none}
+.ptab{position:relative;display:flex;align-items:center;gap:7px;height:40px;padding:0 16px 0 14px;border-radius:20px;font:600 15px/1 var(--sans);color:var(--ink-weak);transition:color 200ms var(--ease-out)}
+.ptab[aria-selected="true"]{color:var(--ink)}
+.bd.tab-in{animation:tab-in 240ms var(--ease-out)}
+@keyframes tab-in{from{opacity:0;transform:translateY(6px)}}
+.ptab-n{padding:3px 7px;border-radius:9px;font:500 12px/1 var(--mono);color:var(--ink-weak);font-variant-numeric:tabular-nums;transition:background-color 200ms var(--ease-out),color 200ms var(--ease-out)}
+.ptab[aria-selected="true"] .ptab-n{background:color-mix(in srgb,var(--accent) 22%,transparent);color:var(--accent-soft)}
 .fscreen{padding-top:14px}
 .pchev{margin-right:2px}
 .pchev svg.i{width:20px;height:20px}

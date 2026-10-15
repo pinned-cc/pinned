@@ -229,7 +229,7 @@ export function phoneTop() {
 export function phoneTabs() {
   const t = ui.tab, ni = count('inbox'), nf = count('folders');
   const tab = (k, label, n) => `<button type="button" class="ptab" role="tab" aria-selected="${t === k}" data-a="tab" data-tab="${k}">${label}${n ? `<span class="ptab-n num">${n}</span>` : ''}</button>`;
-  return `<header class="ptbar home tabs"><div class="ptabs" role="tablist" aria-label="Start">${tab('inbox', 'Inbox', ni)}${tab('folders', 'Folders', nf)}</div><span class="ptb-sp"></span>
+  return `<header class="ptbar home tabs"><div class="ptabs" role="tablist" aria-label="Start"><span class="ptab-ind" aria-hidden="true"></span>${tab('inbox', 'Inbox', ni)}${tab('folders', 'Folders', nf)}</div><span class="ptb-sp"></span>
     <button type="button" class="ib weak" data-a="select" aria-label="Select">${ic('select')}</button><button type="button" class="ib weak" data-a="phone-menu" aria-label="More">${ic('more')}</button></header>`;
 }
 /* the share button beside a folder's title: muted, accent once the folder is shared */
@@ -285,12 +285,23 @@ export function phoneBulk() { const n = ui.picked.size, dis = n ? '' : 'disabled
 let phoneMainView = null;
 export function renderPhoneMain() {
   const m = byId('pmain'), rows = '.fscroll, .precent', sx = [...m.querySelectorAll(rows)].map(e => e.scrollLeft);
+  const oi = m.querySelector('.ptab-ind'), from = oi && oi.offsetWidth ? { x: oi.offsetLeft + (oi._x || 0), w: oi.offsetWidth } : null;
   const st = ui.view === 'settings';
   const tabbed = ui.view === 'inbox' && !ui.selecting;
   m.innerHTML = (st ? '' : phoneRecents()) + (st ? '' : backLink('pback')) + phoneTop() + `<div class="bd">${st || tabbed ? '' : folderSection(true)}${phoneBody()}</div>`;
   const now = [...m.querySelectorAll(rows)], same = phoneMainView === ui.view; phoneMainView = ui.view;
   if (same && sx.length === now.length) now.forEach((e, i) => { if (sx[i]) e.scrollLeft = sx[i]; });
+  placeTabInd(m, from);
   syncSearch();
+}
+/* the selected tab's shape is one element that slides between the tabs; the labels never move */
+function placeTabInd(m, from) {
+  const ind = m.querySelector('.ptab-ind'), sel = m.querySelector('.ptab[aria-selected="true"]');
+  if (!ind || !sel) return;
+  const x = sel.offsetLeft, w = sel.offsetWidth, set = (px, pw) => { ind._x = px; ind.style.transform = `translateX(${px}px)`; ind.style.width = pw + 'px'; };
+  if (!from || reduce() || (from.x === x && from.w === w)) { set(x, w); return; }
+  ind.style.transition = 'none'; set(from.x, from.w); void ind.offsetWidth;
+  ind.style.transition = ''; set(x, w);
 }
 export function renderPhone() {
   renderPhoneMain();
