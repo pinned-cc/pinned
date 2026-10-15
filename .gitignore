@@ -1,0 +1,8 @@
+data/
+dist/
+*.db
+*.db-*
+.DS_Store
+reference/
+SPEC.md
+web/extras/pinned-extension.zip

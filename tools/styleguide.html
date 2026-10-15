@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Style guide</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css">
+<style media="(prefers-reduced-motion: reduce)">*,*::before,*::after{transition:none!important;animation:none!important}</style>
+<style>
+/* layout of this page only; every specimen below is styled by app.css alone */
+body.sg{background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);margin:0}
+.sg-wrap{max-width:1200px;margin:0 auto;padding:40px 16px 96px}
+.sg-wrap>header h1{margin:0;font:600 28px/1.2 var(--sans);letter-spacing:-.01em}
+.sg-sec>p.sg-lead{max-width:640px;color:var(--ink);font-size:15px;line-height:1.6}
+.sg-sec{margin-top:56px}
+.sg-sec>h2{margin:0 0 4px;font:600 18px/1.3 var(--sans)}
+.sg-sec>p{margin:0 0 16px;color:var(--ink-weak);font-size:13px}
+.sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px 16px;align-items:start}
+.sg-item{min-width:0}
+.sg-cls{display:block;margin-top:8px;font:400 12px/1.4 var(--mono);color:var(--ink-weak);overflow-wrap:anywhere}
+.sg-scroll{position:relative;overflow-x:auto;padding-bottom:4px}
+.sg-frame{position:relative;transform:translateZ(0);overflow:hidden;border:1px dashed var(--line-2);border-radius:12px;background:var(--screen)}
+.sg-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.sg-sw{display:flex;align-items:center;gap:12px;min-width:0}
+.sg-chip{width:44px;height:44px;border-radius:10px;border:1px solid var(--line-2);flex:none}
+.sg-sw b{display:block;font:500 13px/1.3 var(--mono)}
+.sg-sw span{display:block;font:400 12px/1.3 var(--mono);color:var(--ink-weak)}
+.sg-type{display:flex;flex-direction:column;gap:20px}
+.sg-type .sg-item{border-bottom:1px solid var(--line);padding-bottom:16px}
+.sg-side{width:300px;max-width:calc(100vw - 32px)}
+.sg-desk{min-width:880px}
+.sg-ph{max-width:390px}
+.sg-ph .pgrid,.sg-ph .fgrid-p{padding:0}
+.sg-stack{display:flex;flex-direction:column;gap:28px}
+</style>
+</head>
+<body data-page="styleguide" class="sg">
+<div class="sg-wrap">
+  <header>
+    <h1>Style guide</h1>
+  </header>
+
+  <section class="sg-sec" id="fit"><h2>How the pieces fit</h2>
+    <p class="sg-lead">A bookmark is a card that shows its favicon, its title and its address. A folder is a tile on the start screen, in the Folders screen and above the cards of its parent, and a row in the sidebar alongside All bookmarks, Inbox and Trash. Inside a folder, the back link above the title takes you one level up, to the parent or to Inbox. Sheets are made of glass, and the palette blurs the page behind it.</p></section>
+
+  <section class="sg-sec" id="tokens"><h2>Colour tokens</h2><p>Read live from app.css.</p><div class="sg-grid" id="sg-tokens"></div></section>
+  <section class="sg-sec" id="type"><h2>Type scale</h2><p>Sizes are measured from the rendered element.</p><div class="sg-type" id="sg-type"></div></section>
+  <section class="sg-sec"><h2>Bookmark card</h2><p>Desktop grid, desktop list and phone.</p><div id="sg-cards"></div></section>
+  <section class="sg-sec"><h2>Folder tile</h2><p>Full tile on the start screen, the Folders screen and inside a folder; the picker tile in the sheets.</p><div id="sg-ftiles"></div></section>
+  <section class="sg-sec"><h2>Sidebar rows</h2><p>System rows and folder rows are one component.</p><div id="sg-side"></div></section>
+  <section class="sg-sec"><h2>Title bar</h2><p>Back link, title, count, share, Select and the three dots.</p><div id="sg-title"></div></section>
+  <section class="sg-sec"><h2>Locked folder</h2><p>Shut, it shows a lock where the count sits and asks for its password; open, a lock follows the name and the title bar carries the lock button.</p><div id="sg-lock"></div></section>
+  <section class="sg-sec"><h2>Recent</h2><div id="sg-recent"></div></section>
+  <section class="sg-sec"><h2>Palette</h2><div id="sg-pal"></div></section>
+  <section class="sg-sec"><h2>Glass sheet</h2><div id="sg-sheet"></div></section>
+  <section class="sg-sec"><h2>Floating search and plus</h2><div id="sg-float"></div></section>
+  <section class="sg-sec"><h2>Buttons</h2><div id="sg-buttons"></div></section>
+  <section class="sg-sec"><h2>Add bookmark and empty</h2><div id="sg-empty"></div></section>
+  <section class="sg-sec"><h2>Toast</h2><div id="sg-toast"></div></section>
+  <section class="sg-sec"><h2>Badges and counts</h2><div id="sg-badges"></div></section>
+</div>
+<script type="module" src="/static/js/app.js"></script>
+<script type="module">
+(() => {
+'use strict';
+const K = window.Pinned.kit, U = window.Pinned.U, D = window.Pinned.D, $ = id => document.getElementById(id);
+const now = Math.floor(Date.now() / 1000), day = 86400;
+/* neutral sample data, the same shape the API returns */
+const F = (id, name, parent_id, position, share, lock) => ({ id, name, parent_id, position, share: share ? { url: '' } : null, locked: !!lock, unlocked: lock === 'open' });
+const B = (id, title, url, folder_id, created, opened, pinned) => ({ id, title, url, host: new URL(url).host, folder_id, position: id, created_at: now - created * day, opened_at: opened == null ? null : now - opened * day, pinned: !!pinned, pinned_position: id, deleted_at: null });
+K.setData({
+  folders: [F(1, 'Projects', null, 0, true), F(2, 'Reading', null, 1), F(3, 'Tools', null, 2), F(4, 'Drafts', 1, 0), F(5, 'Archive', 1, 1), F(6, 'Private', null, 3, false, 'shut'), F(7, 'Taxes', null, 4, false, 'open')],
+  bookmarks: [B(1, 'Example', 'https://example.com', null, 0, 0, true), B(2, 'Notes', 'https://notes.example.net', 4, 1, 1, true), B(3, 'Docs', 'https://docs.example.org', 2, 3, 2),
+    B(4, 'Status page', 'http://10.0.0.5:3001', 3, 6, null), B(5, 'Calendar', 'https://calendar.example.com', 1, 9, 4, true), B(6, 'Wiki', 'https://wiki.example.net', 5, 12, null)]
+});
+D.has = true; D.loaded = true; U.view = 4;
+const bms = D.bms;
+const item = (html, cls, extra = '') => `<div class="sg-item"${extra}>${html}<code class="sg-cls">${cls}</code></div>`;
+const frame = (html, h, cls = '') => `<div class="sg-frame ${cls}" style="height:${h}px">${html}</div>`;
+/* specimens are for looking at: keep the app's click and drag handlers out of them */
+document.addEventListener('click', e => { if (e.target.closest('.sg-wrap')) { e.preventDefault(); e.stopPropagation(); } }, true);
+
+/* tokens */
+const names = ['--ground', '--screen', '--surface', '--surface-up', '--sheet', '--recess', '--fold', '--line', '--line-2', '--ink', '--ink-weak', '--accent', '--accent-ink', '--accent-soft', '--danger',
+  '--cyan', '--coral', '--lilac', '--lime', '--mint', '--rose', '--tray', '--bin', '--plain'];
+const cs = getComputedStyle(document.documentElement);
+$('sg-tokens').innerHTML = names.map(n => { const v = cs.getPropertyValue(n).trim(), p = cs.getPropertyValue(n + '-p').trim();
+  return `<div class="sg-sw"><span class="sg-chip" style="background:var(${n})"></span><span><b>${n}</b><span>${v}${p ? ', ' + n + '-p ' + p : ''}</span></span></div>`; }).join('');
+
+/* type */
+const T = [
+  ['Desktop title', `<div class="tb"><h2>Projects</h2></div>`, '.tb h2', '.tb h2'],
+  ['Phone title', `<header class="ptbar home"><h2 class="ptb-t">Projects</h2></header>`, '.ptb-t', '.ptb-t'],
+  ['Card title', `<div class="grid" style="max-width:300px">${K.deskTile(D.bms[3], 0)}</div>`, '.t-title', '.tile .t-title'],
+  ['Folder name on a tile', `<div class="fgrid" style="max-width:300px">${K.ftileHTML(D.folders[1])}</div>`, '.ft-n', '.ftile .ft-n'],
+  ['Row', `<div class="sg-side">${K.sideItem('all', 'all', 'all')}</div>`, '.si', '.si'],
+  ['Section label', `<div class="glbl">Today</div>`, '.glbl', '.glbl'],
+  ['Host, mono', `<div class="grid" style="max-width:300px">${K.deskTile(D.bms[3], 0)}</div>`, '.t-host', '.tile .t-host'],
+  ['Count', `<div class="fgrid" style="max-width:300px">${K.ftileHTML(D.folders[2])}</div>`, '.ft-c', '.ftile .ft-c']];
+$('sg-type').innerHTML = T.map(([n, h, sel, cls]) => `<div class="sg-item" data-sel="${sel}"><div style="font:500 12px var(--mono);color:var(--ink-weak);margin-bottom:6px">${n} <span class="sg-m"></span></div>${h}<code class="sg-cls">${cls}</code></div>`).join('');
+
+/* cards */
+$('sg-cards').innerHTML = `<div class="sg-stack">
+  ${item(`<div class="grid">${K.deskTile(bms[3], bms[3].created_at)}${K.deskTile(bms[2], bms[2].created_at)}${K.deskTile(bms[1], bms[1].created_at)}</div>`, '.grid .tile, desktop')}
+  ${item(`<div class="sg-scroll"><div class="sg-desk"><div class="grid is-list">${K.deskTile(bms[2], bms[2].created_at)}${K.deskTile(bms[3], bms[3].created_at)}</div></div></div>`, '.grid.is-list .tile, desktop list')}
+  ${item(`<div class="sg-ph"><div class="pgrid">${K.phoneTile(bms[3], bms[3].created_at)}${K.phoneTile(bms[1], bms[1].created_at)}</div></div>`, '.pgrid .pt, phone')}</div>`;
+
+/* folder tiles */
+const f1 = D.folders[0], f2 = D.folders[1], f4 = D.folders[3];
+$('sg-ftiles').innerHTML = `<div class="sg-stack">
+  ${item(`<div class="fgrid">${K.ftileHTML(f1)}${K.ftileHTML(f2).replace('class="ftile"', 'class="ftile drop-on"')}${K.ftileHTML(D.folders[2])}</div>`, '.ftile, .ftile.drop-on while a card is held over it, desktop')}
+  ${item(`<div class="sg-ph"><div class="fgrid fgrid-p">${K.ftileHTML(f1)}${K.ftileHTML(f2)}</div></div>`, '.fgrid-p .ftile, phone')}
+  </div><p style="margin:24px 0 12px;color:var(--ink-weak);font-size:13px">Picker tile, used in the Move, Add to and Save sheets.</p><div class="sg-row">
+  ${item(K.fmini(K.INBOX_F), '.fmini, picker tile')}
+  ${item(K.fmini(f1, { fill: true, current: true }), '.fmini.fill, the chosen folder')}
+  ${item(K.nfMini(), '.fmini.dashed, New folder')}</div>`;
+
+/* sidebar */
+$('sg-side').innerHTML = `<div class="sg-grid">
+  ${item(`<div class="sg-side"><div class="nav">${K.sideItem('all', 'all', 'all')}${K.sideItem('inbox', 'inbox', 'inbox')}${K.sideItem('trash', 'trash', 'trash')}</div></div>`, '.si.all, .si.inbox, .si.trash')}
+  ${item(`<div class="sg-side">${K.deskTree()}</div>`, '.si.sf, .subs .si.sf.sub, current is aria-current')}</div>`;
+
+/* title bars */
+U.view = 1;
+$('sg-title').innerHTML = item(`<div class="sg-scroll"><div class="sg-desk">${K.deskToolbar()}</div></div>`, '.uplink.dback, .tb, .tb-share, .btn.icon') + `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.backLink('pback')}${K.phoneTop()}</div>`, '.uplink.pback, .ptbar, .ptb-share, .ib');
+
+/* start screen tabs */
+U.view = 'inbox'; U.tab = 'inbox';
+$('sg-title').innerHTML += `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.phoneTabs()}</div>`, '.ptbar.tabs, .ptab, .ptab-n; the chosen tab carries the shape, the other is bare');
+U.view = 1;
+
+/* locked folder */
+const fShut = D.folders[5], fOpen = D.folders[6];
+U.view = 7;
+$('sg-lock').innerHTML = `<div class="sg-stack">
+  ${item(`<div class="fgrid">${K.ftileHTML(fShut)}${K.ftileHTML(fOpen)}</div>`, '.ftile.locked shut, .ftile with .lk open')}
+  ${item(`<div class="sg-grid"><div class="sg-side">${K.deskTree()}</div></div>`, '.si.sf.locked with .si-lock, open row with .lk')}
+  ${item(`<div class="sg-row">${K.shareBtn(1, 'tb-share')}${K.shareBtn(2, 'tb-share')}${K.shareBtn(7, 'tb-share')}</div>`, '.share-ic.on shared, .share-ic not shared, .lock-btn.on relocks at once')}
+  ${item(`<div style="max-width:390px">${K.backLink('pback')}${K.phoneTop()}</div>`, '.ptbar with .lock-btn')}
+  ${item(frame(`<div class="layer open dialog"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Unlock"><div class="sh-body">${K.lockHTML({ type: 'unlock' }, fShut)}</div></div></div>`, 360), 'unlock dialog: .layer.dialog .sheet, .fld-in, .save')}
+  ${item(frame(`<div class="layer open dialog"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Unlock"><div class="sh-body">${K.lockHTML({ type: 'unlock', err: 'Wrong password' }, fShut)}</div></div></div>`, 380), 'wrong password: .fld-err')}
+  ${item(frame(`<div class="layer open dialog"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Lock"><div class="sh-body">${K.lockHTML({ type: 'lock' }, fOpen)}</div></div></div>`, 560), 'lock dialog')}</div>`;
+U.view = 4;
+
+/* recent */
+$('sg-recent').innerHTML = item(`<div class="sg-scroll">${K.deskDock()}</div>`, '.dock .dk, desktop') + `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.phoneRecents()}</div>`, '.precent .prc, .prc.pinned, phone');
+
+/* palette */
+const palIt = (b, i) => `<a class="pal-it" aria-selected="${i === 0}" href="#">${K.favHTML(b, 28)}<span class="pal-t">${b.title}</span><span class="trunc-start pal-h"><bdi dir="ltr">${b.host}</bdi></span><span class="pal-p">Projects</span></a>`;
+$('sg-pal').innerHTML = item(frame(`<div class="pal open"><div class="pal-scrim"></div><div class="pal-panel glass" role="dialog" aria-label="Search bookmarks">
+  <label class="pal-row">${K.ic('search')}<input type="search" value="cal" aria-label="Search"><span class="kcap">esc</span><button type="button" class="pal-cancel">Cancel</button></label>
+  <div class="pal-scroll"><div class="pal-grp"><div class="pal-lbl pal-g"><span>Projects</span><span class="num">2</span></div>${palIt(bms[4], 0)}${palIt(bms[0], 1)}</div></div></div></div>`, 420), '.pal.open .pal-panel.glass, .pal-it, .pal-cancel on the phone, .kcap on the desktop');
+
+/* sheet */
+$('sg-sheet').innerHTML = item(frame(`<div class="layer open"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Actions">${K.grab()}${K.fHead(f1)}${K.rowsHTML([
+  { icon: 'edit', label: 'Rename' }, { icon: 'link', label: 'Share' }, { icon: 'move', label: 'Move to' }, '-', { icon: 'trash', label: 'Delete', warn: true }])}</div></div>`, 520), '.layer.open .sheet, .sh-head, .sh-row, .sh-row.warn');
+
+/* floating search and plus */
+$('sg-float').innerHTML = item(frame(`<div class="pbottom"><div class="psrow"><button type="button" class="ps ps-trigger">${K.ic('search')}<span class="ps-ph">Search bookmarks</span></button><button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 120, 'sg-phone'), '.pbottom .ps, .pbottom .padd');
+
+/* buttons */
+$('sg-buttons').innerHTML = `<div class="sg-row">
+  ${item(`<button type="button" class="add">${K.ic('plus')}Add</button>`, '.add, primary')}
+  ${item(`<button type="button" class="save" style="width:200px">Save</button>`, '.save, primary in sheets')}
+  ${item(`<button type="button" class="btn lbl">${K.ic('select')}<span class="t">Select</span></button>`, '.btn, quiet')}
+  ${item(`<button type="button" class="btn warn">${K.ic('trash')}Empty trash</button>`, '.btn.warn')}
+  ${item(`<button type="button" class="tbtn">Choose a folder</button>`, '.tbtn, text')}
+  ${item(`<button type="button" class="tbtn warn">Remove</button>`, '.tbtn.warn')}
+  ${item(`<button type="button" class="ib weak" aria-label="More">${K.ic('more')}</button>`, '.ib, icon')}
+  ${item(`<div class="fhead pglbl" style="margin:0;width:200px"><span>Folders</span><button type="button" class="see-all">See all</button></div>`, '.see-all')}</div>`;
+
+/* add tile and empty */
+$('sg-empty').innerHTML = `<div class="sg-grid">
+  ${item(`<div class="grid">${K.addTileHTML('addtile')}</div>`, '.addtile')}
+  ${item(`<div class="sg-ph"><div class="pgrid">${K.addTileHTML('pt-add')}</div></div>`, '.pt-add, phone')}
+  </div><div style="margin-top:24px">${item(K.emptyMerge('empty merge'), '.empty.merge, a folder with nothing in it')}</div>`;
+
+/* toast */
+$('sg-toast').innerHTML = item(frame(`<div class="toasts"><div class="toast"><span class="tx">Moved to Projects</span><button type="button">Undo</button></div><div class="toast solo"><span class="tx">Order saved</span></div></div>`, 150), '.toast, .toast.solo');
+
+/* badges */
+$('sg-badges').innerHTML = `<div class="sg-row">
+  ${item(`<span class="si-c">41</span>`, '.si-c')}
+  ${item(`<div class="tb" style="margin:0;height:auto"><h2>Inbox</h2><span class="cnt">3</span></div>`, '.tb .cnt')}
+  ${item(`<header class="ptbar home" style="padding:0"><h2 class="ptb-t">Inbox</h2><span class="ptb-c">3</span></header>`, '.ptb-c')}
+  ${item(`<span class="kcap">/</span>`, '.kcap')}
+  ${item(`<span class="ft-c num">12</span>`, '.ft-c')}</div>`;
+
+/* measured type sizes */
+document.fonts.ready.then(() => document.querySelectorAll('#sg-type [data-sel]').forEach(it => { const el = it.querySelector(it.dataset.sel); if (!el) return;
+  const s = getComputedStyle(el); it.querySelector('.sg-m').textContent = `${s.fontSize} / ${s.lineHeight}, ${s.fontWeight}`; }));
+})();
+</script>
+</body>
+</html>

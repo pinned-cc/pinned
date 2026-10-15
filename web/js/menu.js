@@ -1,0 +1,42 @@
+/* The small popup menu on desktop (the phone shows the same rows in a sheet). */
+import { actions, startRename } from './actions.js';
+import { openSheet } from './sheets.js';
+import { layers, ui } from './state.js';
+import { esc, ic } from './util.js';
+
+/* ================= menus (desktop) ================= */
+export function openMenu(anchor, items, at) {
+  closeMenu();
+  const m = document.createElement('div'); m.className = 'menu'; m.setAttribute('role', 'menu');
+  m.innerHTML = items.map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="${it.check != null ? 'menuitemradio' : 'menuitem'}"${it.check != null ? ` aria-checked="${!!it.check}"` : ''} data-mi="${i}"${it.warn ? ' class="warn"' : ''}>${it.icon ? ic(it.icon) : ''}${esc(it.label)}${it.check ? `<span class="ck">${ic('check', 's16')}</span>` : ''}</button>`).join('');
+  document.body.appendChild(m);
+  const W = m.offsetWidth, H = m.offsetHeight; let x, y;
+  if (at) { x = at.x; y = at.y; } else { const r = anchor.getBoundingClientRect(); x = r.right - W; y = r.bottom + 6; if (y + H > innerHeight - 8) y = r.top - H - 6; }
+  m.style.left = Math.max(8, Math.min(x, innerWidth - W - 8)) + 'px'; m.style.top = Math.max(8, Math.min(y, innerHeight - H - 8)) + 'px';
+  layers.menu = { el: m, anchor }; if (anchor) anchor.setAttribute('aria-expanded', 'true');
+  m.addEventListener('click', e => { const b = e.target.closest('[data-mi]'); if (!b) return; const it = items[+b.dataset.mi]; closeMenu(e.detail === 0); it.run(); }); /* from the keyboard, focus goes back to the button that opened the menu */
+  m.addEventListener('keydown', e => { const bs = [...m.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); bs[(i + 1) % bs.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); bs[(i - 1 + bs.length) % bs.length].focus(); }
+    else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); bs[e.key === 'Home' ? 0 : bs.length - 1].focus(); }
+    else if (e.key.length === 1 && e.key !== ' ' && !e.metaKey && !e.ctrlKey && !e.altKey) { /* type-ahead: the next item starting with that letter */
+      const k = e.key.toLowerCase(), order = [...bs.slice(i + 1), ...bs.slice(0, i + 1)], hit = order.find(b => b.textContent.trim().toLowerCase().startsWith(k));
+      if (hit) { e.preventDefault(); hit.focus(); } }
+    else if (e.key === 'Tab') { e.preventDefault(); closeMenu(true); } });
+  m.querySelector('button').focus();
+}
+export function closeMenu(refocus) { if (!layers.menu) return; const { el, anchor } = layers.menu; layers.menu = null; el.remove();
+  if (anchor && anchor.isConnected) { anchor.removeAttribute('aria-expanded'); if (refocus) anchor.focus(); } }
+export function menuOrSheet(anchor, items, head) { if (ui.mode === 'phone' || !anchor) openSheet({ type: 'rows', head, rows: items }); else if (layers.menu && layers.menu.anchor === anchor) closeMenu(); else openMenu(anchor, items); }
+export const tileMenu = b => [
+  { icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
+  { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => actions.pin(b) },
+  { icon: 'edit', label: 'Rename', run: () => startRename(b.id) },
+  '-', { icon: 'trash', label: 'Trash', warn: true, run: () => actions.trash([b.id]) }];
+
+
+/* listeners on document and window, registered once by app.js */
+export function installMenu() {
+  document.addEventListener('pointerdown', e => { if (layers.menu && !layers.menu.el.contains(e.target) && !(layers.menu.anchor && layers.menu.anchor.contains(e.target))) closeMenu(); });
+  addEventListener('resize', () => closeMenu());
+}

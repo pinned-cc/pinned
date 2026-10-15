@@ -1,0 +1,48 @@
+# Save a link to Pinned from Home Assistant.
+#
+# Paste this into configuration.yaml, then restart Home Assistant.
+# The address and the token live in secrets.yaml, with these two keys:
+#
+#   pinned_bookmarks_url: "https://bookmarks.example.com/api/bookmarks"
+#   pinned_authorization: "Bearer tk_your_token"
+#
+# The action is rest_command.save_bookmark. It takes a url, and a folder_id
+# when the link should go into a folder instead of the Inbox. Folder ids are
+# in the answer of GET /api/folders.
+#
+# Schema: https://www.home-assistant.io/integrations/rest_command/
+
+rest_command:
+  save_bookmark:
+    url: !secret pinned_bookmarks_url
+    method: post
+    headers:
+      authorization: !secret pinned_authorization
+    content_type: "application/json; charset=utf-8"
+    # An empty title makes the server use the host as the title.
+    payload: >-
+      {"url": {{ url | to_json }}, "title": "",
+      "folder_id": {% if folder_id is defined and folder_id %}{{ folder_id | int }}{% else %}null{% endif %}}
+    timeout: 10
+
+# One example automation. When the button is pressed, it saves the link and
+# shows the answer as a notification: 201 is saved, 409 is already saved.
+# "automation pinned:" keeps it apart from "automation: !include automations.yaml".
+# Change input_button.save_link to your own button, and the url to your link.
+automation pinned:
+  - alias: "Save a link when the button is pressed"
+    triggers:
+      - trigger: state
+        entity_id: input_button.save_link
+        not_from: ["unavailable", "unknown"]
+    actions:
+      - action: rest_command.save_bookmark
+        data:
+          url: "https://example.com/"
+        response_variable: saved
+      - action: persistent_notification.create
+        data:
+          title: "Pinned"
+          message: >-
+            {{ 'Saved' if saved.status == 201 else 'Already saved' if saved.status == 409
+            else 'Error ' ~ saved.status ~ ': ' ~ saved.content }}

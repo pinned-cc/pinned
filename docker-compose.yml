@@ -1,0 +1,21 @@
+services:
+  pinned:
+    image: ghcr.io/pinnedcc/pinned:latest
+    container_name: pinned
+    environment:
+      APP_PASSWORD: ${APP_PASSWORD:?set APP_PASSWORD}
+      TZ: UTC # your time zone, used for the 03:00 export
+    volumes:
+      - ./data:/data
+    ports:
+      - "9095:8080"
+    restart: unless-stopped
+    # The app writes only to /data; everything else stays read only.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # The image has a HEALTHCHECK (pinned -healthcheck), nothing to add here.

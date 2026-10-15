@@ -1,0 +1,96 @@
+{
+  "name": "Save a bookmark to Pinned",
+  "nodes": [
+    {
+      "id": "7d0c6f62-1b7e-4a7e-9a52-3c1f0b6a1001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "3f6b2a4e-6c1d-4f0b-8e5a-2d7c9b1a1002",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "save",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "7d0c6f62-1b7e-4a7e-9a52-3c1f0b6a1003",
+      "name": "Save to Pinned",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Change the address to your own server. Pick a Header Auth credential with Name Authorization and Value Bearer tk_your_token.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://bookmarks.example.com/api/bookmarks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $json.body.url, title: $json.body.title || '', folder_id: $json.body.folder_id ?? null }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "7d0c6f62-1b7e-4a7e-9a52-3c1f0b6a1004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save to Pinned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Pinned": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

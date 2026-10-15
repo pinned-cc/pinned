@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/static/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css">
+<title>Log in</title>
+</head>
+<body data-page="login">
+<main class="lone"><div class="lone-box">
+  <svg class="lone-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="lm-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2c30"/><stop offset="1" stop-color="#0d0d0f"/></linearGradient>
+    <radialGradient id="lm-glow" cx=".5" cy=".12" r=".7"><stop offset="0" stop-color="#ffffff" stop-opacity=".16"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="lm-cardTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ebe7dc"/></linearGradient>
+    <linearGradient id="lm-card2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6e2d7"/><stop offset="1" stop-color="#cfcabd"/></linearGradient>
+    <linearGradient id="lm-card3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdc8bb"/><stop offset="1" stop-color="#b3ada0"/></linearGradient>
+    <linearGradient id="lm-card4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b1ab9e"/><stop offset="1" stop-color="#968f82"/></linearGradient>
+    <linearGradient id="lm-fav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe3b8"/><stop offset="1" stop-color="#2fb87a"/></linearGradient>
+    <linearGradient id="lm-strip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1a17" stop-opacity=".05"/><stop offset="1" stop-color="#1b1a17" stop-opacity=".09"/></linearGradient>
+    <radialGradient id="lm-pinHead" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#b9f0d2"/><stop offset=".45" stop-color="#5fd39a"/><stop offset="1" stop-color="#1f8a5c"/></radialGradient>
+    <linearGradient id="lm-needle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f4f6f9"/><stop offset=".5" stop-color="#8d96a5"/><stop offset="1" stop-color="#3a414e"/></linearGradient>
+    <linearGradient id="lm-tackHead" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8860b"/><stop offset=".45" stop-color="#e0a921"/><stop offset="1" stop-color="#8a6508"/></linearGradient>
+    <linearGradient id="lm-tackTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3c74a"/><stop offset="1" stop-color="#d9a21b"/></linearGradient>
+    <linearGradient id="lm-tackNeck" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9c7210"/><stop offset=".5" stop-color="#d9a21b"/><stop offset="1" stop-color="#7a5806"/></linearGradient>
+    <radialGradient id="lm-tackRim" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#e9b43a"/><stop offset=".7" stop-color="#c9900f"/><stop offset="1" stop-color="#8a6508"/></radialGradient>
+    <radialGradient id="lm-tackDome" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#f6cf5c"/><stop offset=".65" stop-color="#d9a21b"/><stop offset="1" stop-color="#a87a0a"/></radialGradient>
+    <clipPath id="lm-sq"><rect x="0" y="0" width="256" height="256" rx="58"/></clipPath>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#lm-bg)"/>
+  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#lm-glow)"/>
+  <rect x="1" y="1" width="254" height="254" rx="57" fill="none" stroke="#ffffff" stroke-opacity=".10"/>
+  <g clip-path="url(#lm-sq)">
+    <rect x="60" y="92" width="144" height="108" rx="16" fill="#000" fill-opacity=".10" transform="rotate(-2.5 128 150)"/>
+    <rect x="58" y="88" width="144" height="108" rx="15" fill="#000" fill-opacity=".14"/>
+    <!-- the stack: three cards behind, each a step up and a little turned, then the top card straight -->
+    <g>
+      <rect x="56" y="78" width="144" height="108" rx="14" fill="url(#lm-card4)" transform="rotate(-9 128 150)"/>
+      <rect x="56" y="78" width="144" height="108" rx="14" fill="url(#lm-card3)" transform="rotate(-5.5 128 150)"/>
+      <rect x="56" y="78" width="144" height="108" rx="14" fill="url(#lm-card2)" transform="rotate(-2.5 128 150)"/>
+    </g>
+    <!-- the top card, the app's bookmark card: favicon, title, address, the strip with the folder dot -->
+    <g>
+      <rect x="56" y="78" width="144" height="108" rx="14" fill="url(#lm-cardTop)"/>
+      <rect x="56" y="78" width="144" height="108" rx="14" fill="none" stroke="#ffffff" stroke-opacity=".8"/>
+      <rect x="55.5" y="77.5" width="145" height="109" rx="14.5" fill="none" stroke="#1b1a17" stroke-opacity=".18"/>
+      <rect x="70" y="92" width="30" height="30" rx="8" fill="url(#lm-fav)"/>
+      <rect x="76.5" y="98.5" width="7.5" height="7.5" rx="2" fill="#fff"/><rect x="86" y="98.5" width="7.5" height="7.5" rx="2" fill="#fff" fill-opacity=".6"/>
+      <rect x="76.5" y="108" width="7.5" height="7.5" rx="2" fill="#fff" fill-opacity=".6"/><rect x="86" y="108" width="7.5" height="7.5" rx="2" fill="#fff" fill-opacity=".6"/>
+      <rect x="70" y="132" width="74" height="9" rx="4.5" fill="#1b1a17" fill-opacity=".82"/>
+      <rect x="70" y="147" width="96" height="6" rx="3" fill="#1b1a17" fill-opacity=".28"/>
+      <path d="M56 166 H200 V172 a14 14 0 0 1 -14 14 H70 a14 14 0 0 1 -14 -14 z" fill="url(#lm-strip)"/>
+      <path d="M56 166 H200" stroke="#1b1a17" stroke-opacity=".10"/>
+      <circle cx="73" cy="176" r="3" fill="#2fb87a"/>
+      <rect x="80" y="173.5" width="28" height="5" rx="2.5" fill="#1b1a17" fill-opacity=".35"/>
+      <rect x="160" y="173.5" width="26" height="5" rx="2.5" fill="#1b1a17" fill-opacity=".22"/>
+    </g>
+    <!-- the pin, seen from the top: the round head of a thumbtack pushed through the top right corner -->
+    <g>
+      <ellipse cx="184" cy="90" rx="12" ry="5" fill="#000" fill-opacity=".18"/>
+      <circle cx="184" cy="86" r="11" fill="url(#lm-tackRim)"/>
+      <circle cx="184" cy="86" r="7.5" fill="url(#lm-tackDome)"/>
+      <circle cx="184" cy="86" r="1.6" fill="#5a3f04" fill-opacity=".8"/>
+      <ellipse cx="181" cy="82.5" rx="3.2" ry="1.8" fill="#ffffff" fill-opacity=".45"/>
+    </g>
+    <ellipse cx="128" cy="222" rx="80" ry="7" fill="#000" fill-opacity=".35"/>
+  </g>
+</svg>
+  <h1>Pinned</h1>
+  <form id="login" method="post" action="/login">
+    <input type="hidden" name="next" value="/">
+    <label class="fld first"><span class="sh-lbl">Password</span>
+      <input class="fld-in" type="password" name="password" autocomplete="current-password" required autofocus enterkeyhint="go"></label>
+    <p class="fld-err" id="login-err" role="alert"></p>
+    <button type="submit" class="save">Log in</button>
+  </form>
+</div></main>
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

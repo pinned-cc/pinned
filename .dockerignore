@@ -1,0 +1,6 @@
+.git
+data
+dist
+reference
+SPEC.md
+*.db

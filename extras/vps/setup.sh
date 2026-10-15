@@ -1,0 +1,81 @@
+#!/bin/sh
+# Pinned on a fresh server: installs Docker if it is missing, writes the compose file, asks for the
+# password once and starts the container. Debian, Ubuntu and most Docker-capable distributions.
+#
+#   curl -fsSL https://raw.githubusercontent.com/pinnedcc/pinned/main/extras/vps/setup.sh | sh
+#
+# Afterwards Pinned answers on port 9095 of the server. Put it behind HTTPS before you use it from
+# outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README.
+set -eu
+
+DIR="${PINNED_DIR:-$HOME/pinned}"
+PORT="${PINNED_PORT:-9095}"
+IMAGE="${PINNED_IMAGE:-ghcr.io/pinnedcc/pinned:latest}"
+
+say() { printf '%s\n' "$*"; }
+die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
+
+command -v curl >/dev/null 2>&1 || die "curl is needed"
+
+if ! command -v docker >/dev/null 2>&1; then
+  say "Installing Docker"
+  curl -fsSL https://get.docker.com | sh
+fi
+docker compose version >/dev/null 2>&1 || die "Docker is installed but the compose plugin is missing; install docker-compose-plugin and run this again"
+
+if [ -z "${APP_PASSWORD:-}" ]; then
+  if [ -t 0 ]; then
+    printf 'Choose the password for Pinned (8 characters or more): '
+    stty -echo 2>/dev/null || true
+    read -r APP_PASSWORD
+    stty echo 2>/dev/null || true
+    printf '\n'
+  else
+    die "set APP_PASSWORD in the environment when piping this script, for example: APP_PASSWORD='...' sh setup.sh"
+  fi
+fi
+[ "${#APP_PASSWORD}" -ge 8 ] || die "the password needs at least 8 characters"
+
+mkdir -p "$DIR/data"
+cd "$DIR"
+
+cat > compose.yml <<YAML
+services:
+  pinned:
+    image: $IMAGE
+    container_name: pinned
+    restart: unless-stopped
+    ports:
+      - "$PORT:8080"
+    environment:
+      APP_PASSWORD: \${APP_PASSWORD:?set APP_PASSWORD}
+      TZ: \${TZ:-UTC}
+    volumes:
+      - ./data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+YAML
+
+# the password lives in a file only this user can read; compose reads it as .env
+umask 077
+printf 'APP_PASSWORD=%s\n' "$APP_PASSWORD" > .env
+# the container runs as uid 1000 and needs to write the data folder
+chown 1000:1000 data 2>/dev/null || sudo chown 1000:1000 data
+
+docker compose pull
+docker compose up -d
+
+IP="$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || true)"
+say ""
+say "Pinned is running."
+say "  address   http://${IP:-this-server}:$PORT"
+say "  files     $DIR/compose.yml, $DIR/.env, $DIR/data/bookmarks.db"
+say "  update    cd $DIR && docker compose pull && docker compose up -d"
+say "  stop      cd $DIR && docker compose down"
+say ""
+say "Before you use it from outside your network, put HTTPS in front of it. See the README."

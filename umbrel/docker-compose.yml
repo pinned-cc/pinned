@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pinned_web_1
+      APP_PORT: 8080
+      # The extension, the Shortcut, share links and the health check do not
+      # carry the Umbrel login. The app's own password and tokens guard them.
+      # A share link page also loads its CSS, script, fonts and icon from
+      # /static/* and /favicon.svg, which hold only the app's own files.
+      PROXY_AUTH_WHITELIST: "/api/*,/s/*,/extras/*,/health,/static/*,/favicon.svg"
+
+  web:
+    # The digest is filled in at release, from the multi-arch index:
+    # docker buildx imagetools inspect ghcr.io/pinnedcc/pinned:0.1.0
+    image: ghcr.io/pinnedcc/pinned:0.1.0@sha256:PLACEHOLDER
+    user: "1000:1000"
+    restart: on-failure
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      APP_PASSWORD: ${APP_PASSWORD}
+      BASE_URL: http://${DEVICE_DOMAIN_NAME}:9097
+      TZ: UTC
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

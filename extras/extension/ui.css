@@ -1,0 +1,148 @@
+/* Pinned extension. Tokens, type and the save sheet's parts, taken from the app's web/app.css. */
+@font-face{font-family:"Geist";src:url("fonts/Geist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
+@font-face{font-family:"Geist Mono";src:url("fonts/GeistMono-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
+:root{
+  --ground:#0b0d10;--screen:#11141a;--surface:#171b22;--surface-up:#1e232c;--sheet:#1a1f27;--fold:#14181e;
+  --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.12);
+  --ink:#f2f4f7;--ink-weak:#9aa3b2;--accent:#4f8cff;--accent-ink:#071224;--accent-soft:#b3ccff;--danger:#ff9a9a;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --cyan:#7fcfe8;--cyan-p:#b4e6f5;--coral:#ff9e8c;--coral-p:#ffc8bd;--lilac:#b7a3ff;--lilac-p:#d8ccff;
+  --lime:#bfe07a;--lime-p:#dcf1ad;--mint:#7fdcb2;--mint-p:#b3efd2;--rose:#f39cc6;--rose-p:#f9c7df;
+  --tray:#93b1ff;--tray-p:#c4d4ff;--plain:#9aa3b2;--plain-p:#d5dae2;
+  --gut:18px;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--ground)}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 14px/1.45 var(--sans);-webkit-font-smoothing:antialiased;text-align:left}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sprite{position:absolute;width:0;height:0}
+
+/* fields */
+.fld{display:block;margin-top:14px}
+.sh-lbl{display:block;font:500 12px/16px var(--sans);color:var(--ink-weak);margin:0 2px 6px}
+.fld-in{display:block;width:100%;min-height:48px;margin:0;border-radius:14px;background:rgba(18,22,28,.85);border:1px solid var(--line);padding:13px 14px;font:400 16px/20px var(--sans);color:var(--ink);outline:0}
+.fld-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.22)}
+.fld-in::placeholder{color:var(--ink-weak);opacity:.7}
+.fld-err{margin:8px 2px 0;font:500 13px/18px var(--sans);color:var(--danger)}
+.host{font:400 11.5px/13px var(--mono);color:var(--ink-weak);letter-spacing:-.01em}
+
+/* buttons */
+.tbtn{height:44px;padding:0 14px;border-radius:22px;font:500 15px/1 var(--sans);color:var(--accent-soft)}
+.tbtn:hover{background:rgba(79,140,255,.10)}
+.save{height:52px;border-radius:26px;background:var(--accent);color:var(--accent-ink);font:600 16px/1 var(--sans);display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.save:hover{background:#6a9dff}
+.save[disabled]{opacity:.45;cursor:default}
+.save svg.i{width:24px;height:24px;stroke-width:2.2}
+.ib{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;color:var(--ink-weak);flex:none}
+.ib:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+.ib svg.i{width:22px;height:22px}
+.save:active,.tbtn:active,.ib:active,.si:active{transform:scale(.97)}
+
+/* favicon square */
+.fav{width:48px;height:48px;border-radius:12px;overflow:hidden;background:var(--tile,#2a303b);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);display:grid;place-items:center;flex:none;font:600 19px/1 var(--sans);color:var(--ink)}
+.fav img{display:block;width:100%;height:100%;object-fit:cover}
+.sv-ph{position:relative;background:var(--surface);overflow:hidden}
+.sv-ph .ph-in{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.08)}
+.sv-ph::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.08) 50%,transparent 60%);transform:translateX(-100%)}
+
+/* duplicate line */
+.dupe{display:flex;align-items:flex-start;gap:8px;min-height:20px;margin:10px 2px 0;font:500 13px/18px var(--sans);color:var(--ink)}
+.dupe svg.i{width:16px;height:16px;color:var(--danger);margin-top:1px}
+.dupe.off{visibility:hidden}
+.dupe-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.dupe .d2{color:var(--ink-weak);font-weight:400}
+
+/* folder chips: the app's mini tiles */
+.fpick{display:flex;flex-wrap:wrap;gap:4px 8px}
+.fmini{--h:var(--plain);--hp:var(--plain-p);flex:none;height:44px;display:inline-flex;align-items:center;padding:0;max-width:100%}
+.fmini .v{position:relative;height:38px;min-width:96px;max-width:100%;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border-radius:10px;background:rgba(18,22,28,.85);border:1px solid var(--line);font:500 13.5px/1 var(--sans);color:var(--ink);white-space:nowrap}
+.fmini .nm{min-width:0;overflow:hidden;display:inline-flex;align-items:center;gap:8px}
+.fmini .nt{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.fmini svg.fi{width:14px;height:14px;color:var(--h);flex:none}
+.fmini:hover .v{border-color:var(--line-2)}
+.fmini.fill .v{background:color-mix(in srgb,var(--h) 24%,var(--fold));border-color:transparent;color:var(--hp)}
+.fmini.fill svg.fi{color:var(--hp)}
+.sv-pick{display:inline-flex;align-items:center;gap:4px;padding:0 4px;margin:2px 0 0 -4px}
+.sv-pick .chev{width:16px;height:16px;transition:transform 160ms var(--ease-out)}
+.sv-pick[aria-expanded="true"] .chev{transform:rotate(90deg)}
+
+/* the full folder list: the sidebar rows of the app, indented by depth */
+.flist{margin:4px 0 0;max-height:216px;overflow-y:auto;overscroll-behavior:contain;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--line);padding:4px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent}
+.si{--h:var(--plain);--hp:var(--plain-p);display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 8px;border-radius:20px;text-align:left;font:500 13.5px/1 var(--sans);color:var(--ink)}
+.si:hover{background:rgba(255,255,255,.04)}
+.si-ic{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex:none;color:var(--h);background:color-mix(in srgb,var(--h) 16%,transparent)}
+.si-ic svg.i{width:16px;height:16px}
+.si-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si[aria-checked="true"]{background:color-mix(in srgb,var(--h) 14%,transparent);color:var(--hp)}
+.si[aria-checked="true"] .si-ic{background:color-mix(in srgb,var(--h) 22%,transparent)}
+.si .ck{width:16px;height:16px;color:var(--hp);stroke-width:2}
+
+.sv-acts{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:18px}
+
+@media (prefers-reduced-motion: no-preference){
+  .sv-ph::after{animation:ph-sweep 1.6s linear infinite}
+  @keyframes ph-sweep{to{transform:translateX(100%)}}
+  .fade-in{animation:fade-in 160ms ease}
+  @keyframes fade-in{from{opacity:0}to{opacity:1}}
+  .rise{animation:rise 240ms var(--ease-out)}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .save,.tbtn,.ib,.si{transition:transform 120ms var(--ease-out),background-color 160ms var(--ease-out)}
+}
+
+/* ================= popup ================= */
+body.popup{width:360px;background:var(--sheet);box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+.pop{padding:14px var(--gut) 18px}
+.sv-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2px}
+.sv-top .ib{margin:-2px -10px 0 0}
+.url-show{display:block;min-height:0;padding:12px 14px;font:400 13px/18px var(--mono);letter-spacing:-.01em;color:var(--ink-weak);word-break:break-all;
+  max-height:calc(18px * 3 + 24px);overflow:hidden;background:rgba(255,255,255,.02)}
+.sv-folder{margin-top:14px}
+.state{display:flex;align-items:center;gap:14px;padding:4px 0 2px}
+.state .tick{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.state .tick svg.i{width:24px;height:24px;stroke-width:2.2}
+.state .tt{min-width:0;flex:1}
+.state h1{margin:0;font:600 17px/1.25 var(--sans);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.state p{margin:2px 0 0;font:400 13px/18px var(--sans);color:var(--ink-weak);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.setup h1{margin:0 0 4px;font:600 17px/1.25 var(--sans);letter-spacing:-.01em}
+.setup p{margin:0 0 16px;font:400 14px/20px var(--sans);color:var(--ink-weak)}
+.loading{height:180px}
+
+/* ================= options page ================= */
+body.options{min-height:100vh}
+.opt{max-width:440px;padding:56px 24px 64px 48px}
+.opt h1{margin:0 0 8px;font:600 22px/1.2 var(--sans);letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+.opt h1 img{width:32px;height:32px;border-radius:8px}
+.opt .lead{margin:0 0 12px;color:var(--ink-weak);font:400 14px/20px var(--sans)}
+.opt .note{margin:6px 2px 0;font:400 12.5px/18px var(--sans);color:var(--ink-weak)}
+.opt-acts{display:flex;align-items:center;gap:8px;margin-top:20px}
+.opt-acts .save{width:auto;flex:1}
+.opt-acts .btn{height:52px;padding:0 22px;border-radius:26px;border:1px solid var(--line-2);font:500 15px/1 var(--sans);color:var(--ink);flex:none}
+.opt-acts .btn:hover{background:rgba(255,255,255,.05)}
+.opt-acts .btn[disabled]{opacity:.45;cursor:default}
+.status{display:flex;align-items:flex-start;gap:8px;min-height:20px;margin:14px 2px 0;font:500 13px/18px var(--sans);color:var(--ink)}
+.status svg.i{width:16px;height:16px;margin-top:1px;flex:none}
+.status.ok svg.i{color:var(--accent-soft)}
+.status.bad{color:var(--danger)}
+.status.bad svg.i{color:var(--danger)}
+.keys{margin-top:36px;padding-top:20px;border-top:1px solid var(--line)}
+.keys h2{margin:0 0 6px;font:600 15px/1.3 var(--sans)}
+.keys p{margin:0 0 8px;color:var(--ink-weak);font:400 14px/20px var(--sans)}
+.kcap{display:inline-grid;place-items:center;min-width:26px;padding:0 6px;height:24px;border-radius:7px;font:500 12px/1 var(--mono);color:var(--ink);
+  background:rgba(255,255,255,.04);border:1px solid var(--line-2);box-shadow:inset 0 -2px 0 rgba(0,0,0,.35);vertical-align:middle}
+.status.wait{color:var(--ink-weak)}.status.wait svg.i{color:var(--ink-weak)}
+/* the popup never grows past 600 px, the browser's limit: an open folder list takes the room that is left and scrolls */
+body.popup .pop{max-height:600px;display:flex;flex-direction:column;overflow:hidden}
+body.popup .pop>*,body.popup form>*{flex:none}
+body.popup .pop>form{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+body.popup .flist{flex:0 1 auto;min-height:88px;max-height:none}
+/* the second action is a text button on the left, not a centred line */
+.sv-acts .tbtn{align-self:flex-start;margin-left:-4px;padding:0 4px}
+body.popup .sv-pick{align-self:flex-start}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

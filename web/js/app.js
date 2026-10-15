@@ -1,0 +1,78 @@
+/* Pinned front end, the entry: wires the modules for the app (desktop and phone), the save page,
+   the login page and the bookmarklet page. Pages pick their part with <body data-page="...">.
+   No framework, no build step: the browser loads these ES modules as they are. */
+import { onClick, onInput, onSubmit, doImport } from './actions.js';
+import { api } from './api.js';
+import { installDrag } from './drag.js';
+import { onKey } from './keys.js';
+import { installMenu } from './menu.js';
+import { installPalette } from './palette.js';
+import { installPhone } from './phone.js';
+import { addTileHTML, backLink, deskDock, deskTile, deskToolbar, deskTree, emptyMerge, favHTML, fmini, ftileHTML, INBOX_F, installRender, nfMini, phoneRecents, phoneTile, phoneTop, phoneTabs, render, shareBtn, sideItem } from './render.js';
+import { installSelect } from './select.js';
+import { bmHead, checkUrl, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, rowsHTML } from './sheets.js';
+import { data, layers, load, setData, ui } from './state.js';
+import { toast } from './toast.js';
+import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE } from './util.js';
+
+/* document and window listeners, in the order they always ran: pointer handlers on the same event
+   depend on it (a drag start resets the click suppression the others set) */
+installIconFallback();
+installRender();
+installPhone();
+installPalette();
+installMenu();
+installSheets();
+installDrag();
+installSelect();
+
+function boot() {
+  document.body.insertAdjacentHTML('afterbegin', SPRITE);
+  const page = document.body.dataset.page;
+  document.addEventListener('click', onClick);
+  document.addEventListener('submit', onSubmit);
+  document.addEventListener('input', onInput);
+  document.addEventListener('keydown', onKey);
+  if (page === 'app') bootApp(); else if (page === 'save') bootSave(); else if (page === 'login') bootLogin(); else if (page === 'bookmarklet') bootBookmarklet();
+}
+function bootApp() {
+  const m = /^#q=(.*)$/.exec(location.hash); if (m) { try { ui.q = decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { ui.q = m[1]; } history.replaceState(null, '', location.pathname); }
+  render(); load();
+  /* the version, under Source in the app menu */
+  fetch('/health', { credentials: 'same-origin' }).then(r => r.json()).then(h => { if (h && h.version) { ui.version = h.version; render(); } }).catch(() => {});
+  let last = 0; const refresh = () => { if (Date.now() - last < 1500 || document.hidden) return; last = Date.now(); load(); };
+  addEventListener('focus', refresh); document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  PHONE_MQ.addEventListener ? PHONE_MQ.addEventListener('change', () => render()) : PHONE_MQ.addListener(() => render());
+  byId('import-file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; doImport(f); });
+}
+async function bootSave() {
+  const p = new URLSearchParams(location.search); let url = (p.get('url') || '').trim(), title = (p.get('title') || '').trim(); const text = (p.get('text') || '').trim();
+  const found = text.match(/https?:\/\/\S+/i);
+  if (!url && found) { url = found[0].replace(/[).,;]+$/, ''); if (!title) title = text.replace(found[0], '').trim(); }
+  else if (!title && text && !found) title = text;
+  try { setData(await api('GET', '/api/state')); data.has = true; } catch (e) { if (e.auth) return; }
+  layers.save = newSave({ title, url });
+  layer().classList.add('page-sheet');
+  openSheet({ type: 'save' }, false);
+  if (url) checkUrl(true);
+}
+function bootLogin() {
+  const f = byId('login'), err = byId('login-err'), p = new URLSearchParams(location.search);
+  let next = p.get('next') || '/'; if (!next.startsWith('/') || next.startsWith('//')) next = '/';
+  f.elements.next.value = next;
+  if (p.get('error')) err.textContent = p.get('error') === 'wait' ? 'Wait 30 seconds and try again.' : 'Wrong password.';
+  /* the form posts to /login; the server redirects back with error=1 or error=wait */
+  f.addEventListener('submit', () => { f.querySelector('button').disabled = true; });
+}
+function bootBookmarklet() {
+  const base = (document.body.dataset.base || '').replace(/\/+$/, ''), origin = base && !base.includes('{{') ? base : location.origin;
+  const code = `javascript:(function(){var u=${JSON.stringify(origin + '/save?url=')}+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title);var w=window.open(u,'bookmarks-save','width=392,height=760,menubar=no,toolbar=no,location=no');if(!w)location.href=u;})();`;
+  document.querySelectorAll('[data-bm]').forEach(a => { a.href = code; a.addEventListener('click', e => { e.preventDefault(); toast('Drag this button to the bookmarks bar.'); }); });
+  document.querySelectorAll('[data-bm-code]').forEach(c => { c.textContent = code; });
+  document.querySelectorAll('[data-bm-copy]').forEach(b => b.addEventListener('click', async () => { if (await copy(code)) toast('Copied'); }));
+}
+
+/* the style guide (tools/styleguide.html) renders its specimens with these builders, so they match the app */
+window.Pinned = { render, load, U: ui, D: data };
+window.Pinned.kit = { setData, ic, backLink, shareBtn, lockHTML, deskTile, phoneTile, ftileHTML, fmini, INBOX_F, nfMini, addTileHTML, emptyMerge, deskToolbar, phoneTop, phoneTabs, phoneTabs, sideItem, deskTree, deskDock, phoneRecents, rowsHTML, fHead, bmHead, grab, favHTML };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/static/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css">
+<title>Save button</title>
+</head>
+<body data-page="bookmarklet" data-base="{{BASE_URL}}">
+<main class="bm-page">
+  <a class="back" href="/"><svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.25 6.75 10l5.75 5.75"/></svg>Pinned</a>
+  <h1>Save button</h1>
+  <p class="lead">Saves the page you are on to Pinned, from any browser.</p>
+
+  <h2>Mac</h2>
+  <p>Show the bookmarks bar, then drag this button into it.</p>
+  <p><a class="bm-btn" data-bm href="#"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0b0d10"/><rect x="13" y="13" width="17" height="17" rx="4.5" fill="#4f8cff"/><rect x="34" y="13" width="17" height="17" rx="4.5" fill="#3a4252"/><rect x="13" y="34" width="17" height="17" rx="4.5" fill="#3a4252"/><rect x="34" y="34" width="17" height="17" rx="4.5" fill="#3a4252"/></svg>Save to Pinned</a></p>
+  <p>Brave and Chrome: <strong>Cmd Shift B</strong>. Safari: <strong>View, Show Favorites Bar</strong>.</p>
+
+  <h2>iPhone</h2>
+  <ol>
+    <li>In Safari, bookmark any page.</li>
+    <li>Edit that bookmark, name it Save, and paste this code as its address.
+      <div class="code"><code data-bm-code></code><button type="button" class="btn" data-bm-copy>Copy</button></div></li>
+    <li>On a page you want to keep, open your bookmarks and tap Save.</li>
+  </ol>
+
+  <h2>Android</h2>
+  <p>Open Pinned in Chrome and add it to the home screen. Then use <strong>Share</strong> on any page and pick Pinned.</p>
+
+  <h2>iOS Shortcut</h2>
+  <p><a class="bm-link" href="/extras/save-to-pinned.shortcut" download>Add the Shortcut</a></p>
+  <ol>
+    <li>When you add it, it asks for your address and a token.</li>
+    <li>Create a token in the app under <strong>API tokens</strong>.</li>
+    <li>Afterwards the share sheet on the iPhone has <strong>Save to Pinned</strong>.</li>
+  </ol>
+
+  <h2>Browser extension</h2>
+  <p><a class="bm-link" href="/extras/pinned-extension.zip" download>Download the extension</a></p>
+  <ol>
+    <li>Unzip it.</li>
+    <li>Brave, Chrome, Edge: open the extensions page, turn on developer mode, choose <strong>Load unpacked</strong> and pick the folder.</li>
+    <li>Firefox: open <strong>about:debugging</strong>, choose <strong>This Firefox</strong>, then <strong>Load temporary add-on</strong> and pick manifest.json.</li>
+    <li>Open the extension's options and enter your address and a token.</li>
+  </ol>
+</main>
+<div class="toasts" id="toasts"></div>
+<p class="vh" id="announce" role="status" aria-live="polite"></p>
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
