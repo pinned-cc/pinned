@@ -124,6 +124,15 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	icons := favicon.NewPool(ctx, filepath.Join(dataDir, "icons"), st)
+	// Bookmarks still showing a letter get another try at every start, so an
+	// improved icon search reaches links that were saved before it.
+	if all, err := st.Bookmarks(); err == nil {
+		for _, b := range all {
+			if b.Icon == nil && b.DeletedAt == nil {
+				icons.Enqueue(b.ID)
+			}
+		}
+	}
 	var background sync.WaitGroup
 	background.Add(1)
 	go func() {
