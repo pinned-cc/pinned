@@ -651,3 +651,35 @@ func readAll(resp *http.Response) []byte {
 }
 
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
+
+func TestFolderHideRecent(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	nas := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "NAS"}, 201))
+	if nas.HideRecent {
+		t.Fatal("a new folder starts hidden from Recent")
+	}
+	r := decode[folderJSON](t, e.expect("PATCH", "/api/folders/"+itoa(nas.ID), map[string]any{"hide_recent": true}, 200))
+	if !r.HideRecent || r.Name != "NAS" {
+		t.Errorf("on: %+v", r)
+	}
+	st := e.state()
+	if len(st.Folders) != 1 || !st.Folders[0].HideRecent {
+		t.Errorf("state after on: %+v", st.Folders)
+	}
+	// a rename leaves the setting alone; both in one request apply both
+	r = decode[folderJSON](t, e.expect("PATCH", "/api/folders/"+itoa(nas.ID), map[string]any{"name": "Home NAS"}, 200))
+	if !r.HideRecent || r.Name != "Home NAS" {
+		t.Errorf("rename: %+v", r)
+	}
+	r = decode[folderJSON](t, e.expect("PATCH", "/api/folders/"+itoa(nas.ID), map[string]any{"name": "NAS", "hide_recent": false}, 200))
+	if r.HideRecent || r.Name != "NAS" {
+		t.Errorf("off: %+v", r)
+	}
+	if st = e.state(); st.Folders[0].HideRecent {
+		t.Errorf("state after off: %+v", st.Folders)
+	}
+	e.expect("PATCH", "/api/folders/"+itoa(nas.ID), map[string]any{"hide_recent": "yes"}, 400)
+	e.expect("PATCH", "/api/folders/"+itoa(nas.ID), map[string]any{"hide_recent": nil}, 400)
+	e.expect("PATCH", "/api/folders/999", map[string]any{"hide_recent": true}, 404)
+}

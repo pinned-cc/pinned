@@ -58,10 +58,12 @@ type folderJSON struct {
 	Share    *shareJSON `json:"share"`
 	Locked   bool       `json:"locked"`
 	Unlocked bool       `json:"unlocked"`
+	// HideRecent is the folder's own setting; subfolders inherit it.
+	HideRecent bool `json:"hide_recent"`
 }
 
 func folderToJSON(f store.Folder) folderJSON {
-	return folderJSON{ID: f.ID, ParentID: f.ParentID, Name: f.Name, Position: f.Position}
+	return folderJSON{ID: f.ID, ParentID: f.ParentID, Name: f.Name, Position: f.Position, HideRecent: f.HideRecent}
 }
 
 func pathID(r *http.Request) (int64, bool) {
@@ -576,6 +578,13 @@ func (s *Server) apiPatchFolder(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	var hideRecent *bool
+	if raw, ok := in["hide_recent"]; ok {
+		if err := json.Unmarshal(raw, &hideRecent); err != nil || hideRecent == nil {
+			writeError(w, http.StatusBadRequest, "invalid hide_recent")
+			return
+		}
+	}
 	v, err := s.lockView(r)
 	if err != nil {
 		writeStoreError(w, err)
@@ -596,6 +605,12 @@ func (s *Server) apiPatchFolder(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeStoreError(w, err)
 		return
+	}
+	if hideRecent != nil {
+		if f, err = s.st.SetHideRecent(id, *hideRecent); err != nil {
+			writeStoreError(w, err)
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, folderToJSON(f))
 }

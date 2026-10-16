@@ -9,7 +9,8 @@ import { toast } from './toast.js';
 import { byId, reduce } from './util.js';
 
 /* ================= drag to reorder (pointer events, no library) ================= */
-export const DSEL = { tile: '.tile:not(.sk), .pt:not(.sk)', frow: '.sf[data-fid]', dock: '.dk, .prc.pinned', recent: '.prc', ftile: '.ftile' };
+/* only the pinned dock reorders; the desktop Recent row wears the same .dk items and does not */
+export const DSEL = { tile: '.tile:not(.sk), .pt:not(.sk)', frow: '.sf[data-fid]', dock: '.dock .dk, .prc.pinned', recent: '.prc', ftile: '.ftile' };
 let dragState = null;
 export function dragKind(t) {
   if (t.closest('.sheet, .menu, .pal, input, textarea, .acts, .chk')) return null;
@@ -17,11 +18,13 @@ export function dragKind(t) {
   return null;
 }
 export function canReorder(k, el) {
-  if (ui.selecting) return false;
   if (k === 'recent' || k === 'ftile') return false; /* folder tiles open and take drops; folder order is set in the sidebar */
-  if (k === 'tile') return !!el.parentElement.closest('[data-container]');
-  return true;
+  if (k === 'tile') return ui.selecting ? ui.picked.has(+el.dataset.id) : true; /* a card can always be carried to a folder */
+  return !ui.selecting;
 }
+/* where a carried card lands: a folder tile, a folder in the sidebar, or the Inbox */
+const DROPS = '#app .ftile:not(.locked), #app .sf[data-fid]:not(.locked), #app .nav .si[data-view="inbox"]';
+const dropFolder = d => d.dataset.ftile ? +d.dataset.ftile : d.dataset.fid ? +d.dataset.fid : null;
 /* only the pointer that started the press counts; a second finger or a stray mouse move does not */
 /* the scrim closes on pointer up: WebKit does not always synthesise a click for a tap on a plain div */
 export function dragCancel() { if (!dragState) return; clearTimeout(dragState.timer); dragState.el.classList.remove('press'); if (!layers.sheet) dragState.el.classList.remove('lift', 'held'); dragState = null; }
@@ -32,6 +35,10 @@ export function dragBegin(e) {
   Object.assign(g.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
   g.setAttribute('aria-hidden', 'true'); document.body.appendChild(g);
   el.classList.remove('lift', 'press', 'held'); el.classList.add('placeholder');
+  /* a selection travels together; the order is only rearranged for a single card in a folder or the Inbox */
+  dragState.ids = dragState.k === 'tile' && ui.selecting ? [...ui.picked] : [+el.dataset.id];
+  dragState.sort = dragState.k !== 'tile' || (!ui.selecting && !!el.parentElement.closest('[data-container]'));
+  if (dragState.ids.length > 1) { const n = document.createElement('span'); n.className = 'drag-n'; n.textContent = dragState.ids.length; g.appendChild(n); }
   dragState.active = true; dragState.ghost = g; dragState.ox = e.clientX - r.left; dragState.oy = e.clientY - r.top; dragState.cont = el.parentElement; dragState.cont.classList.add('sorting');
   dragState.before = [...dragState.cont.children].filter(x => x.matches(DSEL[dragState.k])).map(x => x.dataset.id || x.dataset.fid).join(',');
   document.body.classList.add('dragging'); dragMove(e); dragLoop();
@@ -47,9 +54,9 @@ export function itemAt(x, y) {
 export function dragStep() {
   const g = dragState.ghost, x = dragState.cx, y = dragState.cy;
   g.style.transform = `translate(${x - dragState.x}px, ${y - dragState.y}px)` + (dragState.k === 'tile' ? ' scale(1.04)' : '');
-  if (dragState.k === 'tile') { const u = document.elementFromPoint(x, y), f = u && u.closest('#app .ftile:not(.locked)');
+  if (dragState.k === 'tile') { const u = document.elementFromPoint(x, y), f = u && u.closest(DROPS);
     if (dragState.drop !== f) { if (dragState.drop) dragState.drop.classList.remove('drop-on'); dragState.drop = f || null; if (f) f.classList.add('drop-on'); }
-    if (f) return; }
+    if (f || !dragState.sort) return; }
   const t = itemAt(x, y);
   if (t && t !== dragState.el) {
     /* the rest of the grid reflows around the lifted item: first, last, invert, play */
@@ -77,9 +84,10 @@ export function dragLoop() {
   requestAnimationFrame(dragLoop);
 }
 export function dragEnd() {
-  const { k, el, cont, ghost, before, drop } = dragState; dragState = null;
+  const { k, el, cont, ghost, before, drop, ids: carried, sort } = dragState; dragState = null;
   ghost.remove(); el.classList.remove('placeholder', 'lift', 'held'); cont.classList.remove('sorting'); document.body.classList.remove('dragging');
-  if (drop) { drop.classList.remove('drop-on'); moveWithUndo([+el.dataset.id], +drop.dataset.ftile); return; }
+  if (drop) { drop.classList.remove('drop-on'); if (ui.selecting) { ui.selecting = false; ui.picked.clear(); } moveWithUndo(carried, dropFolder(drop)); return; }
+  if (!sort) return;
   const ids = [...cont.children].filter(x => x.matches(DSEL[k])).map(x => +(x.dataset.id || x.dataset.fid));
   if (ids.join(',') === before) return;
   if (k === 'tile') { const c = cont.dataset.container, folder = c === 'inbox' ? null : +c;
@@ -102,7 +110,7 @@ export function installDrag() {
     ui.suppressClick = 0;
     if (document.body.dataset.page !== 'app' || e.button > 0 || layers.sheet) return;
     const hit = dragKind(e.target); if (!hit) return;
-    if (hit.k === 'tile' && ui.selecting) return;
+    if (hit.k === 'tile' && ui.selecting && !ui.picked.has(+hit.el.dataset.id)) return;
     const touch = e.pointerType === 'touch';
     dragState = { k: hit.k, el: hit.el, x: e.clientX, y: e.clientY, touch, pid: e.pointerId, held: false, active: false, timer: null };
     if (touch) { if (hit.k === 'tile' && ui.mode === 'phone') hit.el.classList.add('press');

@@ -57,6 +57,8 @@ export function onKey(e) {
   if (e.shiftKey && !mod && e.key.startsWith('Arrow') && !typing && ui.mode === 'desk') { e.preventDefault(); extendByKey(e.key); return; }
   if (typing || mod || e.altKey) return;
   if (e.key === '/') { e.preventDefault(); focusSearch(); return; }
+  /* S starts selecting, and ends it again, like the Select button */
+  if (e.key.toLowerCase() === 's' && ui.mode === 'desk' && !layers.sheet) { e.preventDefault(); if (ui.selecting) exitSelect(); else { ui.selecting = true; ui.picked.clear(); render(); } return; }
   if (e.key.startsWith('Arrow')) { e.preventDefault(); moveFocus(e.key); return; }
   const art = t.closest && t.closest('#app article[data-id]');
   if (art && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); const b = bm(+art.dataset.id); if (!b) return;

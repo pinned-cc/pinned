@@ -97,6 +97,8 @@ async function login(page) {
 const RECORD_OPEN = () => { window.__opened = []; window.open = (u) => { window.__opened.push(String(u)); return null; }; };
 
 const toastWith = (page, text) => visible(page.locator('#toasts .toast', { hasText: text }));
+/* the sidebar actions sit folded behind More; open them before using one */
+const openFoot = async page => { const t = page.locator('#side .foot-tog'); if (await t.count() && await t.getAttribute('aria-expanded') !== 'true') { await t.click(); await page.waitForTimeout(300); } };
 const sheetOpen = page => visible(page.locator('#layer.open #sheet'));
 const sheetClosed = page => until(page, () => !document.querySelector('#layer.open'), null, 'sheet closed');
 const menuItem = (page, label) => page.locator('.menu [role^=menuitem]', { hasText: label });
@@ -126,7 +128,17 @@ async function desktop(browser, engine) {
     await shot(page, `${engine}-desktop-inbox`);
   });
 
+  await check('the sidebar actions fold: More opens and closes them, the choice is remembered', async () => {
+    const tog = page.locator('#side .foot-tog');
+    if (await tog.getAttribute('aria-expanded') === 'true') await tog.click();
+    await until(page, () => !document.querySelector('#side .side-foot.open') && getComputedStyle(document.querySelector('#side .foot-in')).visibility === 'hidden', null, 'folded');
+    await tog.click();
+    await until(page, () => !!document.querySelector('#side .side-foot.open'), null, 'open');
+    assert(await page.evaluate(() => localStorage.getItem('pinned.foot') || Object.keys(localStorage).some(k => /foot/.test(k))), 'choice not stored');
+  });
+
   await check('Source link and version at the end of the app menu', async () => {
+    await openFoot(page);
     const a = page.locator('#side .side-foot a.si').last();
     assert(await a.getAttribute('href') === SOURCE, 'last item is not Source');
     assert((await a.textContent()).trim() === 'Source', 'label');
@@ -136,7 +148,7 @@ async function desktop(browser, engine) {
   });
 
   await check('new folder from the sidebar', async () => {
-    await page.click('#side [data-a="new-folder"]'); await sheetOpen(page);
+    await openFoot(page); await page.click('#side [data-a="new-folder"]'); await sheetOpen(page);
     await page.fill('#sheet input[name=v]', T.folder); await page.keyboard.press('Enter');
     await until(page, n => (document.querySelector('#tbwrap h2') || {}).textContent === n, T.folder, 'folder view');
     folderId = await page.evaluate(n => { const f = window.Pinned.D.folders.find(x => x.name === n); return f && f.id; }, T.folder);
@@ -188,12 +200,20 @@ async function desktop(browser, engine) {
     const tiles = page.locator('#body article.tile[data-id]');
     await visible(tiles);
     assert(await tiles.count() >= 4, 'fewer than 4 tiles in Inbox');
-    await tiles.nth(0).click({ modifiers: ['ControlOrMeta'] });
+    await tiles.nth(0).click({ modifiers: ['Shift'] });
     await tiles.nth(3).click({ modifiers: ['Shift'] });
     await until(page, () => document.querySelectorAll('#body article.tile.picked').length === 4, null, '4 picked');
     assert((await page.textContent('#tbwrap .bulk .n')).trim().startsWith('4'), 'bulk bar does not say 4');
     await page.locator('#body .glbl').first().click();
     await until(page, () => !document.querySelector('#body article.tile.picked') && !document.querySelector('#tbwrap .bulk'), null, 'selection cleared');
+  });
+
+  await check('S starts and ends selecting', async () => {
+    await page.locator('#body .glbl').first().click();
+    await page.keyboard.press('s');
+    await until(page, () => !!document.querySelector('#screen.selecting'), null, 'selecting');
+    await page.keyboard.press('s');
+    await until(page, () => !document.querySelector('#screen.selecting'), null, 'not selecting');
   });
 
   await check('share sheet from a folder menu: link, password, expiry', async () => {
@@ -222,14 +242,14 @@ async function desktop(browser, engine) {
   });
 
   await check('API tokens: keyboard, focus stays in the sheet and returns to the opener', async () => {
-    await page.focus('#side [data-a="tokens"]'); await page.keyboard.press('Enter'); await sheetOpen(page);
+    await openFoot(page); await page.focus('#side [data-a="tokens"]'); await page.keyboard.press('Enter'); await sheetOpen(page);
     await page.waitForTimeout(350); await tabsStayInSheet(page);
     await page.keyboard.press('Escape'); await sheetClosed(page);
     assert(await page.evaluate(() => document.activeElement && document.activeElement.dataset.a === 'tokens'), 'focus did not return to API tokens');
   });
 
   await check('API tokens: create, shown once, copy, revoke with confirm', async () => {
-    await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
+    await openFoot(page); await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
     await visible(page.locator('#sheet .at-title', { hasText: 'API tokens' }));
     await page.fill('#sheet form[data-token] input[name=name]', T.token);
     await page.press('#sheet form[data-token] input[name=name]', 'Enter');
@@ -247,7 +267,7 @@ async function desktop(browser, engine) {
 
   await check('API tokens: empty state sentence', async () => {
     await page.route('**/api/tokens', r => r.request().method() === 'GET' ? r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }) : r.fallback());
-    await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
+    await openFoot(page); await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
     await visible(page.locator('#sheet p.tk-sec'));
     const text = (await page.textContent('#sheet p.tk-sec')).trim();
     await page.unroute('**/api/tokens');

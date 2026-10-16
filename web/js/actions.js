@@ -7,7 +7,7 @@ import { phoneMenu } from './phone.js';
 import { deskBody, render, renderList, renderPhoneMain, switchLayout } from './render.js';
 import { exitSelect, pickRange, toggle } from './select.js';
 import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
-import { SORTS, SOURCE_URL, bm, chain, count, data, descSet, fid, folderById, isLocked, layers, listFor, live, load, loadQuiet, lockedAt, ownLock, run, setSort, ui } from './state.js';
+import { SORTS, SOURCE_URL, bm, chain, count, data, descSet, fid, folderById, hidesRecent, isLocked, layers, listFor, live, load, loadQuiet, lockedAt, ownLock, run, setSort, ui } from './state.js';
 import { announce, resultsText, toast } from './toast.js';
 import { byId, copy, errorText, plural, reduce, store, wait } from './util.js';
 
@@ -88,8 +88,14 @@ export const folderItems = id => isLocked(folderById.get(id)) ? lockItems(id) : 
   { icon: 'folder-plus', label: 'New folder inside', run: () => newFolder(id) },
   { icon: 'edit', label: 'Rename', run: () => renameFolder(id) },
   { icon: 'move', label: 'Move to', run: () => openSheet({ type: 'fmove', id }) },
+  ...recentItems(id),
   ...lockItems(id),
   '-', { icon: 'trash', label: 'Delete', warn: true, run: () => deleteFolder(id) }];
+/* Hide from Recent: set on the folder itself; a subfolder hidden through a parent has no item, the parent holds the switch */
+export const recentItems = id => { const f = folderById.get(id); if (!f) return [];
+  if (!f.hide_recent && f.parent_id != null && hidesRecent(f.parent_id)) return [];
+  return [{ icon: 'clock', label: f.hide_recent ? 'Show in Recent' : 'Hide from Recent', run: () => setHideRecent(id, !f.hide_recent) }]; };
+export async function setHideRecent(id, on) { const r = await run(api('PATCH', `/api/folders/${id}`, { hide_recent: on })); if (r.ok) toast(on ? 'Hidden from Recent' : 'Shown in Recent'); }
 /* relock at once; if the folder is on screen, back to Inbox */
 export async function relock(id) { if (lockedAt(ui.view) || (typeof ui.view === 'number' && chain(ui.view).some(f => f.id === id))) ui.view = 'inbox';
   const r = await run(api('POST', `/api/folders/${id}/relock`)); render(); if (r.ok) announce('Folder locked'); }
@@ -136,9 +142,16 @@ export function onClick(e) {
   const v = t.closest('[data-view]');
   if (v && !t.closest('.sheet')) { const raw = v.dataset.view; goView(/^\d+$/.test(raw) ? +raw : raw); return; }
   const tileEl = t.closest('#app article[data-id]');
-  if (tileEl && ui.mode === 'desk' && (e.metaKey || e.ctrlKey || e.shiftKey) && !t.closest('.acts, .menu')) {
+  /* Cmd or Ctrl click opens the link in a new background tab, one after another, as browsers do */
+  if (tileEl && ui.mode === 'desk' && (e.metaKey || e.ctrlKey) && !e.shiftKey && !t.closest('.acts, .menu')) {
+    const b = bm(+tileEl.dataset.id); if (!b || b.deleted_at) return;
+    if (!t.closest('a[href]')) { e.preventDefault(); const l = tileEl.querySelector('a[data-open]'); if (l) l.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, metaKey: e.metaKey, ctrlKey: e.ctrlKey })); return; }
+    actions.opened(b.id); return;
+  }
+  /* Shift click selects a range from the last picked card */
+  if (tileEl && ui.mode === 'desk' && e.shiftKey && !t.closest('.acts, .menu')) {
     e.preventDefault(); const id = +tileEl.dataset.id; ui.selecting = true;
-    if (e.shiftKey && ui.anchor != null) pickRange(ui.anchor, id); else { ui.picked.has(id) ? ui.picked.delete(id) : ui.picked.add(id); ui.anchor = id; }
+    if (ui.anchor != null) pickRange(ui.anchor, id); else { ui.picked.add(id); ui.anchor = id; }
     render(); return;
   }
   const op = t.closest('[data-open]'); if (op && !ui.selecting) { actions.opened(+op.dataset.open); return; }
@@ -157,6 +170,8 @@ export function onClick(e) {
     case 'add': layers.save = newSave({ folder: typeof ui.view === 'number' ? ui.view : undefined }); openSheet({ type: 'save' }); break;
     case 'sort': menuOrSheet(a, sortItems(), 'Sort'); break;
     case 'select': ui.selecting = true; ui.picked.clear(); render(); break;
+    case 'foot': { ui.footOpen = !ui.footOpen; store.set('foot', ui.footOpen ? 'open' : ''); const f = a.closest('.side-foot');
+      f.classList.toggle('open', ui.footOpen); a.setAttribute('aria-expanded', ui.footOpen); break; }
     case 'sel-all': listFor().forEach(x => ui.picked.add(x.id)); render(); break;
     case 'sel-done': exitSelect(); break;
     case 'bulk-move': if (ui.picked.size) openSheet({ type: 'move', ids: [...ui.picked] }); break;

@@ -125,6 +125,9 @@ var migrations = []string{
 	CREATE INDEX bookmarks_deleted ON bookmarks(deleted_at) WHERE deleted_at IS NOT NULL;
 	CREATE INDEX bookmarks_pinned ON bookmarks(pinned_position) WHERE pinned = 1;
 	CREATE INDEX sessions_expires ON sessions(expires_at);`,
+
+	// Hide from Recent, per folder; subfolders inherit it.
+	`ALTER TABLE folders ADD COLUMN hide_recent INTEGER NOT NULL DEFAULT 0;`,
 }
 
 func (s *Store) migrate() error {

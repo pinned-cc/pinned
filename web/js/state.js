@@ -38,7 +38,12 @@ export const live = () => data.bms.filter(b => !b.deleted_at);
 export const trashed = () => data.bms.filter(b => b.deleted_at);
 export const bm = id => data.bms.find(b => b.id === id);
 export const nowS = () => Date.now() / 1000;
-export const isRecent = b => b.opened_at && nowS() - b.opened_at < 14 * 86400;
+/* Hide from Recent is set per folder and holds for its subfolders: a link in any such folder stays out of every recent list */
+export const hidesRecent = id => typeof id === 'number' && chain(id).some(f => f.hide_recent);
+export const recentOk = b => !hidesRecent(b.folder_id);
+export const isRecent = b => b.opened_at && nowS() - b.opened_at < 14 * 86400 && recentOk(b);
+/* the last opened links, newest first, for the Recent rows */
+export const lastOpened = n => live().filter(b => b.opened_at && recentOk(b)).sort((a, b) => b.opened_at - a.opened_at).slice(0, n);
 export const fid = b => b.folder_id == null ? null : b.folder_id;
 export function count(v) {
   if (v === 'all') return live().length;
@@ -58,7 +63,7 @@ export const iconSrc = b => !b || !b.icon ? null : /^(\/|https?:|data:)/.test(b.
 export const SOURCE_URL = 'https://github.com/pinnedcc/pinned';
 export const SORTS = { saved: 'Newest', name: 'A to Z', opened: 'Last opened', manual: 'Your order' };
 export const ui = {
-  view: 'inbox', tab: store.get('tab', 'inbox') === 'folders' ? 'folders' : 'inbox', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid',
+  view: 'inbox', tab: store.get('tab', 'inbox') === 'folders' ? 'folders' : 'inbox', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid', footOpen: store.get('foot', '') === 'open',
   selecting: false, picked: new Set(), renaming: null,
   version: null, /* from /health, which tells it only to a logged in session */
   mode: null, /* 'desk' or 'phone', set by render() */

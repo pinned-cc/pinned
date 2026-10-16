@@ -3,7 +3,7 @@
 import { closeMenu } from './menu.js';
 import { closePalette } from './palette.js';
 import { vvSync } from './phone.js';
-import { SORTS, SOURCE_URL, chain, count, data, descSet, dfs, fid, folderById, hostOf, hue, hueClass, iconSrc, isLocked, kids, listFor, live, pathOf, pickable, pinned, sections, ui, viewName } from './state.js';
+import { SORTS, SOURCE_URL, chain, count, data, descSet, dfs, fid, folderById, hostOf, hue, hueClass, iconSrc, isLocked, kids, lastOpened, listFor, live, pathOf, pickable, pinned, recentOk, sections, ui, viewName } from './state.js';
 import { byId, esc, fmtDate, highlight, ic, isMac, isPhone, isoDate, reduce, store, truncStart } from './util.js';
 
 /* search hits in the app: the current search unless a query is given */
@@ -47,6 +47,19 @@ export function deskDock() {
       <span class="dk-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || '#2a303b')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="56" height="56" draggable="false">` : l}</span>
       <span class="dk-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
 }
+/* home: the last eight opened links above the folders, in the dock's shape; the row keeps only the ones that fit whole (fitRecent) */
+export const showRecent = () => ui.view === 'inbox' && !ui.q.trim() && !ui.selecting;
+export function deskRecent() {
+  if (!data.has || !showRecent()) return '';
+  const R = lastOpened(8); if (!R.length) return '';
+  return `<div class="glbl fhead"><span>Recent</span><button type="button" class="see-all" data-view="recent">See all</button></div><nav class="drecent" aria-label="Recent">` + R.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
+    return `<a class="dk" href="${esc(b.url)}" target="_blank" rel="noopener" title="${esc(b.title)}" data-open="${b.id}" draggable="false">
+      <span class="dk-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || '#2a303b')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="56" height="56" draggable="false">` : l}</span>
+      <span class="dk-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
+}
+/* the row wraps; whatever wrapped to a second line is hidden, so no item is ever cut */
+export function fitRecent() { const row = document.querySelector('#body .drecent'); if (!row) return; const L = [...row.children];
+  L.forEach(a => { a.hidden = false; }); const top = L.length ? L[0].offsetTop : 0; L.forEach(a => { if (a.offsetTop > top) a.hidden = true; }); }
 /* one level up: a folder's parent, Inbox from everywhere else */
 export function backLink(cls) {
   const v = ui.view; if (ui.selecting || v === 'inbox') return '';
@@ -104,7 +117,7 @@ export function deskBody() {
   if (!data.loaded || (!data.has && !data.error)) { body.innerHTML = `<div class="glbl">&nbsp;</div><div class="${gridCls}" aria-busy="true">${Array.from({ length: 8 }, skel).join('')}</div>`; return; }
   if (!data.has) { body.innerHTML = h; return; }
   if (ui.view === 'folders' && !ui.q.trim()) { body.innerHTML = h + foldersScreen(false); return; }
-  h += folderSection(false);
+  h += deskRecent() + folderSection(false);
   const S = sections(false);
   if (!S.length) {
     if (ui.q.trim()) h += `<p class="nores">No matches.</p>`;
@@ -112,14 +125,14 @@ export function deskBody() {
     else if (ui.view === 'trash' || ui.view === 'recent') h += `<div class="glbl">&nbsp;</div><div class="empty">Nothing here yet.</div>`;
     else if (canAddTo()) h += `<div class="glbl">&nbsp;</div>${emptyMerge('empty merge')}`;
     else h += `<div class="glbl">&nbsp;</div><div class="empty">Nothing here yet.<button type="button" class="add" data-a="add">${ic('plus')}Add</button></div>`;
-    body.innerHTML = h; return;
+    body.innerHTML = h; fitRecent(); return;
   }
   h += S.map((s, n) => `<div class="glbl">${esc(s.label)}</div><div class="${gridCls}"${contAttr(s.container)}>${s.items.map(b => deskTile(b, s.date(b))).join('')}${n === S.length - 1 && showAddTile() ? addTileHTML('addtile') : ''}</div>`).join('');
   body.innerHTML = h; setCw();
 }
 /* the home folder row uses the bookmark card column width: the same auto-fill sum as .grid */
 export function setCw() { const b = byId('body'); if (!b || ui.mode !== 'desk') return; const W = b.clientWidth, n = Math.max(1, Math.floor((W + 16) / 216));
-  b.style.setProperty('--cw', ((W - 16 * (n - 1)) / n) + 'px'); }
+  b.style.setProperty('--cw', ((W - 16 * (n - 1)) / n) + 'px'); fitRecent(); }
 export const deskPlaceholder = () => { const q = byId('q'); if (q && ui.mode === 'desk') q.placeholder = innerWidth > 1100 ? `Search bookmarks or press ${kHint}` : `Search, ${kHint}`; };
 export function renderDesk() {
   byId('screen').classList.toggle('selecting', ui.selecting);
@@ -127,10 +140,11 @@ export function renderDesk() {
   side.innerHTML = `<div class="brand" aria-hidden="true">Pinned</div>
     <div class="nav">${sideItem('all', 'all', 'all')}${sideItem('inbox', 'inbox', 'inbox')}${sideItem('trash', 'trash', 'trash')}</div>
     <div class="side-lbl">Folders</div><div class="side-tree">${deskTree()}</div>
-    <div class="side-foot">${sideAction('New folder', 'folder-plus', 'new-folder')}${sideAction('Import', 'import', 'import')}
+    <div class="side-foot${ui.footOpen ? ' open' : ''}"><button type="button" class="si foot-tog" data-a="foot" aria-expanded="${!!ui.footOpen}" aria-controls="footacts"><span class="si-ic">${ic('more')}</span><span class="si-n">More</span><span class="foot-chev" aria-hidden="true">${ic('chev')}</span></button>
+      <div class="foot-acts" id="footacts"><div class="foot-in">${sideAction('New folder', 'folder-plus', 'new-folder')}${sideAction('Import', 'import', 'import')}
       <a class="si" href="/api/export" download><span class="si-ic">${ic('export')}</span><span class="si-n">Export</span></a>${sideAction('API tokens', 'key', 'tokens')}
       <a class="si" href="/bookmarklet"><span class="si-ic">${ic('all')}</span><span class="si-n">Save button</span></a>${sideAction('Log out', 'logout', 'logout')}
-      <a class="si" href="${SOURCE_URL}" target="_blank" rel="noopener"><span class="si-ic">${ic('open')}</span><span class="si-n">Source</span></a>${ui.version ? `<p class="app-ver">Pinned ${esc(ui.version)}</p>` : ''}</div>`;
+      <a class="si" href="${SOURCE_URL}" target="_blank" rel="noopener"><span class="si-ic">${ic('open')}</span><span class="si-n">Source</span></a>${ui.version ? `<p class="app-ver">Pinned ${esc(ui.version)}</p>` : ''}</div></div></div>`;
   side.querySelector('.side-tree').scrollTop = sideScroll;
   byId('scope').innerHTML = `<button type="button" data-view="all" aria-pressed="${ui.view === 'all'}">${ic('grid', 's16')}All <span class="num">${data.has ? count('all') : ''}</span></button>
     <button type="button" data-view="recent" aria-pressed="${ui.view === 'recent'}">${ic('clock', 's16')}Recent</button>`;
@@ -271,7 +285,7 @@ export function phoneRecents() {
   if (ui.selecting || !data.has) return '';
   const head = ui.view === 'inbox' ? `<div class="phead"><h1 class="phead-t">Pinned</h1><button type="button" class="ib gear" data-view="settings" aria-label="Settings">${ic('gear')}</button></div>` : '';
   /* pinned first, marked with a pin, then the last ten opened that are not pinned */
-  const P = pinned(), R = live().filter(b => b.opened_at && !b.pinned).sort((a, b) => b.opened_at - a.opened_at).slice(0, 10), all = [...P, ...R];
+  const P = pinned(), R = live().filter(b => b.opened_at && !b.pinned && recentOk(b)).sort((a, b) => b.opened_at - a.opened_at).slice(0, 10), all = [...P, ...R];
   if (!all.length) return head;
   return head + `<div class="pglbl prc-lbl"><span>Recent</span></div><nav class="precent" aria-label="Recent" data-dock>` + all.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
     return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener" data-id="${b.id}" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}${b.pinned ? ', pinned' : ''}">
@@ -336,9 +350,9 @@ export function renderList() { if (ui.mode === 'phone') renderPhoneMain(); else 
 export const canAddTo = () => typeof ui.view === 'number' || ui.view === 'inbox';
 /* the dashed "Add bookmark" entry closes every folder, Inbox and All; it is a button, so selection, drag, marquee and arrows, which work on articles, pass over it */
 export const showAddTile = () => (typeof ui.view === 'number' || ui.view === 'inbox' || ui.view === 'all') && !ui.selecting && !ui.q.trim();
-/* an empty folder: one dashed box, two ways in */
+/* an empty folder: one dashed box, two ways in; the Inbox only takes new ones */
 export const emptyMerge = cls => `<div class="${cls}"><span>Nothing here yet.</span><span class="em-acts">
-  <button type="button" class="em-a" data-a="add-new">${ic('plus')}Add bookmark</button><button type="button" class="em-a" data-a="add-to">${ic('move')}Add existing</button></span></div>`;
+  <button type="button" class="em-a" data-a="add-new">${ic('plus')}Add bookmark</button>${ui.view === 'inbox' ? '' : `<button type="button" class="em-a" data-a="add-to">${ic('move')}Add existing</button>`}</span></div>`;
 export const addTileHTML = cls => `<button type="button" class="${cls}" data-a="add-new">${ic('plus')}<span>Add bookmark</span></button>`;
 /* grid and list: cards morph into their rows with a view transition, or the body crossfades */
 export function switchLayout(to) {

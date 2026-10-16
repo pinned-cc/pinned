@@ -18,13 +18,16 @@ type Folder struct {
 	// LockHash is the bcrypt hash of the folder's own password, nil when
 	// the folder has no lock of its own.
 	LockHash *string
+	// HideRecent keeps the folder's bookmarks, and those of its subfolders,
+	// out of the recently opened lists.
+	HideRecent bool
 }
 
 // Folders returns every folder ordered by position.
 func (s *Store) Folders() ([]Folder, error) { return queryFolders(s.db) }
 
 func queryFolders(q querier) ([]Folder, error) {
-	rows, err := q.Query(`SELECT id, parent_id, name, position, created_at, lock_hash FROM folders ORDER BY position, id`)
+	rows, err := q.Query(`SELECT id, parent_id, name, position, created_at, lock_hash, hide_recent FROM folders ORDER BY position, id`)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +37,7 @@ func queryFolders(q querier) ([]Folder, error) {
 		var f Folder
 		var parent sql.NullInt64
 		var lock sql.NullString
-		if err := rows.Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock); err != nil {
+		if err := rows.Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock, &f.HideRecent); err != nil {
 			return nil, err
 		}
 		if parent.Valid {
@@ -55,8 +58,8 @@ func getFolder(q querier, id int64) (Folder, error) {
 	var f Folder
 	var parent sql.NullInt64
 	var lock sql.NullString
-	err := q.QueryRow(`SELECT id, parent_id, name, position, created_at, lock_hash FROM folders WHERE id = ?`, id).
-		Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock)
+	err := q.QueryRow(`SELECT id, parent_id, name, position, created_at, lock_hash, hide_recent FROM folders WHERE id = ?`, id).
+		Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock, &f.HideRecent)
 	if errors.Is(err, sql.ErrNoRows) {
 		return f, ErrNotFound
 	}
@@ -216,6 +219,24 @@ func (s *Store) UpdateFolder(id int64, name *string, parentSet bool, parentID *i
 				return err
 			}
 		}
+		f, err = getFolder(tx, id)
+		return err
+	})
+	return f, err
+}
+
+// SetHideRecent turns the folder's Hide from Recent setting on or off. The
+// subfolders inherit it in the client; only the folder itself is stored.
+func (s *Store) SetHideRecent(id int64, on bool) (Folder, error) {
+	var f Folder
+	err := s.withTx(func(tx *sql.Tx) error {
+		if _, err := getFolder(tx, id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`UPDATE folders SET hide_recent = ? WHERE id = ?`, on, id); err != nil {
+			return err
+		}
+		var err error
 		f, err = getFolder(tx, id)
 		return err
 	})

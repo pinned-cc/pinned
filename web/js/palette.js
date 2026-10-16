@@ -3,14 +3,14 @@
 import { actions, goView } from './actions.js';
 import { closeMenu } from './menu.js';
 import { favHTML, hl, hostLine } from './render.js';
-import { count, fid, hostOf, iconSrc, layers, live, pathOf, ui, viewName } from './state.js';
+import { count, fid, hostOf, iconSrc, lastOpened, layers, live, pathOf, ui, viewName } from './state.js';
 import { announce, resultsText } from './toast.js';
 import { byId, esc, ic, isPhone, reduce } from './util.js';
 
 /* ================= palette (Cmd K on desktop, the search field on the phone) ================= */
 /* a search over the blurred app: a row of recent opens, then matches grouped by where they live */
 export const PAL_CAP = 40;
-export const palRecent = () => live().filter(b => b.opened_at).sort((a, b) => b.opened_at - a.opened_at).slice(0, 10);
+export const palRecent = () => lastOpened(10);
 export function palGroups(q) {
   const k = q.toLowerCase(), L = live().filter(b => (b.title + ' ' + b.url + ' ' + hostOf(b)).toLowerCase().includes(k));
   const G = new Map(); for (const b of L) { const f = fid(b); if (!G.has(f)) G.set(f, []); G.get(f).push(b); }

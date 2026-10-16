@@ -1,6 +1,7 @@
 package store
 
 import (
+	"database/sql"
 	"errors"
 	"os"
 	"path/filepath"
@@ -455,5 +456,66 @@ func TestIconsForOrigin(t *testing.T) {
 	}
 	if list, _ := s.IconsForOrigin("nope"); list != nil {
 		t.Error("invalid url gave icons")
+	}
+}
+
+// A database from before Hide from Recent gains the column on open, and the
+// folders already in it start with the setting off.
+func TestHideRecentMigration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "old.db")
+	db, err := sql.Open("sqlite", "file:"+path+"?_pragma=foreign_keys(1)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`CREATE TABLE schema_version (version INTEGER NOT NULL)`); err != nil {
+		t.Fatal(err)
+	}
+	old := len(migrations) - 1
+	for _, m := range migrations[:old] {
+		if _, err := db.Exec(m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := db.Exec(`INSERT INTO schema_version (version) VALUES (?)`, old); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO folders (name, position, created_at) VALUES ('NAS', 0, 1)`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	fs, err := s.Folders()
+	if err != nil || len(fs) != 1 || fs[0].Name != "NAS" || fs[0].HideRecent {
+		t.Fatalf("after migration: %+v %v", fs, err)
+	}
+	var version int
+	if err := s.db.QueryRow(`SELECT version FROM schema_version`).Scan(&version); err != nil || version != len(migrations) {
+		t.Errorf("version %d, want %d (%v)", version, len(migrations), err)
+	}
+}
+
+func TestSetHideRecent(t *testing.T) {
+	s := open(t)
+	a, _ := s.CreateFolder("NAS", nil)
+	if a.HideRecent {
+		t.Fatal("a new folder starts hidden from Recent")
+	}
+	f, err := s.SetHideRecent(a.ID, true)
+	if err != nil || !f.HideRecent {
+		t.Fatalf("on: %+v %v", f, err)
+	}
+	if g, _ := s.Folder(a.ID); !g.HideRecent {
+		t.Error("setting did not persist")
+	}
+	if f, err = s.SetHideRecent(a.ID, false); err != nil || f.HideRecent {
+		t.Errorf("off: %+v %v", f, err)
+	}
+	if _, err := s.SetHideRecent(999, true); !errors.Is(err, ErrNotFound) {
+		t.Errorf("missing folder: %v", err)
 	}
 }

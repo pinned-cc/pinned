@@ -59,6 +59,15 @@ body.desk{overflow:hidden}
 .side-tree{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0 -4px;padding:2px 4px 12px;scrollbar-width:none}
 .side-tree::-webkit-scrollbar{display:none}
 .side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:2px;flex:none}
+/* the sidebar actions fold behind one row; the grid row animates from 0fr to 1fr */
+.foot-acts{display:grid;grid-template-rows:0fr;transition:grid-template-rows 260ms var(--ease-out)}
+.side-foot.open .foot-acts{grid-template-rows:1fr}
+.foot-in{min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:2px;visibility:hidden;transition:visibility 0s 260ms}
+.side-foot.open .foot-in{visibility:visible;transition:none}
+.foot-chev{margin-left:auto;display:grid;place-items:center;color:var(--ink-weak);transition:transform 260ms var(--ease-out)}
+.foot-chev svg.i{width:16px;height:16px}
+.side-foot.open .foot-chev{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.foot-acts,.foot-chev{transition:none}}
 .content{overflow-y:auto;overflow-x:hidden;min-width:0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent}
 .col{width:min(928px,calc(100% - 64px));margin:0 auto;padding-bottom:48px}
 
@@ -107,6 +116,10 @@ mark.hit{background:rgba(95,211,154,.18);color:inherit;border-radius:3px}
 .dk:hover .dk-l,.dk:focus-visible .dk-l{color:var(--ink)}
 .dk:focus-visible{outline:none}
 .dk:focus-visible .dk-ic{outline:2px solid var(--accent);outline-offset:3px}
+/* home: the last opened links in the dock's shape; a link that would wrap is hidden by fitRecent, never cut */
+.drecent{display:flex;flex-wrap:wrap;gap:20px;padding-top:2px}
+.drecent>[hidden]{display:none}
+@media (max-width:1100px){.drecent{gap:12px}}
 
 .tb{height:44px;display:flex;align-items:center;gap:8px;margin-top:22px}
 .tb h2{margin:0;font:600 20px/1 var(--sans);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -290,6 +303,9 @@ mark.hit{background:rgba(95,211,154,.18);color:inherit;border-radius:3px}
 .ft-faces .fav img{width:20px;height:20px}
 .ft-more{margin-left:11px;font:500 12px/1 var(--sans);color:var(--ink-weak);font-variant-numeric:tabular-nums}
 .ftile.drop-on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(95,211,154,.45);background:color-mix(in srgb,var(--accent) 14%,var(--fold))}
+.si.drop-on{background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:inset 0 0 0 2px rgba(95,211,154,.55)}
+/* how many cards a carried selection holds */
+.drag-n{position:absolute;top:-8px;right:-8px;min-width:24px;height:24px;padding:0 7px;border-radius:12px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font:600 12px/1 var(--sans);font-variant-numeric:tabular-nums;box-shadow:0 2px 6px rgba(0,0,0,.4)}
 /* the mini tiles: same shape at half height, hugging the name */
 .fmini{--h:var(--plain);--hp:var(--plain-p);flex:none;height:44px;display:inline-flex;align-items:center;padding:0;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .fmini .v{position:relative;height:38px;min-width:96px;max-width:240px;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border-radius:10px;background:var(--fold);border:1px solid var(--line);font:500 13.5px/1 var(--sans);color:var(--ink);white-space:nowrap}
