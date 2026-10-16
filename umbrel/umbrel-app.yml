@@ -21,8 +21,8 @@ releaseNotes: ""
 developer: Pinned authors
 website: https://pinned.cc
 dependencies: []
-repo: https://github.com/pinnedcc/pinned
-support: https://github.com/pinnedcc/pinned/issues
+repo: https://github.com/pinned-cc/pinned
+support: https://github.com/pinned-cc/pinned/issues
 port: 9097
 gallery: []
 path: ""

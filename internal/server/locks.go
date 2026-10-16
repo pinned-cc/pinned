@@ -14,7 +14,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 // A folder with its own password is locked, and so is everything below it.

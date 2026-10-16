@@ -60,7 +60,7 @@ export const hostOf = b => b.host || hostFromUrl(b.url);
 export const iconSrc = b => !b || !b.icon ? null : /^(\/|https?:|data:)/.test(b.icon) ? b.icon : '/icons/' + encodeURIComponent(b.icon);
 /* ---------- ui state ---------- */
 /* the source of this program, linked from the app menu (AGPL section 13) */
-export const SOURCE_URL = 'https://github.com/pinnedcc/pinned';
+export const SOURCE_URL = 'https://github.com/pinned-cc/pinned';
 export const SORTS = { saved: 'Newest', name: 'A to Z', opened: 'Last opened', manual: 'Your order' };
 export const ui = {
   view: 'inbox', tab: store.get('tab', 'inbox') === 'folders' ? 'folders' : 'inbox', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid', footOpen: store.get('foot', '') === 'open',

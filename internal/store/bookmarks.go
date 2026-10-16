@@ -7,7 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/pinnedcc/pinned/internal/urlkey"
+	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
 // Bookmark is one saved link. Icon is the file name under DATA_DIR/icons.

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/netscape"
+	"github.com/pinned-cc/pinned/internal/netscape"
 )
 
 func open(t *testing.T) *Store {

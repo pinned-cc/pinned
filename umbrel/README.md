@@ -6,7 +6,7 @@ They follow the packaging rules in `.agents/skills/umbrel-package-app/SKILL.md` 
 
 ## What has to be filled in before the pull request
 
-- The image digest. After the release image is built, run `docker buildx imagetools inspect ghcr.io/pinnedcc/pinned:<version>`, check that `linux/amd64` and `linux/arm64` are both listed, and put the index digest in place of `sha256:PLACEHOLDER`.
+- The image digest. After the release image is built, run `docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:<version>`, check that `linux/amd64` and `linux/arm64` are both listed, and put the index digest in place of `sha256:PLACEHOLDER`.
 - The version, in `umbrel-app.yml` and in the image tag, to the release being packaged.
 - The image must be public. GitHub makes a new package private; set it to public in the package settings and test `docker pull` while logged out.
 - The icon, 256 by 256, and the gallery images. The store keeps them in a separate repository; `gallery` stays `[]` in the pull request, and the screenshots go in the pull request text.

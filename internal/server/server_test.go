@@ -19,7 +19,7 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 type fakeQueue struct {

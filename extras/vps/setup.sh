@@ -2,7 +2,7 @@
 # Pinned on a fresh server: installs Docker if it is missing, writes the compose file, asks for the
 # password once and starts the container. Debian, Ubuntu and most Docker-capable distributions.
 #
-#   curl -fsSL https://raw.githubusercontent.com/pinnedcc/pinned/main/extras/vps/setup.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | sh
 #
 # Afterwards Pinned answers on port 9095 of the server. Put it behind HTTPS before you use it from
 # outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README.
@@ -10,7 +10,7 @@ set -eu
 
 DIR="${PINNED_DIR:-$HOME/pinned}"
 PORT="${PINNED_PORT:-9095}"
-IMAGE="${PINNED_IMAGE:-ghcr.io/pinnedcc/pinned:latest}"
+IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:latest}"
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }

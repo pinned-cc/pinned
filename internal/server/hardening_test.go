@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/auth"
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 // upload posts a bookmark file to /api/import with the session.

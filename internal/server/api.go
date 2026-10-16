@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/jobs"
-	"github.com/pinnedcc/pinned/internal/netscape"
-	"github.com/pinnedcc/pinned/internal/store"
-	"github.com/pinnedcc/pinned/internal/urlkey"
+	"github.com/pinned-cc/pinned/internal/jobs"
+	"github.com/pinned-cc/pinned/internal/netscape"
+	"github.com/pinned-cc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
 // bookmarkJSON is a bookmark as the front end sees it.

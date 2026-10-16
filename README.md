@@ -21,14 +21,14 @@ You need Docker with the compose plugin, on amd64 or arm64. A NAS, a Raspberry P
 `extras/vps/setup.sh` installs Docker if it is missing, writes the compose file into `~/pinned`, asks for the password once and starts the container:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/pinnedcc/pinned/main/extras/vps/setup.sh | sh
+curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | sh
 ```
 
 Pinned then answers on port 9095. Put HTTPS in front before you use it from outside your network, see Behind a reverse proxy. `PINNED_DIR`, `PINNED_PORT` and `APP_PASSWORD` in the environment override the questions. Not yet run on a rented server at the time of writing; the steps below are the same thing by hand.
 
 ### By hand
 
-The image is published at `ghcr.io/pinnedcc/pinned` with the first release. Until then there is nothing to pull: build it yourself, see Building from source.
+The image is published at `ghcr.io/pinned-cc/pinned` with the first release. Until then there is nothing to pull: build it yourself, see Building from source.
 
 1. Make a folder for it and a data folder that the container user (1000) can write:
 
@@ -42,7 +42,7 @@ The image is published at `ghcr.io/pinnedcc/pinned` with the first release. Unti
    ```yaml
    services:
      pinned:
-       image: ghcr.io/pinnedcc/pinned:latest
+       image: ghcr.io/pinned-cc/pinned:latest
        container_name: pinned
        environment:
          APP_PASSWORD: ${APP_PASSWORD:?set APP_PASSWORD}

@@ -49,7 +49,7 @@ const T = {
   token: `ui-test token ${stamp}`,
   lockPw: 'lockpw-ui',
 };
-const SOURCE = 'https://github.com/pinnedcc/pinned';
+const SOURCE = 'https://github.com/pinned-cc/pinned';
 const TOKENS_EMPTY = 'A token lets a Shortcut, an extension or a script read your folders and save links. It cannot export, share, lock or delete anything.';
 
 let failures = 0, passes = 0, beforeEach = null;

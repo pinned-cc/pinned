@@ -1,4 +1,4 @@
-module github.com/pinnedcc/pinned
+module github.com/pinned-cc/pinned
 
 go 1.27.2
 

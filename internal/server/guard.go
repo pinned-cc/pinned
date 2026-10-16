@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/auth"
 )
 
 // failDelay is how long every failed password, token or share password

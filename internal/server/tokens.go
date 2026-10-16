@@ -9,8 +9,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/pinnedcc/pinned/internal/auth"
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 // API tokens let a Shortcut, a browser extension or a script call /api/*

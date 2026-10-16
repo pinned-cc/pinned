@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/netscape"
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/netscape"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 // TrashDays is how long a bookmark waits in Trash.

@@ -18,12 +18,12 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/pinnedcc/pinned"
-	"github.com/pinnedcc/pinned/internal/auth"
-	"github.com/pinnedcc/pinned/internal/favicon"
-	"github.com/pinnedcc/pinned/internal/jobs"
-	"github.com/pinnedcc/pinned/internal/server"
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned"
+	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/favicon"
+	"github.com/pinned-cc/pinned/internal/jobs"
+	"github.com/pinned-cc/pinned/internal/server"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 // version is set at build time with -ldflags "-X main.version=v1.2.3".

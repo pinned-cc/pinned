@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pinnedcc/pinned/internal/auth"
-	"github.com/pinnedcc/pinned/internal/store"
-	"github.com/pinnedcc/pinned/internal/urlkey"
+	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
 // CookieName is the session cookie.

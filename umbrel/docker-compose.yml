@@ -13,8 +13,8 @@ services:
 
   web:
     # The digest is filled in at release, from the multi-arch index:
-    # docker buildx imagetools inspect ghcr.io/pinnedcc/pinned:0.1.0
-    image: ghcr.io/pinnedcc/pinned:0.1.0@sha256:PLACEHOLDER
+    # docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:0.1.0
+    image: ghcr.io/pinned-cc/pinned:0.1.0@sha256:PLACEHOLDER
     user: "1000:1000"
     restart: on-failure
     read_only: true

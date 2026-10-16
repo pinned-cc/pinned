@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/pinnedcc/pinned/internal/netscape"
-	"github.com/pinnedcc/pinned/internal/urlkey"
+	"github.com/pinned-cc/pinned/internal/netscape"
+	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
 // ImportResult says what an import did. AddedIDs lists the new bookmarks so

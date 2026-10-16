@@ -19,7 +19,7 @@ import (
 
 	ico "github.com/sergeymakinen/go-ico"
 
-	"github.com/pinnedcc/pinned/internal/store"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 func TestChoose(t *testing.T) {

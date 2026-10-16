@@ -1,6 +1,6 @@
 services:
   pinned:
-    image: ghcr.io/pinnedcc/pinned:latest
+    image: ghcr.io/pinned-cc/pinned:latest
     container_name: pinned
     environment:
       APP_PASSWORD: ${APP_PASSWORD:?set APP_PASSWORD}
