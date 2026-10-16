@@ -74,6 +74,8 @@
   <h1>Pinned</h1>
   <form id="login" method="post" action="/login">
     <input type="hidden" name="next" value="/">
+    <!-- A fixed username, so password managers see a full sign in form and fill it. The server reads only the password. -->
+    <label class="vh">Username <input type="text" name="username" value="pinned" autocomplete="username" readonly tabindex="-1"></label>
     <label class="fld first"><span class="sh-lbl">Password</span>
       <input class="fld-in" type="password" name="password" autocomplete="current-password" required autofocus enterkeyhint="go"></label>
     <p class="fld-err" id="login-err" role="alert"></p>
