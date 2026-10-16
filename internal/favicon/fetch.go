@@ -30,8 +30,8 @@ const (
 )
 
 // Find fetches pageURL and returns the first icon that downloads and decodes,
-// trying apple touch icons, then the manifest, then link icons, then
-// /favicon.ico.
+// trying apple touch icons, then the manifest, then link icons, then the
+// home page's icons when the page has none, then /favicon.ico and /favicon.svg.
 func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error) {
 	page, err := url.Parse(pageURL)
 	if err != nil {
@@ -51,7 +51,17 @@ func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error
 		}
 	}
 	list = append(list, c.Icons...)
-	list = append(list, page.Scheme+"://"+page.Host+"/favicon.ico")
+	root := page.Scheme + "://" + page.Host
+	// A deep link (a dashboard, a sign in page) often declares no icon of its
+	// own; the site's home page does.
+	if len(c.Apple)+len(c.Icons) == 0 && c.Manifest == "" && page.Path != "" && page.Path != "/" {
+		if body, final, err := get(ctx, client, root+"/", maxPage); err == nil {
+			h := Choose(final, bytes.NewReader(body))
+			list = append(list, h.Apple...)
+			list = append(list, h.Icons...)
+		}
+	}
+	list = append(list, root+"/favicon.ico", root+"/favicon.svg")
 
 	seen := map[string]bool{}
 	tries := 0
