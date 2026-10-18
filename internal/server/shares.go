@@ -241,12 +241,15 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	if !readJSON(w, r, &in) {
 		return
 	}
-	key := s.clientKey(r)
-	if sh.PasswordHash != nil && bcrypt.CompareHashAndPassword([]byte(*sh.PasswordHash), []byte(in.Password)) != nil {
-		s.refuse(w, s.shareLimiter, key, http.StatusUnauthorized, "Wrong password")
-		return
+	if sh.PasswordHash != nil {
+		ok, wait := s.attempt(r, s.shareLimiter, s.clientKey(r), func() bool {
+			return bcrypt.CompareHashAndPassword([]byte(*sh.PasswordHash), []byte(in.Password)) == nil
+		})
+		if !ok {
+			refuseAttempt(w, wait, http.StatusUnauthorized, "Wrong password")
+			return
+		}
 	}
-	s.shareLimiter.Success(key)
 	exp := s.st.Now().Add(unlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
 		Name: shareCookie, Value: s.unlockValue(sh, exp), Path: "/s/" + sh.Token,

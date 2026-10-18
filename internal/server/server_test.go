@@ -40,20 +40,19 @@ func (q *fakeQueue) count() int {
 }
 
 var testWeb = fstest.MapFS{
-	"index.html":                     {Data: []byte("<p>app</p>")},
-	"login.html":                     {Data: []byte("<p>login</p>")},
-	"save.html":                      {Data: []byte("<p>save</p>")},
-	"bookmarklet.html":               {Data: []byte(`<a href="javascript:open('{{BASE_URL}}/save')">Save</a>`)},
-	"share.html":                     {Data: []byte(`<p>share {{BASE_URL}}</p>`)},
-	"app.css":                        {Data: []byte("body{}")},
-	"app.js":                         {Data: []byte("1")},
-	"icons/icon-192.png":             {Data: []byte("\x89PNG")},
-	"icons/icon-512.png":             {Data: []byte("\x89PNG")},
-	"icons/favicon.svg":              {Data: []byte("<svg/>")},
-	"icons/apple-touch-icon.png":     {Data: []byte("\x89PNG")},
-	"extras/README.txt":              {Data: []byte("downloads")},
-	"extras/save-to-pinned.shortcut": {Data: []byte("bplist00")},
-	"extras/pinned-extension.zip":    {Data: []byte("PK\x03\x04")},
+	"index.html":                  {Data: []byte("<p>app</p>")},
+	"login.html":                  {Data: []byte("<p>login</p>")},
+	"save.html":                   {Data: []byte("<p>save</p>")},
+	"bookmarklet.html":            {Data: []byte(`<a href="javascript:open('{{BASE_URL}}/save')">Save</a>`)},
+	"share.html":                  {Data: []byte(`<p>share {{BASE_URL}}</p>`)},
+	"app.css":                     {Data: []byte("body{}")},
+	"app.js":                      {Data: []byte("1")},
+	"icons/icon-192.png":          {Data: []byte("\x89PNG")},
+	"icons/icon-512.png":          {Data: []byte("\x89PNG")},
+	"icons/favicon.svg":           {Data: []byte("<svg/>")},
+	"icons/apple-touch-icon.png":  {Data: []byte("\x89PNG")},
+	"extras/README.txt":           {Data: []byte("downloads")},
+	"extras/pinned-extension.zip": {Data: []byte("PK\x03\x04")},
 }
 
 type env struct {
@@ -205,12 +204,9 @@ func TestLoginAPIAndRateLimit(t *testing.T) {
 	if code, _ := e.do("POST", "/api/login", map[string]string{"password": "wrong"}); code != 429 {
 		t.Fatalf("failure during the wait: %d", code)
 	}
-	if n := e.slept.Load(); n != 6 {
-		t.Errorf("every failed login should wait, %d did", n)
-	}
-	// Only failures count: the right password is never held back.
-	if code, _ := e.do("POST", "/api/login", map[string]string{"password": "pw"}); code != 204 {
-		t.Fatalf("right password during wait: %d", code)
+	// Only checked passwords wait; during the wait none is checked.
+	if n := e.slept.Load(); n != 5 {
+		t.Errorf("every checked failure should wait, %d did", n)
 	}
 	// Reset the limiter and log in properly.
 	e2 := newEnv(t, Config{})

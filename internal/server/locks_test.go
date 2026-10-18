@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
 
@@ -173,7 +174,11 @@ func TestUnlockRateLimitAndRemoveLock(t *testing.T) {
 		e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "no"}, 403)
 	}
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "no"}, 429)
-	// Only failures count: the right password still opens it.
+	// During the wait the password is not checked, so even the right one
+	// is refused; once the wait is over it opens.
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 429)
+	later := time.Now().Add(auth.Wait + time.Second)
+	e.server.folderLimiter.Now = func() time.Time { return later }
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
 
 	// Per folder: another locked folder still accepts tries.

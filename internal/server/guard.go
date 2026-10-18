@@ -99,10 +99,36 @@ func (s *Server) fail(l *auth.Limiter, key string) time.Duration {
 	return l.Fail(key)
 }
 
+// attempt runs one password check for key under l. While the client has to
+// wait it returns the wait without running check; checks from one client run
+// one at a time; a failed check waits failDelay and counts.
+func (s *Server) attempt(r *http.Request, l *auth.Limiter, key string, check func() bool) (ok bool, wait time.Duration) {
+	done, wait := l.Begin(r.Context(), key)
+	if done == nil {
+		return false, wait
+	}
+	defer done()
+	if check() {
+		l.Success(key)
+		return true, 0
+	}
+	return false, s.fail(l, key)
+}
+
 // refuse answers a failed check: 429 when the client is over the limit,
 // otherwise status with msg.
 func (s *Server) refuse(w http.ResponseWriter, l *auth.Limiter, key string, status int, msg string) {
 	if wait := s.fail(l, key); wait > 0 {
+		tooMany(w, wait)
+		return
+	}
+	writeError(w, status, msg)
+}
+
+// refuseAttempt answers an attempt that did not pass: 429 with the wait, or
+// status with msg.
+func refuseAttempt(w http.ResponseWriter, wait time.Duration, status int, msg string) {
+	if wait > 0 {
 		tooMany(w, wait)
 		return
 	}

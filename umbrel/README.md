@@ -17,7 +17,7 @@ They follow the packaging rules in `.agents/skills/umbrel-package-app/SKILL.md` 
 ## Choices made here
 
 - `deterministicPassword: true`, because the app's login password is `APP_PASSWORD`, which Umbrel sets per install and shows to the user.
-- Umbrel's own login stays on. `PROXY_AUTH_WHITELIST` lets these paths through without it: `/api/*` for the extension, the Shortcut and scripts, which send an API token; `/s/*` for share links; `/extras/*` for the Shortcut and extension downloads; `/health`; `/static/*` and `/favicon.svg`, which a share link page loads. Nothing on those paths answers with your bookmarks without the app password, a token, or a share link.
+- Umbrel's own login stays on. `PROXY_AUTH_WHITELIST` lets these paths through without it: `/api/*` for the extension and scripts, which send an API token; `/s/*` for share links; `/extras/*` for the extension download; `/health`; `/static/*` and `/favicon.svg`, which a share link page loads. Nothing on those paths answers with your bookmarks without the app password, a token, or a share link.
 - `BASE_URL` points at the device address and the store port, so the Save button code and the search entry use it.
 - Data lives in `${APP_DATA_DIR}/data`, mounted at `/data`.
 

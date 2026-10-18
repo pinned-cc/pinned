@@ -2,6 +2,8 @@ package auth
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,5 +92,34 @@ func TestLimiter(t *testing.T) {
 	l.Fail("c")
 	if len(l.clients) != 1 {
 		t.Errorf("quiet clients not forgotten: %d", len(l.clients))
+	}
+}
+
+func TestLimiterGlobalCap(t *testing.T) {
+	now := time.Unix(1000, 0)
+	l := NewLimiter()
+	l.Now = func() time.Time { return now }
+	// Many addresses, each under its own limit.
+	for i := 0; i < GlobalMaxFails-1; i++ {
+		if wait := l.Fail(fmt.Sprintf("10.0.%d.%d", i/250, i%250)); wait != 0 {
+			t.Fatalf("blocked after %d spread failures", i+1)
+		}
+		now = now.Add(time.Second)
+	}
+	if wait := l.Fail("fresh"); wait <= 0 {
+		t.Fatal("global cap not reached")
+	}
+	if done, wait := l.Begin(context.Background(), "another"); done != nil || wait <= 0 {
+		t.Fatal("a new client may check past the global cap")
+	}
+	// Once the oldest failures leave the window, checks run again.
+	now = now.Add(GlobalWindow - time.Duration(GlobalMaxFails-5)*time.Second)
+	done, wait := l.Begin(context.Background(), "another")
+	if done == nil || wait != 0 {
+		t.Fatalf("still blocked after the window moved: %v", wait)
+	}
+	done()
+	if len(l.slots) != 0 {
+		t.Error("slot not released")
 	}
 }

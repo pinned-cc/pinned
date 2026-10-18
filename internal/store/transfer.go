@@ -61,7 +61,7 @@ func importFolder(tx *sql.Tx, f *netscape.Folder, parentID *int64, depth int, no
 		if created <= 0 {
 			created = now
 		}
-		title := strings.TrimSpace(l.Title)
+		title := clip(l.Title, MaxTitle)
 		if title == "" {
 			title = urlkey.Host(l.URL)
 		}

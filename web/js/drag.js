@@ -46,7 +46,12 @@ const trashAt = (x, y) => { if (ui.view === 'trash') return null; const u = docu
 const holdable = (k, el) => (k === 'tile' && canSelect()) || (k === 'ftile' && el.matches(FPICK));
 /* only the pointer that started the press counts; a second finger or a stray mouse move does not */
 /* the scrim closes on pointer up: WebKit does not always synthesise a click for a tap on a plain div */
-export function dragCancel() { if (!dragState) return; clearTimeout(dragState.timer); clearTimeout(dragState.spring); dragState.el.classList.remove('press'); if (!layers.sheet) dragState.el.classList.remove('lift', 'held'); dragState = null; }
+/* a finger's touch events keep going to the node it first touched, even once a view swap (the Folders tab opening
+   under a carried card) takes that node out of the page, where a listener on document no longer hears them: the
+   node itself holds the scroll back, so the browser never takes the gesture over and cancels the drag */
+const holdScroll = e => { if (dragState && (dragState.held || dragState.active)) e.preventDefault(); };
+const letScroll = st => { if (st && st.tgt) st.tgt.removeEventListener('touchmove', holdScroll); };
+export function dragCancel() { if (!dragState) return; letScroll(dragState); clearTimeout(dragState.timer); clearTimeout(dragState.spring); dragState.el.classList.remove('press'); if (!layers.sheet) dragState.el.classList.remove('lift', 'held'); dragState = null; }
 const dragId = x => +(x.dataset.id || x.dataset.fid || x.dataset.ftile);
 export const subsOf = el => { const n = el.nextElementSibling; return el.dataset.fid && n && n.matches('.subs') && n.dataset.parent === el.dataset.fid ? n : null; };
 export function dragBegin(e) {
@@ -107,7 +112,7 @@ export function dragLoop() {
   requestAnimationFrame(dragLoop);
 }
 export function dragEnd() {
-  const { k, el, cont, ghost, before, drop, ids: carried, sort, spring, springEl } = dragState; dragState = null;
+  const { k, el, cont, ghost, before, drop, ids: carried, sort, spring, springEl } = dragState; letScroll(dragState); dragState = null;
   clearTimeout(spring); if (springEl) springEl.classList.remove('drop-on');
   ghost.remove(); el.classList.remove('placeholder', 'lift', 'held'); cont.classList.remove('sorting'); document.body.classList.remove('dragging');
   if (drop) { drop.classList.remove('drop-on');
@@ -156,6 +161,7 @@ export function installDrag() {
     if (!touch && !e.shiftKey && !e.metaKey && !e.ctrlKey && holdable(hit.k, hit.el) && !ui.selecting)
       dragState.timer = setTimeout(() => { if (!dragState || dragState.active) return; dragState.held = true; dragState.timer = null; hit.el.classList.add('held'); }, 450);
     if (touch) { if (hit.k === 'tile') hit.el.classList.add('press');
+      dragState.tgt = e.target; e.target.addEventListener('touchmove', holdScroll, { passive: false });
       /* 450 ms still: the press registers with a small tick; release starts selecting, a move lifts it */
       dragState.timer = setTimeout(() => { if (!dragState) return; dragState.held = true; dragState.timer = null; hit.el.classList.remove('press'); hit.el.classList.add('held');
         if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) { /* ignore */ } }, 450); }
@@ -172,7 +178,7 @@ export function installDrag() {
   document.addEventListener('pointerup', e => {
     if (!dragState || e.pointerId !== dragState.pid) return;
     if (dragState.active) { dragEnd(); ui.suppressClick = performance.now() + 350; return; }
-    if (dragState.held) { ui.suppressClick = performance.now() + 350; const { k, el, touch } = dragState; if (!touch) el.classList.remove('held'); dragState = null; heldAction(k, el, e, touch); return; }
+    if (dragState.held) { ui.suppressClick = performance.now() + 350; const { k, el, touch } = dragState; if (!touch) el.classList.remove('held'); letScroll(dragState); dragState = null; heldAction(k, el, e, touch); return; }
     dragCancel();
   });
   document.addEventListener('pointercancel', e => { if (!dragState || e.pointerId !== dragState.pid) return; if (dragState.active) dragEnd(); else dragCancel(); });

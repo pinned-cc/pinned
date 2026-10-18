@@ -13,10 +13,10 @@ description: >-
   Links to services on your network are kept apart by host and port, so two apps on the same address with different ports are two bookmarks, and the port is always shown.
 
 
-  Save from any browser with the Save button, from the iPhone share sheet with the Shortcut, from Android as a home screen app, or with the browser extension. Import and export use the bookmarks file every browser reads, and a copy is written to the data folder every night.
+  Save from any browser with the Save button, from Android as a home screen app, or with the browser extension. Import and export use the bookmarks file every browser reads, and a copy is written to the data folder every night.
 
 
-  Log in with the password Umbrel shows for this app. The paths /api, /s (share links), /extras and /health, and the app's own CSS, scripts and fonts, skip the Umbrel login so the extension, the Shortcut and share links work. The app's own password and API tokens protect them.
+  Log in with the password Umbrel shows for this app. The paths /api, /s (share links), /extras and /health, and the app's own CSS, scripts and fonts, skip the Umbrel login so the extension and share links work. The app's own password and API tokens protect them.
 releaseNotes: ""
 developer: Pinned authors
 website: https://pinned.cc

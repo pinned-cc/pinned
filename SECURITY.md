@@ -22,7 +22,7 @@ Please do not open a public issue for a security problem.
 ## What is in scope
 
 - The server in this repository: login, sessions, API tokens, locked folders, share links, import and export, the icon fetcher, the HTTP headers it sends.
-- The browser extension in `extras/extension` and the iOS Shortcut in `extras/shortcut`.
+- The browser extension in `extras/extension`.
 - The Docker image and the example `docker-compose.yml`.
 
 Out of scope:

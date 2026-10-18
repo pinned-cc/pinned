@@ -221,7 +221,9 @@ func TestPoolRunStoresIcon(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := &Pool{dir: dir, store: st, client: srv.Client()}
+	// The real guarded client: the bookmark is on a loopback host, so
+	// that host may be reached.
+	p := &Pool{dir: dir, store: st}
 	p.Run(b.ID)
 
 	got, _ := st.Bookmark(b.ID)

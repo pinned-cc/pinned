@@ -4,6 +4,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | sh
 #
+# It asks for the password on the terminal. Without one (cloud-init, CI), set APP_PASSWORD:
+#
+#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | APP_PASSWORD='...' sh
+#
 # Afterwards Pinned answers on port 9095 of the server. Put it behind HTTPS before you use it from
 # outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README.
 set -eu
@@ -24,15 +28,22 @@ fi
 docker compose version >/dev/null 2>&1 || die "Docker is installed but the compose plugin is missing; install docker-compose-plugin and run this again"
 
 if [ -z "${APP_PASSWORD:-}" ]; then
+  # with curl ... | sh the script itself is on stdin, so ask on the terminal
   if [ -t 0 ]; then
-    printf 'Choose the password for Pinned (8 characters or more): '
-    stty -echo 2>/dev/null || true
-    read -r APP_PASSWORD
-    stty echo 2>/dev/null || true
-    printf '\n'
+    TTY=/dev/stdin
+  elif (: </dev/tty) 2>/dev/null; then
+    TTY=/dev/tty
   else
-    die "set APP_PASSWORD in the environment when piping this script, for example: APP_PASSWORD='...' sh setup.sh"
+    die "no terminal to ask for the password; set APP_PASSWORD in the environment, for example: curl -fsSL <setup.sh address> | APP_PASSWORD='...' sh"
   fi
+  printf 'Choose the password for Pinned (8 characters or more): '
+  stty -echo <"$TTY" 2>/dev/null || true
+  trap 'stty echo <"$TTY" 2>/dev/null' EXIT
+  trap 'exit 130' INT TERM
+  read -r APP_PASSWORD <"$TTY" || true
+  stty echo <"$TTY" 2>/dev/null || true
+  trap - EXIT INT TERM
+  printf '\n'
 fi
 [ "${#APP_PASSWORD}" -ge 8 ] || die "the password needs at least 8 characters"
 

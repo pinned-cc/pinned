@@ -46,7 +46,7 @@ body:
     id: client
     attributes:
       label: Browser and device
-      description: Only if the problem is in the app's pages, the extension or the Shortcut.
+      description: Only if the problem is in the app's pages or the extension.
       placeholder: Safari on iPhone, Firefox on Linux
   - type: textarea
     id: steps

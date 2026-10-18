@@ -24,11 +24,11 @@ You need Docker with the compose plugin, on amd64 or arm64. A NAS, a Raspberry P
 curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | sh
 ```
 
-Pinned then answers on port 9095. Put HTTPS in front before you use it from outside your network, see Behind a reverse proxy. `PINNED_DIR`, `PINNED_PORT` and `APP_PASSWORD` in the environment override the questions. Not yet run on a rented server at the time of writing; the steps below are the same thing by hand.
+It asks for the password on the terminal. Where there is no terminal to ask on, such as cloud-init, pass it in: `curl -fsSL ... | APP_PASSWORD='...' sh`. Pinned then answers on port 9095. Put HTTPS in front before you use it from outside your network, see Behind a reverse proxy. `PINNED_DIR`, `PINNED_PORT` and `APP_PASSWORD` in the environment override the questions. Not yet run on a rented server at the time of writing; the steps below are the same thing by hand.
 
 ### By hand
 
-The image is published at `ghcr.io/pinned-cc/pinned`, for amd64 and arm64.
+The image is published at `ghcr.io/pinned-cc/pinned` for amd64 and arm64, from version 0.1.0 on. To build it yourself instead, see Building from source.
 
 1. Make a folder for it and a data folder that the container user (1000) can write:
 
@@ -110,9 +110,6 @@ It opens without browser bars, like an app.
 **Android share target.** Once the app is on the Android home screen, it shows up in the share sheet as Pinned.
 Share a page to it and the save page opens.
 
-**iOS Shortcut.** Tap Add the Shortcut on the Save button page on the iPhone. It asks for your address and an API token.
-The share sheet then has Save to Pinned. It saves to the Inbox first, then lets you pick a folder. See `extras/shortcut/README.md`.
-
 **Browser extension.** Download it from the Save button page and load it unpacked in Brave, Chrome or Edge, or as a temporary add-on in Firefox.
 It has a save popup with your recent folders and a right click menu. See `extras/extension/README.md`.
 
@@ -147,11 +144,11 @@ A token can do four things, and nothing else:
 
 Everything else answers 403 with a token: export, import, Trash and delete, creating, renaming, moving or deleting folders, shares, locks, and creating or revoking tokens.
 
-A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage, and the Shortcut keeps it inside the shortcut, so anyone who can open the shortcut in the Shortcuts app can read it. Do not pass on your installed shortcut; point people to the download instead.
+A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage.
 
 ## Wrong passwords and tokens
 
-Wrong app passwords, wrong tokens and wrong share passwords are counted apart, per address (IPv6 per /64). Every wrong try waits one second before it answers. After 5 wrong tries the address has to wait 30 seconds (status 429). A right password or a valid token always gets through, so a broken script with an old token does not lock you out of the login.
+Wrong app passwords, wrong tokens, wrong share passwords and wrong folder passwords are counted apart, per address (IPv6 per /64). Every wrong try waits one second before it answers, and tries from one address are checked one at a time. After 5 wrong tries the address has to wait 30 seconds (status 429); during the wait no password is checked, not even the right one. After 100 wrong tries within 10 minutes from all addresses together, everyone waits until the count drops. A valid token always gets through, and wrong tokens are counted apart from the login, so a broken script with an old token does not lock you out.
 
 ## Behind a reverse proxy
 
@@ -171,7 +168,7 @@ bookmarks.example.com {
 
 On Nginx Proxy Manager, add a proxy host for your server and port 9095 with an SSL certificate. On Traefik, route a host rule to the container's port 8080.
 
-On Umbrel with the App Store package (`umbrel/` holds the draft), Umbrel's login sits in front of the app. These paths must get past it, because the extension, the Shortcut, scripts and share links do not carry an Umbrel login: `/api/*`, `/s/*`, `/extras/*` and `/health`, and for share link pages `/static/*` and `/favicon.svg`. The app's own password, tokens and share links still protect them.
+On Umbrel with the App Store package (`umbrel/` holds the draft), Umbrel's login sits in front of the app. These paths must get past it, because the extension, scripts and share links do not carry an Umbrel login: `/api/*`, `/s/*`, `/extras/*` and `/health`, and for share link pages `/static/*` and `/favicon.svg`. The app's own password, tokens and share links still protect them.
 
 ## Your data and backups
 
@@ -230,7 +227,7 @@ Shares are not part of the export.
 
 ## What the server sends out
 
-One thing: the icon of each site you save. When you save a link or change its address, the server loads that page once to find the icon, then downloads the icon. The request comes from your server, with the user agent `Mozilla/5.0 (compatible; Pinned bookmarks; favicon fetch)`.
+One thing: the icon of each site you save. When you save a link or change its address, the server loads that page once to find the icon, then downloads the icon. The request comes from your server, with the user agent `Mozilla/5.0 (compatible; Pinned bookmarks; favicon fetch)`. It goes only to public addresses, with one exception: a bookmark whose own host is on your network (a private, loopback or link local address) may load its icon from that same host.
 
 No telemetry, no update checks, no fonts or scripts from other servers. The pages, the extension and the fonts are all served from your own server.
 

@@ -297,11 +297,13 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	key := s.clientKey(r) + "|" + strconv.FormatInt(id, 10)
-	if bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.Password)) != nil {
-		s.refuse(w, s.folderLimiter, key, http.StatusForbidden, "Wrong password")
+	ok, wait := s.attempt(r, s.folderLimiter, key, func() bool {
+		return bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.Password)) == nil
+	})
+	if !ok {
+		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
 		return
 	}
-	s.folderLimiter.Success(key)
 	exp := s.st.Now().Add(folderUnlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
 		Name: unlockCookieName(id), Value: s.folderUnlockValue(f, exp), Path: "/",

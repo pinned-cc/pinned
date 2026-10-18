@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"strings"
 )
 
 // Folder is a folder. ParentID nil means top level.
@@ -80,7 +79,7 @@ func nextFolderPosition(q querier, parentID *int64) (int64, error) {
 
 // CreateFolder adds a folder at the end of its level.
 func (s *Store) CreateFolder(name string, parentID *int64) (Folder, error) {
-	name = strings.TrimSpace(name)
+	name = clip(name, MaxFolderName)
 	if name == "" {
 		return Folder{}, ErrEmptyName
 	}
@@ -175,7 +174,7 @@ func (s *Store) UpdateFolder(id int64, name *string, parentSet bool, parentID *i
 			return err
 		}
 		if name != nil {
-			n := strings.TrimSpace(*name)
+			n := clip(*name, MaxFolderName)
 			if n == "" {
 				return ErrEmptyName
 			}

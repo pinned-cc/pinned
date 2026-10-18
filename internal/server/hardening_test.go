@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -488,3 +490,91 @@ func TestCheckHidesIconsOfLockedBookmarks(t *testing.T) {
 }
 
 func authHash(secret []byte, token string) string { return auth.HashToken(secret, token) }
+
+func TestRightPasswordDuringWaitIs429(t *testing.T) {
+	e := newEnv(t, Config{})
+	for i := 0; i < auth.MaxFails; i++ {
+		e.do("POST", "/api/login", map[string]string{"password": "wrong"})
+	}
+	if code, _ := e.do("POST", "/api/login", map[string]string{"password": "pw"}); code != 429 {
+		t.Fatalf("right password during the wait: %d", code)
+	}
+	resp, err := e.client.PostForm(e.srv.URL+"/login", url.Values{"password": {"pw"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if loc := resp.Header.Get("Location"); !strings.Contains(loc, "error=wait") {
+		t.Errorf("form login during the wait went to %q", loc)
+	}
+	if n := e.slept.Load(); n != auth.MaxFails {
+		t.Errorf("passwords compared during the wait: %d failures waited", n)
+	}
+	later := time.Now().Add(auth.Wait + time.Second)
+	e.server.loginLimiter.Now = func() time.Time { return later }
+	if code, _ := e.do("POST", "/api/login", map[string]string{"password": "pw"}); code != 204 {
+		t.Errorf("right password after the wait: %d", code)
+	}
+}
+
+func TestParallelGuessesAreSerialized(t *testing.T) {
+	e := newEnv(t, Config{})
+	var compares atomic.Int64
+	e.server.sleep = func(time.Duration) {
+		compares.Add(1)
+		time.Sleep(20 * time.Millisecond) // long enough for the burst to pile up
+	}
+	const burst = 40
+	codes := make(chan int, burst)
+	var wg sync.WaitGroup
+	for range burst {
+		wg.Go(func() {
+			req, _ := http.NewRequest("POST", e.srv.URL+"/api/login", strings.NewReader(`{"password":"wrong"}`))
+			req.Header.Set("X-Requested-With", "fetch")
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			resp.Body.Close()
+			codes <- resp.StatusCode
+		})
+	}
+	wg.Wait()
+	close(codes)
+	limited := 0
+	for c := range codes {
+		if c == 429 {
+			limited++
+		}
+	}
+	if n := compares.Load(); n > auth.MaxFails {
+		t.Errorf("%d passwords compared in a burst of %d, at most %d allowed", n, burst, auth.MaxFails)
+	}
+	// The fifth failure itself starts the wait, so four answer 401.
+	if limited != burst-auth.MaxFails+1 {
+		t.Errorf("%d of %d answered 429", limited, burst)
+	}
+}
+
+func TestTitleAndFolderNameAreCapped(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	long := strings.Repeat("é", 2000)
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"title": long, "url": "https://example.com/long"}, 201))
+	if n := len([]rune(b.Title)); n != store.MaxTitle {
+		t.Errorf("created title has %d characters", n)
+	}
+	b = decode[bookmarkJSON](t, e.expect("PATCH", "/api/bookmarks/"+itoa(b.ID), map[string]any{"title": long + "x"}, 200))
+	if n := len([]rune(b.Title)); n != store.MaxTitle {
+		t.Errorf("patched title has %d characters", n)
+	}
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": long}, 201))
+	if n := len([]rune(f.Name)); n != store.MaxFolderName {
+		t.Errorf("created folder name has %d characters", n)
+	}
+	f = decode[folderJSON](t, e.expect("PATCH", "/api/folders/"+itoa(f.ID), map[string]any{"name": long}, 200))
+	if n := len([]rune(f.Name)); n != store.MaxFolderName {
+		t.Errorf("renamed folder has %d characters", n)
+	}
+}

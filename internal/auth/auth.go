@@ -3,6 +3,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -76,11 +77,16 @@ func LoadSecret(dataDir string) ([]byte, error) {
 }
 
 // Limiter counts failed checks per client. After MaxFails failures the
-// client waits Wait; when the wait is over the count starts again. Only
-// failures count: a correct password or a valid token is never refused.
+// client waits Wait; when the wait is over the count starts again. During the
+// wait no check runs at all, so not even the right password gets in. Checks
+// from one client run one at a time, and past GlobalMaxFails failures in
+// GlobalWindow across all clients everyone waits, which slows a guesser that
+// spreads over many addresses.
 type Limiter struct {
 	mu      sync.Mutex
 	clients map[string]*attempts
+	slots   map[string]*slot
+	global  []time.Time // failures inside GlobalWindow, oldest first
 	Now     func() time.Time
 }
 
@@ -90,13 +96,91 @@ type attempts struct {
 	last  time.Time
 }
 
+// slot lets one check per client run; users counts who holds or waits for
+// it, so it can be dropped when the last one is done.
+type slot struct {
+	ch    chan struct{}
+	users int
+}
+
 const (
-	MaxFails = 5
-	Wait     = 30 * time.Second
+	MaxFails       = 5
+	Wait           = 30 * time.Second
+	GlobalMaxFails = 100
+	GlobalWindow   = 10 * time.Minute
 )
 
 func NewLimiter() *Limiter {
-	return &Limiter{clients: map[string]*attempts{}, Now: time.Now}
+	return &Limiter{clients: map[string]*attempts{}, slots: map[string]*slot{}, Now: time.Now}
+}
+
+// Begin starts a check for client. While the client, or everyone, has to
+// wait it returns the wait and no check may run. Otherwise it returns done,
+// which the caller calls once the check and its Fail or Success are over;
+// until then other checks from the same client queue here. done is nil with
+// a zero wait when ctx ends while queued.
+func (l *Limiter) Begin(ctx context.Context, client string) (done func(), wait time.Duration) {
+	if wait := l.Waiting(client); wait > 0 {
+		return nil, wait
+	}
+	l.mu.Lock()
+	sl := l.slots[client]
+	if sl == nil {
+		sl = &slot{ch: make(chan struct{}, 1)}
+		l.slots[client] = sl
+	}
+	sl.users++
+	l.mu.Unlock()
+	leave := func() {
+		l.mu.Lock()
+		if sl.users--; sl.users == 0 {
+			delete(l.slots, client)
+		}
+		l.mu.Unlock()
+	}
+	select {
+	case sl.ch <- struct{}{}:
+	case <-ctx.Done():
+		leave()
+		return nil, 0
+	}
+	release := func() {
+		<-sl.ch
+		leave()
+	}
+	// The check queued before this one may have started the wait.
+	if wait := l.Waiting(client); wait > 0 {
+		release()
+		return nil, wait
+	}
+	return release, 0
+}
+
+// Waiting returns how long client has to wait before its next check, zero
+// when it may check now.
+func (l *Limiter) Waiting(client string) time.Duration {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	now := l.Now()
+	var wait time.Duration
+	if a := l.clients[client]; a != nil && now.Before(a.until) {
+		wait = a.until.Sub(now)
+	}
+	return max(wait, l.globalWait(now))
+}
+
+// globalWait drops failures older than GlobalWindow and returns how long
+// until the oldest one leaves it, zero while under the cap.
+func (l *Limiter) globalWait(now time.Time) time.Duration {
+	cut := 0
+	for cut < len(l.global) && now.Sub(l.global[cut]) >= GlobalWindow {
+		cut++
+	}
+	l.global = l.global[cut:]
+	if len(l.global) < GlobalMaxFails {
+		return 0
+	}
+	return l.global[0].Add(GlobalWindow).Sub(now)
 }
 
 // Fail records a failed check for client and returns how long the client
@@ -106,6 +190,10 @@ func (l *Limiter) Fail(client string) time.Duration {
 	defer l.mu.Unlock()
 	now := l.Now()
 	l.forgetOld(now)
+	if len(l.global) < GlobalMaxFails {
+		l.global = append(l.global, now)
+	}
+	gw := l.globalWait(now)
 	a := l.clients[client]
 	if a == nil {
 		a = &attempts{}
@@ -113,7 +201,7 @@ func (l *Limiter) Fail(client string) time.Duration {
 	}
 	if now.Before(a.until) {
 		a.last = now
-		return a.until.Sub(now)
+		return max(a.until.Sub(now), gw)
 	}
 	if !a.until.IsZero() {
 		// The wait is over: start counting again.
@@ -123,9 +211,9 @@ func (l *Limiter) Fail(client string) time.Duration {
 	a.last = now
 	if a.fails >= MaxFails {
 		a.until = now.Add(Wait)
-		return Wait
+		return max(Wait, gw)
 	}
-	return 0
+	return gw
 }
 
 // Success clears the client's failures.

@@ -30,19 +30,19 @@ export function openMenu(anchor, items, at) {
 export function closeMenu(refocus) { if (!layers.menu) return; const { el, anchor } = layers.menu; layers.menu = null; el.remove();
   if (anchor && anchor.isConnected) { anchor.removeAttribute('aria-expanded'); if (refocus) anchor.focus(); } }
 export function menuOrSheet(anchor, items, head) { if (ui.mode === 'phone' || !anchor) openSheet({ type: 'rows', head, rows: items }); else if (layers.menu && layers.menu.anchor === anchor) closeMenu(); else openMenu(anchor, items); }
-/* what acts on one card, in one order everywhere: the right click menu, the three dots on a card, the sheet for a
-   card that cannot be selected; the first group is also what the selection bar's three dots hold for one card */
+/* what acts on one card, in one order everywhere: the selection bar, then what its More holds. The right click menu
+   and the three dots on a card are mouse shortcuts to the same actions in the same order */
 export const oneCardItems = b => [
   { icon: 'open', label: 'Open', run: () => actions.open(b) },
   { icon: 'edit', label: 'Rename', run: () => startRename(b.id) },
   { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => actions.pin(b) }];
 export const tileMenu = b => b.deleted_at
   ? [{ icon: 'restore', label: 'Restore', run: () => actions.restore([b.id]) }, '-', { icon: 'trash', label: 'Delete now', warn: true, run: () => actions.purge([b.id]) }]
-  : [...oneCardItems(b), '-',
-    { icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
+  : [{ icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
     { icon: 'link', label: 'Copy', run: () => actions.copy(b) },
     { icon: 'share', label: 'Share', run: () => actions.share(b) },
-    '-', { icon: 'trash', label: 'Trash', warn: true, run: () => actions.trash([b.id]) }];
+    { icon: 'trash', label: 'Trash', warn: true, run: () => actions.trash([b.id]) },
+    '-', ...oneCardItems(b)];
 /* the selection bar's three dots: what the bar has no button for. Open and Rename only with one card selected */
 export function selItems() {
   const L = [...ui.picked].map(bm).filter(b => b && !b.deleted_at); if (!L.length) return [];

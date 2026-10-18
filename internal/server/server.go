@@ -256,16 +256,13 @@ func isHTTPS(r *http.Request) bool {
 	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }
 
-// checkPassword compares the app password. A correct password always
-// passes; a wrong one waits, counts, and returns the wait once the client
-// is over the limit.
+// checkPassword compares the app password under the login limiter. It
+// returns the wait instead when the client is over the limit; then the
+// password is not compared at all.
 func (s *Server) checkPassword(r *http.Request, password string) (ok bool, wait time.Duration) {
-	key := s.clientKey(r)
-	if auth.PasswordOK(s.cfg.Password, password) {
-		s.loginLimiter.Success(key)
-		return true, 0
-	}
-	return false, s.fail(s.loginLimiter, key)
+	return s.attempt(r, s.loginLimiter, s.clientKey(r), func() bool {
+		return auth.PasswordOK(s.cfg.Password, password)
+	})
 }
 
 // baseURL is BASE_URL when set. Only without it are the request's Host and

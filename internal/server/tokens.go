@@ -13,7 +13,7 @@ import (
 	"github.com/pinned-cc/pinned/internal/store"
 )
 
-// API tokens let a Shortcut, a browser extension or a script call /api/*
+// API tokens let the browser extension or a script call /api/*
 // with "Authorization: Bearer tk_..." instead of the session cookie.
 
 const tokenPrefix = "tk_"
@@ -170,8 +170,8 @@ func (s *Server) apiDeleteToken(w http.ResponseWriter, r *http.Request) {
 	s.byID(w, r, s.st.DeleteToken)
 }
 
-// apiFolderList is the light folder list for pickers in the Shortcut and the
-// extension. Folders whose contents are locked are left out: nothing can be
+// apiFolderList is the light folder list for the pickers in the extension
+// and in scripts. Folders whose contents are locked are left out: nothing can be
 // saved into them.
 func (s *Server) apiFolderList(w http.ResponseWriter, r *http.Request) {
 	folders, err := s.st.Folders()
@@ -199,7 +199,7 @@ func (s *Server) apiFolderList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// extras serves the downloads in web/extras: the Shortcut and the extension.
+// extras serves the downloads in web/extras: the browser extension.
 func (s *Server) extras(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("file")
 	if name == "" || name != path.Base(name) || strings.HasPrefix(name, ".") {
@@ -214,9 +214,6 @@ func (s *Server) extras(w http.ResponseWriter, r *http.Request) {
 	h := w.Header()
 	h.Set("Cache-Control", "no-cache")
 	switch path.Ext(name) {
-	case ".shortcut":
-		h.Set("Content-Type", "application/octet-stream")
-		h.Set("Content-Disposition", `attachment; filename="`+name+`"`)
 	case ".zip":
 		h.Set("Content-Type", "application/zip")
 		h.Set("Content-Disposition", `attachment; filename="`+name+`"`)

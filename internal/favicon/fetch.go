@@ -109,8 +109,10 @@ type Store interface {
 
 // Pool fetches icons in the background, at most four at a time.
 type Pool struct {
-	dir    string
-	store  Store
+	dir   string
+	store Store
+	// client replaces the guarded client NewClient builds per bookmark;
+	// tests set it.
 	client *http.Client
 	jobs   chan int64
 	ctx    context.Context
@@ -123,11 +125,8 @@ func NewPool(ctx context.Context, dir string, st Store) *Pool {
 	p := &Pool{
 		dir:   dir,
 		store: st,
-		// Self hosted services often use self signed certificates; the
-		// default verification stays on, so those simply get no icon.
-		client: &http.Client{Timeout: budget},
-		jobs:   make(chan int64, queueLength),
-		ctx:    ctx,
+		jobs:  make(chan int64, queueLength),
+		ctx:   ctx,
 	}
 	p.wg.Add(workers)
 	for i := 0; i < workers; i++ {
@@ -172,7 +171,14 @@ func (p *Pool) Run(id int64) {
 	}
 	ctx, cancel := context.WithTimeout(parent, budget)
 	defer cancel()
-	icon, err := Find(ctx, p.client, b.URL)
+	client := p.client
+	if client == nil {
+		// Self hosted services often use self signed certificates; the
+		// default verification stays on, so those simply get no icon.
+		client = NewClient(ctx, b.URL)
+		defer client.CloseIdleConnections()
+	}
+	icon, err := Find(ctx, client, b.URL)
 	if err != nil {
 		return
 	}

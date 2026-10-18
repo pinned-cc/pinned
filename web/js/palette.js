@@ -67,7 +67,7 @@ export function palFill() {
     else if (total > PAL_CAP) h += `<p class="pal-none pal-more">${total - PAL_CAP} more, keep typing</p>`;
   }
   layers.palette.idx = Math.max(0, Math.min(layers.palette.idx, layers.palette.items.length - 1));
-  byId('pal-list').innerHTML = h;
+  byId('pal-list').innerHTML = h; byId('pal-rec').hidden = !!q; /* a typed query shows only what it finds */
   if (q && data.has) announce(resultsText(found), 500);
   byId('pq').setAttribute('aria-activedescendant', layers.palette.items.length ? 'pal-' + layers.palette.idx : '');
 }

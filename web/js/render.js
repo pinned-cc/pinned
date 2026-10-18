@@ -89,13 +89,13 @@ export function deskBulk() {
       <button type="button" class="btn warn lbl" data-a="bulk-ftrash" data-fit="9" aria-label="Delete" ${dis}>${ic('trash')}<span class="t">Delete</span></button></div>`; }
   const n = ui.picked.size, dis = n ? '' : 'disabled', tr = v === 'trash';
   return `<div class="tb bulk" role="toolbar" aria-label="Selection"><span class="n num">${n} <span>selected</span></span><span class="sp"></span>
-      <button type="button" class="btn lbl" data-a="sel-all" data-fit="3" aria-label="Select all">${ic('select')}<span class="t">Select all</span></button>
+      <button type="button" class="btn lbl" data-a="sel-all" data-fit="2" aria-label="Select all">${ic('select')}<span class="t">Select all</span></button>
       ${tr ? `<button type="button" class="btn lbl" data-a="bulk-restore" data-fit="3" aria-label="Restore" ${dis}>${ic('restore')}<span class="t">Restore</span></button><button type="button" class="btn warn lbl" data-a="bulk-purge" data-fit="9" aria-label="Delete" ${dis}>${ic('trash')}<span class="t">Delete</span></button>`
-           : `<button type="button" class="btn lbl" data-a="bulk-move" data-fit="4" aria-label="Move" ${dis}>${ic('move')}<span class="t">Move</span></button><button type="button" class="btn lbl" data-a="bulk-copy" data-fit="1" aria-label="Copy" ${dis}>${ic('link')}<span class="t">Copy</span></button><button type="button" class="btn lbl" data-a="bulk-share" data-fit="2" aria-label="Share" ${dis}>${ic('share')}<span class="t">Share</span></button><button type="button" class="btn warn lbl" data-a="bulk-trash" data-fit="9" aria-label="Trash" ${dis}>${ic('trash')}<span class="t">Trash</span></button>
-             <button type="button" class="btn icon" data-a="sel-more" aria-haspopup="menu" aria-label="More actions" title="More actions" ${dis}>${ic('more')}</button>`}</div>`;
+           : `<button type="button" class="btn lbl" data-a="bulk-move" data-fit="4" aria-label="Move" ${dis}>${ic('move')}<span class="t">Move</span></button><button type="button" class="btn lbl" data-a="bulk-copy" data-fit="3" aria-label="Copy" ${dis}>${ic('link')}<span class="t">Copy</span></button><button type="button" class="btn lbl" data-a="bulk-share" data-fit="1" aria-label="Share" ${dis}>${ic('share')}<span class="t">Share</span></button><button type="button" class="btn warn lbl" data-a="bulk-trash" data-fit="9" aria-label="Trash" ${dis}>${ic('trash')}<span class="t">Trash</span></button>
+             <button type="button" class="btn lbl" data-a="sel-more" data-fit="8" aria-haspopup="menu" aria-label="More actions" ${dis}>${ic('more')}<span class="t">More</span></button>`}</div>`;
 }
-/* the bar keeps every word that fits: where the row runs short, the least needed button folds to its icon first
-   (data-fit, low first) and Trash or Delete keeps its word longest; measured before the frame paints */
+/* the bar keeps every word that fits: where the row runs short, the button whose icon reads plainest folds first
+   (data-fit, low first: Share, Select all, Copy, Move, More) and Trash or Delete keeps its word longest; measured before the frame paints */
 export function fitBulk() { const bar = document.querySelector('#dbulk .bulk'); if (!bar) return;
   const B = [...bar.querySelectorAll('[data-fit]')].sort((a, b) => a.dataset.fit - b.dataset.fit);
   B.forEach(b => { b.classList.remove('ic'); b.removeAttribute('title'); });
@@ -303,7 +303,7 @@ export function settingsScreen() {
   return `<div class="pset">
     <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}</div></div></div>
     <div class="pset-lbl">Save</div>
-    ${link('/bookmarklet', 'all', 'hue-tray', 'Save button', 'Bookmarklet, Shortcut and extension')}${row('tokens', 'key', 'hue-mint', 'API tokens', tokens)}
+    ${link('/bookmarklet', 'all', 'hue-tray', 'Save button', 'Bookmarklet and extension')}${row('tokens', 'key', 'hue-mint', 'API tokens', tokens)}
     <div class="pset-lbl">Data</div>
     ${row('import', 'import', 'hue-cyan', 'Import', 'A bookmarks file from any browser')}${link('/api/export', 'export', 'hue-lilac', 'Export', 'bookmarks.html, written nightly too')}
     <div class="pset-lbl">About</div>

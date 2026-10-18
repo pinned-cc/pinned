@@ -2,6 +2,26 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.1, 2026-10-18
+
+### Fixes
+
+- During the 30 second wait after five wrong passwords, no password is checked, not even the right one. Tries from one address are checked one at a time, and after 100 wrong tries within 10 minutes from all addresses together everyone waits. This covers the login, share passwords and folder passwords.
+- Icon fetches go only to public addresses, on every redirect too. A bookmark on your own network can still load its icon from its own host.
+- Delete for several selected bookmarks only removes bookmarks that are already in Trash.
+- Bookmark titles are cut at 500 characters and folder names at 200.
+- A database written by a newer version is refused on start with a message, instead of being opened by an older one.
+- The server setup script asks for the password when run as `curl ... | sh`, and says to set `APP_PASSWORD` where there is no terminal.
+- README: the image is published, and the setup one-liner works as written.
+- Sheets on the phone read as solid, and the selection bar steps out of sight while one is open.
+- Dragging a card onto the Folders tab on Android Chrome no longer drops the card when the folders open.
+- Search hides Recent while you type.
+- More in the selection bar has its word on a computer too.
+- When the selection bar runs short, Share folds to its icon first and Copy keeps its word.
+- The right click menu on a card lists the same actions in the same order as the selection bar and its More.
+- The name of a new API token is no longer wiped when the token list finishes loading.
+- The iPhone and Mac Shortcut is removed.
+
 ## 0.1.0, 2026-10-18
 
 The first release.

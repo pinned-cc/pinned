@@ -216,7 +216,7 @@ func (s *Store) Create(in NewBookmark) (b Bookmark, created bool, err error) {
 		return b, false, err
 	}
 	in.URL = strings.TrimSpace(in.URL)
-	in.Title = strings.TrimSpace(in.Title)
+	in.Title = clip(in.Title, MaxTitle)
 	if in.Title == "" {
 		in.Title = urlkey.Host(in.URL)
 	}
@@ -303,7 +303,7 @@ func (s *Store) Update(id int64, p Patch) (b Bookmark, urlChanged bool, err erro
 			return err
 		}
 		if p.Title != nil {
-			t := strings.TrimSpace(*p.Title)
+			t := clip(*p.Title, MaxTitle)
 			if t == "" {
 				return ErrEmptyTitle
 			}
@@ -353,8 +353,8 @@ func (s *Store) Update(id int64, p Patch) (b Bookmark, urlChanged bool, err erro
 				return err
 			}
 		}
-		// Moving into a folder counts as saving there, like Create: the
-		// Shortcut saves to Inbox first and then moves the bookmark.
+		// Moving into a folder counts as saving there, like Create: a
+		// client can save to Inbox first and then move the bookmark.
 		if p.FolderSet && p.FolderID != nil {
 			if err := rememberFolder(tx, *p.FolderID); err != nil {
 				return err
@@ -528,7 +528,8 @@ func (s *Store) SetIcon(id int64, forKey string, icon string, tile *string) (pre
 
 // Bulk applies one action to many bookmarks: move, trash, restore, pin,
 // unpin or delete. Restoring a bookmark whose URL was saved again leaves it
-// in Trash.
+// in Trash. Delete only removes bookmarks already in Trash; live ones are
+// left alone, so nothing skips Trash by accident.
 func (s *Store) Bulk(ids []int64, action string, folderID *int64) (orphanIcons []string, err error) {
 	now := s.now()
 	err = s.withTx(func(tx *sql.Tx) error {
@@ -563,7 +564,7 @@ func (s *Store) Bulk(ids []int64, action string, folderID *int64) (orphanIcons [
 				err = setPinned(tx, id, false)
 			case "delete":
 				var orphans []string
-				orphans, err = deleteBookmarks(tx, `id = ?`, id)
+				orphans, err = deleteBookmarks(tx, `id = ? AND deleted_at IS NOT NULL`, id)
 				orphanIcons = append(orphanIcons, orphans...)
 			default:
 				return ErrUnknownAction

@@ -153,22 +153,26 @@ export function shareUnlock() { const fid = layers.sheet.fid, f = folderById.get
   openSheet({ type: 'confirm', title: 'Remove the password?', text: 'Anyone with the link can open it.', button: 'Remove password',
     run: async () => { await api('PATCH', `/api/shares/${tok}`, { password: '' }); await load(); announce('Password removed'); setTimeout(() => openSheet({ type: 'share', fid }), reduce() ? 0 : 320); } }); }
 
-/* ---------- API tokens: for a Shortcut, an extension or a script ---------- */
+/* ---------- API tokens: for the extension or a script ---------- */
 export const ago = ts => { const d = Math.max(0, nowS() - ts);
   if (d < 60) return 'just now'; if (d < 3600) return plural(Math.floor(d / 60), 'minute', 'minutes') + ' ago';
   if (dayDiff(ts) === 0) return plural(Math.floor(d / 3600), 'hour', 'hours') + ' ago'; if (dayDiff(ts) === 1) return 'yesterday';
   return dayDiff(ts) < 30 ? dayDiff(ts) + ' days ago' : 'on ' + fmtDay(ts); };
 export function openTokens() { openSheet({ type: 'tokens', list: null, created: null, confirm: null }); tokensLoad(); }
 export async function tokensLoad() { const s = layers.sheet; try { const list = await api('GET', '/api/tokens'); if (layers.sheet !== s) return; s.list = list; s.err = null; }
-  catch (e) { if (e.auth || layers.sheet !== s) return; s.err = 'Could not load the tokens.'; } fillSheet(); }
+  catch (e) { if (e.auth || layers.sheet !== s) return; s.err = 'Could not load the tokens.'; }
+  /* the list arrives while the name may already be typed: the redraw keeps the name, its caret and its focus */
+  const i = sheetEl().querySelector('form[data-token] [name=name]'), v = i ? i.value : '', on = i && document.activeElement === i;
+  fillSheet(); const n = sheetEl().querySelector('form[data-token] [name=name]');
+  if (n && v) n.value = v; if (n && on) { n.focus({ preventScroll: true }); try { n.setSelectionRange(v.length, v.length); } catch (e) { /* ok */ } } }
 export function tokensHTML(s) {
   let h = `<div class="at-head"><h2 class="at-title">API tokens</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
   if (s.created) h += `<div class="tk-new"><span class="sh-lbl">${esc(s.created.name)}</span><div class="share-link"><div class="fld-in tk-val" tabindex="0" aria-label="Token">${esc(s.created.token)}</div><button type="button" class="tbtn" data-a="tk-copy">Copy</button></div>
     <p class="share-meta">Copy it now. It is not shown again.</p></div>`;
-  else h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Shortcut on my phone" autocomplete="off" spellcheck="false" enterkeyhint="done" aria-label="Token name"${isPhone() ? '' : ' data-autofocus'}><button type="submit" class="tbtn">Create</button></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
+  else h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Extension on my laptop" autocomplete="off" spellcheck="false" enterkeyhint="done" aria-label="Token name"${isPhone() ? '' : ' data-autofocus'}><button type="submit" class="tbtn">Create</button></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
   if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
   if (!s.list) return h + `<div class="tk-sec" aria-busy="true"></div>`;
-  if (!s.list.length) return h + `<p class="share-meta tk-sec">A token lets a Shortcut, an extension or a script read your folders and save links. It cannot export, share, lock or delete anything.</p>`;
+  if (!s.list.length) return h + `<p class="share-meta tk-sec">A token lets the extension or a script read your folders and save links. It cannot export, share, lock or delete anything.</p>`;
   return h + `<div class="tk-sec"><span class="sh-lbl">Tokens</span><div class="sh-rows tk-list">` + s.list.map(t => s.confirm === t.id
     ? `<div class="tk-row confirm"><span class="tk-tt"><span class="tk-n">Revoke ${esc(t.name)}?</span><span class="tk-m">Anything using it stops working.</span></span><span class="tk-acts"><button type="button" class="tbtn" data-a="tk-cancel">Cancel</button><button type="button" class="tbtn warn" data-a="tk-revoke-yes" data-id="${t.id}">Revoke</button></span></div>`
     : `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(t.name)}</span><span class="tk-m">Created ${fmtDay(t.created_at)}, ${t.last_used_at ? 'last used ' + ago(t.last_used_at) : 'never used'}</span></span><button type="button" class="tbtn warn" data-a="tk-revoke" data-id="${t.id}" aria-label="Revoke ${esc(t.name)}">Revoke</button></div>`).join('') + `</div></div>`;

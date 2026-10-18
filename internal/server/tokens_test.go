@@ -44,13 +44,13 @@ func TestTokensCreateListDelete(t *testing.T) {
 	e := newEnv(t, Config{})
 	e.login()
 	e.expect("POST", "/api/tokens", map[string]string{"name": "  "}, 400)
-	tok := e.newToken("Shortcut on my phone")
+	tok := e.newToken("Extension on my laptop")
 	body := e.expect("GET", "/api/tokens", nil, 200)
 	if strings.Contains(string(body), tok) || strings.Contains(string(body), `"token"`) {
 		t.Fatalf("token list leaks the value: %s", body)
 	}
 	list := decode[[]tokenJSON](t, body)
-	if len(list) != 1 || list[0].Name != "Shortcut on my phone" || list[0].LastUsedAt != nil {
+	if len(list) != 1 || list[0].Name != "Extension on my laptop" || list[0].LastUsedAt != nil {
 		t.Fatalf("list: %+v", list)
 	}
 	// The value is stored hashed.
@@ -245,16 +245,11 @@ func TestCORSPreflight(t *testing.T) {
 
 func TestExtras(t *testing.T) {
 	e := newEnv(t, Config{})
-	resp := e.get("/extras/save-to-pinned.shortcut")
+	resp := e.get("/extras/pinned-extension.zip")
 	body := readAll(resp)
-	if resp.StatusCode != 200 || resp.Header.Get("Content-Type") != "application/octet-stream" ||
-		!strings.HasPrefix(resp.Header.Get("Content-Disposition"), "attachment") || string(body) != "bplist00" ||
+	if resp.StatusCode != 200 || resp.Header.Get("Content-Type") != "application/zip" ||
+		!strings.HasPrefix(resp.Header.Get("Content-Disposition"), "attachment") || string(body) != "PK\x03\x04" ||
 		resp.Header.Get("Cache-Control") != "no-cache" {
-		t.Errorf("shortcut: %d %v", resp.StatusCode, resp.Header)
-	}
-	resp = e.get("/extras/pinned-extension.zip")
-	readAll(resp)
-	if resp.StatusCode != 200 || resp.Header.Get("Content-Type") != "application/zip" {
 		t.Errorf("zip: %d %v", resp.StatusCode, resp.Header)
 	}
 	for _, p := range []string{"/extras/missing.zip", "/extras/..%2fapp.js", "/extras/"} {
@@ -271,8 +266,8 @@ func TestPatchFolderRemembersFolder(t *testing.T) {
 	e.login()
 	a := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "A", "parent_id": nil}, 201))
 	b := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "B", "parent_id": nil}, 201))
-	tok := e.newToken("shortcut")
-	// Save to Inbox, then move, the way the Shortcut does.
+	tok := e.newToken("script")
+	// Save to Inbox, then move, the way a script can.
 	resp := e.bearer("POST", "/api/bookmarks", tok, map[string]any{"title": "X", "url": "https://example.com/x", "folder_id": nil})
 	created := decode[bookmarkJSON](t, readAll(resp))
 	resp = e.bearer("PATCH", "/api/bookmarks/"+itoa(created.ID), tok, map[string]any{"folder_id": a.ID})

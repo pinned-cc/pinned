@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -291,11 +292,22 @@ func TestBulkAndOrder(t *testing.T) {
 	if gc, _ = s.Bookmark(c.ID); gc.DeletedAt != nil {
 		t.Error("restore failed")
 	}
-	if _, err := s.Bulk([]int64{c.ID}, "delete", nil); err != nil {
+	// Delete skips bookmarks that are not in Trash.
+	if _, err := s.Bulk([]int64{a.ID, c.ID}, "delete", nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Bookmark(c.ID); err != nil {
+		t.Errorf("live bookmark deleted without Trash: %v", err)
+	}
+	s.Bulk([]int64{c.ID}, "trash", nil)
+	if _, err := s.Bulk([]int64{a.ID, c.ID}, "delete", nil); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.Bookmark(c.ID); !errors.Is(err, ErrNotFound) {
-		t.Error("delete failed")
+		t.Error("delete from Trash failed")
+	}
+	if ga, err := s.Bookmark(a.ID); err != nil || ga.DeletedAt != nil {
+		t.Errorf("live bookmark touched by delete: %+v %v", ga, err)
 	}
 	if _, err := s.Bulk([]int64{a.ID}, "explode", nil); err == nil {
 		t.Error("unknown action accepted")
@@ -517,5 +529,27 @@ func TestSetHideRecent(t *testing.T) {
 	}
 	if _, err := s.SetHideRecent(999, true); !errors.Is(err, ErrNotFound) {
 		t.Errorf("missing folder: %v", err)
+	}
+}
+
+func TestOpenRefusesNewerSchema(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "test.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newer := len(migrations) + 1
+	if _, err := s.db.Exec(`UPDATE schema_version SET version = ?`, newer); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	_, err = Open(path)
+	var e *NewerSchemaError
+	if !errors.As(err, &e) || e.Have != newer || e.Know != len(migrations) {
+		t.Fatalf("newer schema opened: %v", err)
+	}
+	want := fmt.Sprintf("database was written by a newer Pinned (schema %d); this version knows %d. Update the image or restore a backup.", newer, len(migrations))
+	if err.Error() != want {
+		t.Errorf("message %q", err)
 	}
 }

@@ -6,7 +6,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	_ "modernc.org/sqlite"
 )
@@ -25,6 +27,22 @@ var (
 
 // MaxDepth is how deep folders can nest. Top level folders are depth 1.
 const MaxDepth = 32
+
+// Longer bookmark titles and folder names are cut to these lengths, in
+// characters.
+const (
+	MaxTitle      = 500
+	MaxFolderName = 200
+)
+
+// clip trims s and cuts it to at most n characters.
+func clip(s string, n int) string {
+	s = strings.TrimSpace(s)
+	if utf8.RuneCountInString(s) > n {
+		s = strings.TrimSpace(string([]rune(s)[:n]))
+	}
+	return s
+}
 
 // DuplicateError is returned when a live bookmark already has the same url_key.
 type DuplicateError struct{ Existing Bookmark }
@@ -55,6 +73,10 @@ func Open(path string) (*Store, error) {
 	s := &Store{db: db, Now: time.Now}
 	if err := s.migrate(); err != nil {
 		db.Close()
+		var newer *NewerSchemaError
+		if errors.As(err, &newer) {
+			return nil, err
+		}
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 	return s, nil
@@ -130,6 +152,15 @@ var migrations = []string{
 	`ALTER TABLE folders ADD COLUMN hide_recent INTEGER NOT NULL DEFAULT 0;`,
 }
 
+// NewerSchemaError means the database was written by a later version. That
+// version may have changed tables this one would misread, so it does not
+// start at all.
+type NewerSchemaError struct{ Have, Know int }
+
+func (e *NewerSchemaError) Error() string {
+	return fmt.Sprintf("database was written by a newer Pinned (schema %d); this version knows %d. Update the image or restore a backup.", e.Have, e.Know)
+}
+
 func (s *Store) migrate() error {
 	if _, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)`); err != nil {
 		return err
@@ -142,6 +173,9 @@ func (s *Store) migrate() error {
 		}
 	} else if err != nil {
 		return err
+	}
+	if version > len(migrations) {
+		return &NewerSchemaError{Have: version, Know: len(migrations)}
 	}
 	for i := version; i < len(migrations); i++ {
 		tx, err := s.db.Begin()

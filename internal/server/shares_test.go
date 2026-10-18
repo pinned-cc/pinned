@@ -273,8 +273,8 @@ func TestSharePassword(t *testing.T) {
 	if code := w.unlock(sh2.Token, "x"); code != 429 {
 		t.Errorf("5th wrong unlock: %d", code)
 	}
-	// Only failures count: the right password still unlocks.
-	if code := w.unlock(sh2.Token, "new one here"); code != 204 {
+	// During the wait the password is not checked: the right one waits too.
+	if code := w.unlock(sh2.Token, "new one here"); code != 429 {
 		t.Errorf("right share password during the wait: %d", code)
 	}
 	if code := w.unlock("unknown", "x"); code != 404 {

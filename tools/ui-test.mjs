@@ -51,7 +51,7 @@ const T = {
   lockPw: 'lockpw-ui',
 };
 const SOURCE = 'https://github.com/pinned-cc/pinned';
-const TOKENS_EMPTY = 'A token lets a Shortcut, an extension or a script read your folders and save links. It cannot export, share, lock or delete anything.';
+const TOKENS_EMPTY = 'A token lets the extension or a script read your folders and save links. It cannot export, share, lock or delete anything.';
 
 let failures = 0, passes = 0, beforeEach = null;
 async function check(label, fn) {
@@ -64,7 +64,8 @@ async function until(page, fn, arg, what, timeout = 6000) {
   try { await page.waitForFunction(fn, arg, { timeout, polling: 50 }); } catch { throw new Error('timed out: ' + what); }
 }
 const assert = (ok, msg) => { if (!ok) throw new Error(msg); };
-async function shot(page, name) { if (!shotsDir) return; await page.mouse.move(1, 1).catch(() => {}); await page.waitForTimeout(350); await page.screenshot({ path: join(shotsDir, name + '.png') }); }
+/* the mouse moves out of the way first, unless a drag holds it (moving it would carry the drag off its target) */
+async function shot(page, name, holding) { if (!shotsDir) return; if (!holding) await page.mouse.move(1, 1).catch(() => {}); await page.waitForTimeout(350); await page.screenshot({ path: join(shotsDir, name + '.png') }); }
 
 /* the JSON API from inside the page, with the session and the CSRF header */
 const apiIn = (page, method, path, body) => page.evaluate(async ([m, p, b]) => {
@@ -338,13 +339,13 @@ async function desktop(browser, engine) {
   });
 
   const menuLabels = async () => (await page.locator('.menu [role="menuitem"]').allTextContents()).map(x => x.trim()).join(',');
-  await check('right click on a card: Open, Rename and Pin, then Move, Share and Trash; the three dots on a card show the same', async () => {
+  await check('right click on a card: Move, Copy, Share and Trash, then Open, Rename and Pin, as the selection bar and its More; the three dots on a card show the same', async () => {
     await page.click('#side [data-view="inbox"]'); await visible(page.locator('#body article.tile[data-id]'));
     const card = page.locator('#body article.tile[data-id]').first();
     await card.locator('.t-title').click({ button: 'right' }); await visible(page.locator('.menu'));
     const labels = await menuLabels();
-    assert(/^Open,Rename,(Pin|Unpin),Move,Copy,Share,Trash$/.test(labels), 'right click menu: ' + labels);
-    assert(await page.locator('.menu hr').count() === 2, 'the groups are not split');
+    assert(/^Move,Copy,Share,Trash,Open,Rename,(Pin|Unpin)$/.test(labels), 'right click menu: ' + labels);
+    assert(await page.locator('.menu hr').count() === 1, 'the bar actions and the More actions are not split');
     await shot(page, `${engine}-desktop-right-click`);
     await page.keyboard.press('Escape'); await gone(page.locator('.menu'));
     await card.hover(); await card.locator('[data-a="more"]').click(); await visible(page.locator('.menu'));
@@ -391,6 +392,14 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape');
     await until(page, () => !document.querySelector('#pal'), null, 'palette closed');
     await page.click('#side [data-view="inbox"]');
+  });
+
+  await check('the palette shows Recent with no query; a typed query with no hit shows only No matches, Escape brings Recent back', async () => {
+    await page.click('#q'); await visible(page.locator('#pal.open #pal-rec .pal-recent'));
+    await page.keyboard.type('zq-no-such-link-' + stamp);
+    await visible(page.locator('#pal-list .pal-none', { hasText: 'No matches.' })); await gone(page.locator('#pal-rec'));
+    await page.keyboard.press('Escape'); await visible(page.locator('#pal-rec .pal-recent'));
+    await page.keyboard.press('Escape'); await until(page, () => !document.querySelector('#pal'), null, 'palette closed');
   });
 
   await check('Cmd K palette: grouped results, Enter opens, Escape closes', async () => {
@@ -467,7 +476,7 @@ async function desktop(browser, engine) {
 
   await check('API tokens: create, shown once, copy, revoke with confirm', async () => {
     await openFoot(page); await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
-    await visible(page.locator('#sheet .at-title', { hasText: 'API tokens' }));
+    await visible(page.locator('#sheet .at-title', { hasText: 'API tokens' })); await visible(page.locator('#sheet .tk-sec:not([aria-busy])'));
     await page.fill('#sheet form[data-token] input[name=name]', T.token);
     await page.press('#sheet form[data-token] input[name=name]', 'Enter');
     await until(page, () => /^tk_/.test((document.querySelector('#sheet .tk-val') || {}).textContent || ''), null, 'token value');
@@ -597,7 +606,7 @@ async function desktop(browser, engine) {
       await visible(page.locator('#dbulk .bulk')); const g = await state();
       assert(!g.over, w + ': the bar runs over ' + JSON.stringify(g));
       if (w >= 800) assert(!g.ic.length, w + ': words folded ' + g.ic);
-      else { const order = ['bulk-copy', 'bulk-share', 'sel-all', 'bulk-move', 'bulk-trash']; assert(g.ic.length && g.ic.every(a => order.indexOf(a) < g.ic.length) && !g.ic.includes('bulk-trash'), '720: folded ' + g.ic); }
+      else { const order = ['bulk-share', 'sel-all', 'bulk-copy', 'bulk-move', 'sel-more', 'bulk-trash']; assert(g.ic.length && g.ic.every(a => order.indexOf(a) < g.ic.length) && !g.ic.includes('bulk-trash'), '720: folded ' + g.ic); }
       await page.keyboard.press('Escape'); await gone(page.locator('#dbulk .bulk')); }
     await page.setViewportSize({ width: 1440, height: 900 }); await visible(page.locator('#side .si'));
   });
@@ -778,6 +787,20 @@ async function phone(browser, engine) {
     await scrimClose();
   });
 
+  await check('a sheet over the selection reads solid: the bar steps out while it is open and comes back after', async () => {
+    await page.goto(BASE + '/'); await page.tap('.ptbar.tabs [data-tab="inbox"]'); await visible(page.locator('#pmain article.pt'));
+    await hold(`#pmain article.pt[data-id="${await page.getAttribute('#pmain article.pt >> nth=0', 'data-id')}"] .pt-in`); await visible(page.locator('#pbulkwrap .pbulk'));
+    await page.tap('#pbulkwrap [data-a="sel-all"]'); await page.tap('#pbulkwrap [data-a="bulk-move"]'); await sheetOpen(page); await page.waitForTimeout(400);
+    const g = await page.evaluate(() => { const w = getComputedStyle(document.getElementById('pbulkwrap')), bg = getComputedStyle(document.getElementById('sheet')).backgroundColor, a = bg.match(/rgba?\(([^)]+)\)/)[1].split(',').map(Number);
+      return { op: w.opacity, vis: w.visibility, alpha: a.length > 3 ? a[3] : 1 }; });
+    assert(g.op === '0' && g.vis === 'hidden', 'the selection bar shows under the sheet: ' + JSON.stringify(g));
+    assert(g.alpha >= .9, 'the sheet is see-through: ' + g.alpha);
+    await shot(page, `${engine}-phone-move-sheet`);
+    await scrimClose(); await page.waitForTimeout(300);
+    assert(await page.evaluate(() => { const w = getComputedStyle(document.getElementById('pbulkwrap')); return w.opacity === '1' && w.visibility === 'visible'; }), 'the bar did not come back');
+    await page.tap('#pmain [data-a="select"][aria-pressed="true"]'); await gone(page.locator('#pbulkwrap .pbulk'));
+  });
+
   await check('hold a card and move it: it lifts and drops on a folder, no selecting', async () => {
     const seedF = (await apiIn(page, 'GET', '/api/state')).data.folders.find(f => f.name === 'ui-test seed');
     const sub = (await apiIn(page, 'POST', '/api/folders', { name: 'ui-test drop', parent_id: seedF.id })).data;
@@ -902,6 +925,29 @@ async function phone(browser, engine) {
     await toastWith(page, 'Moved to ui-test gdrop');
     assert((await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === b.id).folder_id === f.id, 'not moved into the folder');
     assert(!(await page.locator('#pbulkwrap .pbulk').count()) && !(await page.locator('#layer.open').count()), 'selecting or a sheet started after the drag');
+    await apiIn(page, 'PATCH', `/api/bookmarks/${b.id}`, { folder_id: from }); await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
+  });
+  /* the same carry with a real finger: Chromium's touch input runs through its scroll handling, so a drag that loses its
+     touch target in the view swap is cancelled there. WebKit has no way to drive real touch from here */
+  if (engine === 'chromium') await check('home gallery at 390, real touch: a card carried over the Folders tab survives the swap and drops on a folder, the page holds still', async () => {
+    const st = (await apiIn(page, 'GET', '/api/state')).data, b = st.bookmarks.find(x => x.title === 'ui-test gal 1'), from = b.folder_id;
+    const f = (await apiIn(page, 'POST', '/api/folders', { name: 'ui-test tdrop', parent_id: null })).data;
+    await page.goto(BASE + '/'); await visible(page.locator(galCard(b.id)));
+    await page.evaluate(() => { window.__pc = 0; window.__sy = new Set(); document.addEventListener('pointercancel', () => { __pc++; }, true); addEventListener('scroll', () => __sy.add(scrollY)); });
+    const cdp = await ctx.newCDPSession(page), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+    const mid = async sel => { const r = await page.locator(sel).first().boundingBox(); return [r.x + r.width / 2, r.y + r.height / 2]; };
+    let [x, y] = await mid(galCard(b.id)); const y0 = await page.evaluate(() => scrollY);
+    const leg = async ([tx, ty]) => { const x0 = x, y0 = y; for (let i = 1; i <= 14; i++) { x = x0 + (tx - x0) * i / 14; y = y0 + (ty - y0) * i / 14; await touch('touchMove', [{ x, y }]); await page.waitForTimeout(20); } };
+    await touch('touchStart', [{ x, y }]); await page.waitForTimeout(600);
+    await leg(await mid('.ptbar.tabs [data-tab="folders"]')); await page.waitForTimeout(700);
+    await visible(page.locator(`#pmain .fscreen .ftile[data-ftile="${f.id}"]`));
+    await leg(await mid(`#pmain .fscreen .ftile[data-ftile="${f.id}"]`)); await page.waitForTimeout(80);
+    const mid1 = await page.evaluate(() => ({ ghost: !!document.querySelector('.ghost'), on: !!document.querySelector('.ftile.drop-on'), pc: __pc, sy: [...__sy] }));
+    await touch('touchEnd', []); await cdp.detach();
+    assert(mid1.ghost && mid1.on && !mid1.pc, 'the drag did not survive the swap: ' + JSON.stringify(mid1));
+    assert(mid1.sy.every(v => v === y0), 'the page scrolled during the drag: ' + mid1.sy.join(','));
+    await toastWith(page, 'Moved to ui-test tdrop');
+    assert((await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === b.id).folder_id === f.id, 'not moved into the folder');
     await apiIn(page, 'PATCH', `/api/bookmarks/${b.id}`, { folder_id: from }); await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
   });
   await check('home gallery at 390: a card carried onto the Trash row of the Folders tab goes to Trash with Undo', async () => {
@@ -1237,7 +1283,7 @@ async function narrow(browser, engine) {
     const a = await centre(page.locator('#pmain .fscreen .ftile', { hasText: 'ui-test fdrag' })), b = await centre(page.locator('#pmain .ftrash'));
     await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(a.x + 20, a.y + 20, { steps: 4 }); await page.mouse.move(b.x, b.y, { steps: 12 });
     await visible(page.locator('#pmain .ftrash.drop-on'));
-    await shot(page, `${engine}-700-folder-over-trash`);
+    await shot(page, `${engine}-700-folder-over-trash`, true);
     await page.mouse.up(); await sheetOpen(page);
     assert(/Delete ui-test fdrag\?/.test(await page.textContent('#sheet')), 'no delete confirm for the folder');
     await page.click('#sheet [data-a="confirm"]'); await sheetClosed(page);
@@ -1312,7 +1358,7 @@ async function narrow(browser, engine) {
     const a = await centre(c), b = await centre(page.locator('#side .si.trash'));
     await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(a.x + 20, a.y + 10, { steps: 4 }); await page.mouse.move(b.x, b.y, { steps: 14 });
     await visible(page.locator('#side .si.trash.drop-on'));
-    await shot(page, `${engine}-1440-card-over-trash`);
+    await shot(page, `${engine}-1440-card-over-trash`, true);
     await page.mouse.up(); await toastWith(page, 'Moved to Trash');
     const s = (await apiIn(page, 'GET', '/api/state')).data; assert(s.bookmarks.find(x => x.id === made.id).deleted_at, 'the card is not in Trash');
     await page.click('#toasts .toast button', { timeout: 3000 }).catch(() => {});
@@ -1427,6 +1473,7 @@ async function barParity(browser, engine) {
     if (!noShare) for (const w of [390, 700, 1024, 1440]) await check(`${w}: Select all, Move, Copy, Share, Trash and More, in that order with those words; More holds the same items`, async () => {
       const { phone } = await pick(w); const got = await bar(); assert(got === want, w + ': ' + got);
       if (phone) for (const l of ['Copy', 'Share', 'Trash', 'More']) assert(await page.locator('#pbulkwrap .bb', { hasText: l }).count() === 1, w + ': no visible word ' + l);
+      else for (const l of ['Move', 'Copy', 'Share', 'Trash', 'More']) assert(await page.locator('#dbulk .btn:not(.ic) .t:visible', { hasText: new RegExp('^' + l + '$') }).count() === 1, w + ': no visible word ' + l);
       await page.click(phone ? '#pbulkwrap [data-a="sel-more"]' : '#dbulk [data-a="sel-more"]');
       const items = phone ? (await page.locator('#sheet .sh-row').allTextContents()) : (await page.locator('.menu [role^=menuitem]').allTextContents());
       assert(items.map(x => x.trim()).join(',').match(/^(Pin|Unpin)$/), w + ': More holds ' + items.join(','));
