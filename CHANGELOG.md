@@ -2,9 +2,9 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
-## Unreleased
+## 0.1.0, 2026-10-18
 
-What exists on 2026-10-13. Nothing has been released yet.
+The first release.
 
 ### Bookmarks
 
@@ -12,10 +12,12 @@ What exists on 2026-10-13. Nothing has been released yet.
 - An Inbox for links saved without a folder.
 - A Trash that keeps bookmarks for 30 days, with restore, permanent delete and Empty trash.
 - A pinned row with its own order.
-- Recent: bookmarks opened in the last 14 days.
+- A Dashboard with the links you opened lately, under Today, Yesterday, This week and Earlier.
 - Grid and list view. Sort by your own order, name, date saved or date opened.
 - Drag to reorder bookmarks and folders, and to move bookmarks into a folder.
-- Select several bookmarks to move or trash them, with Undo after Trash.
+- Select bookmarks or folders the same way on a phone and a computer: hold a card and let go, Shift click, Cmd A or a box drawn around them. One selection bar everywhere with Move, Copy, Share and Trash, with Undo after Trash. A tap on an empty spot stops selecting.
+- Drop bookmarks or folders on Trash.
+- One search: at the top on a computer, at the bottom on a phone, and the words you typed stay when the window changes size.
 - Search over titles and addresses, including host and port, and a palette on Cmd K with results grouped by folder.
 - Keyboard: `/` and Cmd K search, arrows move, Enter opens, Delete trashes, Escape clears, Cmd Z undoes.
 - Host plus port is the identity of a link, so services on one address with different ports are separate bookmarks. Saving a link that exists shows where it is saved.

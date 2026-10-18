@@ -28,7 +28,7 @@ Pinned then answers on port 9095. Put HTTPS in front before you use it from outs
 
 ### By hand
 
-The image is published at `ghcr.io/pinned-cc/pinned` with the first release. Until then there is nothing to pull: build it yourself, see Building from source.
+The image is published at `ghcr.io/pinned-cc/pinned`, for amd64 and arm64.
 
 1. Make a folder for it and a data folder that the container user (1000) can write:
 

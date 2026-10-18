@@ -1,14 +1,16 @@
 /* The small popup menu on desktop (the phone shows the same rows in a sheet). */
 import { actions, startRename } from './actions.js';
+import { render } from './render.js';
 import { openSheet } from './sheets.js';
-import { layers, ui } from './state.js';
+import { bm, layers, ui } from './state.js';
 import { esc, ic } from './util.js';
 
 /* ================= menus (desktop) ================= */
+export const menuHTML = items => items.map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="${it.check != null ? 'menuitemradio' : 'menuitem'}"${it.check != null ? ` aria-checked="${!!it.check}"` : ''} data-mi="${i}"${it.warn ? ' class="warn"' : ''}>${it.icon ? ic(it.icon) : ''}${esc(it.label)}${it.check ? `<span class="ck">${ic('check', 's16')}</span>` : ''}</button>`).join('');
 export function openMenu(anchor, items, at) {
   closeMenu();
   const m = document.createElement('div'); m.className = 'menu'; m.setAttribute('role', 'menu');
-  m.innerHTML = items.map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="${it.check != null ? 'menuitemradio' : 'menuitem'}"${it.check != null ? ` aria-checked="${!!it.check}"` : ''} data-mi="${i}"${it.warn ? ' class="warn"' : ''}>${it.icon ? ic(it.icon) : ''}${esc(it.label)}${it.check ? `<span class="ck">${ic('check', 's16')}</span>` : ''}</button>`).join('');
+  m.innerHTML = menuHTML(items);
   document.body.appendChild(m);
   const W = m.offsetWidth, H = m.offsetHeight; let x, y;
   if (at) { x = at.x; y = at.y; } else { const r = anchor.getBoundingClientRect(); x = r.right - W; y = r.bottom + 6; if (y + H > innerHeight - 8) y = r.top - H - 6; }
@@ -28,11 +30,27 @@ export function openMenu(anchor, items, at) {
 export function closeMenu(refocus) { if (!layers.menu) return; const { el, anchor } = layers.menu; layers.menu = null; el.remove();
   if (anchor && anchor.isConnected) { anchor.removeAttribute('aria-expanded'); if (refocus) anchor.focus(); } }
 export function menuOrSheet(anchor, items, head) { if (ui.mode === 'phone' || !anchor) openSheet({ type: 'rows', head, rows: items }); else if (layers.menu && layers.menu.anchor === anchor) closeMenu(); else openMenu(anchor, items); }
-export const tileMenu = b => [
-  { icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
-  { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => actions.pin(b) },
+/* what acts on one card, in one order everywhere: the right click menu, the three dots on a card, the sheet for a
+   card that cannot be selected; the first group is also what the selection bar's three dots hold for one card */
+export const oneCardItems = b => [
+  { icon: 'open', label: 'Open', run: () => actions.open(b) },
   { icon: 'edit', label: 'Rename', run: () => startRename(b.id) },
-  '-', { icon: 'trash', label: 'Trash', warn: true, run: () => actions.trash([b.id]) }];
+  { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => actions.pin(b) }];
+export const tileMenu = b => b.deleted_at
+  ? [{ icon: 'restore', label: 'Restore', run: () => actions.restore([b.id]) }, '-', { icon: 'trash', label: 'Delete now', warn: true, run: () => actions.purge([b.id]) }]
+  : [...oneCardItems(b), '-',
+    { icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
+    { icon: 'link', label: 'Copy', run: () => actions.copy(b) },
+    { icon: 'share', label: 'Share', run: () => actions.share(b) },
+    '-', { icon: 'trash', label: 'Trash', warn: true, run: () => actions.trash([b.id]) }];
+/* the selection bar's three dots: what the bar has no button for. Open and Rename only with one card selected */
+export function selItems() {
+  const L = [...ui.picked].map(bm).filter(b => b && !b.deleted_at); if (!L.length) return [];
+  const done = run => () => { ui.selecting = false; ui.picked.clear(); ui.anchor = null; render(); run(); };
+  if (L.length === 1) return oneCardItems(L[0]).map(it => ({ ...it, run: done(it.run) }));
+  const on = L.some(b => !b.pinned);
+  return [{ icon: 'pin', label: on ? 'Pin' : 'Unpin', run: done(() => actions.pinMany(L.map(b => b.id), on)) }];
+}
 
 
 /* listeners on document and window, registered once by app.js */

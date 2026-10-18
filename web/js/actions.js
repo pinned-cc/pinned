@@ -1,14 +1,13 @@
 /* What a click, a submit or an input does: bookmark and folder actions, menus of actions, navigation between
    views, and the document level click, submit and input handlers. */
 import { api } from './api.js';
-import { closeMenu, menuOrSheet, openMenu, tileMenu } from './menu.js';
+import { closeMenu, menuOrSheet, openMenu, selItems, tileMenu } from './menu.js';
 import { openPalette } from './palette.js';
-import { phoneMenu } from './phone.js';
-import { deskBody, render, renderList, renderPhoneMain, switchLayout } from './render.js';
-import { exitSelect, pickRange, toggle } from './select.js';
+import { deskBody, render, switchLayout } from './render.js';
+import { FPICK, emptySpace, exitSelect, pickRange, selSync, toggle } from './select.js';
 import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
-import { SORTS, SOURCE_URL, bm, chain, count, data, descSet, fid, folderById, hidesRecent, isLocked, layers, listFor, live, load, loadQuiet, lockedAt, ownLock, run, setSort, ui } from './state.js';
-import { announce, resultsText, toast } from './toast.js';
+import { FSORTS, SORTS, bm, chain, count, data, descSet, fid, folderById, foldersSel, hidesRecent, isLocked, layers, live, load, loadQuiet, lockedAt, ownLock, run, selectables, setFsort, setSort, ui } from './state.js';
+import { announce, toast } from './toast.js';
 import { byId, copy, errorText, plural, reduce, store, wait } from './util.js';
 
 /* ================= bookmark actions ================= */
@@ -18,10 +17,11 @@ export const actions = {
   open(b) { window.open(b.url, '_blank', 'noopener'); actions.opened(b.id); },
   opened(id) { fetch(`/api/bookmarks/${id}/open`, { method: 'POST', credentials: 'same-origin', keepalive: true, headers: { 'X-Requested-With': 'fetch' } }).catch(() => {}); },
   async share(b) {
-    /* the system share sheet wherever the browser has one; a copy and a toast where it does not */
+    /* the system share sheet wherever the browser has one; a new email with the address where it does not */
     if (navigator.share) { try { await navigator.share({ title: b.title, url: b.url }); } catch (e) { /* cancelled */ } return; }
-    if (await copy(b.url)) toast('Copied'); else toast('Could not copy the link.');
+    window.open('mailto:?subject=' + encodeURIComponent(b.title) + '&body=' + encodeURIComponent(b.url), '_self');
   },
+  async copy(b) { toast(await copy(b.url) ? 'Copied' : 'Could not copy the link.'); },
   async trash(ids) {
     const [r] = await Promise.all([ids.length === 1 ? api('DELETE', `/api/bookmarks/${ids[0]}`).then(() => true, e => e) : api('POST', '/api/bookmarks/bulk', { ids, action: 'trash' }).then(() => true, e => e), leave(ids)]);
     ids.forEach(id => ui.picked.delete(id));
@@ -33,6 +33,7 @@ export const actions = {
     if (r.ok) announce(ids.length === 1 ? 'Restored' : `${ids.length} restored`); return r; },
   async purge(ids) { await leave(ids); return run(ids.length === 1 ? api('DELETE', `/api/bookmarks/${ids[0]}?permanent=1`) : api('POST', '/api/bookmarks/bulk', { ids, action: 'delete' })); },
   pin(b) { return run(api('PATCH', `/api/bookmarks/${b.id}`, { pinned: !b.pinned })); },
+  pinMany(ids, on) { return run(ids.reduce((p, id) => p.then(() => api('PATCH', `/api/bookmarks/${id}`, { pinned: on })), Promise.resolve())); },
   move(ids, folder) { return run(ids.length === 1 ? api('PATCH', `/api/bookmarks/${ids[0]}`, { folder_id: folder }) : api('POST', '/api/bookmarks/bulk', { ids, action: 'move', folder_id: folder })); },
   rename(b, title) { return run(api('PATCH', `/api/bookmarks/${b.id}`, { title })); },
   async nudge(b, d) {
@@ -42,6 +43,15 @@ export const actions = {
     return run(api('PUT', '/api/bookmarks/order', { folder_id: fid(b), ids: sib.map(x => x.id) }));
   }
 };
+/* the picked links' addresses, one per line */
+const pickedUrls = () => [...ui.picked].map(bm).filter(b => b && !b.deleted_at).map(b => b.url);
+/* Copy puts them on the clipboard, at every width */
+export async function bulkCopy() { const L = pickedUrls(); if (!L.length) return;
+  toast(await copy(L.join('\n')) ? (L.length === 1 ? 'Copied' : `${L.length} links copied`) : 'Could not copy the links.'); }
+/* Share hands them to the system share sheet; a browser without one starts a new email with them in the body */
+export async function bulkShare() { const L = pickedUrls(); if (!L.length) return; const text = L.join('\n');
+  if (navigator.share) { try { await navigator.share({ text }); } catch (e) { /* cancelled */ } return; }
+  window.open('mailto:?body=' + encodeURIComponent(text), '_self'); }
 export function startRename(id) {
   if (ui.mode === 'phone') { renameSheet(bm(id)); return; }
   ui.renaming = id; deskBody();
@@ -66,8 +76,17 @@ export function deleteFolder(id) { const f = folderById.get(id); if (!f) return;
   const text = (subs ? `Its ${plural(subs, 'subfolder goes', 'subfolders go')} too. ` : '') + (n ? `${plural(n, 'bookmark goes', 'bookmarks go')} to Trash.` : 'It holds no bookmarks.');
   openSheet({ type: 'confirm', title: `Delete ${f.name}?`, text, button: 'Delete folder', run: async () => {
     const gone = descSet(id);
-    try { await api('DELETE', `/api/folders/${id}`); } catch (e) { if (e.status === 409) { toast('Unlock the folders inside first'); return; } throw e; } if (typeof ui.view === 'number' && gone.has(ui.view)) ui.view = 'inbox';
+    try { await api('DELETE', `/api/folders/${id}`); } catch (e) { if (e.status === 409) { toast('Unlock the folders inside first'); return; } throw e; } if (typeof ui.view === 'number' && gone.has(ui.view)) ui.view = 'dashboard';
     await load(); if (n) toast(`${plural(n, 'bookmark', 'bookmarks')} moved to Trash`); } }); }
+/* folders picked on the Folders screen or carried to Trash: one confirm with the count, then each goes as a single delete would */
+export function deleteFolders(ids) { ids = ids.filter(id => folderById.has(id)); if (!ids.length) return; const one = ids.length === 1;
+  const all = new Set(ids.flatMap(id => [...descSet(id)])), n = live().filter(b => fid(b) != null && all.has(b.folder_id)).length, subs = all.size - ids.length;
+  const text = (subs ? `${one ? 'Its' : 'Their'} ${plural(subs, 'subfolder goes', 'subfolders go')} too. ` : '') + (n ? `${plural(n, 'bookmark goes', 'bookmarks go')} to Trash.` : one ? 'It holds no bookmarks.' : 'They hold no bookmarks.');
+  openSheet({ type: 'confirm', title: one ? `Delete ${folderById.get(ids[0]).name}?` : `Delete ${ids.length} folders?`, text, button: one ? 'Delete folder' : 'Delete folders', run: async () => {
+    let held = 0; for (const id of ids) { try { await api('DELETE', `/api/folders/${id}`); } catch (e) { if (e.status === 409) { held++; continue; } await load(); throw e; } }
+    if (typeof ui.view === 'number' && all.has(ui.view)) ui.view = 'dashboard';
+    ui.selecting = false; ui.picked.clear(); ui.anchor = null; await load();
+    if (held) toast('Unlock the folders inside first'); else if (n) toast(`${plural(n, 'bookmark', 'bookmarks')} moved to Trash`); } }); }
 export function emptyTrash() { const n = count('trash'); if (!n) return;
   openSheet({ type: 'confirm', title: 'Empty trash?', text: `${plural(n, 'bookmark', 'bookmarks')} will be deleted for good.`, button: 'Empty trash',
     run: async () => { await api('DELETE', '/api/trash'); await load(); } }); }
@@ -97,17 +116,15 @@ export const recentItems = id => { const f = folderById.get(id); if (!f) return 
   return [{ icon: 'clock', label: f.hide_recent ? 'Show in Recent' : 'Hide from Recent', run: () => setHideRecent(id, !f.hide_recent) }]; };
 export async function setHideRecent(id, on) { const r = await run(api('PATCH', `/api/folders/${id}`, { hide_recent: on })); if (r.ok) toast(on ? 'Hidden from Recent' : 'Shown in Recent'); }
 /* relock at once; if the folder is on screen, back to Inbox */
-export async function relock(id) { if (lockedAt(ui.view) || (typeof ui.view === 'number' && chain(ui.view).some(f => f.id === id))) ui.view = 'inbox';
+export async function relock(id) { if (lockedAt(ui.view) || (typeof ui.view === 'number' && chain(ui.view).some(f => f.id === id))) ui.view = 'dashboard';
   const r = await run(api('POST', `/api/folders/${id}/relock`)); render(); if (r.ok) announce('Folder locked'); }
 export const sortItems = () => Object.keys(SORTS).map(k => ({ label: SORTS[k], check: ui.sort === k, run: () => { setSort(k); render(); } }));
-export const homeItems = () => [
-  { icon: 'folder-plus', label: 'New folder', run: () => newFolder(null) },
-  { icon: 'import', label: 'Import', run: () => byId('import-file').click() },
-  { icon: 'export', label: 'Export', run: () => { location.href = '/api/export'; } },
-  { icon: 'key', label: 'API tokens', run: openTokens },
-  { icon: 'all', label: 'Save button', run: () => { location.href = '/bookmarklet'; } },
-  { icon: 'logout', label: 'Log out', run: logout },
-  { icon: 'open', label: 'Source', href: SOURCE_URL, run: () => {} }];
+export const fsortItems = () => Object.keys(FSORTS).map(k => ({ label: FSORTS[k], check: ui.fsort === k, run: () => { setFsort(k); render(); } }));
+/* the orders open as a small menu under the control on both layouts; on the phone it starts at the control's left edge */
+export function sortMenu(a, items) {
+  if (layers.menu && layers.menu.anchor === a) { closeMenu(); return; }
+  const r = a.getBoundingClientRect(); openMenu(a, items, ui.mode === 'phone' ? { x: r.left, y: r.bottom + 4 } : undefined);
+}
 export async function logout() { try { await api('POST', '/api/logout'); } catch (e) { /* go anyway */ } location.href = '/login'; }
 export async function doImport(file) {
   if (!file) return; const fd = new FormData(); fd.append('file', file);
@@ -120,17 +137,17 @@ export function goView(v) {
   if (v === 'settings' && ui.tokenCount == null) api('GET', '/api/tokens').then(l => { ui.tokenCount = l.length; if (ui.view === 'settings') render(); }).catch(() => {});
   const lk = lockedAt(v); if (lk) { openSheet({ type: 'unlock', fid: lk.id, to: v }); return; }
   ui.selecting = false; ui.picked.clear(); closeMenu();
-  if (ui.mode === 'phone') { ui.view = v; ui.q = ''; const q = byId('q'); if (q) q.value = ''; render(); window.scrollTo(0, 0); return; }
+  if (ui.mode === 'phone') { ui.view = v; render(); window.scrollTo(0, 0); return; }
   ui.view = v; render(); const c = byId('content'); if (c) c.scrollTop = 0;
 }
 /* ================= events (app) ================= */
 export function onClick(e) {
   const t = e.target;
   if (t.closest('.menu')) return;
-  /* select mode: a click on empty space in the content clears it, like clicking the desktop */
-  if (ui.mode === 'desk' && ui.selecting && t.closest('#content') && !t.closest('article, button, a, input, label, .tb, .head, #dockwrap')) { exitSelect(); return; }
+  /* select mode: a click or tap on empty space clears it, like clicking the desktop, at every width */
+  if (ui.selecting && emptySpace(t)) { exitSelect(); return; }
   const row = t.closest('[data-row]');
-  if (row && layers.sheet && layers.sheet.rows) { const r = layers.sheet.rows[+row.dataset.row]; if (r && !r.disabled) { if (layers.sheet.type === 'rows') closeSheet(); r.run(); } return; }
+  if (row && layers.sheet && layers.sheet.rows) { const r = layers.sheet.rows[+row.dataset.row]; if (r && !r.disabled) { if (layers.sheet.type === 'rows' || layers.sheet.type === 'acts') closeSheet(); r.run(); } return; }
   const dest = t.closest('[data-dest]');
   if (dest && layers.sheet) { const raw = dest.dataset.dest;
     if (layers.sheet.type === 'save') { const id = +raw; layers.save.folder = id; layers.save.recent = [id, ...layers.save.recent.filter(x => x !== id)].slice(0, 3); layers.save.picker = false; layers.save.nf = false; fillSheet(); return; }
@@ -139,23 +156,30 @@ export function onClick(e) {
   }
   const pk = t.closest('[data-pick]'); if (pk && layers.sheet && layers.save) { layers.save.folder = +pk.dataset.pick; fillSheet(); return; }
   const lay = t.closest('[data-layout]'); if (lay) { if (lay.dataset.layout !== ui.layout) switchLayout(lay.dataset.layout); return; }
+  /* the Folders screen picks folders: a click while selecting, Shift click for a range, Cmd click to toggle */
+  const ft = foldersSel() && t.closest('#app .fscreen .ftile[data-ftile]');
+  if (ft && (ui.selecting || e.shiftKey || e.metaKey || e.ctrlKey)) { e.preventDefault(); if (!ft.matches(FPICK)) return; const id = +ft.dataset.ftile;
+    if (e.shiftKey && ui.anchor != null && ui.selecting) { pickRange(ui.anchor, id); ui.selecting = true; selSync(); return; }
+    ui.selecting = true; ui.anchor = id; toggle(id); return; }
   const v = t.closest('[data-view]');
   if (v && !t.closest('.sheet')) { const raw = v.dataset.view; goView(/^\d+$/.test(raw) ? +raw : raw); return; }
   const tileEl = t.closest('#app article[data-id]');
-  /* Cmd or Ctrl click opens the link in a new background tab, one after another, as browsers do */
-  if (tileEl && ui.mode === 'desk' && (e.metaKey || e.ctrlKey) && !e.shiftKey && !t.closest('.acts, .menu')) {
+  /* Cmd or Ctrl click opens the link in a new background tab, one after another, as browsers do; a modifier means a
+     keyboard and a pointer, so this holds at every width */
+  if (tileEl && (e.metaKey || e.ctrlKey) && !e.shiftKey && !t.closest('.acts, .menu')) {
     const b = bm(+tileEl.dataset.id); if (!b || b.deleted_at) return;
-    if (!t.closest('a[href]')) { e.preventDefault(); const l = tileEl.querySelector('a[data-open]'); if (l) l.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, metaKey: e.metaKey, ctrlKey: e.ctrlKey })); return; }
+    if (!t.closest('a[href]')) { e.preventDefault(); const l = tileEl.querySelector('a[data-open]'); if (l) l.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, metaKey: e.metaKey, ctrlKey: e.ctrlKey })); else actions.open(b); return; }
     actions.opened(b.id); return;
   }
   /* Shift click selects a range from the last picked card */
-  if (tileEl && ui.mode === 'desk' && e.shiftKey && !t.closest('.acts, .menu')) {
+  if (tileEl && e.shiftKey && !t.closest('.acts, .menu')) {
     e.preventDefault(); const id = +tileEl.dataset.id; ui.selecting = true;
     if (ui.anchor != null) pickRange(ui.anchor, id); else { ui.picked.add(id); ui.anchor = id; }
-    render(); return;
+    selSync(true); return;
   }
   const op = t.closest('[data-open]'); if (op && !ui.selecting) { actions.opened(+op.dataset.open); return; }
-  if (tileEl && ui.selecting && ui.mode === 'desk') { e.preventDefault(); ui.anchor = +tileEl.dataset.id; toggle(+tileEl.dataset.id); return; }
+  /* while selecting a click or tap anywhere on a card toggles it and sets where a Shift click range starts, at every width */
+  if (tileEl && ui.selecting) { e.preventDefault(); ui.anchor = +tileEl.dataset.id; toggle(+tileEl.dataset.id); return; }
   const a = t.closest('[data-a]'); if (!a) return;
   const k = a.dataset.a, b = tileEl ? bm(+tileEl.dataset.id) : null;
   switch (k) {
@@ -167,29 +191,27 @@ export function onClick(e) {
     case 'purge': actions.purge([b.id]); break;
     case 'more': if (layers.menu && layers.menu.anchor === a) closeMenu(); else openMenu(a, tileMenu(b)); break;
     case 'tile-acts': openSheet({ type: 'acts', id: b.id }); break;
+    /* a card in Trash never opens its link: a click offers Restore and Delete, in the menu at the card on the desktop */
+    case 'tile-menu': if (layers.menu && layers.menu.anchor === a) closeMenu(); else openMenu(a, tileMenu(b), e.detail ? { x: e.clientX, y: e.clientY } : undefined); break;
     case 'add': layers.save = newSave({ folder: typeof ui.view === 'number' ? ui.view : undefined }); openSheet({ type: 'save' }); break;
-    case 'sort': menuOrSheet(a, sortItems(), 'Sort'); break;
-    case 'select': ui.selecting = true; ui.picked.clear(); render(); break;
+    case 'sort': sortMenu(a, sortItems()); break;
+    case 'fsort': sortMenu(a, fsortItems()); break;
+    case 'select': if (ui.selecting) exitSelect(); else { ui.selecting = true; ui.picked.clear(); selSync(); } break;
     case 'foot': { ui.footOpen = !ui.footOpen; store.set('foot', ui.footOpen ? 'open' : ''); const f = a.closest('.side-foot');
       f.classList.toggle('open', ui.footOpen); a.setAttribute('aria-expanded', ui.footOpen); break; }
-    case 'sel-all': listFor().forEach(x => ui.picked.add(x.id)); render(); break;
-    case 'sel-done': exitSelect(); break;
+    case 'sel-all': selectables().forEach(id => ui.picked.add(id)); selSync(); break;
+    case 'sel-more': { const it = selItems(), n = ui.picked.size; if (it.length) menuOrSheet(a, it, n === 1 ? bm([...ui.picked][0]) : `${n} selected`); break; }
+    case 'bulk-copy': bulkCopy(); break;
+    case 'bulk-share': bulkShare(); break;
     case 'bulk-move': if (ui.picked.size) openSheet({ type: 'move', ids: [...ui.picked] }); break;
+    case 'bulk-ftrash': deleteFolders([...ui.picked]); break;
     case 'bulk-trash': { const ids = [...ui.picked]; ui.selecting = false; actions.trash(ids).then(() => { ui.picked.clear(); render(); }); break; }
     case 'bulk-restore': { const ids = [...ui.picked]; ui.selecting = false; ui.picked.clear(); actions.restore(ids); break; }
     case 'bulk-purge': { const ids = [...ui.picked]; ui.selecting = false; ui.picked.clear(); actions.purge(ids); break; }
     case 'folder-menu': menuOrSheet(a, folderItems(ui.view), folderById.get(ui.view)); break;
-    case 'phone-menu': openSheet({ type: 'rows', rows: phoneMenu() }); break;
     case 'empty-trash': emptyTrash(); break;
     case 'new-folder': newFolder(null); break;
-    case 'tab': { const to = a.dataset.tab; if (ui.tab === to) break; ui.tab = to; store.set('tab', to); render();
-      if (!reduce()) { const bd = document.querySelector('#pmain .bd'); if (bd) bd.classList.add('tab-in'); } break; }
-    case 'folders-toggle': { const go = () => { ui.foldersOpen = !ui.foldersOpen; render(); };
-      if (document.startViewTransition && !reduce()) { document.querySelectorAll('#pmain .ftile[data-ftile]').forEach(el => { el.style.viewTransitionName = 'f' + el.dataset.ftile; });
-        document.startViewTransition(() => { go(); document.querySelectorAll('#pmain .ftile[data-ftile]').forEach(el => { el.style.viewTransitionName = 'f' + el.dataset.ftile; }); })
-          .finished.finally(() => document.querySelectorAll('#pmain .ftile[data-ftile]').forEach(el => { el.style.viewTransitionName = ''; })); }
-      else go(); break; }
-    case 'folders-menu': menuOrSheet(a, [{ icon: 'folder-plus', label: 'New folder', run: () => newFolder(null) }]); break;
+    case 'tab': { const to = a.dataset.tab; if (ui.view !== to) goView(to); break; } /* the tab's shape glides; the content is there at once */
     case 'import': byId('import-file').click(); break;
     case 'tokens': openTokens(); break;
     case 'tk-copy': tokenCopy(); break;
@@ -198,7 +220,6 @@ export function onClick(e) {
     case 'tk-revoke-yes': a.disabled = true; tokenRevoke(+a.dataset.id); break;
     case 'logout': logout(); break;
     case 'retry': data.error = null; data.loaded = false; render(); load(); break;
-    case 'clear': ui.q = ''; byId('q').value = ''; byId('q').focus(); renderList(); break;
     case 'close': closeSheet(); break;
     case 'confirm': { const r = layers.sheet.run; a.disabled = true; r().then(() => closeSheet(), err => { if (!err.auth) toast(errorText(err, 'That did not work. Try again.')); closeSheet(); }); break; }
     case 'choose': layers.save.picker = !layers.save.picker; layers.save.nf = false; fillSheet(); break;
@@ -247,6 +268,5 @@ export function nfCreate() {
 }
 export function onInput(e) {
   const t = e.target;
-  if (t.id === 'q') { ui.q = t.value; if (ui.mode === 'phone') { renderPhoneMain(); } else renderList(); if (ui.q.trim()) announce(resultsText(listFor().length), 500); return; }
   if (t.dataset.f && layers.save) { layers.save[t.dataset.f] = t.value; if (t.tagName === 'TEXTAREA') { fitTa(t); checkUrl(); } patchSave(); }
 }

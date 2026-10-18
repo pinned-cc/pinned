@@ -5,10 +5,11 @@ import { onClick, onInput, onSubmit, doImport } from './actions.js';
 import { api } from './api.js';
 import { installDrag } from './drag.js';
 import { onKey } from './keys.js';
-import { installMenu } from './menu.js';
-import { installPalette } from './palette.js';
+import { galleryHTML, sortedHTML } from './home.js';
+import { installMenu, menuHTML, selItems, tileMenu } from './menu.js';
+import { installPalette, openPalette } from './palette.js';
 import { installPhone } from './phone.js';
-import { addTileHTML, backLink, deskDock, deskTile, deskToolbar, deskTree, emptyMerge, favHTML, fmini, ftileHTML, INBOX_F, installRender, nfMini, phoneRecents, phoneTile, phoneTop, phoneTabs, render, shareBtn, sideItem } from './render.js';
+import { addTileHTML, backLink, deskBulk, deskDock, deskTile, deskToolbar, deskTree, emptyMerge, favHTML, fmini, ftileHTML, INBOX_F, installRender, nfMini, foldersScreen, phoneBulk, phoneRecents, phoneTile, phoneTop, phoneTabs, phoneVbar, render, searchField, shareBtn, sideItem } from './render.js';
 import { installSelect } from './select.js';
 import { bmHead, checkUrl, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, rowsHTML } from './sheets.js';
 import { data, layers, load, setData, ui } from './state.js';
@@ -36,8 +37,9 @@ function boot() {
   if (page === 'app') bootApp(); else if (page === 'save') bootSave(); else if (page === 'login') bootLogin(); else if (page === 'bookmarklet') bootBookmarklet();
 }
 function bootApp() {
-  const m = /^#q=(.*)$/.exec(location.hash); if (m) { try { ui.q = decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { ui.q = m[1]; } history.replaceState(null, '', location.pathname); }
-  render(); load();
+  /* /search?q= arrives as #q=: the search opens with the query at any width; results fill in once the bookmarks load */
+  const m = /^#q=(.*)$/.exec(location.hash); let q = null; if (m) { try { q = decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { q = m[1]; } history.replaceState(null, '', location.pathname); }
+  render(); if (q && q.trim()) openPalette({ q }); load();
   /* the version, under Source in the app menu */
   fetch('/health', { credentials: 'same-origin' }).then(r => r.json()).then(h => { if (h && h.version) { ui.version = h.version; render(); } }).catch(() => {});
   let last = 0; const refresh = () => { if (Date.now() - last < 1500 || document.hidden) return; last = Date.now(); load(); };
@@ -74,5 +76,5 @@ function bootBookmarklet() {
 
 /* the style guide (tools/styleguide.html) renders its specimens with these builders, so they match the app */
 window.Pinned = { render, load, U: ui, D: data };
-window.Pinned.kit = { setData, ic, backLink, shareBtn, lockHTML, deskTile, phoneTile, ftileHTML, fmini, INBOX_F, nfMini, addTileHTML, emptyMerge, deskToolbar, phoneTop, phoneTabs, phoneTabs, sideItem, deskTree, deskDock, phoneRecents, rowsHTML, fHead, bmHead, grab, favHTML };
+window.Pinned.kit = { setData, ic, searchField, backLink, shareBtn, lockHTML, deskTile, phoneTile, ftileHTML, fmini, INBOX_F, nfMini, addTileHTML, emptyMerge, deskBulk, deskToolbar, phoneTop, phoneTabs, phoneVbar, phoneBulk, foldersScreen, sideItem, deskTree, deskDock, phoneRecents, rowsHTML, fHead, bmHead, grab, favHTML, galleryHTML, sortedHTML, menuHTML, tileMenu, selItems };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

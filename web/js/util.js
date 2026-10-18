@@ -37,11 +37,22 @@ export const SPRITE = `<svg class="sprite" width="0" height="0" aria-hidden="tru
 </svg>`;
 
 export const byId = id => document.getElementById(id);
+/* the selection bar keeps its node while the selection runs: a tick only changes the count and what is disabled, and it fades out before it is emptied */
+export function setBar(w, html) {
+  clearTimeout(w._t);
+  if (!html) { if (w.firstChild) w._t = setTimeout(() => { w.textContent = ''; }, 320); return; }
+  const cur = w.firstElementChild; if (cur) {
+    const nx = Object.assign(document.createElement('template'), { innerHTML: html }).content.firstElementChild, acts = e => [...e.querySelectorAll('[data-a]')].map(a => a.dataset.a).join();
+    if (acts(cur) === acts(nx)) { cur.querySelector('.n').innerHTML = nx.querySelector('.n').innerHTML; const nb = nx.querySelectorAll('button'); cur.querySelectorAll('button').forEach((b, i) => { b.disabled = nb[i].disabled; }); return; } }
+  w.innerHTML = html;
+}
 export const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 export const ic = (name, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 export const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const PHONE_MQ = matchMedia('(max-width: 719px)');
 export const isPhone = () => PHONE_MQ.matches;
+/* a finger, not a mouse: no key hints */
+export const COARSE = matchMedia('(pointer: coarse)');
 export const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 export const wait = ms => new Promise(r => setTimeout(r, ms));
 /* per browser preferences: sort and layout */
@@ -65,11 +76,10 @@ export function highlight(s, query) { const q = String(query == null ? '' : quer
 export const truncStart = (inner, cls = '') => `<span class="trunc-start${cls ? ' ' + cls : ''}"><bdi dir="ltr">${inner}</bdi></span>`;
 
 /* dates */
-/* the words stay English; a day is written the browser's way (9 Oct 2026, Oct 9, 2026, 9. Okt. 2026) */
-let dayFormat = null;
-const dayFormatter = () => dayFormat || (dayFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }));
+/* one way to write a day on every device and in every locale: 4 Oct, and 4 Oct 2025 for an earlier year */
+export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const dayDiff = ts => { const a = new Date(); a.setHours(0, 0, 0, 0); const b = new Date(ts * 1000); b.setHours(0, 0, 0, 0); return Math.round((a - b) / 864e5); };
-export const fmtDay = ts => dayFormatter().format(new Date(ts * 1000));
+export const fmtDay = ts => { const d = new Date(ts * 1000); return `${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() === new Date().getFullYear() ? '' : ' ' + d.getFullYear()}`; };
 export const fmtDate = ts => { if (!ts) return ''; const n = dayDiff(ts); if (n === 0) return 'Today'; if (n === 1) return 'Yesterday'; return fmtDay(ts); };
 export const groupName = ts => { const n = dayDiff(ts); return n <= 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 7 ? 'This week' : 'Earlier'; };
 export const isoDate = ts => { const d = new Date(ts * 1000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };

@@ -2,7 +2,7 @@
    confirm, lock dialogs, share, API tokens, add to folder, save. A swipe down closes a phone sheet. */
 import { actions, goView } from './actions.js';
 import { api } from './api.js';
-import { closeMenu } from './menu.js';
+import { closeMenu, tileMenu } from './menu.js';
 import { favHTML, fmini, hl, hostLine, miniPicker, nfForm, nfMini } from './render.js';
 import { bm, chain, data, descSet, fid, folderById, hostOf, hueClass, kids, layers, live, load, nowS, pathOf, pickable, run, ui } from './state.js';
 import { announce, toast } from './toast.js';
@@ -31,24 +31,18 @@ export const grab = () => `<div class="grab" aria-hidden="true"></div>`;
 export const bmHead = b => `<div class="sh-head">${favHTML(b)}<span class="tt"><span class="t">${esc(b.title)}</span>${hostLine(hostOf(b), 'host')}</span></div>`;
 export const fHead = f => `<div class="sh-head ${hueClass(f.id)}">${ic('folder', 'fh-ic')}<span class="tt"><span class="t">${esc(f.name)}</span></span></div>`;
 export const textHead = t => `<div class="sh-head"><span class="tt"><span class="t">${esc(t)}</span></span></div>`;
-export function rowsHTML(rows) { return `<div class="sh-rows">${rows.map((r, i) => r === '-' ? `</div><div class="sh-rows">` : (r.href ? `<a class="sh-row" href="${esc(r.href)}" target="_blank" rel="noopener" data-row="${i}">${r.icon ? ic(r.icon) : ''}${esc(r.label)}</a>`
-    : `<button type="button" class="sh-row${r.warn ? ' warn' : ''}" data-row="${i}"${r.disabled ? ' disabled' : ''}${r.check != null ? ` role="menuitemradio" aria-checked="${!!r.check}"` : ''}>${r.icon ? ic(r.icon) : ''}${esc(r.label)}${r.check ? `<span class="ck">${ic('check')}</span>` : ''}</button>`)).join('')}</div>`; }
-export function actsRows(b) {
-  if (b.deleted_at) return [{ icon: 'restore', label: 'Restore', run: () => { closeSheet(); actions.restore([b.id]); } },
-    { icon: 'trash', label: 'Delete now', warn: true, run: () => { closeSheet(); actions.purge([b.id]); } }];
-  return [{ icon: 'share', label: 'Share', run: () => { closeSheet(); actions.share(b); } },
-    { icon: 'open', label: 'Open', run: () => { closeSheet(); actions.open(b); } },
-    { icon: 'edit', label: 'Rename', run: () => renameSheet(b) },
-    { icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
-    { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => { closeSheet(); actions.pin(b); } },
-    { icon: 'trash', label: 'Trash', warn: true, run: () => { const id = b.id; closeSheet(); actions.trash([id]); } }];
-}
+/* rows in groups split by '-' (an empty group never shows) */
+const rowHTML = (r, i) => r.href ? `<a class="sh-row" href="${esc(r.href)}" target="_blank" rel="noopener" data-row="${i}">${r.icon ? ic(r.icon) : ''}${esc(r.label)}</a>`
+  : `<button type="button" class="sh-row${r.warn ? ' warn' : ''}" data-row="${i}"${r.disabled ? ' disabled' : ''}${r.check != null ? ` role="menuitemradio" aria-checked="${!!r.check}"` : ''}>${r.icon ? ic(r.icon) : ''}${esc(r.label)}${r.check ? `<span class="ck">${ic('check')}</span>` : ''}</button>`;
+export function rowsHTML(rows) { const groups = [[]];
+  rows.forEach((r, i) => { if (r === '-') groups.push([]); else groups[groups.length - 1].push([r, i]); });
+  return groups.filter(g => g.length).map(g => `<div class="sh-rows">${g.map(([r, i]) => rowHTML(r, i)).join('')}</div>`).join(''); }
 export function renameSheet(b) { if (!b) return;
   openSheet({ type: 'name', head: b, title: 'Rename', label: 'Title', value: b.title, button: 'Save', submit: async v => { await api('PATCH', `/api/bookmarks/${b.id}`, { title: v }); await load(); } }); }
 export function fillSheet() {
   const s = layers.sheet, el = sheetEl(); if (!s) return; let h = grab(), label = 'Actions';
   const hadFocus = el.contains(document.activeElement);
-  if (s.type === 'acts') { const b = bm(s.id); if (!b) { closeSheet(); return; } s.rows = actsRows(b); h += bmHead(b) + rowsHTML(s.rows); }
+  if (s.type === 'acts') { const b = bm(s.id); if (!b) { closeSheet(); return; } s.rows = tileMenu(b); h += bmHead(b) + rowsHTML(s.rows); }
   else if (s.type === 'rows') { h += (s.head ? (typeof s.head === 'string' ? textHead(s.head) : s.head.url ? bmHead(s.head) : fHead(s.head)) : '') + rowsHTML(s.rows) + (s.foot ? `<p class="app-ver">${esc(s.foot)}</p>` : ''); label = typeof s.head === 'string' ? s.head : 'Actions'; }
   else if (s.type === 'move') { const one = s.ids.length === 1 ? bm(s.ids[0]) : null; label = 'Folder';
     const inbox = { id: 'inbox', name: 'Inbox', hue: 'tray' };
@@ -74,7 +68,7 @@ export function fillSheet() {
   layer().classList.toggle('dialog', s.type === 'lock' || s.type === 'unlock' || s.type === 'unlockremove'); /* password dialogs sit in the middle */
   el.setAttribute('aria-label', label);
   /* the sheet is the glass and never scrolls itself; its body scrolls when the content is taller */
-  el.innerHTML = s.type === 'addto' ? h : h.startsWith(grab()) ? grab() + `<div class="sh-body">${h.slice(grab().length)}</div>` : `<div class="sh-body">${h}</div>`;
+  el.innerHTML = (s.type === 'addto' ? h : h.startsWith(grab()) ? grab() + `<div class="sh-body">${h.slice(grab().length)}</div>` : `<div class="sh-body">${h}</div>`) + (s.type === 'save' ? `<div class="sh-foot">${saveActs()}</div>` : '');
   if (s.type === 'addto') atAfterFill();
   if (hadFocus && !el.contains(document.activeElement)) el.focus({ preventScroll: true }); /* a redraw keeps focus inside the sheet */
   const ta = el.querySelector('textarea'); if (ta) fitTa(ta);
@@ -103,7 +97,7 @@ export async function submitLock(f) {
   btn.disabled = true;
   try {
     if (s.type === 'lock') { await api('POST', `/api/folders/${s.fid}/lock`, { password: pw }); closeSheet();
-      if (typeof ui.view === 'number' && chain(ui.view).some(x => x.id === s.fid)) ui.view = 'inbox'; await load(); toast('Folder locked'); }
+      if (typeof ui.view === 'number' && chain(ui.view).some(x => x.id === s.fid)) ui.view = 'dashboard'; await load(); toast('Folder locked'); }
     else if (s.type === 'unlock') { await api('POST', `/api/folders/${s.fid}/unlock`, { password: pw }); closeSheet(); await load(); goView(s.to == null ? s.fid : s.to); announce('Folder unlocked'); }
     else { await api('DELETE', `/api/folders/${s.fid}/lock`, { app_password: pw }); closeSheet(); await load(); toast('Lock removed'); }
   } catch (e) { if (e.auth || layers.sheet !== s) return; fail(lockErr(e), e.status === 403); }
@@ -256,7 +250,7 @@ export function saveHTML() {
   if (!rec.length) rec = kids(null).filter(f => pickable(f.id)).slice(0, 3).map(f => f.id);
   const none = s.folder == null;
   return `<div class="sv-top"><span class="sv-fav">${svFav(s)}</span><button type="button" class="ib" data-a="close" aria-label="Close">${ic('close')}</button></div>
-  <form data-save novalidate>
+  <form data-save id="svf" novalidate>
   <label class="fld"><span class="sh-lbl">Title</span><input class="fld-in" data-f="title" value="${esc(s.title)}" autocomplete="off" enterkeyhint="next"></label>
   <label class="fld"><span class="sh-lbl">URL</span><textarea class="fld-in" data-f="url" rows="1" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" enterkeyhint="done">${esc(s.url)}</textarea></label>
   <p class="dupe${s.dup || s.hid ? '' : ' off'}" role="status">${ic('warn')}<span class="dupe-t">${dupeInner(s)}</span></p>
@@ -264,12 +258,14 @@ export function saveHTML() {
   <div class="sv-folder" role="radiogroup" aria-labelledby="sv-fl"><span class="sh-lbl" id="sv-fl">Folder</span>
     ${rec.length ? `<div class="prow fpick">` : `<div class="prow fpick" hidden>`}${rec.map(id => fmini(folderById.get(id), { attr: 'pick', current: id === s.folder, radio: true, fill: id === s.folder, label: pathOf(id), noCount: true })).join('')}</div></div>
   <button type="button" class="tbtn sv-pick" data-a="choose" aria-expanded="${s.picker}">${none ? 'Choose a folder' : 'Choose another folder'}${ic('chev', 'chev')}</button>
-  ${s.picker ? miniPicker({ sel: s.folder, post: s.nf ? nfForm() : nfMini() }) : ''}
-  <div class="sv-acts">${none ? '' : `<button type="button" class="tbtn" data-a="save-inbox">Save to Inbox</button>`}
-    <button type="submit" class="save" data-a="save-go"${s.ticked ? ' disabled aria-label="Saved"' : s.hid ? ' disabled' : ''}>${s.ticked ? ic('check') : primaryLabel(s)}</button></div></form>`;
+  ${s.picker ? miniPicker({ sel: s.folder, post: s.nf ? nfForm() : nfMini() }) : ''}</form>`;
 }
+/* the save sheet's actions, in the sheet's foot outside the body that scrolls; Save submits the form by its id */
+export function saveActs() { const s = layers.save;
+  return `<div class="sv-acts">${s.folder == null ? '' : `<button type="button" class="tbtn" data-a="save-inbox">Save to Inbox</button>`}
+    <button type="submit" form="svf" class="save" data-a="save-go"${s.ticked ? ' disabled aria-label="Saved"' : s.hid ? ' disabled' : ''}>${s.ticked ? ic('check') : primaryLabel(s)}</button></div>`; }
 /* until the favicon is known the square is a quiet shimmering placeholder */
-export const svFav = s => s.icon ? favHTML({ icon: s.icon.icon, tile: s.icon.tile, letter: '' }, 48) : `<span class="fav sv-ph" aria-hidden="true"><span class="ph-in"></span></span>`;
+export const svFav = s => s.icon ? favHTML({ icon: s.icon.icon, tile: s.icon.tile, letter: '' }, 48) : `<span class="fav sv-ph${s.checking ? ' busy' : ''}" aria-hidden="true"><span class="ph-in"></span></span>`;
 export const dupeInner = s => s.hid ? `<span class="d1">Already saved</span>` : s.dup
   ? `<span class="d1"><span class="d0">Already saved in&nbsp;</span>${hostLine(pathOf(fid(s.dup)))}<span class="d0">.</span></span><span class="d2">Save anyway moves it here.</span>`
   : `<span class="d1">Not saved yet</span>`;
@@ -282,13 +278,15 @@ export function patchSave() { // update the live parts of the save sheet without
   d.classList.toggle('off', !s.dup && !s.hid); d.querySelector('.dupe-t').innerHTML = dupeInner(s);
   const sf = el.querySelector('.sv-fav'), key = s.icon ? s.icon.icon : '';
   if (sf.dataset.k !== key) { sf.dataset.k = key; sf.innerHTML = svFav(s); if (key) sf.firstElementChild.classList.add('fade-in'); }
+  const ph = sf.querySelector('.sv-ph'); if (ph) ph.classList.toggle('busy', !!s.checking); /* the shimmer runs only while the address is being looked up */
   const b = el.querySelector('[data-a="save-go"]'); if (b && !s.ticked) { b.textContent = primaryLabel(s); b.disabled = !!s.hid; }
 }
 let checkT = null, checkSeq = 0;
 export function checkUrl(now) {
   clearTimeout(checkT); const go = async () => { const u = layers.save.url.trim(), my = ++checkSeq;
-    if (!validUrl(u)) { layers.save.dup = null; layers.save.hid = false; layers.save.icon = null; patchSave(); return; }
-    try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.dup = r.duplicate || null; layers.save.hid = false; layers.save.icon = r.icon || null; patchSave(); /* hid comes only from a refused save (409 with locked) */ } catch (e) { /* the save itself reports */ } };
+    if (!validUrl(u)) { layers.save.dup = null; layers.save.hid = false; layers.save.icon = null; layers.save.checking = false; patchSave(); return; }
+    layers.save.checking = true; patchSave();
+    try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.checking = false; layers.save.dup = r.duplicate || null; layers.save.hid = false; layers.save.icon = r.icon || null; patchSave(); /* hid comes only from a refused save (409 with locked) */ } catch (e) { if (my === checkSeq && layers.save) { layers.save.checking = false; patchSave(); } /* the save itself reports */ } };
   if (now) go(); else checkT = setTimeout(go, 220);
 }
 export async function doSave(inbox) {

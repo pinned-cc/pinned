@@ -45,19 +45,23 @@ body.sg{background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);
   </header>
 
   <section class="sg-sec" id="fit"><h2>How the pieces fit</h2>
-    <p class="sg-lead">A bookmark is a card that shows its favicon, its title and its address. A folder is a tile on the start screen, in the Folders screen and above the cards of its parent, and a row in the sidebar alongside All bookmarks, Inbox and Trash. Inside a folder, the back link above the title takes you one level up, to the parent or to Inbox. Sheets are made of glass, and the palette blurs the page behind it.</p></section>
+    <p class="sg-lead">A bookmark is a card that shows its favicon, its title and its address. A folder is a tile on the start screen, in the Folders screen and above the cards of its parent, and a row in the sidebar alongside All bookmarks, Inbox and Trash. Inside a folder, the back link above the title takes you one level up, to the parent or to the Dashboard. The Dashboard shows the links opened last under small day heads, each tagged with its folder. Sheets are made of glass, and the palette blurs the page behind it.</p></section>
 
   <section class="sg-sec" id="tokens"><h2>Colour tokens</h2><p>Read live from app.css.</p><div class="sg-grid" id="sg-tokens"></div></section>
   <section class="sg-sec" id="type"><h2>Type scale</h2><p>Sizes are measured from the rendered element.</p><div class="sg-type" id="sg-type"></div></section>
   <section class="sg-sec"><h2>Bookmark card</h2><p>Desktop grid, desktop list and phone.</p><div id="sg-cards"></div></section>
   <section class="sg-sec"><h2>Folder tile</h2><p>Full tile on the start screen, the Folders screen and inside a folder; the picker tile in the sheets.</p><div id="sg-ftiles"></div></section>
   <section class="sg-sec"><h2>Sidebar rows</h2><p>System rows and folder rows are one component.</p><div id="sg-side"></div></section>
-  <section class="sg-sec"><h2>Title bar</h2><p>Back link, title, count, share, Select and the three dots.</p><div id="sg-title"></div></section>
+  <section class="sg-sec"><h2>Title bar</h2><p>Back link, title, count, share, Sort, Select and, on a folder only, the three dots. A view's own controls sit on the view; the three dots hold only what acts on the folder itself.</p><div id="sg-title"></div></section>
+  <section class="sg-sec"><h2>View row on the phone</h2><p>Under the title or the tabs, where the first section label sat: the order in use with its chevron on the left (a fixed label where the view has a fixed order), the view's actions on the right, 44 px targets. The Folders tab carries its order and New folder.</p><div id="sg-vbar"></div></section>
+  <section class="sg-sec"><h2>Folders grid</h2><p>All bookmarks is the first card, a folder card in ink with every bookmark's newest faces. Trash is a quiet row at the foot, always there with its count. With no folders yet, a dashed New folder card follows All bookmarks.</p><div id="sg-fgrid"></div></section>
+  <section class="sg-sec"><h2>Selection</h2><p>Holding a card and letting go starts selecting with that card ticked; a tap adds the next. With cards picked, the group actions sit on screen: in place of the search on the desktop and of the search pill on the phone. Nothing else moves: the title, the tabs and the toolbar stay as they are, and Select turns into the pressed Done in its place, quiet grey like any pressed button, which ends selecting; so do Escape and switching tab. The three dots hold what the bar has no button for: Open, Rename and Pin for one card, Pin or Unpin for several. A right click on a card opens the same items first, then Move, Share and Trash.</p><div id="sg-sel"></div></section>
   <section class="sg-sec"><h2>Locked folder</h2><p>Shut, it shows a lock where the count sits and asks for its password; open, a lock follows the name and the title bar carries the lock button.</p><div id="sg-lock"></div></section>
+  <section class="sg-sec"><h2>Dashboard</h2><p>Recently opened, grouped by day: Today, Yesterday, Last 7 days, Last 30 days, Earlier. An empty group never shows. It follows the grid or list switch. Its cards select like every card: Select on screen, a hold, Shift and Cmd clicks, the marquee; a picked card wears the round tick and the green edge.</p><div id="sg-dash"></div></section>
   <section class="sg-sec"><h2>Recent</h2><div id="sg-recent"></div></section>
   <section class="sg-sec"><h2>Palette</h2><div id="sg-pal"></div></section>
   <section class="sg-sec"><h2>Glass sheet</h2><div id="sg-sheet"></div></section>
-  <section class="sg-sec"><h2>Floating search and plus</h2><div id="sg-float"></div></section>
+  <section class="sg-sec"><h2>Search field</h2><p>One search, one field: at the top on the desktop, at the foot on the phone within thumb reach, beside the round plus. Same height, corners, ground, border, icon, 16 px text and padding; only the width differs. The / key hint shows only where a keyboard is the input. The field opens the palette; while a search runs, the field shows its query.</p><div id="sg-float"></div></section>
   <section class="sg-sec"><h2>Buttons</h2><div id="sg-buttons"></div></section>
   <section class="sg-sec"><h2>Add bookmark and empty</h2><div id="sg-empty"></div></section>
   <section class="sg-sec"><h2>Toast</h2><div id="sg-toast"></div></section>
@@ -107,7 +111,9 @@ $('sg-type').innerHTML = T.map(([n, h, sel, cls]) => `<div class="sg-item" data-
 $('sg-cards').innerHTML = `<div class="sg-stack">
   ${item(`<div class="grid">${K.deskTile(bms[3], bms[3].created_at)}${K.deskTile(bms[2], bms[2].created_at)}${K.deskTile(bms[1], bms[1].created_at)}</div>`, '.grid .tile, desktop')}
   ${item(`<div class="sg-scroll"><div class="sg-desk"><div class="grid is-list">${K.deskTile(bms[2], bms[2].created_at)}${K.deskTile(bms[3], bms[3].created_at)}</div></div></div>`, '.grid.is-list .tile, desktop list')}
-  ${item(`<div class="sg-ph"><div class="pgrid">${K.phoneTile(bms[3], bms[3].created_at)}${K.phoneTile(bms[1], bms[1].created_at)}</div></div>`, '.pgrid .pt, phone')}</div>`;
+  ${item(`<div class="sg-ph"><div class="pgrid">${K.phoneTile(bms[3], bms[3].created_at)}${K.phoneTile(bms[1], bms[1].created_at)}</div></div>`, '.pgrid .pt, phone')}
+  ${item(`<div class="sg-ph" style="max-width:390px">${(() => { U.layout = 'list'; const h = `<div class="pgrid is-list">${K.phoneTile(bms[3], bms[3].created_at)}${K.phoneTile(bms[1], bms[1].created_at)}${K.phoneTile(bms[2], bms[2].created_at)}</div>`; U.layout = 'grid'; return h; })()}</div>`, '.pgrid.is-list .pt.row, phone list: 56 px rows, the folder dot and the date at the end')}
+  ${item(`<div class="grid" style="max-width:300px">${K.deskTile(Object.assign({}, bms[2], { deleted_at: bms[2].created_at }), bms[2].created_at)}</div>`, '.tile in Trash: button.t-title, a click offers Restore and Delete now in the menu at the card, never the link')}</div>`;
 
 /* folder tiles */
 const f1 = D.folders[0], f2 = D.folders[1], f4 = D.folders[3];
@@ -127,6 +133,36 @@ $('sg-side').innerHTML = `<div class="sg-grid">
 /* title bars */
 U.view = 1;
 $('sg-title').innerHTML = item(`<div class="sg-scroll"><div class="sg-desk">${K.deskToolbar()}</div></div>`, '.uplink.dback, .tb, .tb-share, .btn.icon') + `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.backLink('pback')}${K.phoneTop()}</div>`, '.uplink.pback, .ptbar, .ptb-share, .ib');
+
+/* the phone view row and the Folders grid */
+const phoneAs = (fn, view) => { const m = U.mode, v = U.view; U.mode = 'phone'; U.view = view; const h = fn(); U.mode = m; U.view = v; return h; };
+$('sg-vbar').innerHTML = `<div class="sg-stack">
+  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar(), 'inbox')}</div>`, '.vbar, .sortc.p, .ib, .vsw.p: the Inbox, Sort, Select and the grid and list switch')}
+  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar(), 'folders')}</div>`, '.vbar, .sortc.p, .vbar-add: the Folders tab')}
+  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneTop() + K.phoneVbar(), 1)}</div>`, '.ptbar with the three dots, .vbar: inside a folder')}
+  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => { D.bms.push(Object.assign(B(99, 'Old link', 'https://old.example.com', null, 20, null), { deleted_at: now - day })); const h = K.phoneTop() + K.phoneVbar(); D.bms.pop(); return h; }, 'trash')}</div>`, '.vbar-t, .vsw.p; .ptbar .vbar-a.warn: Trash keeps Empty trash on screen beside its title')}
+  ${item(`<div class="sg-scroll"><div class="sg-desk">${(() => { const v = U.view; U.view = 'inbox'; const h = K.deskToolbar(); U.view = v; return h; })()}</div></div>`, '.tb with .btn.sortc and Select: the desktop Inbox')}</div>`;
+$('sg-fgrid').innerHTML = `<div class="sg-stack">
+  ${item(`<div class="sg-scroll"><div class="sg-desk">${K.foldersScreen(false)}</div></div>`, '.fscreen .ftile.fplace first, .ftrash, desktop')}
+  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneVbar() + K.foldersScreen(true), 'folders')}</div>`, '.fgrid-p .ftile.fplace, .ftrash.p, phone')}</div>`;
+/* selection */
+{ const v = U.view; U.view = 'inbox'; U.selecting = true; U.picked = new Set([1, 3]);
+  const one = () => { const p = U.picked; U.picked = new Set([1]); const h = K.rowsHTML(K.selItems()); U.picked = p; return h; };
+  $('sg-sel').innerHTML = `<div class="sg-stack">${item(`<div class="sg-scroll"><div class="sg-desk selecting"><div class="head">${K.deskBulk()}</div>${K.deskToolbar()}</div></div>`, '.head .tb.bulk in the search\'s place: count, Select all, Move, Copy, Share, Trash, the three dots, each folding to its icon only where its word does not fit, Trash last; the toolbar below as it is, .btn.sel pressed as Done in the quiet grey of a pressed .btn, which ends it, as does Escape')}
+    ${item(`<div class="sg-ph selecting" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar(), 'inbox')}</div>`, '.ptbar.tabs and .vbar unchanged while selecting, .ib.sel pressed as Done, phone')}
+    ${item(`<div class="sg-ph" style="max-width:390px">${K.phoneBulk()}</div>`, '.pbulk: .pall (the count and All, one target that selects every card), then .bb Move, Copy, Share, Trash, More: the desktop bar\'s actions, order and words')}
+    <div class="sg-grid">${item(frame(`<div class="layer open"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Actions">${K.grab()}${K.bmHead(bms[0])}${one()}</div></div>`, 340), 'More with one card picked, phone: .sh-row')}
+    ${item(frame(`<div class="menu" role="menu" style="left:16px;top:16px">${K.menuHTML(K.tileMenu(bms[0]))}</div>`, 330), '.menu: right click on a card, and the three dots on a card, desktop')}</div></div>`;
+  U.selecting = false; U.picked = new Set(); U.view = v; }
+/* picked folders on the Folders screen, and Trash lit as a drop target */
+{ const v = U.view; U.view = 'folders'; U.selecting = true; const top = D.folders.filter(f => f.parent_id == null && !f.locked); U.picked = new Set(top.slice(0, 2).map(f => f.id));
+  $('sg-sel').innerHTML += `<p style="margin:24px 0 12px;color:var(--ink-weak);font-size:13px">On the Folders screen the same gestures pick folders. The bar holds Select all and Delete, which asks once with the count.</p><div class="sg-stack">
+    ${item(`<div class="sg-scroll"><div class="sg-desk selecting"><div class="head">${K.deskBulk()}</div>${K.deskToolbar()}${K.foldersScreen(false)}</div></div>`, '.ftile.picked with .chk, .tb.bulk for folders: count, Select all, Delete')}
+    ${item(`<div class="sg-ph selecting" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar() + K.foldersScreen(true) + K.phoneBulk(), 'folders')}</div>`, '.pall, .pbulk .bb.wide: All and Delete, phone')}</div>
+    <p style="margin:24px 0 12px;color:var(--ink-weak);font-size:13px">Trash takes a dropped card or selection at once with Undo; a dropped folder asks first. It lights in the bin hue while something is held over it.</p><div class="sg-grid">
+    ${item(`<div class="sg-side"><div class="nav">${K.sideItem('trash', 'trash', 'trash').replace('class="si trash"', 'class="si trash drop-on"')}</div></div>`, '.si.trash.drop-on, sidebar')}
+    ${item(`<div style="max-width:420px">${K.foldersScreen(false).replace(/^[\s\S]*?(<button type="button" class="ftrash)/, '$1').replace('class="ftrash', 'class="ftrash drop-on')}</div>`, '.ftrash.drop-on, the Folders screen')}</div>`;
+  U.selecting = false; U.picked = new Set(); U.view = v; }
 
 /* start screen tabs */
 U.view = 'inbox'; U.tab = 'inbox';
@@ -149,18 +185,38 @@ U.view = 4;
 /* recent */
 $('sg-recent').innerHTML = item(`<div class="sg-scroll">${K.deskDock()}</div>`, '.dock .dk, desktop') + `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.phoneRecents()}</div>`, '.precent .prc, .prc.pinned, phone');
 
+/* the Dashboard */
+U.layout = 'grid'; const dGrid = K.galleryHTML(false), pGrid = K.galleryHTML(true); U.layout = 'list'; const dList = K.galleryHTML(false); U.layout = 'grid';
+$('sg-dash').innerHTML = `<div class="sg-stack">${item(`<div class="sg-scroll"><div class="sg-desk">${dGrid}</div></div>`, '.gal .gs-h, .gb .gk, .gc-chip, desktop grid')}
+  ${item(`<div class="sg-scroll"><div class="sg-desk">${dList}</div></div>`, '.gal.is-list .gl .gc-row, desktop list, two columns from 1100 px')}
+  ${item(`<div class="sg-ph">${pGrid}</div>`, '.gal.gal-p, phone: Select and the layout on the Recently opened row')}</div>`;
+/* the Dashboard while selecting: ticks on every card, picked ones green */
+{ const v = U.view; U.view = 'dashboard'; U.selecting = true;
+  U.picked = new Set(D.bms.filter(b => b.opened_at && b.folder_id != null).sort((a, b) => b.opened_at - a.opened_at).slice(0, 2).map(b => b.id));
+  const g = K.galleryHTML(false), gp = K.galleryHTML(true); U.layout = 'list'; const gl = K.galleryHTML(false), glp = K.galleryHTML(true); U.layout = 'grid';
+  $('sg-dash').innerHTML += `<div style="height:24px"></div><div class="sg-stack">
+    ${item(`<div class="sg-scroll"><div class="sg-desk selecting"><div class="head">${K.deskBulk()}</div>${K.deskToolbar()}${g}</div></div>`, '.gk.picked with .chk, the bookmark .tb.bulk: selecting on the desktop Dashboard')}
+    ${item(`<div class="sg-scroll"><div class="sg-desk selecting">${gl}</div></div>`, '.gc-row.picked with .chk at the row end, list')}
+    ${item(`<div class="sg-ph selecting" style="max-width:390px">${phoneAs(() => K.phoneTabs(), 'dashboard')}${gp}${K.phoneBulk()}</div>`, '.gal-p .gk.picked, .pbulk: selecting on the phone Dashboard')}
+    ${item(`<div class="sg-ph selecting" style="max-width:390px">${glp}</div>`, '.gal-p .gc-row.picked, phone list')}</div>`;
+  U.selecting = false; U.picked = new Set(); U.view = v; }
+
 /* palette */
 const palIt = (b, i) => `<a class="pal-it" aria-selected="${i === 0}" href="#">${K.favHTML(b, 28)}<span class="pal-t">${b.title}</span><span class="trunc-start pal-h"><bdi dir="ltr">${b.host}</bdi></span><span class="pal-p">Projects</span></a>`;
 $('sg-pal').innerHTML = item(frame(`<div class="pal open"><div class="pal-scrim"></div><div class="pal-panel glass" role="dialog" aria-label="Search bookmarks">
-  <label class="pal-row">${K.ic('search')}<input type="search" value="cal" aria-label="Search"><span class="kcap">esc</span><button type="button" class="pal-cancel">Cancel</button></label>
+  <div class="pal-row"><label class="pal-f">${K.ic('search')}<input type="search" value="cal" aria-label="Search"><span class="kcap">esc</span></label><button type="button" class="pal-cancel">Cancel</button></div>
   <div class="pal-scroll"><div class="pal-grp"><div class="pal-lbl pal-g"><span>Projects</span><span class="num">2</span></div>${palIt(bms[4], 0)}${palIt(bms[0], 1)}</div></div></div></div>`, 420), '.pal.open .pal-panel.glass, .pal-it, .pal-cancel on the phone, .kcap on the desktop');
 
 /* sheet */
 $('sg-sheet').innerHTML = item(frame(`<div class="layer open"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Actions">${K.grab()}${K.fHead(f1)}${K.rowsHTML([
-  { icon: 'edit', label: 'Rename' }, { icon: 'link', label: 'Share' }, { icon: 'move', label: 'Move to' }, '-', { icon: 'trash', label: 'Delete', warn: true }])}</div></div>`, 520), '.layer.open .sheet, .sh-head, .sh-row, .sh-row.warn');
+  { icon: 'edit', label: 'Rename' }, { icon: 'link', label: 'Share' }, { icon: 'move', label: 'Move to' }, '-', { icon: 'trash', label: 'Delete', warn: true }])}</div></div>`, 520), '.layer.open .sheet, .sh-head, .sh-row, .sh-row.warn')
+;
 
-/* floating search and plus */
-$('sg-float').innerHTML = item(frame(`<div class="pbottom"><div class="psrow"><button type="button" class="ps ps-trigger">${K.ic('search')}<span class="ps-ph">Search bookmarks</span></button><button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 120, 'sg-phone'), '.pbottom .ps, .pbottom .padd');
+/* the search field: one look at the top of the desktop and at the foot of the phone, only the width differs; the / hint only with a keyboard */
+{ const sf = (phone, q) => K.searchField(phone).replace(/ id="[^"]*"/g, '').replace('class="sf-t">', `class="sf-t" data-ph="Search bookmarks">${q || ''}`);
+  $('sg-float').innerHTML = `<div class="sg-row">${item(`<div style="width:520px;max-width:100%;display:flex">${K.searchField(false).replace(/ id="[^"]*"/g, '').replace('<input ', '<input placeholder="Search bookmarks or press ⌘K" ')}</div>`, '.head .search, desktop, at rest')}
+  ${item(frame(`<div class="pbottom"><div class="psrow">${sf(true)}<button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 120, 'sg-phone'), '.pbottom .search, .pbottom .padd: the same field, phone, at rest')}
+  ${item(frame(`<div class="pbottom"><div class="psrow">${sf(true, 'immich')}<button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 120, 'sg-phone'), '.sf-t with the query while the search runs')}</div>`; }
 
 /* buttons */
 $('sg-buttons').innerHTML = `<div class="sg-row">
@@ -170,14 +226,14 @@ $('sg-buttons').innerHTML = `<div class="sg-row">
   ${item(`<button type="button" class="btn warn">${K.ic('trash')}Empty trash</button>`, '.btn.warn')}
   ${item(`<button type="button" class="tbtn">Choose a folder</button>`, '.tbtn, text')}
   ${item(`<button type="button" class="tbtn warn">Remove</button>`, '.tbtn.warn')}
-  ${item(`<button type="button" class="ib weak" aria-label="More">${K.ic('more')}</button>`, '.ib, icon')}
-  ${item(`<div class="fhead pglbl" style="margin:0;width:200px"><span>Folders</span><button type="button" class="see-all">See all</button></div>`, '.see-all')}</div>`;
+  ${item(`<button type="button" class="ib weak" aria-label="More">${K.ic('more')}</button>`, '.ib, icon')}</div>`;
 
 /* add tile and empty */
 $('sg-empty').innerHTML = `<div class="sg-grid">
   ${item(`<div class="grid">${K.addTileHTML('addtile')}</div>`, '.addtile')}
   ${item(`<div class="sg-ph"><div class="pgrid">${K.addTileHTML('pt-add')}</div></div>`, '.pt-add, phone')}
-  </div><div style="margin-top:24px">${item(K.emptyMerge('empty merge'), '.empty.merge, a folder with nothing in it')}</div>`;
+  </div><div style="margin-top:24px">${item(K.emptyMerge('empty merge'), '.empty.merge, a folder with nothing in it')}</div>
+  <div style="margin-top:24px">${item(frame(`<div style="display:flex;flex-direction:column;height:100%">${K.sortedHTML(false)}</div>`, 460), '.calm, All sorted: centred both ways in the space under the title, the one centred block in the app')}</div>`;
 
 /* toast */
 $('sg-toast').innerHTML = item(frame(`<div class="toasts"><div class="toast"><span class="tx">Moved to Projects</span><button type="button">Undo</button></div><div class="toast solo"><span class="tx">Order saved</span></div></div>`, 150), '.toast, .toast.solo');

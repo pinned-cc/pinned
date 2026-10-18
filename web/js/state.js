@@ -41,20 +41,19 @@ export const nowS = () => Date.now() / 1000;
 /* Hide from Recent is set per folder and holds for its subfolders: a link in any such folder stays out of every recent list */
 export const hidesRecent = id => typeof id === 'number' && chain(id).some(f => f.hide_recent);
 export const recentOk = b => !hidesRecent(b.folder_id);
-export const isRecent = b => b.opened_at && nowS() - b.opened_at < 14 * 86400 && recentOk(b);
 /* the last opened links, newest first, for the Recent rows */
 export const lastOpened = n => live().filter(b => b.opened_at && recentOk(b)).sort((a, b) => b.opened_at - a.opened_at).slice(0, n);
 export const fid = b => b.folder_id == null ? null : b.folder_id;
 export function count(v) {
+  if (v === 'dashboard') return '';
   if (v === 'all') return live().length;
   if (v === 'trash') return trashed().length;
   if (v === 'inbox') return live().filter(b => fid(b) == null).length;
-  if (v === 'recent') return live().filter(isRecent).length;
   if (v === 'folders') return kids(null).length;
   if (v === 'settings') return '';
   const s = descSet(v); return live().filter(b => fid(b) != null && s.has(b.folder_id)).length;
 }
-export const viewName = v => ({ all: 'All bookmarks', recent: 'Recent', inbox: 'Inbox', trash: 'Trash', folders: 'Folders', settings: 'Settings' })[v] || (folderById.get(v) || { name: 'Folder' }).name;
+export const viewName = v => ({ dashboard: 'Dashboard', all: 'All bookmarks', inbox: 'Inbox', trash: 'Trash', folders: 'Folders', settings: 'Settings' })[v] || (folderById.get(v) || { name: 'Folder' }).name;
 export const pinned = () => live().filter(b => b.pinned).sort((a, b) => a.pinned_position - b.pinned_position || a.id - b.id);
 export const hostOf = b => b.host || hostFromUrl(b.url);
 export const iconSrc = b => !b || !b.icon ? null : /^(\/|https?:|data:)/.test(b.icon) ? b.icon : '/icons/' + encodeURIComponent(b.icon);
@@ -62,8 +61,10 @@ export const iconSrc = b => !b || !b.icon ? null : /^(\/|https?:|data:)/.test(b.
 /* the source of this program, linked from the app menu (AGPL section 13) */
 export const SOURCE_URL = 'https://github.com/pinned-cc/pinned';
 export const SORTS = { saved: 'Newest', name: 'A to Z', opened: 'Last opened', manual: 'Your order' };
+/* the Folders grid has its own order: the sidebar order, by name, or the newest folder first; kept on this device */
+export const FSORTS = { manual: 'Your order', name: 'A to Z', saved: 'Newest' };
 export const ui = {
-  view: 'inbox', tab: store.get('tab', 'inbox') === 'folders' ? 'folders' : 'inbox', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid', footOpen: store.get('foot', '') === 'open',
+  view: 'dashboard', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', fsort: FSORTS[store.get('fsort', 'manual')] ? store.get('fsort', 'manual') : 'manual', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid', footOpen: store.get('foot', '') === 'open',
   selecting: false, picked: new Set(), renaming: null,
   version: null, /* from /health, which tells it only to a logged in session */
   mode: null, /* 'desk' or 'phone', set by render() */
@@ -72,25 +73,42 @@ export const ui = {
 };
 /* what is open over the page: a sheet and its state, the save form, the palette, a menu, the toast with Undo */
 export const layers = { sheet: null, save: null, palette: null, menu: null, undo: null };
+/* every opened link that sits in a folder, newest open first: the Dashboard's gallery */
+export const galLinks = () => live().filter(b => b.opened_at && fid(b) != null && recentOk(b) && !lockedAt(b.folder_id)).sort((a, b) => b.opened_at - a.opened_at || a.id - b.id);
+/* the Dashboard shows the gallery */
+export const galleryOn = () => data.has && ui.view === 'dashboard';
+const GAL_CAP = 60; /* the Dashboard is a look back, not an archive: the 60 opened last */
+export const galShown = () => galLinks().slice(0, GAL_CAP);
+/* every view with cards or folders can select, the Dashboard's gallery too; Settings has nothing to pick */
+export const canSelect = () => ui.view !== 'settings';
+/* on the Folders screen the selection holds folders, everywhere else bookmarks; the two never mix */
+export const foldersSel = () => ui.view === 'folders';
+export const selectables = () => foldersSel() ? sortedTop().filter(f => !isLocked(f)).map(f => f.id) : galleryOn() ? galShown().map(b => b.id) : listFor().map(b => b.id);
 export const setSort = s => { ui.sort = s; store.set('sort', s); };
+export const setFsort = s => { ui.fsort = s; store.set('fsort', s); };
+/* the top level folders in the Folders grid's order */
+export const sortedTop = () => { const L = [...kids(null)];
+  if (ui.fsort === 'name') L.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  else if (ui.fsort === 'saved') L.sort((a, b) => b.id - a.id);
+  return L; };
+/* the bookmark views that carry Sort: Trash lists in a fixed order, by deletion */
+export const sortable = (v = ui.view) => v === 'inbox' || v === 'all' || typeof v === 'number';
 
 export function listFor(v = ui.view) {
   let L;
   if (v === 'folders' || v === 'settings') return [];
+  if (v === 'dashboard') return []; /* the dashboard lists recents itself */
   if (v === 'trash') L = trashed();
   else if (v === 'all') L = live();
-  else if (v === 'recent') L = live().filter(isRecent);
   else if (v === 'inbox') L = live().filter(b => fid(b) == null);
   else L = live().filter(b => fid(b) === v); /* subfolders show as folder tiles above the cards */
-  const q = ui.q.trim().toLowerCase();
-  if (q) L = L.filter(b => (b.title + ' ' + b.url + ' ' + hostOf(b)).toLowerCase().includes(q));
   return L;
 }
 /* single container views can be reordered by drag in any sort; the drop switches the sort to "Your order" */
-export const soleContainer = () => { const v = ui.view; if (ui.q.trim()) return undefined;
+export const soleContainer = () => { const v = ui.view;
   if (v === 'inbox') return null; if (typeof v === 'number') return v; return undefined; };
-export function sections(phone) {
-  const L = listFor(), v = ui.view, q = !!ui.q.trim();
+export function sections() {
+  const L = listFor(), v = ui.view;
   if (!L.length) return [];
   const by = k => (a, b) => (b[k] || 0) - (a[k] || 0) || a.title.localeCompare(b.title);
   const grouped = (items, k) => { const out = []; for (const b of items) { const g = groupName(b[k]); let s = out.find(x => x.label === g);
@@ -98,21 +116,20 @@ export function sections(phone) {
   const sole = soleContainer();
   const mark = S => { if (sole !== undefined) S.forEach(s => { s.container = sole; }); return S; };
   if (v === 'trash') return [{ label: 'Kept for 30 days', items: L.sort(by('deleted_at')), date: b => b.deleted_at }];
-  if (v === 'recent') { const it = L.sort(by('opened_at')); return phone ? [{ label: 'Last opened', items: it, date: b => b.opened_at }] : grouped(it, 'opened_at'); }
   if (ui.sort === 'name') return mark([{ label: 'A to Z', items: L.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })), date: b => b.created_at }]);
   if (ui.sort === 'opened') {
     const o = L.filter(b => b.opened_at).sort(by('opened_at')), n = L.filter(b => !b.opened_at).sort(by('created_at'));
-    const S = phone ? (o.length ? [{ label: 'Last opened', items: o, date: b => b.opened_at }] : []) : grouped(o, 'opened_at');
+    const S = grouped(o, 'opened_at');
     if (n.length) S.push({ label: 'Not opened', items: n, date: b => b.created_at }); return mark(S);
   }
   if (ui.sort === 'manual') {
     const S = [];
     for (const c of [null, ...dfs()]) { const it = L.filter(b => fid(b) === c).sort((a, b) => a.position - b.position || a.id - b.id);
-      if (it.length) S.push({ label: pathOf(c), items: it, date: b => b.created_at, container: q ? undefined : c }); }
+      if (it.length) S.push({ label: pathOf(c), items: it, date: b => b.created_at, container: c }); }
     return S;
   }
   const it = L.sort(by('created_at'));
-  return mark(phone ? [{ label: 'Newest', items: it, date: b => b.created_at }] : grouped(it, 'created_at'));
+  return mark(grouped(it, 'created_at'));
 }
 let loadSeq = 0;
 export async function load() {
@@ -120,9 +137,9 @@ export async function load() {
   try { const s = await api('GET', '/api/state'); if (my !== loadSeq) return; setData(s); data.has = true; data.error = null; }
   catch (e) { if (e.auth) return; if (my !== loadSeq) return; data.error = e; }
   data.loaded = true;
-  for (const id of [...ui.picked]) if (!bm(id)) ui.picked.delete(id);
-  if (typeof ui.view === 'number' && !folderById.has(ui.view)) ui.view = 'inbox';
-  if (lockedAt(ui.view)) { ui.view = 'inbox'; toast('Folder locked again'); }
+  for (const id of [...ui.picked]) if (foldersSel() ? !folderById.has(id) : !bm(id)) ui.picked.delete(id);
+  if (typeof ui.view === 'number' && !folderById.has(ui.view)) ui.view = 'dashboard';
+  if (lockedAt(ui.view)) { ui.view = 'dashboard'; toast('Folder locked again'); }
   render();
   if (layers.sheet && layers.sheet.type !== 'save' && layers.sheet.type !== 'done' && layers.sheet.type !== 'addto') fillSheet();
 }
