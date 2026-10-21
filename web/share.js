@@ -8,7 +8,7 @@ let shared = null, query = '', VIEW = 'all';
 const hl = s => highlight(s, query);
 const hostLine = (h, cls = '') => truncStart(hl(h), cls);
 const fav = (b, size) => { const l = esc(b.letter || (b.title || '?').charAt(0).toUpperCase());
-  return `<span class="fav" data-l="${l}"${b.icon ? ` style="--tile:${esc(b.tile || '#2a303b')}"` : ''}>${b.icon ? `<img src="${esc(b.icon)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`; };
+  return `<span class="fav" data-l="${l}"${b.icon ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${b.icon ? `<img src="${esc(b.icon)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`; };
 
 /* folders inside the shared one: the root has no id in the response, its children point at it */
 const folders = () => shared.folders || [];

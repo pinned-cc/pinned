@@ -16,7 +16,7 @@ export const hostLine = (host, cls = '', mark, query) => truncStart(mark ? hl(ho
 export const favHTML = (b, size = 40) => {
   if (!b) return `<span class="fav">${ic('all')}</span>`;
   const src = iconSrc(b), l = esc(b.letter || (b.title || '?').trim().charAt(0).toUpperCase() || '?');
-  return `<span class="fav" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || '#2a303b')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`;
+  return `<span class="fav" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`;
 };
 export const contAttr = c => c === undefined ? '' : ` data-container="${c === null ? 'inbox' : c}"`;
 /* the view's own controls sit on the view, never in a sheet: Sort shows the order in use and opens a short menu of
@@ -33,6 +33,8 @@ const hasItems = () => data.has && listFor().length > 0;
 export const selIb = () => `<button type="button" class="ib weak sel" data-a="select" aria-pressed="${ui.selecting}" aria-label="${ui.selecting ? 'Done' : 'Select'}">${ic('select')}</button>`;
 const selBtn = () => `<button type="button" class="btn lbl sel" data-a="select" aria-pressed="${ui.selecting}" aria-label="${ui.selecting ? 'Done' : 'Select'}">${ic('select')}<span class="t"><span>Select</span><span>Done</span></span></button>`;
 
+/* the New folder plus, one control in the sidebar and on the Folders tab: a quiet filled circle, the button around it the target */
+export const nfPlus = c => `<button type="button" class="${c} nf-plus" data-a="new-folder" aria-label="New folder"><span class="nf-c">${ic('plus')}</span></button>`;
 /* ================= desktop ================= */
 export const kHint = isMac ? '⌘K' : 'Ctrl K';
 export function mountDesk() {
@@ -69,7 +71,7 @@ export function deskDock() {
   const P = pinned(); if (!P.length) return '';
   return `<nav class="dock" aria-label="Pinned" data-dock>` + P.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
     return `<a class="dk" href="${esc(b.url)}" target="_blank" rel="noopener" title="${esc(b.title)}" data-id="${b.id}" data-open="${b.id}" draggable="false">
-      <span class="dk-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || '#2a303b')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="56" height="56" draggable="false">` : l}</span>
+      <span class="dk-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="56" height="56" draggable="false">` : l}</span>
       <span class="dk-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
 }
 /* one level up: a folder's parent; past the top, the Dashboard on the desktop and the Folders tab on the phone, where
@@ -177,7 +179,7 @@ export function renderDesk() {
   /* places first, then the folders under their head with New folder beside it, Trash at the foot above More */
   const sh = `<div class="brand" aria-hidden="true"><span class="brand-t">Pinned</span><svg class="brand-mark"><use href="#app-mark"/></svg></div>
     <div class="nav">${sideItem('dashboard', 'dash', 'grid')}${sideItem('all', 'all', 'all')}${sideItem('inbox', 'inbox', 'inbox')}</div>
-    <div class="side-lbl"><span class="side-lt">Folders</span><button type="button" class="side-add" data-a="new-folder" aria-label="New folder">${ic('plus')}</button></div><div class="side-tree">${deskTree()}</div>
+    <div class="side-lbl"><span class="side-lt">Folders</span>${nfPlus('side-add')}</div><div class="side-tree">${deskTree()}</div>
     <div class="side-foot${ui.footOpen ? ' open' : ''}">${sideItem('trash', 'trash', 'trash')}<button type="button" class="si foot-tog" data-a="foot" aria-expanded="${!!ui.footOpen}" aria-controls="footacts"><span class="si-ic">${ic('more')}</span><span class="si-n">More</span><span class="foot-chev" aria-hidden="true">${ic('chev')}</span></button>
       <div class="foot-acts" id="footacts"><div class="foot-in">${sideAction('Import', 'import', 'import')}
       <a class="si" href="/api/export" download><span class="si-ic">${ic('export')}</span><span class="si-n">Export</span></a>${sideAction('API tokens', 'key', 'tokens')}
@@ -283,7 +285,7 @@ const vbarLabel = () => sortable() ? SORTS[ui.sort] : 'Kept for 30 days';
 export function phoneVbar() {
   const v = ui.view;
   if (v === 'folders') return `<div class="vbar">${kids(null).length > 1 ? sortCtl(true, 'p') : ''}<span class="ptb-sp"></span>${ui.selecting || selectables().length ? selIb() : ''}
-    <button type="button" class="ib weak vbar-add" data-a="new-folder" aria-label="New folder">${ic('plus')}</button></div>`;
+    ${nfPlus('ib weak vbar-add')}</div>`;
   if (!hasItems()) return '';
   const left = sortable(v) ? sortCtl(false, 'p') : `<span class="vbar-t">${vbarLabel()}</span>`;
   return `<div class="vbar">${left}<span class="ptb-sp"></span>${selIb()}${layoutSwitch(' p')}</div>`;
@@ -292,24 +294,24 @@ export function phoneVbar() {
 export const shareBtn = (id, cls) => { const f = folderById.get(id), on = !!(f && f.share);
   if (f && f.locked) return `<button type="button" class="share-ic lock-btn ${cls} on" data-a="relock" aria-label="Lock now" title="Lock now">${ic('lock')}</button>`;
   return `<button type="button" class="share-ic ${cls}${on ? ' on' : ''}" data-a="share-open" aria-label="${on ? 'Sharing' : 'Share'}" title="${on ? 'Sharing' : 'Share'}">${ic('link')}</button>`; };
-/* the settings screen on the phone: everything about the app itself, plain rows with an icon chip, a fact and a chevron */
+/* the settings screen on the phone: everything about the app itself, plain rows with an icon in the row's hue (plain, bin for Log out), a fact and a chevron */
 export function settingsScreen() {
   const nb = live().length, nf = data.folders.length, nt = count('trash');
-  const chip = (icon, hue) => `<span class="sr-ic ${hue}">${ic(icon)}</span>`;
+  const chip = icon => `<span class="sr-ic">${ic(icon)}</span>`;
   const body = (label, sub) => `<span class="sr-t"><span>${label}</span>${sub ? `<span class="sr-s">${sub}</span>` : ''}</span>`;
-  const row = (a, icon, hue, label, sub, warn) => `<button type="button" class="sr${warn ? ' warn' : ''}" data-a="${a}">${chip(icon, hue)}${body(label, sub)}${warn ? '' : `<span class="sr-ch">${ic('chev')}</span>`}</button>`;
-  const link = (href, icon, hue, label, sub, ext) => `<a class="sr" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${chip(icon, hue)}${body(label, sub)}<span class="sr-ch">${ic(ext ? 'open' : 'chev')}</span></a>`;
+  const row = (a, icon, label, sub, warn) => `<button type="button" class="sr${warn ? ' warn hue-bin' : ''}" data-a="${a}">${chip(icon)}${body(label, sub)}${warn ? '' : `<span class="sr-ch">${ic('chev')}</span>`}</button>`;
+  const link = (href, icon, label, sub, ext) => `<a class="sr" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${chip(icon)}${body(label, sub)}<span class="sr-ch">${ic(ext ? 'open' : 'chev')}</span></a>`;
   const tokens = ui.tokenCount == null ? '' : ui.tokenCount === 0 ? 'No tokens yet' : ui.tokenCount === 1 ? '1 token' : `${ui.tokenCount} tokens`;
   return `<div class="pset">
     <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}</div></div></div>
     <div class="pset-lbl">Save</div>
-    ${link('/bookmarklet', 'all', 'hue-tray', 'Save button', 'Bookmarklet and extension')}${row('tokens', 'key', 'hue-mint', 'API tokens', tokens)}
+    ${link('/bookmarklet', 'all', 'Save button', 'Bookmarklet and extension')}${row('tokens', 'key', 'API tokens', tokens)}
     <div class="pset-lbl">Data</div>
-    ${row('import', 'import', 'hue-cyan', 'Import', 'A bookmarks file from any browser')}${link('/api/export', 'export', 'hue-lilac', 'Export', 'bookmarks.html, written nightly too')}
+    ${row('import', 'import', 'Import', 'A bookmarks file from any browser')}${link('/api/export', 'export', 'Export', 'bookmarks.html, written nightly too')}
     <div class="pset-lbl">About</div>
-    ${link(SOURCE_URL, 'open', 'hue-plain', 'Source', 'Open source, AGPL-3.0', true)}
+    ${link(SOURCE_URL, 'open', 'Source', 'Open source, AGPL-3.0', true)}
     <div class="pset-lbl"></div>
-    ${row('logout', 'logout', 'hue-bin', 'Log out', '', true)}
+    ${row('logout', 'logout', 'Log out', '', true)}
   </div>`;
 }
 export function phoneBody() {
@@ -334,7 +336,7 @@ export function phoneRecents() {
   if (!all.length) return head;
   return head + `<div class="pglbl prc-lbl"><span>Pinned</span></div><nav class="precent" aria-label="Recent" data-dock>` + all.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
     return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener" data-id="${b.id}" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}${b.pinned ? ', pinned' : ''}">
-      <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || '#2a303b')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
+      <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
       <span class="prc-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
 }
 export function phoneBulk() { const n = ui.picked.size, dis = n ? '' : 'disabled';

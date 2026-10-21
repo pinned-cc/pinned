@@ -93,5 +93,5 @@ export async function copy(text) {
 /* a favicon that fails to load falls back to the letter on the dark tile */
 export function installIconFallback() {
   document.addEventListener('error', e => { const t = e.target; if (t.tagName === 'IMG' && t.parentElement && t.parentElement.dataset.l != null) {
-    const p = t.parentElement; p.style.setProperty('--tile', '#2a303b'); p.textContent = p.dataset.l; } }, true);
+    const p = t.parentElement; p.style.setProperty('--tile', 'var(--tile-blank)'); p.textContent = p.dataset.l; } }, true);
 }

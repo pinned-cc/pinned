@@ -2,15 +2,16 @@
 @font-face{font-family:"Geist";src:url("fonts/Geist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
 @font-face{font-family:"Geist Mono";src:url("fonts/GeistMono-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
 :root{
-  --ground:#0b0d10;--screen:#11141a;--surface:#171b22;--surface-up:#1e232c;--sheet:#1a1f27;--fold:#14181e;
+  --ground:#0a0a0b;--screen:#101012;--surface:#161618;--surface-up:#1d1d20;--sheet:#19191c;--fold:#131315;
   --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.12);
-  --ink:#f2f4f7;--ink-weak:#9aa3b2;--accent:#4f8cff;--accent-ink:#071224;--accent-soft:#b3ccff;--danger:#ff9a9a;
+  --ink:#f0f0f0;--ink-weak:#9a9a9f;--accent:#5fd39a;--accent-ink:#04150c;--accent-soft:#b5efd0;--danger:#ff9a9a;
+  --tile-blank:#2a2a2e;--press:rgba(255,255,255,.06);--focus-field:0 0 0 3px rgba(95,211,154,.22);
   --ease-out:cubic-bezier(.23,1,.32,1);
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --cyan:#7fcfe8;--cyan-p:#b4e6f5;--coral:#ff9e8c;--coral-p:#ffc8bd;--lilac:#b7a3ff;--lilac-p:#d8ccff;
   --lime:#bfe07a;--lime-p:#dcf1ad;--mint:#7fdcb2;--mint-p:#b3efd2;--rose:#f39cc6;--rose-p:#f9c7df;
-  --tray:#93b1ff;--tray-p:#c4d4ff;--plain:#9aa3b2;--plain-p:#d5dae2;
+  --tray:#8fd8b4;--tray-p:#c4efd9;--plain:#9a9a9f;--plain-p:#d6d6da;
   --gut:18px;
   color-scheme:dark;
 }
@@ -26,17 +27,17 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stro
 /* fields */
 .fld{display:block;margin-top:14px}
 .sh-lbl{display:block;font:500 12px/16px var(--sans);color:var(--ink-weak);margin:0 2px 6px}
-.fld-in{display:block;width:100%;min-height:48px;margin:0;border-radius:14px;background:rgba(18,22,28,.85);border:1px solid var(--line);padding:13px 14px;font:400 16px/20px var(--sans);color:var(--ink);outline:0}
-.fld-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.22)}
+.fld-in{display:block;width:100%;min-height:48px;margin:0;border-radius:14px;background:var(--surface);border:1px solid var(--line);padding:13px 14px;font:400 16px/20px var(--sans);color:var(--ink);outline:0}
+.fld-in:focus{border-color:var(--accent);box-shadow:var(--focus-field)}
 .fld-in::placeholder{color:var(--ink-weak);opacity:.7}
 .fld-err{margin:8px 2px 0;font:500 13px/18px var(--sans);color:var(--danger)}
 .host{font:400 11.5px/13px var(--mono);color:var(--ink-weak);letter-spacing:-.01em}
 
 /* buttons */
 .tbtn{height:44px;padding:0 14px;border-radius:22px;font:500 15px/1 var(--sans);color:var(--accent-soft)}
-.tbtn:hover{background:rgba(79,140,255,.10)}
+.tbtn:hover{background:rgba(95,211,154,.10)}
 .save{height:52px;border-radius:26px;background:var(--accent);color:var(--accent-ink);font:600 16px/1 var(--sans);display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
-.save:hover{background:#6a9dff}
+.save:hover{background:linear-gradient(var(--press),var(--press)) var(--accent)}
 .save[disabled]{opacity:.45;cursor:default}
 .save svg.i{width:24px;height:24px;stroke-width:2.2}
 .ib{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;color:var(--ink-weak);flex:none}
@@ -45,7 +46,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stro
 .save:active,.tbtn:active,.ib:active,.si:active{transform:scale(.97)}
 
 /* favicon square */
-.fav{width:48px;height:48px;border-radius:12px;overflow:hidden;background:var(--tile,#2a303b);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);display:grid;place-items:center;flex:none;font:600 19px/1 var(--sans);color:var(--ink)}
+.fav{width:48px;height:48px;border-radius:12px;overflow:hidden;background:var(--tile,var(--tile-blank));box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);display:grid;place-items:center;flex:none;font:600 19px/1 var(--sans);color:var(--ink)}
 .fav img{display:block;width:100%;height:100%;object-fit:cover}
 .sv-ph{position:relative;background:var(--surface);overflow:hidden}
 .sv-ph .ph-in{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.08)}
@@ -61,7 +62,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stro
 /* folder chips: the app's mini tiles */
 .fpick{display:flex;flex-wrap:wrap;gap:4px 8px}
 .fmini{--h:var(--plain);--hp:var(--plain-p);flex:none;height:44px;display:inline-flex;align-items:center;padding:0;max-width:100%}
-.fmini .v{position:relative;height:38px;min-width:96px;max-width:100%;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border-radius:10px;background:rgba(18,22,28,.85);border:1px solid var(--line);font:500 13.5px/1 var(--sans);color:var(--ink);white-space:nowrap}
+.fmini .v{position:relative;height:38px;min-width:96px;max-width:100%;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border-radius:10px;background:var(--fold);border:1px solid var(--line);font:500 13.5px/1 var(--sans);color:var(--ink);white-space:nowrap}
 .fmini .nm{min-width:0;overflow:hidden;display:inline-flex;align-items:center;gap:8px}
 .fmini .nt{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .fmini svg.fi{width:14px;height:14px;color:var(--h);flex:none}

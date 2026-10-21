@@ -170,7 +170,7 @@ func shareHeaders(w http.ResponseWriter) {
 const goneHTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex"><title>Pinned</title>
-<style>html,body{margin:0;height:100%;background:#0b0d10;color:#c9ccd1;font:15px/1.5 system-ui,sans-serif}
+<style>html,body{margin:0;height:100%;background:#0a0a0b;color:#f0f0f0;font:15px/1.5 system-ui,sans-serif}
 body{display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}</style>
 </head><body><p>This link is no longer available.</p></body></html>
 `

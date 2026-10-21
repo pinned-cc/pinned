@@ -260,6 +260,9 @@ async function desktop(browser, engine) {
     const nav = await page.evaluate(() => [...document.querySelectorAll('#side .nav .si')].map(e => e.dataset.view));
     assert(nav.join(',') === 'dashboard,all,inbox', 'nav: ' + nav.join(','));
     assert(await page.locator('#side .side-lbl .side-add[data-a="new-folder"]').count() === 1, 'no + beside Folders');
+    assert(await page.locator('#side .side-add.nf-plus > .nf-c').count() === 1, 'the + beside Folders is not the filled circle');
+    { const c = await page.locator('#side .side-add .nf-c').boundingBox(), t = await page.evaluate(() => { const r = document.querySelector('#side .side-add').getBoundingClientRect(), a = getComputedStyle(document.querySelector('#side .side-add'), '::after'); return r.width - 2 * parseFloat(a.left); });
+      assert(Math.abs(c.width - 28) < 0.5 && Math.abs(c.height - 28) < 0.5, 'the circle is not 28 px'); assert(t > 43.5, 'the + target under 44 px'); }
     const foot = await page.evaluate(() => [...document.querySelector('#side .side-foot').children].map(e => e.dataset.view || e.dataset.a || e.className));
     assert(foot[0] === 'trash' && foot[1] === 'foot', 'foot: ' + foot.join(','));
     assert(!(await page.locator('#side .foot-acts [data-a="new-folder"]').count()), 'New folder still folded under More');
@@ -284,14 +287,20 @@ async function desktop(browser, engine) {
     await visible(page.locator('#tbwrap [data-a="select"]'));
   });
 
-  await check('the Folders screen: All bookmarks first, Trash at the foot, its order and New folder on screen', async () => {
-    await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.type('Folders');
-    await visible(page.locator('#pal .pal-view', { hasText: 'Folders' })); await page.locator('#pal .pal-view', { hasText: 'Folders' }).first().click();
-    await until(page, () => (document.querySelector('#tbwrap h2') || {}).textContent === 'Folders', null, 'Folders screen');
+  await check('the Folders screen: All bookmarks first, Trash at the foot, New folder always, its order from two folders on', async () => {
+    const tops = async () => ((await apiIn(page, 'GET', '/api/state')).data.folders || []).filter(f => f.parent_id == null).length;
+    const toFolders = async () => { await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.type('Folders');
+      await visible(page.locator('#pal .pal-view', { hasText: 'Folders' })); await page.locator('#pal .pal-view', { hasText: 'Folders' }).first().click();
+      await until(page, () => (document.querySelector('#tbwrap h2') || {}).textContent === 'Folders', null, 'Folders screen'); };
+    await toFolders();
+    assert(await page.locator('#tbwrap [data-a="new-folder"]').count() === 1, 'New folder missing');
+    assert(await page.locator('#tbwrap [data-a="fsort"]').count() === (await tops() > 1 ? 1 : 0), 'the folder order shows with one folder or hides with two');
+    const made = []; for (const x of ['a', 'b']) made.push((await apiIn(page, 'POST', '/api/folders', { name: `ui-test fsort ${x}`, parent_id: null })).data.id);
+    await page.reload(); await visible(page.locator('#side .si')); await toFolders();
     assert(await page.getAttribute('#body .fscreen > .ftile >> nth=0', 'data-view') === 'all', 'All bookmarks is not the first card');
     assert(/^All bookmarks, \d+$/.test(await page.getAttribute('#body .fscreen > .ftile >> nth=0', 'aria-label')), 'All bookmarks has no count');
     assert(/^Trash, \d+$/.test(await page.getAttribute('#body .ftrash', 'aria-label')), 'no Trash row with its count');
-    assert(await page.locator('#tbwrap [data-a="new-folder"]').count() === 1 && await page.locator('#tbwrap [data-a="fsort"]').count() === 1, 'New folder or the folder order missing');
+    assert(await page.locator('#tbwrap [data-a="new-folder"]').count() === 1 && await page.locator('#tbwrap [data-a="fsort"]').count() === 1, 'New folder or the folder order missing with two folders');
     assert(!(await page.locator('#tbwrap [data-a$="menu"]').count()), 'three dots on the Folders screen');
     await page.click('#tbwrap [data-a="fsort"]'); await menuItem(page, 'A to Z').click();
     await until(page, () => { const n = [...document.querySelectorAll('#body .fscreen .ftile[data-ftile] .ft-t')].map(e => e.textContent); return n.length > 1 && n.every((x, i) => !i || n[i - 1].localeCompare(x, undefined, { sensitivity: 'base' }) <= 0); }, null, 'folders A to Z');
@@ -300,6 +309,8 @@ async function desktop(browser, engine) {
     await page.click('#body .fscreen > .ftile[data-view="all"]');
     await until(page, () => (document.querySelector('#tbwrap h2') || {}).textContent === 'All bookmarks', null, 'All bookmarks opens');
     await visible(page.locator('#tbwrap [data-a="sort"]')); await visible(page.locator('#tbwrap [data-a="select"]'));
+    for (const id of made) await apiIn(page, 'DELETE', `/api/folders/${id}`);
+    await page.reload(); await visible(page.locator('#side .si'));
   });
 
   await check('in between widths: the sidebar folds to an icon rail from 720 to 999 px, names on focus, nothing scrolls sideways', async () => {
@@ -440,6 +451,30 @@ async function desktop(browser, engine) {
     await until(page, () => !!document.querySelector('#screen.selecting'), null, 'selecting');
     await page.keyboard.press('s');
     await until(page, () => !document.querySelector('#screen.selecting'), null, 'not selecting');
+  });
+
+  await check('N opens New folder; not with Shift or while typing, not in Trash', async () => {
+    const nf = async () => { await sheetOpen(page); assert(await page.locator('#sheet input[name=v]').count() === 1 && (await page.textContent('#sheet')).includes('New folder'), 'not the New folder sheet');
+      await page.keyboard.press('Escape'); await sheetClosed(page); };
+    await page.locator('#body .glbl').first().click();
+    await page.keyboard.press('n'); await nf();
+    await page.keyboard.press('Shift+N'); await page.waitForTimeout(300); assert(!(await page.locator('#layer.open').count()), 'Shift N opened a sheet');
+    await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.press('n'); await page.waitForTimeout(300);
+    assert(!(await page.locator('#layer.open').count()) && await page.inputValue('#pq') === 'n', 'N in the palette field did not type');
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await gone(page.locator('#pal'));
+    await page.click('#side [data-view="trash"]'); await page.locator('#body .glbl, #body .empty, #tbwrap h2').first().click().catch(() => {});
+    await page.keyboard.press('n'); await page.waitForTimeout(300); assert(!(await page.locator('#layer.open').count()), 'N opened a sheet in Trash');
+    await page.click('#side [data-view="inbox"]'); await visible(page.locator('#body article.tile[data-id]'));
+  });
+
+  await check('palette: New folder is an action, Enter and a click both open its sheet', async () => {
+    await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.type('new fol');
+    await visible(page.locator('#pal .pal-act[data-act="new-folder"]', { hasText: 'New folder' }));
+    await page.keyboard.press('Enter'); await gone(page.locator('#pal')); await sheetOpen(page);
+    assert((await page.textContent('#sheet')).includes('New folder'), 'Enter: not the New folder sheet'); await page.keyboard.press('Escape'); await sheetClosed(page);
+    await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.type('new fol');
+    await page.locator('#pal .pal-act[data-act="new-folder"]').click(); await gone(page.locator('#pal')); await sheetOpen(page);
+    assert((await page.textContent('#sheet')).includes('New folder'), 'click: not the New folder sheet'); await page.keyboard.press('Escape'); await sheetClosed(page);
   });
 
   await check('share sheet from a folder menu: link, password, expiry', async () => {
@@ -977,12 +1012,15 @@ async function phone(browser, engine) {
     await until(page, () => ![...document.querySelectorAll('#pmain .ftile')].some(t => t.textContent.includes('ui-test fhold')), null, 'both folders gone');
   });
 
-  await check('the Folders tab: its order and New folder on screen, All bookmarks the first card, Trash at the foot', async () => {
+  await check('the Folders tab: New folder on screen, its order from two folders on, All bookmarks the first card, Trash at the foot', async () => {
     await page.tap('.ptbar.tabs [data-tab="folders"]');
     await until(page, () => !!document.querySelector('#pmain .fscreen .ftile'), null, 'folders grid');
-    await visible(page.locator('#pmain .vbar [data-a="fsort"]'));
+    const tops = ((await apiIn(page, 'GET', '/api/state')).data.folders || []).filter(f => f.parent_id == null).length;
+    assert(await page.locator('#pmain .vbar [data-a="fsort"]').count() === (tops > 1 ? 1 : 0), `the folder order ${tops > 1 ? 'hides with two folders' : 'shows with one folder'}`);
     const add = page.locator('#pmain .vbar [data-a="new-folder"]'), b = await add.boundingBox();
     assert(b.width > 43.5 && b.height > 43.5, 'New folder under 44 px');
+    assert(await add.locator('.nf-c').count() === 1, 'the Folders tab + is not the filled circle');
+    assert(await page.evaluate(() => { const a = getComputedStyle(document.querySelector('#pmain .vbar .nf-c')), w = document.querySelector('#pmain .vbar .nf-c').getBoundingClientRect().width; return a.backgroundColor !== 'rgba(0, 0, 0, 0)' && Math.abs(w - 28) < 0.5; }), 'the Folders tab circle has no fill or is not 28 px');
     const first = page.locator('#pmain .fscreen > .ftile').first();
     assert(await first.getAttribute('data-view') === 'all' && /^All bookmarks, \d+$/.test(await first.getAttribute('aria-label')), 'All bookmarks is not the first card');
     const fb = await first.boundingBox(), sb = await page.locator('#pmain .fscreen .ftile[data-ftile]').first().boundingBox();

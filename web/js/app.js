@@ -5,13 +5,13 @@ import { onClick, onInput, onSubmit, doImport } from './actions.js';
 import { api } from './api.js';
 import { installDrag } from './drag.js';
 import { onKey } from './keys.js';
-import { galleryHTML, sortedHTML } from './home.js';
+import { freshHTML, galleryHTML, sortedHTML } from './home.js';
 import { installMenu, menuHTML, selItems, tileMenu } from './menu.js';
 import { installPalette, openPalette } from './palette.js';
 import { installPhone } from './phone.js';
-import { addTileHTML, backLink, deskBulk, deskDock, deskTile, deskToolbar, deskTree, emptyMerge, favHTML, fmini, ftileHTML, INBOX_F, installRender, nfMini, foldersScreen, phoneBulk, phoneRecents, phoneTile, phoneTop, phoneTabs, phoneVbar, render, searchField, shareBtn, sideItem } from './render.js';
+import { addTileHTML, backLink, deskBulk, deskDock, deskTile, deskToolbar, deskTree, emptyMerge, favHTML, fmini, ftileHTML, INBOX_F, installRender, nfMini, nfPlus, foldersScreen, noticeHTML, phoneBulk, phoneRecents, phoneTile, phoneTop, phoneTabs, phoneVbar, pskel, render, searchField, settingsScreen, shareBtn, sideItem, skel } from './render.js';
 import { installSelect } from './select.js';
-import { bmHead, checkUrl, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, rowsHTML } from './sheets.js';
+import { bmHead, checkUrl, doneHTML, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, rowsHTML, saveActs, saveHTML, shareHTML, textHead, tokensHTML } from './sheets.js';
 import { data, layers, load, setData, ui } from './state.js';
 import { toast } from './toast.js';
 import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE } from './util.js';
@@ -75,6 +75,7 @@ function bootBookmarklet() {
 }
 
 /* the style guide (tools/styleguide.html) renders its specimens with these builders, so they match the app */
-window.Pinned = { render, load, U: ui, D: data };
-window.Pinned.kit = { setData, ic, searchField, backLink, shareBtn, lockHTML, deskTile, phoneTile, ftileHTML, fmini, INBOX_F, nfMini, addTileHTML, emptyMerge, deskBulk, deskToolbar, phoneTop, phoneTabs, phoneVbar, phoneBulk, foldersScreen, sideItem, deskTree, deskDock, phoneRecents, rowsHTML, fHead, bmHead, grab, favHTML, galleryHTML, sortedHTML, menuHTML, tileMenu, selItems };
+window.Pinned = { render, load, U: ui, D: data, L: layers };
+window.Pinned.kit = { setData, ic, searchField, backLink, shareBtn, lockHTML, deskTile, phoneTile, ftileHTML, fmini, INBOX_F, nfMini, addTileHTML, emptyMerge, deskBulk, deskToolbar, phoneTop, phoneTabs, phoneVbar, nfPlus, phoneBulk, foldersScreen, sideItem, deskTree, deskDock, phoneRecents, rowsHTML, fHead, bmHead, grab, favHTML, galleryHTML, sortedHTML, freshHTML, menuHTML, tileMenu, selItems,
+  noticeHTML, skel, pskel, settingsScreen, textHead, shareHTML, tokensHTML, newSave, saveHTML, saveActs, doneHTML };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

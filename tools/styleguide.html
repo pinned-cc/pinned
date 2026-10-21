@@ -3,253 +3,610 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Style guide</title>
-<meta name="theme-color" content="#0b0d10">
+<title>Pinned style guide</title>
+<meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/static/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/app.css">
-<style media="(prefers-reduced-motion: reduce)">*,*::before,*::after{transition:none!important;animation:none!important}</style>
 <style>
-/* layout of this page only; every specimen below is styled by app.css alone */
-body.sg{background:var(--ground);color:var(--ink);font:400 14px/1.5 var(--sans);margin:0}
-.sg-wrap{max-width:1200px;margin:0 auto;padding:40px 16px 96px}
-.sg-wrap>header h1{margin:0;font:600 28px/1.2 var(--sans);letter-spacing:-.01em}
-.sg-sec>p.sg-lead{max-width:640px;color:var(--ink);font-size:15px;line-height:1.6}
-.sg-sec{margin-top:56px}
-.sg-sec>h2{margin:0 0 4px;font:600 18px/1.3 var(--sans)}
-.sg-sec>p{margin:0 0 16px;color:var(--ink-weak);font-size:13px}
-.sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px 16px;align-items:start}
-.sg-item{min-width:0}
-.sg-cls{display:block;margin-top:8px;font:400 12px/1.4 var(--mono);color:var(--ink-weak);overflow-wrap:anywhere}
-.sg-scroll{position:relative;overflow-x:auto;padding-bottom:4px}
-.sg-frame{position:relative;transform:translateZ(0);overflow:hidden;border:1px dashed var(--line-2);border-radius:12px;background:var(--screen)}
-.sg-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.sg-sw{display:flex;align-items:center;gap:12px;min-width:0}
-.sg-chip{width:44px;height:44px;border-radius:10px;border:1px solid var(--line-2);flex:none}
-.sg-sw b{display:block;font:500 13px/1.3 var(--mono)}
-.sg-sw span{display:block;font:400 12px/1.3 var(--mono);color:var(--ink-weak)}
-.sg-type{display:flex;flex-direction:column;gap:20px}
-.sg-type .sg-item{border-bottom:1px solid var(--line);padding-bottom:16px}
-.sg-side{width:300px;max-width:calc(100vw - 32px)}
+/* The page around the specimens. Every specimen is styled by app.css alone; this sheet only lays the page out, and it
+   uses the app's own tokens, so a token change shows up here too. */
+body.sg{background:var(--ground);color:var(--ink);font:400 var(--t-body)/var(--lh-body) var(--sans);margin:0}
+.sg-shell{display:grid;grid-template-columns:minmax(0,1fr);max-width:1440px;margin:0 auto}
+.sg-toc{position:relative;padding:var(--s-8) var(--s-8) 0}
+.sg-toc summary{display:flex;align-items:center;gap:var(--s-4);height:var(--tap);padding:0 var(--s-7);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);
+  font:500 var(--t-body)/var(--lh-none) var(--sans);cursor:pointer;list-style:none}
+.sg-toc summary::-webkit-details-marker{display:none}
+.sg-toc ol{list-style:none;margin:var(--s-4) 0 0;padding:var(--s-3) 0;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line)}
+.sg-toc li a{display:block;padding:var(--s-3) var(--s-7);color:var(--ink-weak);font:400 var(--t-meta)/var(--lh-18) var(--sans)}
+.sg-toc li a:hover{color:var(--ink)}
+.sg-toc li.h{padding:var(--s-6) var(--s-7) var(--s-2);font:500 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink)}
+@media (min-width:1100px){
+  .sg-shell{grid-template-columns:232px minmax(0,1fr)}
+  .sg-toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:var(--s-20) 0 var(--s-20) var(--s-8);scrollbar-width:none}
+  .sg-toc summary{display:none}
+  .sg-toc ol{margin:0;background:none;border:0;padding:0}
+  .sg-toc li a{padding:var(--s-1) var(--s-6)}
+}
+.sg-main{min-width:0;padding:var(--s-20) var(--s-8) 96px}
+@media (min-width:720px){.sg-main{padding:var(--s-20) var(--s-20) 96px}}
+.sg-main>header{max-width:720px}
+.sg-main>header h1{margin:0;font:600 var(--t-display)/var(--lh-tight) var(--sans);letter-spacing:-.02em}
+.sg-main>header p{margin:var(--s-6) 0 0;color:var(--ink-weak);font:400 var(--t-control)/var(--lh-24) var(--sans)}
+.sg-part{margin:72px 0 0;padding-top:var(--s-6);border-top:1px solid var(--line-2);font:600 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-weak);letter-spacing:.06em;text-transform:uppercase}
+.sg-sec{margin-top:var(--s-28);scroll-margin-top:var(--s-12)}
+.sg-sec>h2{margin:0;font:600 var(--t-page)/var(--lh-tight) var(--sans);letter-spacing:-.01em}
+.sg-sec>p,.sg-p{max-width:720px;margin:var(--s-4) 0 0;color:var(--ink-weak);font:400 var(--t-body)/var(--lh-20) var(--sans)}
+.sg-sec h3{margin:var(--s-16) 0 var(--s-4);font:600 var(--t-control)/var(--lh-20) var(--sans)}
+.sg-rules{max-width:720px;margin:var(--s-8) 0 0;padding:var(--s-7) var(--s-8) var(--s-7) var(--s-14);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);color:var(--ink-weak)}
+.sg-rules li{margin:var(--s-1) 0;font:400 var(--t-body)/var(--lh-20) var(--sans)}
+.sg-rules b{color:var(--ink);font-weight:500}
+.sg-spec{margin-top:var(--s-8)}
+.sg-frame{position:relative;transform:translateZ(0);overflow:hidden;padding:var(--s-8);border:1px dashed var(--line-2);border-radius:var(--r-l);background:var(--screen)}
+.sg-frame.tight{padding:0}
+.sg-frame.fixed{padding:0}
+.sg-scroll{position:relative;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .sg-desk{min-width:880px}
 .sg-ph{max-width:390px}
-.sg-ph .pgrid,.sg-ph .fgrid-p{padding:0}
-.sg-stack{display:flex;flex-direction:column;gap:28px}
+.sg-ph .pgrid,.sg-ph .fgrid-p,.sg-ph .gb,.sg-ph .gl{padding:0}
+.sg-ph .ftrash.p{margin-left:0;margin-right:0}
+.sg-cap{display:block;margin-top:var(--s-4);font:400 var(--t-label)/var(--lh-18) var(--mono);color:var(--ink-weak);overflow-wrap:anywhere}
+.sg-cap b{color:var(--ink);font-weight:500}
+.sg-row{display:flex;flex-wrap:wrap;gap:var(--s-8) var(--s-12);align-items:flex-start}
+.sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:var(--s-12) var(--s-8);align-items:start}
+.sg-grid.wide{grid-template-columns:repeat(auto-fill,minmax(min(100%,432px),1fr))}
+.sg-item{min-width:0}
+.sg-state{display:block;margin-bottom:var(--s-3);font:500 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-weak)}
+/* token tables */
+.sg-tokens{display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--line);margin-top:var(--s-8)}
+.sg-tok{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-3) var(--s-8);align-items:center;padding:var(--s-6) 0;border-bottom:1px solid var(--line)}
+@media (min-width:720px){.sg-tok{grid-template-columns:200px minmax(0,1fr) 220px}}
+.sg-tok code{font:500 var(--t-meta)/var(--lh-18) var(--mono);color:var(--ink)}
+.sg-tok .v{display:block;font:400 var(--t-label)/var(--lh-16) var(--mono);color:var(--ink-weak);overflow-wrap:anywhere}
+.sg-tok .n{color:var(--ink-weak);font:400 var(--t-meta)/var(--lh-18) var(--sans)}
+.sg-tok details{font:400 var(--t-label)/var(--lh-18) var(--sans);color:var(--ink-weak)}
+.sg-tok summary{cursor:pointer;color:var(--ink-weak)}
+.sg-tok summary:hover{color:var(--ink)}
+.sg-tok details code{font:400 var(--t-label)/var(--lh-18) var(--mono);color:var(--ink-weak);display:block;overflow-wrap:anywhere}
+.sg-sw{display:block;width:100%;height:var(--h-field);border-radius:var(--r-s);border:1px solid var(--line-2)}
+.sg-sw.pair{display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.sg-type-s{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg-bar{height:var(--s-6);border-radius:2px;background:var(--accent)}
+.sg-rad{width:var(--s-32);height:var(--s-28);background:var(--surface-up);border:1px solid var(--line-2)}
+.sg-elev{height:72px;border-radius:var(--r-l);background:var(--surface-up)}
+.sg-ic{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:var(--s-4);margin-top:var(--s-8)}
+.sg-ic>div{display:flex;flex-direction:column;align-items:center;gap:var(--s-4);padding:var(--s-7) var(--s-2);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.sg-ic code{font:400 var(--t-micro)/var(--lh-14) var(--mono);color:var(--ink-weak)}
+.sg-curve{width:100%;height:120px;color:var(--accent)}
+.sg-table{width:100%;max-width:720px;margin-top:var(--s-8);border-collapse:collapse;font:400 var(--t-meta)/var(--lh-18) var(--sans)}
+.sg-table th,.sg-table td{padding:var(--s-4) var(--s-6) var(--s-4) 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.sg-table th{font-weight:500;color:var(--ink-weak)}
+.sg-table td:first-child{font-family:var(--mono);white-space:nowrap}
+.sg-iframe{display:block;width:390px;height:780px;border:0;border-radius:var(--r-l);background:var(--screen)}
+.sg-iframe.wide{width:100%;min-width:720px;height:640px}
+.sg-main p code,.sg-main li code{font:400 .92em/1 var(--mono);color:var(--ink)}
+.sg-note{color:var(--ink-weak);font:400 var(--t-label)/var(--lh-18) var(--sans)}
 </style>
 </head>
 <body data-page="styleguide" class="sg">
-<div class="sg-wrap">
-  <header>
-    <h1>Style guide</h1>
-  </header>
+<div class="sg-shell">
+  <details class="sg-toc" id="toc"><summary>Contents</summary><ol id="toc-list"></ol></details>
+  <main class="sg-main">
+    <header>
+      <h1>Pinned style guide</h1>
+      <p>The tokens and components of the app, drawn by the app's own stylesheet and markup. Values in this page are read from app.css as it is served, so it stays in step with the code. Where a specimen is markup written in this page rather than built by the app, the source file is named beside it.</p>
+    </header>
 
-  <section class="sg-sec" id="fit"><h2>How the pieces fit</h2>
-    <p class="sg-lead">A bookmark is a card that shows its favicon, its title and its address. A folder is a tile on the start screen, in the Folders screen and above the cards of its parent, and a row in the sidebar alongside All bookmarks, Inbox and Trash. Inside a folder, the back link above the title takes you one level up, to the parent or to the Dashboard. The Dashboard shows the links opened last under small day heads, each tagged with its folder. Sheets are made of glass, and the palette blurs the page behind it.</p></section>
+    <div class="sg-part" data-part="Foundations">Foundations</div>
+    <section class="sg-sec" id="colour"><h2>Colour</h2>
+      <p>Graphite surfaces with one green accent and one danger red. Surfaces step up in lightness as they rise. Text is ink or weak ink, nothing in between. Each row lists the rules in app.css that use the token.</p>
+      <h3>Surfaces</h3><div class="sg-tokens" data-tokens="--ground --screen --recess --fold --surface --sheet --surface-up"></div>
+      <h3>Ink and lines</h3><div class="sg-tokens" data-tokens="--ink --ink-weak --ink-faint --line --line-2"></div>
+      <h3>Accent and danger</h3><div class="sg-tokens" data-tokens="--accent --accent-ink --accent-soft --danger"></div>
+      <h3>Folder colours</h3>
+      <p class="sg-p">Each folder colour is a pair: the hue (left) tints icons, dots and fills; the pale (right) is text set on a tinted fill. Top level folders take cyan, coral, lilac, lime, mint and rose in the order they were created, and their subfolders take the parent's. The Inbox is tray, Trash is bin, places such as All bookmarks are ink, and plain is the fallback. A class such as <code>hue-cyan</code> sets <code>--h</code> and <code>--hp</code> for everything inside it, so markup never carries a style attribute for colour.</p>
+      <div class="sg-tokens" data-tokens="--cyan --coral --lilac --lime --mint --rose --tray --bin --ink-h --plain" data-pair="1"></div>
+      <h3>Interaction</h3><div class="sg-tokens" data-tokens="--hover --press --picked-edge --picked-fill --tile-blank"></div>
+    </section>
 
-  <section class="sg-sec" id="tokens"><h2>Colour tokens</h2><p>Read live from app.css.</p><div class="sg-grid" id="sg-tokens"></div></section>
-  <section class="sg-sec" id="type"><h2>Type scale</h2><p>Sizes are measured from the rendered element.</p><div class="sg-type" id="sg-type"></div></section>
-  <section class="sg-sec"><h2>Bookmark card</h2><p>Desktop grid, desktop list and phone.</p><div id="sg-cards"></div></section>
-  <section class="sg-sec"><h2>Folder tile</h2><p>Full tile on the start screen, the Folders screen and inside a folder; the picker tile in the sheets.</p><div id="sg-ftiles"></div></section>
-  <section class="sg-sec"><h2>Sidebar rows</h2><p>System rows and folder rows are one component.</p><div id="sg-side"></div></section>
-  <section class="sg-sec"><h2>Title bar</h2><p>Back link, title, count, share, Sort, Select and, on a folder only, the three dots. A view's own controls sit on the view; the three dots hold only what acts on the folder itself.</p><div id="sg-title"></div></section>
-  <section class="sg-sec"><h2>View row on the phone</h2><p>Under the title or the tabs, where the first section label sat: the order in use with its chevron on the left (a fixed label where the view has a fixed order), the view's actions on the right, 44 px targets. The Folders tab carries its order and New folder.</p><div id="sg-vbar"></div></section>
-  <section class="sg-sec"><h2>Folders grid</h2><p>All bookmarks is the first card, a folder card in ink with every bookmark's newest faces. Trash is a quiet row at the foot, always there with its count. With no folders yet, a dashed New folder card follows All bookmarks.</p><div id="sg-fgrid"></div></section>
-  <section class="sg-sec"><h2>Selection</h2><p>Holding a card and letting go starts selecting with that card ticked; a tap adds the next. With cards picked, the group actions sit on screen: in place of the search on the desktop and of the search pill on the phone. Nothing else moves: the title, the tabs and the toolbar stay as they are, and Select turns into the pressed Done in its place, quiet grey like any pressed button, which ends selecting; so do Escape and switching tab. The three dots hold what the bar has no button for: Open, Rename and Pin for one card, Pin or Unpin for several. A right click on a card opens the same items first, then Move, Share and Trash.</p><div id="sg-sel"></div></section>
-  <section class="sg-sec"><h2>Locked folder</h2><p>Shut, it shows a lock where the count sits and asks for its password; open, a lock follows the name and the title bar carries the lock button.</p><div id="sg-lock"></div></section>
-  <section class="sg-sec"><h2>Dashboard</h2><p>Recently opened, grouped by day: Today, Yesterday, Last 7 days, Last 30 days, Earlier. An empty group never shows. It follows the grid or list switch. Its cards select like every card: Select on screen, a hold, Shift and Cmd clicks, the marquee; a picked card wears the round tick and the green edge.</p><div id="sg-dash"></div></section>
-  <section class="sg-sec"><h2>Recent</h2><div id="sg-recent"></div></section>
-  <section class="sg-sec"><h2>Palette</h2><div id="sg-pal"></div></section>
-  <section class="sg-sec"><h2>Glass sheet</h2><div id="sg-sheet"></div></section>
-  <section class="sg-sec"><h2>Search field</h2><p>One search, one field: at the top on the desktop, at the foot on the phone within thumb reach, beside the round plus. Same height, corners, ground, border, icon, 16 px text and padding; only the width differs. The / key hint shows only where a keyboard is the input. The field opens the palette; while a search runs, the field shows its query.</p><div id="sg-float"></div></section>
-  <section class="sg-sec"><h2>Buttons</h2><div id="sg-buttons"></div></section>
-  <section class="sg-sec"><h2>Add bookmark and empty</h2><div id="sg-empty"></div></section>
-  <section class="sg-sec"><h2>Toast</h2><div id="sg-toast"></div></section>
-  <section class="sg-sec"><h2>Badges and counts</h2><div id="sg-badges"></div></section>
+    <section class="sg-sec" id="type"><h2>Type</h2>
+      <p>One family, Geist, with Geist Mono for addresses and tokens. Three weights: 400 for running text, 500 for labels and controls, 600 for titles and primary buttons. Sizes are named by role; line heights are a separate scale. Text in a field is never under 16 px, so iOS does not zoom into it.</p>
+      <div class="sg-tokens" data-type="1"></div>
+      <h3>Line heights</h3>
+      <p class="sg-p"><code>--lh-none</code> is for one line controls, where the box height sets the rhythm. The ratios are for running text. The pixel steps hold stacked label pairs such as a title over an address. Every address line, 11.5 px mono under a title, uses <code>--lh-14</code>: on a card, a phone card, a list row, a sheet head and the Dashboard.</p>
+      <div class="sg-tokens" data-prefix="--lh-"></div>
+      <h3>Candidates to merge later</h3>
+      <ul class="sg-rules">
+        <li><b>11.5, 12.5 and 13.5 px</b> sit between steps. 11.5 carries every address line and the small chips; 12.5 the tab count and the tooltip; 13.5 the sidebar rows, toasts and list titles. Each could move to its neighbour, but that shifts pixels, so they stay until it is decided by eye.</li>
+        <li><b>Addresses at 12 px</b>: the palette and the Add to sheet set theirs one step up from the 11.5 px address line. One size would do.</li>
+        <li><b>One off line heights</b> left as numbers: 15 and 22 px, 1.25 (the heading of the Share, API tokens and Add to sheets) and 1.5 (the Save button page).</li>
+        <li><b>Favicon letters</b> scale with their tile, about 0.4 of its side (9 px on a 20 px tile up to 22 px on a 56 px tile). They are set beside the tile size, not from the type scale.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="spacing"><h2>Spacing</h2>
+      <p>Padding, margin and gap sit on a 2 px grid: <code>--s-n</code> is n times 2 px. The steps used most are 4, 8, 12 and 16 px. A few odd values remain as numbers: 1, 3, 5, 7, 9, 11, 13 and 15 px. They are optical nudges, mostly to line an icon or a count up with text, and are worth rounding when a component is next touched.</p>
+      <div class="sg-tokens" data-prefix="--s-"></div>
+      <h3>Layout</h3><div class="sg-tokens" data-tokens="--gut --pb"></div>
+    </section>
+
+    <section class="sg-sec" id="radius"><h2>Radius</h2>
+      <p>Surfaces round by size: a small part 6 to 8 px, a card 12 px, a phone card or field 14 px, a sheet 26 px. Small square boxes (icon boxes, favicons, key caps) have their own steps. Pills take half their control's height. A shape inside a bordered shape takes the outer radius less the border, written as <code>calc(var(--r-xl) - 1px)</code>, so the two stay concentric.</p>
+      <div class="sg-tokens" data-prefix="--r-"></div>
+    </section>
+
+    <section class="sg-sec" id="elevation"><h2>Elevation and lines</h2>
+      <p>Most surfaces are separated by a 1 px line, not a shadow. Shadows mark things that float: a card lifted under the pointer, the floating search on the phone, menus, sheets and the palette. The top edge highlight is the light catching a sheet's rim.</p>
+      <div class="sg-tokens" data-tokens="--edge-top --shadow-hover --shadow-lift --shadow-float --shadow-glass" data-elev="1"></div>
+      <h3>Glass</h3>
+      <p class="sg-p">Where the browser supports backdrop blur, the palette, the floating plus on the phone and the search on the share page show 70 percent of their fill over a blur; on the phone the palette stays solid while it moves in and takes the blur once it has landed. Grid cards and folder tiles show 72 percent over a light blur. Sheets are near solid: 94 percent of #18181b over a heavy blur, 96 percent when the sheet holds rows of actions, and menus take 96 percent too, so no title reads through. The phone selection bar is solid. The palette's scrim blurs the page at every width, a dialog's scrim on the desktop only. Without blur support every one of these is a solid fill.</p>
+    </section>
+
+    <section class="sg-sec" id="motion"><h2>Motion</h2>
+      <p>One curve for nearly everything, a softer one for sheets sliding in. Movement is short, from 120 to 320 ms, and only one thing moves per action. With reduced motion set, a rule at the end of app.css turns every transition and animation off; the palette keeps an 80 ms fade so it is clear it opened. The scripts check the same setting and skip their own animations.</p>
+      <div class="sg-grid" id="sg-ease"></div>
+      <h3>Durations in use</h3>
+      <p class="sg-p">Counted from app.css. The sheet drag on the phone also uses 200 and 220 ms from sheets.js, and the grid and list switch uses a 150 ms view transition.</p>
+      <table class="sg-table" id="sg-dur"><thead><tr><th>Duration</th><th>Rules</th><th>Used for</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <section class="sg-sec" id="icons"><h2>Icons</h2>
+      <p>A single sprite of line icons on a 20 px grid, stroke 1.5, round caps, drawn in the text colour. Insert one with <code>ic('name')</code> from util.js; it renders <code>svg.i</code>. The default size is 20 px; buttons and rows set it to 16 or 18 px with the icon tokens.</p>
+      <div class="sg-tokens" data-prefix="--icon"></div>
+      <div class="sg-ic" id="sg-icons"></div>
+    </section>
+
+    <section class="sg-sec" id="focus"><h2>Focus</h2>
+      <p>Keyboard focus is a 2 px accent outline 2 px outside the element, from <code>:focus-visible</code>, so a mouse click never shows it. A card shows the ring around the whole card when its title link has focus. The search fields use a soft double ring instead of an outline, and text fields turn their border accent with a faint ring.</p>
+      <div class="sg-tokens" data-tokens="--focus-glow --focus-field"></div>
+      <div class="sg-row sg-spec" id="sg-focus"></div>
+    </section>
+
+    <section class="sg-sec" id="sizes"><h2>Control sizes</h2>
+      <p>Four heights. Desktop toolbar buttons are 36 px. Anything meant for a finger is at least 44 px, on the phone and on touch screens at desktop widths. Fields and the search are 48 px. The primary button in a sheet is 52 px.</p>
+      <div class="sg-tokens" data-tokens="--h-control --tap --h-field --h-cta"></div>
+    </section>
+
+    <div class="sg-part" data-part="Components">Components</div>
+    <section class="sg-sec" id="card"><h2>Bookmark card</h2>
+      <p>One card per link. The favicon, the title on one line, the address in mono cut at the start so the port always shows, and a strip with the folder's dot, its path and the date.</p>
+      <div id="sg-cards"></div>
+      <ul class="sg-rules">
+        <li><b>Use</b> the grid card for browsing and the list row when there are many links to scan. The choice is kept per device and applies to every view.</li>
+        <li><b>Hover</b> on the desktop shows the action bar (Share, Open, Trash, More) in place of the date and lifts the card 2 px. Touch screens have no hover; a hold selects instead.</li>
+        <li><b>Selected</b> is the green edge and the round tick. While selecting, the tick shows on every card and the action bar does not. In the list the tick sits at the row's end and the date steps left of it, so the two never overlap.</li>
+        <li><b>In Trash</b> the title is a button, never a link: a click offers Restore and Delete now.</li>
+        <li><b>Do not</b> wrap a title onto two lines or drop the strip; the strip is how a card says where it lives.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="folder"><h2>Folder tile</h2>
+      <p>A folder as an object: its icon in the folder colour, the name, and a short row of its newest favicons with a count of the rest. Shorter than a card, so folders and links never look alike.</p>
+      <div id="sg-ftiles"></div>
+      <ul class="sg-rules">
+        <li><b>Use</b> the tile on the Folders screen and above a folder's links for its subfolders. Use the picker tile (<code>.fmini</code>) inside sheets.</li>
+        <li><b>Locked</b> folders show a muted name and a lock where the faces were. Opening one asks for its password.</li>
+        <li><b>Drop target</b>: while a card is carried over a tile, it lights in the accent. Trash lights in the bin colour.</li>
+        <li><b>All bookmarks</b> is always the first tile of the Folders screen, in ink. Trash is a quiet row at the foot, never a tile.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="sidebar"><h2>Sidebar rows</h2>
+      <p>Places and folders share one row: an icon box tinted with the row's colour, the name and a count. The current row takes the tint and the pale text.</p>
+      <div id="sg-side"></div>
+      <ul class="sg-rules">
+        <li><b>Rows</b> are 40 px, 44 px on a touch screen. From 720 to 999 px the sidebar folds to a rail of icons; the names stay for screen readers and show in a tooltip.</li>
+        <li><b>Folders</b> show their subfolders only along the path to the open folder.</li>
+        <li><b>More</b> folds Import, Export, API tokens, Save button, Log out and Source behind one row.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="titlebar"><h2>Title bar and toolbar</h2>
+      <p>The title, its count, the share button on a folder, then the view's own controls on the right: Add, the grid and list switch, Sort, Select and, on a folder, the three dots.</p>
+      <div id="sg-title"></div>
+      <ul class="sg-rules">
+        <li><b>Order</b> is fixed: Add, layout, Sort, Select, then the folder's three dots. Trash has Empty trash instead of Add.</li>
+        <li><b>Below 1100 px</b> the labelled buttons fold to their icon; the label stays as the accessible name.</li>
+        <li><b>Select</b> turns into a pressed Done in place, in the quiet grey of any pressed button. Nothing else in the row moves.</li>
+        <li><b>The three dots</b> hold only what acts on the folder itself, never on its links.</li>
+        <li><b>On the phone</b> the title row is <code>.ptbar</code> and the view's controls sit on the view row (<code>.vbar</code>) below it, 44 px targets.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="search"><h2>Search field</h2>
+      <p>One search, one look: at the top on the desktop, at the foot of the phone within thumb reach beside the round plus. Same height, ground, border, icon and 16 px text; only the width differs.</p>
+      <div id="sg-float"></div>
+      <ul class="sg-rules">
+        <li><b>The field opens the palette</b>; the search runs there. While it runs, the field shows the query.</li>
+        <li><b>The key hint</b> (<code>.kcap</code>) shows only where the pointer is fine, so never on a phone.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="palette"><h2>Palette</h2>
+      <p>Cmd K or / on the desktop, a tap on the search on the phone. Recent opens first, then Views and Actions when the query names one (New folder, also on the N key), then matches grouped by folder.</p>
+      <div id="sg-pal"></div>
+      <ul class="sg-rules">
+        <li><b>The one blurred surface</b> over the page on the desktop. On the phone it drops from the top and stops above the keyboard.</li>
+        <li><b>Arrows</b> move the highlighted row, Enter opens it, Escape clears the query and a second Escape closes. Results stop at 40 with a line saying how many more.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="buttons"><h2>Buttons</h2>
+      <p>Few kinds, each with one job. The accent fill is for the single primary action in view.</p>
+      <div id="sg-buttons"></div>
+      <ul class="sg-rules">
+        <li><b>Add</b> (<code>.add</code>) is the primary action of a desktop toolbar. <b>Save</b> (<code>.save</code>) is the primary action of a sheet, full width, 52 px. Only one of either in view.</li>
+        <li><b>Quiet</b> (<code>.btn</code>) for everything else in a toolbar. <b>Warn</b> turns its text and icon danger red; use it only where the action removes something.</li>
+        <li><b>Text buttons</b> (<code>.tbtn</code>) for secondary actions in sheets, such as Cancel, Copy or Save to Inbox.</li>
+        <li><b>Icon buttons</b> (<code>.ib</code>) are 44 px round targets with no ground. Give each an aria-label.</li>
+        <li><b>New folder</b> (<code>.nf-plus</code>, from <code>nfPlus()</code>) is one control beside Folders in the sidebar and on the Folders tab: a 28 px circle filled with the raised surface and its hairline, the plus in weak ink, inside a 44 px target. Hover and focus brighten the plus; the focus ring sits on the circle. Quiet on purpose: the accent fill stays with the one primary add.</li>
+        <li><b>Disabled</b> buttons fade to 45 percent (sheet rows and phone bar buttons to 40 percent) and keep their place.</li>
+        <li><b>Press</b>: buttons scale to 97 percent while held.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="fields"><h2>Fields</h2>
+      <p>48 px, 16 px text, a label above in the label style. The address field is a mono text area that grows with its content.</p>
+      <div id="sg-fields"></div>
+      <ul class="sg-rules">
+        <li><b>Focus</b> turns the border accent with a faint ring. <b>Errors</b> show under the field in danger red, in a sentence.</li>
+        <li><b>In a sheet</b> fields sit one step below the sheet's surface.</li>
+        <li><b>Do not</b> use placeholder text as the label.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="sheets"><h2>Sheets and dialogs</h2>
+      <p>A bottom sheet on the phone with a grab handle; a centred dialog of 392 px on the desktop. Password dialogs (lock, unlock, remove lock) are centred at every width. Specimens below render as the current window width does, so open this page at phone width to see the sheet form.</p>
+      <div id="sg-sheets"></div>
+      <ul class="sg-rules">
+        <li><b>Rows</b> (<code>.sh-row</code>) come in rounded groups; a danger row sits in its own group at the end.</li>
+        <li><b>Close</b> by the scrim, Escape, a swipe down on the phone, or the close button where there is one. Tab stays inside the sheet.</li>
+        <li><b>The primary button</b> stays in view under a body that scrolls (the Save sheet's foot, the Add to sheet's bar).</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="menu"><h2>Context menu</h2>
+      <p>A right click on a card, the menu key on a focused card, or the three dots on a card. On the phone the same items open as a sheet.</p>
+      <div id="sg-menu"></div>
+      <ul class="sg-rules">
+        <li><b>Order</b> for a card: Move, Copy, Share, Trash, a divider, then Open, Rename and Pin or Unpin. The first group matches the selection bar; the second is what the bar's More holds for one card.</li>
+        <li><b>In Trash</b>: Restore, a divider, Delete now.</li>
+        <li><b>Keys</b>: arrows, Home and End move; a letter jumps to the next item starting with it; Tab or Escape closes.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="selection"><h2>Selection bar</h2>
+      <p>Selecting starts with Select, the S key, a hold on a card, a Shift click, Shift and an arrow key, Cmd A, or a marquee drawn on empty space. A Cmd click opens the link in a new tab instead; on the Folders screen it picks the folder. The bar takes the search's place; the title and toolbar stay where they are.</p>
+      <div id="sg-sel"></div>
+      <ul class="sg-rules">
+        <li><b>Order</b> on the desktop: the count, Select all, Move, Copy, Share, Trash, More. The phone bar has the same actions in the same order after the count and All.</li>
+        <li><b>Folding</b>: where the row runs short, buttons fold to their icon one by one, in this order: Share, Select all, Copy, Move, More. Trash keeps its word longest.</li>
+        <li><b>Folders</b> on the Folders screen select the same way; the bar then holds Select all and Delete, which asks once with the count. In Trash it holds Select all, Restore and Delete.</li>
+        <li><b>Ends</b> with Done, Escape, a click on empty space or a change of view.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="toasts"><h2>Toasts</h2>
+      <p>A short line at the bottom centre that confirms what just happened. At most three at once.</p>
+      <div id="sg-toast"></div>
+      <ul class="sg-rules">
+        <li><b>With Undo</b> when the action can be taken back; it stays 6 seconds and Cmd Z runs it. Without, 2.4 seconds.</li>
+        <li><b>Words</b>: what happened, in the past tense, such as Moved to Trash or Order saved. No exclamation marks.</li>
+        <li><b>Screen readers</b> hear the same words through the one live region.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="empty"><h2>Empty and loading states</h2>
+      <p>Calm, centred in the space under the title, and always with the next step. This is the one place the app centres text.</p>
+      <div id="sg-empty"></div>
+      <ul class="sg-rules">
+        <li><b>All sorted</b> when the Inbox is empty, <b>Nothing here yet</b> on a fresh install or an empty folder, <b>Nothing opened yet</b> on the Dashboard.</li>
+        <li><b>The dashed tile</b> closes every folder, the Inbox and All bookmarks, so adding is always one click away.</li>
+        <li><b>Loading</b> shows skeleton cards that pulse; a failed load keeps the last cards dimmed under a notice with Retry.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="smalls"><h2>Small parts</h2>
+      <p>Counts, chips, the key cap, the switch, the segmented control and the tooltip.</p>
+      <div id="sg-smalls"></div>
+    </section>
+
+    <section class="sg-sec" id="phone"><h2>Phone tabs and layout</h2>
+      <p>Below 720 px the app is one column. The start screen has three tabs, Dashboard, Inbox and Folders; only the chosen one carries a shape, and the shape slides when the tab changes. Search and the plus float at the foot over a soft fade, within thumb reach.</p>
+      <div id="sg-phone"></div>
+      <ul class="sg-rules">
+        <li><b>Targets</b> are 44 px everywhere on the phone.</li>
+        <li><b>Gutters</b> are 18 px (<code>--gut</code>); cards sit two to a row, three from 520 px.</li>
+        <li><b>Settings</b> on the phone holds what the sidebar's More holds on the desktop. Each row's icon takes the row's hue like the sidebar's icon boxes: plain, and bin for Log out.</li>
+      </ul>
+    </section>
+
+    <section class="sg-sec" id="pages"><h2>Login and Save page</h2>
+      <p>The small pages, live. Login is a single password field; the Save page is the Save sheet on its own, opened by the bookmarklet, the extension or the share sheet.</p>
+      <div id="sg-pages"></div>
+    </section>
+  </main>
 </div>
 <script type="module" src="/static/js/app.js"></script>
 <script type="module">
-(() => {
 'use strict';
-const K = window.Pinned.kit, U = window.Pinned.U, D = window.Pinned.D, $ = id => document.getElementById(id);
-const now = Math.floor(Date.now() / 1000), day = 86400;
+const K = window.Pinned.kit, U = window.Pinned.U, D = window.Pinned.D, L = window.Pinned.L, $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const root = getComputedStyle(document.documentElement), val = n => root.getPropertyValue(n).trim();
+
+/* app.css as it is served: the tokens it declares and the rules that use each one */
+const CSS = await (await fetch('/static/app.css')).text();
+const flat = CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+const RULES = [...flat.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim().replace(/\s+/g, ' '), body: m[2] }));
+const DECLS = []; for (const r of RULES.filter(r => r.sel === ':root')) for (const m of r.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g)) DECLS.push(m[1]);
+const usedBy = tok => RULES.filter(r => r.sel !== ':root' && new RegExp('var\\(' + tok.replace(/-/g, '\\-') + '[,)]').test(r.body)).map(r => r.sel);
+
+/* roles, written by hand; the values and the lists of rules come from the stylesheet */
+const NOTE = {
+  '--ground': 'The page itself: html and body, the fade under the phone bar.', '--screen': 'The app area on the desktop, the phone app, the share page.',
+  '--recess': 'The back card of the All sorted pile.', '--fold': 'Folder tiles and picker tiles, one step below a card.',
+  '--surface': 'Cards, fields at rest, the search, the layout switch.', '--sheet': 'Sheets, and the palette on the phone.',
+  '--surface-up': 'Raised things: menus, the desktop palette, toasts, the tooltip, the chosen tab, a focused search.',
+  '--ink': 'Text and icons that matter.', '--ink-weak': 'Secondary text, counts, labels, icons at rest.', '--ink-faint': 'The footer line of the share page only.',
+  '--line': 'Hairlines and card borders.', '--line-2': 'Stronger borders: hover, buttons, menus, the glass rim.',
+  '--accent': 'The primary fill, the focus ring, the pressed layout button, ticks.', '--accent-ink': 'Text and icons on an accent fill.',
+  '--accent-soft': 'Accent as text: text buttons, links, checks.', '--danger': 'Destructive text and icons, the danger button fill.',
+  '--hover': 'The veil behind a row or button under the pointer.', '--press': 'The veil while a row or button is held, and some hovers.',
+  '--picked-edge': 'The border of a selected card or tile.', '--picked-fill': 'The fill of a selected list row.',
+  '--tile-blank': 'Behind a letter when a link has no favicon, behind a favicon that brings no colour of its own, and behind the letter when a favicon fails to load (set from the scripts).',
+  '--cyan': 'First top level folder.', '--coral': 'Second.', '--lilac': 'Third.', '--lime': 'Fourth.', '--mint': 'Fifth.', '--rose': 'Sixth, then the cycle starts again.',
+  '--tray': 'The Inbox.', '--bin': 'Trash.', '--ink-h': 'Places: All bookmarks and the Dashboard.', '--plain': 'The fallback hue.',
+  '--t-micro': 'Card strips, recent labels, the version line.', '--t-small': 'Addresses (mono), chips, times, dock labels, phone bar labels.',
+  '--t-label': 'Section and field labels, key caps, hints.', '--t-tag': 'The tab count and the tooltip.', '--t-meta': 'Desktop buttons, menus, notices, secondary lines.',
+  '--t-ui': 'Sidebar rows, toasts, list titles, picker tiles.', '--t-body': 'Body text and card titles.', '--t-control': 'Phone actions, text buttons, phone list titles.',
+  '--t-input': 'Fields and the search (never smaller on iOS), sheet rows, sheet titles.', '--t-heading': 'The phone title bar, the palette field, sheet headings.',
+  '--t-heading-l': 'Empty state headings.', '--t-title': 'The desktop view title.', '--t-page': 'Login and Save button page headings.', '--t-page-l': 'The share page title.',
+  '--t-display': 'The phone start screen head.',
+  '--gut': 'The phone gutter, left and right.', '--pb': 'The height of the phone bottom bar, measured and kept up to date by render.js.',
+  '--edge-top': 'The light rim along a sheet\'s top edge.', '--shadow-hover': 'A desktop card under the pointer.', '--shadow-lift': 'A card held or carried.',
+  '--shadow-float': 'The floating search and plus on the phone.', '--shadow-glass': 'Menus, sheets, the palette and the phone bars on glass.',
+  '--focus-glow': 'The search fields.', '--focus-field': 'Text fields and the inline rename field.',
+  '--h-control': 'Desktop toolbar buttons.', '--tap': 'The minimum touch target.', '--h-field': 'Fields, the search, the floating plus.', '--h-cta': 'The primary button in a sheet.'
+};
+const swatch = (n, pair) => pair ? `<span class="sg-sw pair"><span style="background:var(${n})"></span><span style="background:var(${n === '--ink-h' ? '--ink-hp' : n + '-p'})"></span></span>`
+  : `<span class="sg-sw" style="background:var(${n})"></span>`;
+const uses = n => { const u = usedBy(n); return u.length ? `<details><summary>${u.length} ${u.length === 1 ? 'rule' : 'rules'}</summary>${u.map(s => `<code>${esc(s)}</code>`).join('')}</details>` : '<span class="n">No rule in app.css</span>'; };
+const row = (n, sample, extra = '') => `<div class="sg-tok"><div><code>${n}</code><span class="v">${esc(val(n))}${extra}</span></div><div>${sample}${NOTE[n] ? `<div class="n">${NOTE[n]}</div>` : ''}</div><div>${uses(n)}</div></div>`;
+for (const box of document.querySelectorAll('[data-tokens],[data-prefix]')) {
+  const list = box.dataset.tokens ? box.dataset.tokens.split(' ') : DECLS.filter(n => n.startsWith(box.dataset.prefix) && !(box.dataset.prefix === '--icon' && !/^--icon(-|$)/.test(n)));
+  box.innerHTML = list.map(n => {
+    if (box.dataset.elev) return row(n, `<div class="sg-elev" style="box-shadow:var(${n})"></div>`);
+    if (n.startsWith('--s-')) return row(n, `<div class="sg-bar" style="width:var(${n})"></div>`);
+    if (n.startsWith('--r-')) return row(n, `<div class="sg-rad" style="border-radius:var(${n})"></div>`);
+    if (n.startsWith('--lh-')) return row(n, `<div style="font:400 var(--t-body)/var(${n}) var(--sans);background:var(--surface-up);width:max-content;padding:0 var(--s-2)">A title<br>over an address</div>`);
+    if (n.startsWith('--icon')) return row(n, `<svg class="i" style="width:var(${n});height:var(${n})"><use href="#i-folder"/></svg>`);
+    if (/^--(h-|tap)/.test(n)) return row(n, `<div style="height:var(${n});width:var(--s-32);border-radius:var(--r-s);background:var(--surface-up);border:1px solid var(--line-2)"></div>`);
+    if (/^--(focus)/.test(n)) return row(n, `<div style="height:var(--s-16);width:var(--s-32);border-radius:var(--r-s);background:var(--surface);box-shadow:var(${n})"></div>`);
+    if (/^--(gut|pb)$/.test(n)) return row(n, '');
+    const pair = !!box.dataset.pair;
+    return row(n, swatch(n, pair), pair ? `, ${n === '--ink-h' ? '--ink-hp' : n + '-p'} ${esc(val(n === '--ink-h' ? '--ink-hp' : n + '-p'))}` : '');
+  }).join('');
+}
+/* type: each size token drawn at its size, with the weights and line heights it is paired with in app.css */
+$('type').querySelector('[data-type]').innerHTML = DECLS.filter(n => n.startsWith('--t-')).map(n => {
+  const u = RULES.filter(r => new RegExp('var\\(' + n + '\\)').test(r.body)), w = new Set(), lh = new Set();
+  for (const r of u) for (const m of r.body.matchAll(new RegExp('font:(\\d{3}) var\\(' + n + '\\)(?:/([^ ]+))?', 'g'))) { w.add(m[1]); lh.add(m[2] ? m[2].replace(/var\(--lh-([\w-]+)\)/, '$1') : 'normal'); }
+  return row(n, `<div class="sg-type-s" style="font:500 var(${n})/1.3 var(--sans)">Bookmarks and folders</div>`, `, weights ${[...w].sort().join(', ') || 'set by the rule'}, lines ${[...lh].join(', ') || 'set by the rule'}`);
+}).join('');
+
+/* motion: each easing token drawn as its curve */
+$('sg-ease').innerHTML = DECLS.filter(n => n.startsWith('--ease')).map(n => { const v = val(n), p = (v.match(/cubic-bezier\(([^)]+)\)/) || [, '0,0,1,1'])[1].split(',').map(Number);
+  const X = x => 8 + x * 184, Y = y => 112 - y * 96;
+  return `<div class="sg-item"><svg class="sg-curve" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M${X(0)} ${Y(0)}H${X(1)}M${X(0)} ${Y(1)}H${X(1)}" stroke="var(--line-2)" fill="none"/>
+    <path d="M${X(0)} ${Y(0)}C${X(p[0])} ${Y(p[1])} ${X(p[2])} ${Y(p[3])} ${X(1)} ${Y(1)}" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+    <span class="sg-cap"><b>${n}</b> ${esc(v)}<br>${n === '--ease-out' ? 'Almost every transition: hovers, fades, the selection bar, the palette, tiles leaving.' : n === '--ease-drawer' ? 'Sheets sliding up on the phone, and springing back after a short drag.' : ''} Used in ${usedBy(n).length} rules.</span></div>`; }).join('');
+{ const C = new Map(); for (const r of RULES) for (const m of r.body.matchAll(/(\d+(?:\.\d+)?m?s)\b/g)) { if (/^0m?s$/.test(m[1])) continue; C.set(m[1], (C.get(m[1]) || 0) + 1); }
+  const WHAT = { '80ms': 'The palette fade with reduced motion.', '120ms': 'Presses, the dock icon, phone card lifts, the palette and password dialogs closing.', '150ms': 'The grid and list morph.', '160ms': 'Hovers and card lifts, focus on the search, the switch, the card action bar, a carried card\'s size, the sort chevron turning, a favicon fading in.',
+    '180ms': 'The palette opening, the scrim, password dialogs opening.', '200ms': 'Toasts, the selection bar fading, tab colours, the sheet fading.', '240ms': 'Cards leaving, the selection bar gliding, the phone fade rising.',
+    '250ms': 'The floating plus, the phone selection bar and menus changing their fill.', '260ms': 'The sidebar More folding.', '280ms': 'Sheets sliding, the tick popping in.', '320ms': 'The tab shape sliding, the field shake.', '400ms': 'The All sorted pile settling.',
+    '1.1s': 'Skeleton pulse, repeating.', '1.6s': 'The favicon placeholder shimmer, repeating.' };
+  $('sg-dur').querySelector('tbody').innerHTML = [...C].sort((a, b) => parseFloat(a[0]) * (a[0].endsWith('ms') ? 1 : 1000) - parseFloat(b[0]) * (b[0].endsWith('ms') ? 1 : 1000))
+    .map(([d, n]) => `<tr><td>${d}</td><td>${n}</td><td>${WHAT[d] || ''}</td></tr>`).join(''); }
+
+/* :hover, :focus-visible and :active, copied from app.css onto classes, so a state can be shown at rest */
+{ const out = [], PS = /:(hover|focus-visible|focus-within|active|focus)(?![\w-])/g, CLS = { hover: 'is-hover', 'focus-visible': 'is-focus', 'focus-within': 'is-within', active: 'is-active', focus: 'is-focus' };
+  const sheet = [...document.styleSheets].find(s => s.href && s.href.endsWith('/static/app.css'));
+  const walk = (rules, wrap) => { for (const r of rules) {
+    if (r.selectorText != null) { if (PS.test(r.selectorText)) { PS.lastIndex = 0; out.push(wrap(r.selectorText.replace(PS, (m, p) => '.' + CLS[p]) + '{' + r.style.cssText + '}')); } PS.lastIndex = 0; }
+    else if (r.cssRules && r.conditionText != null) walk(r.cssRules, t => wrap(`@${r.constructor.name === 'CSSSupportsRule' ? 'supports' : 'media'} ${r.conditionText}{${t}}`)); } };
+  if (sheet) walk(sheet.cssRules, t => t);
+  const st = document.createElement('style'); st.textContent = out.join('\n'); document.head.appendChild(st); }
+
 /* neutral sample data, the same shape the API returns */
-const F = (id, name, parent_id, position, share, lock) => ({ id, name, parent_id, position, share: share ? { url: '' } : null, locked: !!lock, unlocked: lock === 'open' });
-const B = (id, title, url, folder_id, created, opened, pinned) => ({ id, title, url, host: new URL(url).host, folder_id, position: id, created_at: now - created * day, opened_at: opened == null ? null : now - opened * day, pinned: !!pinned, pinned_position: id, deleted_at: null });
+const now = Math.floor(Date.now() / 1000), day = 86400;
+const F = (id, name, parent_id, position, share, lock) => ({ id, name, parent_id, position, share: share ? { url: 'https://pinned.example/s/AbC123', token: 'AbC123', opens: 3, last_opened_at: now - day } : null, locked: !!lock, unlocked: lock === 'open' });
+const B = (id, title, url, folder_id, created, opened, pinned) => ({ id, title, url, host: new URL(url).host, folder_id, position: id, created_at: now - created * day, opened_at: opened == null ? null : now - opened * day - 3600, pinned: !!pinned, pinned_position: id, deleted_at: null });
 K.setData({
-  folders: [F(1, 'Projects', null, 0, true), F(2, 'Reading', null, 1), F(3, 'Tools', null, 2), F(4, 'Drafts', 1, 0), F(5, 'Archive', 1, 1), F(6, 'Private', null, 3, false, 'shut'), F(7, 'Taxes', null, 4, false, 'open')],
+  folders: [F(1, 'Projects', null, 0, true), F(2, 'Reading', null, 1), F(3, 'Tools', null, 2), F(4, 'Drafts', 1, 0), F(5, 'Archive', 1, 1), F(6, 'Private', null, 3, false, 'shut'), F(7, 'Taxes', null, 4, false, 'open'), F(8, 'Travel', null, 5), F(9, 'Kitchen', null, 6)],
   bookmarks: [B(1, 'Example', 'https://example.com', null, 0, 0, true), B(2, 'Notes', 'https://notes.example.net', 4, 1, 1, true), B(3, 'Docs', 'https://docs.example.org', 2, 3, 2),
-    B(4, 'Status page', 'http://10.0.0.5:3001', 3, 6, null), B(5, 'Calendar', 'https://calendar.example.com', 1, 9, 4, true), B(6, 'Wiki', 'https://wiki.example.net', 5, 12, null)]
+    B(4, 'Status page', 'http://10.0.0.5:3001', 3, 6, null), B(5, 'Calendar', 'https://calendar.example.com', 1, 9, 4, true), B(6, 'Wiki', 'https://wiki.example.net', 5, 12, null),
+    B(7, 'A long title that does not fit on one line of a card', 'https://long.example.org/path', 8, 2, 0), B(8, 'Recipes', 'https://food.example.com', 9, 4, 8),
+    Object.assign(B(9, 'Old link', 'https://old.example.com', null, 20, null), { deleted_at: now - 2 * day })],
+  settings: { last_folder: 1, recent_folders: [1, 2, 3] }
 });
 D.has = true; D.loaded = true; U.view = 4;
 const bms = D.bms;
-const item = (html, cls, extra = '') => `<div class="sg-item"${extra}>${html}<code class="sg-cls">${cls}</code></div>`;
-const frame = (html, h, cls = '') => `<div class="sg-frame ${cls}" style="height:${h}px">${html}</div>`;
+const item = (html, cap, state) => `<div class="sg-item">${state ? `<span class="sg-state">${state}</span>` : ''}${html}<span class="sg-cap">${cap}</span></div>`;
+const frame = (html, h, cls = '') => `<div class="sg-frame fixed ${cls}" style="height:${h}px">${html}</div>`;
+const desk = html => `<div class="sg-scroll"><div class="sg-desk">${html}</div></div>`;
+const as = (o, fn) => { const keep = {}; for (const k in o) { keep[k] = U[k]; U[k] = o[k]; } try { return fn(); } finally { Object.assign(U, keep); } };
+const cls = (html, from, to) => html.replace(from, to);
+const SRC = f => ` <span class="sg-note">Markup written here; the source is ${f}.</span>`;
 /* specimens are for looking at: keep the app's click and drag handlers out of them */
-document.addEventListener('click', e => { if (e.target.closest('.sg-wrap')) { e.preventDefault(); e.stopPropagation(); } }, true);
+for (const t of ['click', 'pointerdown', 'contextmenu', 'dragstart']) document.addEventListener(t, e => { if (e.target.closest && e.target.closest('.sg-main [id^="sg-"]') && !e.target.closest('details,summary')) { e.preventDefault(); e.stopPropagation(); } }, true);
 
-/* tokens */
-const names = ['--ground', '--screen', '--surface', '--surface-up', '--sheet', '--recess', '--fold', '--line', '--line-2', '--ink', '--ink-weak', '--accent', '--accent-ink', '--accent-soft', '--danger',
-  '--cyan', '--coral', '--lilac', '--lime', '--mint', '--rose', '--tray', '--bin', '--plain'];
-const cs = getComputedStyle(document.documentElement);
-$('sg-tokens').innerHTML = names.map(n => { const v = cs.getPropertyValue(n).trim(), p = cs.getPropertyValue(n + '-p').trim();
-  return `<div class="sg-sw"><span class="sg-chip" style="background:var(${n})"></span><span><b>${n}</b><span>${v}${p ? ', ' + n + '-p ' + p : ''}</span></span></div>`; }).join('');
+/* icons: every symbol in the sprite */
+$('sg-icons').innerHTML = [...document.querySelectorAll('symbol[id^="i-"]')].map(s => `<div><svg class="i"><use href="#${s.id}"/></svg><code>${s.id.slice(2)}</code></div>`).join('');
 
-/* type */
-const T = [
-  ['Desktop title', `<div class="tb"><h2>Projects</h2></div>`, '.tb h2', '.tb h2'],
-  ['Phone title', `<header class="ptbar home"><h2 class="ptb-t">Projects</h2></header>`, '.ptb-t', '.ptb-t'],
-  ['Card title', `<div class="grid" style="max-width:300px">${K.deskTile(D.bms[3], 0)}</div>`, '.t-title', '.tile .t-title'],
-  ['Folder name on a tile', `<div class="fgrid" style="max-width:300px">${K.ftileHTML(D.folders[1])}</div>`, '.ft-n', '.ftile .ft-n'],
-  ['Row', `<div class="sg-side">${K.sideItem('all', 'all', 'all')}</div>`, '.si', '.si'],
-  ['Section label', `<div class="glbl">Today</div>`, '.glbl', '.glbl'],
-  ['Host, mono', `<div class="grid" style="max-width:300px">${K.deskTile(D.bms[3], 0)}</div>`, '.t-host', '.tile .t-host'],
-  ['Count', `<div class="fgrid" style="max-width:300px">${K.ftileHTML(D.folders[2])}</div>`, '.ft-c', '.ftile .ft-c']];
-$('sg-type').innerHTML = T.map(([n, h, sel, cls]) => `<div class="sg-item" data-sel="${sel}"><div style="font:500 12px var(--mono);color:var(--ink-weak);margin-bottom:6px">${n} <span class="sg-m"></span></div>${h}<code class="sg-cls">${cls}</code></div>`).join('');
+/* focus */
+$('sg-focus').innerHTML = item(`<button type="button" class="btn is-focus">${K.ic('sort')}Newest</button>`, '.btn:focus-visible')
+  + item(`<div class="grid" style="width:240px">${cls(K.deskTile(bms[2], bms[2].created_at), '<a class="t-title"', '<a class="t-title is-focus"')}</div>`, '.tile with a focused title')
+  + item(`<div style="width:280px;display:flex">${cls(K.searchField(false).replace(/ id="[^"]*"/g, ''), 'class="search"', 'class="search is-within"')}</div>`, '.search:focus-within')
+  + item(`<input class="fld-in is-focus" value="Projects" style="width:240px" aria-label="Sample">`, '.fld-in:focus');
 
 /* cards */
-$('sg-cards').innerHTML = `<div class="sg-stack">
-  ${item(`<div class="grid">${K.deskTile(bms[3], bms[3].created_at)}${K.deskTile(bms[2], bms[2].created_at)}${K.deskTile(bms[1], bms[1].created_at)}</div>`, '.grid .tile, desktop')}
-  ${item(`<div class="sg-scroll"><div class="sg-desk"><div class="grid is-list">${K.deskTile(bms[2], bms[2].created_at)}${K.deskTile(bms[3], bms[3].created_at)}</div></div></div>`, '.grid.is-list .tile, desktop list')}
-  ${item(`<div class="sg-ph"><div class="pgrid">${K.phoneTile(bms[3], bms[3].created_at)}${K.phoneTile(bms[1], bms[1].created_at)}</div></div>`, '.pgrid .pt, phone')}
-  ${item(`<div class="sg-ph" style="max-width:390px">${(() => { U.layout = 'list'; const h = `<div class="pgrid is-list">${K.phoneTile(bms[3], bms[3].created_at)}${K.phoneTile(bms[1], bms[1].created_at)}${K.phoneTile(bms[2], bms[2].created_at)}</div>`; U.layout = 'grid'; return h; })()}</div>`, '.pgrid.is-list .pt.row, phone list: 56 px rows, the folder dot and the date at the end')}
-  ${item(`<div class="grid" style="max-width:300px">${K.deskTile(Object.assign({}, bms[2], { deleted_at: bms[2].created_at }), bms[2].created_at)}</div>`, '.tile in Trash: button.t-title, a click offers Restore and Delete now in the menu at the card, never the link')}</div>`;
+{ const t = b => K.deskTile(b, b.created_at), p = b => K.phoneTile(b, b.created_at);
+  const tr = Object.assign({}, bms[2], { deleted_at: now - day });
+  $('sg-cards').innerHTML = `<div class="sg-grid sg-spec">
+    ${item(`<div class="grid">${t(bms[2])}</div>`, '.tile', 'Default')}
+    ${item(`<div class="grid">${cls(t(bms[3]), 'class="tile"', 'class="tile is-hover"')}</div>`, '.tile:hover, the action bar in place of the date', 'Hover')}
+    ${item(`<div class="grid">${cls(t(bms[6]), 'class="t-title"', 'class="t-title is-focus"')}</div>`, '.tile:has(.t-title:focus-visible), a long title', 'Focus')}
+    ${item(`<div class="selecting"><div class="grid">${as({ picked: new Set([1]), selecting: true }, () => t(bms[0]))}</div></div>`, '.selecting .tile.picked', 'Selected')}
+    ${item(`<div class="selecting"><div class="grid">${as({ selecting: true }, () => t(bms[1]))}</div></div>`, '.selecting .tile, not picked', 'Selecting')}
+    ${item(`<div class="grid">${t(tr)}</div>`, '.tile in Trash, button.t-title', 'In Trash')}
+    ${item(`<div class="grid">${as({ renaming: 4 }, () => t(bms[3]))}</div>`, '.tile.editing .t-edit, F2 or Rename', 'Renaming')}
+    ${item(`<div class="grid">${K.skel()}</div>`, '.tile.sk', 'Loading')}</div>
+    <h3>List</h3>${item(desk(`<div class="grid is-list">${t(bms[2])}${cls(t(bms[3]), 'class="tile"', 'class="tile is-hover"')}</div>`), '.grid.is-list .tile: default, hover. From 1100 px down the folder column folds away')}
+    ${item(desk(`<div class="selecting"><div class="grid is-list">${as({ picked: new Set([7]), selecting: true }, () => t(bms[6]) + t(bms[2]))}</div></div>`), '.selecting .is-list: picked and not, the date left of the tick')}
+    <h3>Phone</h3><div class="sg-grid sg-spec">
+    ${item(`<div class="sg-ph"><div class="pgrid">${p(bms[2])}${p(bms[0])}</div></div>`, '.pgrid .pt', 'Default')}
+    ${item(`<div class="sg-ph selecting"><div class="pgrid">${as({ selecting: true, picked: new Set([3]) }, () => p(bms[2]) + p(bms[0]))}</div></div>`, '.pt.picked, .pt while selecting', 'Selecting')}
+    ${item(`<div class="sg-ph"><div class="pgrid is-list">${as({ layout: 'list' }, () => p(bms[2]) + p(bms[0]) + p(bms[3]))}</div></div>`, '.pgrid.is-list .pt.row', 'List')}
+    ${item(`<div class="sg-ph"><div class="pgrid">${K.pskel()}${K.pskel()}</div></div>`, '.pt.sk', 'Loading')}</div>
+    <h3>Dashboard</h3><p class="sg-p">Recently opened links grouped by day, each tagged with its folder in a chip. They select like every card.</p>
+    ${item(desk(as({ view: 'dashboard', layout: 'grid' }, () => K.galleryHTML(false))), '.gal .gs-h, .gb .gk, .gc-chip')}
+    ${item(desk(as({ view: 'dashboard', layout: 'list' }, () => K.galleryHTML(false))), '.gal.is-list .gl .gc-row, two columns from 1100 px')}`; }
 
 /* folder tiles */
-const f1 = D.folders[0], f2 = D.folders[1], f4 = D.folders[3];
-$('sg-ftiles').innerHTML = `<div class="sg-stack">
-  ${item(`<div class="fgrid">${K.ftileHTML(f1)}${K.ftileHTML(f2).replace('class="ftile"', 'class="ftile drop-on"')}${K.ftileHTML(D.folders[2])}</div>`, '.ftile, .ftile.drop-on while a card is held over it, desktop')}
-  ${item(`<div class="sg-ph"><div class="fgrid fgrid-p">${K.ftileHTML(f1)}${K.ftileHTML(f2)}</div></div>`, '.fgrid-p .ftile, phone')}
-  </div><p style="margin:24px 0 12px;color:var(--ink-weak);font-size:13px">Picker tile, used in the Move, Add to and Save sheets.</p><div class="sg-row">
-  ${item(K.fmini(K.INBOX_F), '.fmini, picker tile')}
-  ${item(K.fmini(f1, { fill: true, current: true }), '.fmini.fill, the chosen folder')}
-  ${item(K.nfMini(), '.fmini.dashed, New folder')}</div>`;
+{ const f = D.folders;
+  $('sg-ftiles').innerHTML = `<div class="sg-grid sg-spec">
+    ${item(`<div class="fgrid">${K.ftileHTML(f[0])}</div>`, '.ftile, shared: a link after the name', 'Default')}
+    ${item(`<div class="fgrid">${cls(K.ftileHTML(f[1]), 'class="ftile', 'class="ftile is-hover')}</div>`, '.ftile:hover', 'Hover')}
+    ${item(`<div class="fgrid">${cls(K.ftileHTML(f[2]), 'class="ftile', 'class="ftile drop-on')}</div>`, '.ftile.drop-on', 'Drop target')}
+    ${item(`<div class="fgrid">${K.ftileHTML(f[5])}</div>`, '.ftile.locked', 'Locked')}
+    ${item(`<div class="fgrid">${K.ftileHTML(f[6])}</div>`, '.ftile with .lk, unlocked for now', 'Unlocked')}
+    ${item(`<div class="selecting"><div class="fscreen fgrid" style="margin:0;padding:0">${as({ view: 'folders', selecting: true, picked: new Set([8]) }, () => K.ftileHTML(f[7]))}</div></div>`, '.ftile.picked on the Folders screen', 'Selected')}</div>
+    <h3>Folders screen</h3>${item(desk(as({ view: 'folders' }, () => K.foldersScreen(false))), '.fscreen: .ftile.fplace first, then the folders, .ftrash at the foot')}
+    ${item(`<div class="sg-ph" style="display:flex;flex-direction:column">${as({ view: 'folders', mode: 'phone' }, () => K.foldersScreen(true))}</div>`, '.fgrid-p, .ftrash.p, phone')}
+    <h3>Picker tiles</h3><div class="sg-row sg-spec">
+    ${item(K.fmini(K.INBOX_F), '.fmini')}${item(K.fmini(f[0], { fill: true, current: true }), '.fmini.fill, the chosen folder')}${item(K.nfMini(), '.fmini.dashed, New folder')}</div>`; }
 
 /* sidebar */
-$('sg-side').innerHTML = `<div class="sg-grid">
-  ${item(`<div class="sg-side"><div class="nav">${K.sideItem('all', 'all', 'all')}${K.sideItem('inbox', 'inbox', 'inbox')}${K.sideItem('trash', 'trash', 'trash')}</div></div>`, '.si.all, .si.inbox, .si.trash')}
-  ${item(`<div class="sg-side">${K.deskTree()}</div>`, '.si.sf, .subs .si.sf.sub, current is aria-current')}</div>`;
+$('sg-side').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<div class="side" style="border:0;padding:0;width:256px"><div class="nav">${as({ view: 'inbox' }, () => K.sideItem('dashboard', 'dash', 'grid') + K.sideItem('all', 'all', 'all') + K.sideItem('inbox', 'inbox', 'inbox') + cls(K.sideItem('trash', 'trash', 'trash'), 'class="si trash"', 'class="si trash is-hover"'))}</div></div>`, '.si.dash, .si.all, .si.inbox current, .si.trash hover')}
+  ${item(`<div class="side" style="border:0;padding:0;width:256px">${as({ view: 4 }, () => K.deskTree())}</div>`, '.si.sf, .subs along the path, .si.locked with .si-lock')}
+  ${item(`<div class="side" style="border:0;padding:0;width:256px"><div class="nav">${cls(K.sideItem('trash', 'trash', 'trash'), 'class="si trash"', 'class="si trash drop-on"')}${cls(as({ view: 'inbox' }, () => K.sideItem('inbox', 'inbox', 'inbox')), 'aria-current="true"', 'aria-current="false"').replace('class="si inbox"', 'class="si inbox drop-on"')}</div></div>`, '.si.trash.drop-on, .si.drop-on')}</div>`;
 
 /* title bars */
-U.view = 1;
-$('sg-title').innerHTML = item(`<div class="sg-scroll"><div class="sg-desk">${K.deskToolbar()}</div></div>`, '.uplink.dback, .tb, .tb-share, .btn.icon') + `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.backLink('pback')}${K.phoneTop()}</div>`, '.uplink.pback, .ptbar, .ptb-share, .ib');
+$('sg-title').innerHTML = `<div class="sg-spec">${item(desk(as({ view: 1 }, () => K.deskToolbar())), '.uplink.dback, .tb h2, .cnt, .tb-share.on, .add, .vsw, .btn.sortc, .btn.sel, .btn.icon')}</div>
+  <div class="sg-spec">${item(desk(as({ view: 'trash' }, () => K.deskToolbar())), '.tb in Trash: .btn.warn Empty trash')}</div>
+  <div class="sg-spec">${item(desk(as({ view: 'inbox', selecting: true }, () => K.deskToolbar())), '.btn.sel pressed: Done')}</div>
+  <div class="sg-grid sg-spec">
+  ${item(`<div class="sg-ph">${as({ view: 1, mode: 'phone' }, () => K.backLink('pback') + K.phoneTop() + K.phoneVbar())}</div>`, '.uplink.pback, .ptbar, .ptb-share, .vbar with .sortc.p, .ib.sel, .vsw.p')}
+  ${item(`<div class="sg-ph">${as({ view: 'inbox', mode: 'phone', tab: 'inbox' }, () => K.phoneTabs() + K.phoneVbar())}</div>`, '.ptbar.tabs, .ptab, .ptab-n, .vbar')}</div>`;
 
-/* the phone view row and the Folders grid */
-const phoneAs = (fn, view) => { const m = U.mode, v = U.view; U.mode = 'phone'; U.view = view; const h = fn(); U.mode = m; U.view = v; return h; };
-$('sg-vbar').innerHTML = `<div class="sg-stack">
-  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar(), 'inbox')}</div>`, '.vbar, .sortc.p, .ib, .vsw.p: the Inbox, Sort, Select and the grid and list switch')}
-  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar(), 'folders')}</div>`, '.vbar, .sortc.p, .vbar-add: the Folders tab')}
-  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneTop() + K.phoneVbar(), 1)}</div>`, '.ptbar with the three dots, .vbar: inside a folder')}
-  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => { D.bms.push(Object.assign(B(99, 'Old link', 'https://old.example.com', null, 20, null), { deleted_at: now - day })); const h = K.phoneTop() + K.phoneVbar(); D.bms.pop(); return h; }, 'trash')}</div>`, '.vbar-t, .vsw.p; .ptbar .vbar-a.warn: Trash keeps Empty trash on screen beside its title')}
-  ${item(`<div class="sg-scroll"><div class="sg-desk">${(() => { const v = U.view; U.view = 'inbox'; const h = K.deskToolbar(); U.view = v; return h; })()}</div></div>`, '.tb with .btn.sortc and Select: the desktop Inbox')}</div>`;
-$('sg-fgrid').innerHTML = `<div class="sg-stack">
-  ${item(`<div class="sg-scroll"><div class="sg-desk">${K.foldersScreen(false)}</div></div>`, '.fscreen .ftile.fplace first, .ftrash, desktop')}
-  ${item(`<div class="sg-ph" style="max-width:390px">${phoneAs(() => K.phoneVbar() + K.foldersScreen(true), 'folders')}</div>`, '.fgrid-p .ftile.fplace, .ftrash.p, phone')}</div>`;
-/* selection */
-{ const v = U.view; U.view = 'inbox'; U.selecting = true; U.picked = new Set([1, 3]);
-  const one = () => { const p = U.picked; U.picked = new Set([1]); const h = K.rowsHTML(K.selItems()); U.picked = p; return h; };
-  $('sg-sel').innerHTML = `<div class="sg-stack">${item(`<div class="sg-scroll"><div class="sg-desk selecting"><div class="head">${K.deskBulk()}</div>${K.deskToolbar()}</div></div>`, '.head .tb.bulk in the search\'s place: count, Select all, Move, Copy, Share, Trash, the three dots, each folding to its icon only where its word does not fit, Trash last; the toolbar below as it is, .btn.sel pressed as Done in the quiet grey of a pressed .btn, which ends it, as does Escape')}
-    ${item(`<div class="sg-ph selecting" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar(), 'inbox')}</div>`, '.ptbar.tabs and .vbar unchanged while selecting, .ib.sel pressed as Done, phone')}
-    ${item(`<div class="sg-ph" style="max-width:390px">${K.phoneBulk()}</div>`, '.pbulk: .pall (the count and All, one target that selects every card), then .bb Move, Copy, Share, Trash, More: the desktop bar\'s actions, order and words')}
-    <div class="sg-grid">${item(frame(`<div class="layer open"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Actions">${K.grab()}${K.bmHead(bms[0])}${one()}</div></div>`, 340), 'More with one card picked, phone: .sh-row')}
-    ${item(frame(`<div class="menu" role="menu" style="left:16px;top:16px">${K.menuHTML(K.tileMenu(bms[0]))}</div>`, 330), '.menu: right click on a card, and the three dots on a card, desktop')}</div></div>`;
-  U.selecting = false; U.picked = new Set(); U.view = v; }
-/* picked folders on the Folders screen, and Trash lit as a drop target */
-{ const v = U.view; U.view = 'folders'; U.selecting = true; const top = D.folders.filter(f => f.parent_id == null && !f.locked); U.picked = new Set(top.slice(0, 2).map(f => f.id));
-  $('sg-sel').innerHTML += `<p style="margin:24px 0 12px;color:var(--ink-weak);font-size:13px">On the Folders screen the same gestures pick folders. The bar holds Select all and Delete, which asks once with the count.</p><div class="sg-stack">
-    ${item(`<div class="sg-scroll"><div class="sg-desk selecting"><div class="head">${K.deskBulk()}</div>${K.deskToolbar()}${K.foldersScreen(false)}</div></div>`, '.ftile.picked with .chk, .tb.bulk for folders: count, Select all, Delete')}
-    ${item(`<div class="sg-ph selecting" style="max-width:390px">${phoneAs(() => K.phoneTabs() + K.phoneVbar() + K.foldersScreen(true) + K.phoneBulk(), 'folders')}</div>`, '.pall, .pbulk .bb.wide: All and Delete, phone')}</div>
-    <p style="margin:24px 0 12px;color:var(--ink-weak);font-size:13px">Trash takes a dropped card or selection at once with Undo; a dropped folder asks first. It lights in the bin hue while something is held over it.</p><div class="sg-grid">
-    ${item(`<div class="sg-side"><div class="nav">${K.sideItem('trash', 'trash', 'trash').replace('class="si trash"', 'class="si trash drop-on"')}</div></div>`, '.si.trash.drop-on, sidebar')}
-    ${item(`<div style="max-width:420px">${K.foldersScreen(false).replace(/^[\s\S]*?(<button type="button" class="ftrash)/, '$1').replace('class="ftrash', 'class="ftrash drop-on')}</div>`, '.ftrash.drop-on, the Folders screen')}</div>`;
-  U.selecting = false; U.picked = new Set(); U.view = v; }
-
-/* start screen tabs */
-U.view = 'inbox'; U.tab = 'inbox';
-$('sg-title').innerHTML += `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.phoneTabs()}</div>`, '.ptbar.tabs, .ptab, .ptab-n; the chosen tab carries the shape, the other is bare');
-U.view = 1;
-
-/* locked folder */
-const fShut = D.folders[5], fOpen = D.folders[6];
-U.view = 7;
-$('sg-lock').innerHTML = `<div class="sg-stack">
-  ${item(`<div class="fgrid">${K.ftileHTML(fShut)}${K.ftileHTML(fOpen)}</div>`, '.ftile.locked shut, .ftile with .lk open')}
-  ${item(`<div class="sg-grid"><div class="sg-side">${K.deskTree()}</div></div>`, '.si.sf.locked with .si-lock, open row with .lk')}
-  ${item(`<div class="sg-row">${K.shareBtn(1, 'tb-share')}${K.shareBtn(2, 'tb-share')}${K.shareBtn(7, 'tb-share')}</div>`, '.share-ic.on shared, .share-ic not shared, .lock-btn.on relocks at once')}
-  ${item(`<div style="max-width:390px">${K.backLink('pback')}${K.phoneTop()}</div>`, '.ptbar with .lock-btn')}
-  ${item(frame(`<div class="layer open dialog"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Unlock"><div class="sh-body">${K.lockHTML({ type: 'unlock' }, fShut)}</div></div></div>`, 360), 'unlock dialog: .layer.dialog .sheet, .fld-in, .save')}
-  ${item(frame(`<div class="layer open dialog"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Unlock"><div class="sh-body">${K.lockHTML({ type: 'unlock', err: 'Wrong password' }, fShut)}</div></div></div>`, 380), 'wrong password: .fld-err')}
-  ${item(frame(`<div class="layer open dialog"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Lock"><div class="sh-body">${K.lockHTML({ type: 'lock' }, fOpen)}</div></div></div>`, 560), 'lock dialog')}</div>`;
-U.view = 4;
-
-/* recent */
-$('sg-recent').innerHTML = item(`<div class="sg-scroll">${K.deskDock()}</div>`, '.dock .dk, desktop') + `<div style="height:24px"></div>` + item(`<div style="max-width:390px">${K.phoneRecents()}</div>`, '.precent .prc, .prc.pinned, phone');
-
-/* the Dashboard */
-U.layout = 'grid'; const dGrid = K.galleryHTML(false), pGrid = K.galleryHTML(true); U.layout = 'list'; const dList = K.galleryHTML(false); U.layout = 'grid';
-$('sg-dash').innerHTML = `<div class="sg-stack">${item(`<div class="sg-scroll"><div class="sg-desk">${dGrid}</div></div>`, '.gal .gs-h, .gb .gk, .gc-chip, desktop grid')}
-  ${item(`<div class="sg-scroll"><div class="sg-desk">${dList}</div></div>`, '.gal.is-list .gl .gc-row, desktop list, two columns from 1100 px')}
-  ${item(`<div class="sg-ph">${pGrid}</div>`, '.gal.gal-p, phone: Select and the layout on the Recently opened row')}</div>`;
-/* the Dashboard while selecting: ticks on every card, picked ones green */
-{ const v = U.view; U.view = 'dashboard'; U.selecting = true;
-  U.picked = new Set(D.bms.filter(b => b.opened_at && b.folder_id != null).sort((a, b) => b.opened_at - a.opened_at).slice(0, 2).map(b => b.id));
-  const g = K.galleryHTML(false), gp = K.galleryHTML(true); U.layout = 'list'; const gl = K.galleryHTML(false), glp = K.galleryHTML(true); U.layout = 'grid';
-  $('sg-dash').innerHTML += `<div style="height:24px"></div><div class="sg-stack">
-    ${item(`<div class="sg-scroll"><div class="sg-desk selecting"><div class="head">${K.deskBulk()}</div>${K.deskToolbar()}${g}</div></div>`, '.gk.picked with .chk, the bookmark .tb.bulk: selecting on the desktop Dashboard')}
-    ${item(`<div class="sg-scroll"><div class="sg-desk selecting">${gl}</div></div>`, '.gc-row.picked with .chk at the row end, list')}
-    ${item(`<div class="sg-ph selecting" style="max-width:390px">${phoneAs(() => K.phoneTabs(), 'dashboard')}${gp}${K.phoneBulk()}</div>`, '.gal-p .gk.picked, .pbulk: selecting on the phone Dashboard')}
-    ${item(`<div class="sg-ph selecting" style="max-width:390px">${glp}</div>`, '.gal-p .gc-row.picked, phone list')}</div>`;
-  U.selecting = false; U.picked = new Set(); U.view = v; }
+/* search */
+{ const sf = (q) => K.searchField(true).replace(/ id="[^"]*"/g, '').replace('class="sf-t">', `class="sf-t" data-ph="Search bookmarks">${q || ''}`);
+  $('sg-float').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<div style="display:flex">${K.searchField(false).replace(/ id="[^"]*"/g, '').replace('<input ', '<input placeholder="Search bookmarks or press ⌘K" ')}</div>`, '.head .search, desktop', 'At rest')}
+  ${item(`<div style="display:flex">${cls(K.searchField(false).replace(/ id="[^"]*"/g, ''), 'class="search"', 'class="search is-hover"').replace('<input ', '<input placeholder="Search bookmarks or press ⌘K" ')}</div>`, '.search:hover', 'Hover')}
+  ${item(frame(`<div class="pbottom"><div class="psrow">${sf()}<button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 96), '.pbottom .search, .padd, phone', 'Phone')}
+  ${item(frame(`<div class="pbottom"><div class="psrow">${sf('immich')}<button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 96), '.sf-t holding the query while the palette runs', 'With a query')}</div>`; }
 
 /* palette */
-const palIt = (b, i) => `<a class="pal-it" aria-selected="${i === 0}" href="#">${K.favHTML(b, 28)}<span class="pal-t">${b.title}</span><span class="trunc-start pal-h"><bdi dir="ltr">${b.host}</bdi></span><span class="pal-p">Projects</span></a>`;
-$('sg-pal').innerHTML = item(frame(`<div class="pal open"><div class="pal-scrim"></div><div class="pal-panel glass" role="dialog" aria-label="Search bookmarks">
-  <div class="pal-row"><label class="pal-f">${K.ic('search')}<input type="search" value="cal" aria-label="Search"><span class="kcap">esc</span></label><button type="button" class="pal-cancel">Cancel</button></div>
-  <div class="pal-scroll"><div class="pal-grp"><div class="pal-lbl pal-g"><span>Projects</span><span class="num">2</span></div>${palIt(bms[4], 0)}${palIt(bms[0], 1)}</div></div></div></div>`, 420), '.pal.open .pal-panel.glass, .pal-it, .pal-cancel on the phone, .kcap on the desktop');
-
-/* sheet */
-$('sg-sheet').innerHTML = item(frame(`<div class="layer open"><div class="scrim"></div><div class="sheet" role="dialog" aria-label="Actions">${K.grab()}${K.fHead(f1)}${K.rowsHTML([
-  { icon: 'edit', label: 'Rename' }, { icon: 'link', label: 'Share' }, { icon: 'move', label: 'Move to' }, '-', { icon: 'trash', label: 'Delete', warn: true }])}</div></div>`, 520), '.layer.open .sheet, .sh-head, .sh-row, .sh-row.warn')
-;
-
-/* the search field: one look at the top of the desktop and at the foot of the phone, only the width differs; the / hint only with a keyboard */
-{ const sf = (phone, q) => K.searchField(phone).replace(/ id="[^"]*"/g, '').replace('class="sf-t">', `class="sf-t" data-ph="Search bookmarks">${q || ''}`);
-  $('sg-float').innerHTML = `<div class="sg-row">${item(`<div style="width:520px;max-width:100%;display:flex">${K.searchField(false).replace(/ id="[^"]*"/g, '').replace('<input ', '<input placeholder="Search bookmarks or press ⌘K" ')}</div>`, '.head .search, desktop, at rest')}
-  ${item(frame(`<div class="pbottom"><div class="psrow">${sf(true)}<button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 120, 'sg-phone'), '.pbottom .search, .pbottom .padd: the same field, phone, at rest')}
-  ${item(frame(`<div class="pbottom"><div class="psrow">${sf(true, 'immich')}<button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div></div>`, 120, 'sg-phone'), '.sf-t with the query while the search runs')}</div>`; }
+{ const it = (b, i) => `<a class="pal-it" aria-selected="${i === 0}" href="#">${K.favHTML(b, 28)}<span class="pal-t">${esc(b.title)}</span><span class="trunc-start pal-h"><bdi dir="ltr">${b.host}</bdi></span><span class="pal-p">Projects</span></a>`;
+  $('sg-pal').innerHTML = `<div class="sg-spec">${item(frame(`<div class="pal open"><div class="pal-scrim"></div><div class="pal-panel glass" role="dialog" aria-label="Search bookmarks">
+    <div class="pal-row"><label class="pal-f">${K.ic('search')}<input type="search" value="cal" aria-label="Search"><span class="kcap">esc</span></label><button type="button" class="pal-cancel">Cancel</button></div>
+    <div class="pal-scroll"><div class="pal-lbl">Recent</div><nav class="precent pal-recent">${[bms[0], bms[1], bms[4]].map(b => `<a class="prc pal-rc" href="#"><span class="prc-ic">${esc(b.title[0])}</span><span class="prc-l">${esc(b.title)}</span></a>`).join('')}</nav>
+    <div class="pal-grp"><div class="pal-lbl pal-g"><span>Projects</span><span class="num">2</span></div>${it(bms[4], 0)}${it(bms[0], 1)}</div><p class="pal-none pal-more">12 more, keep typing</p></div></div></div>`, 520), '.pal.open .pal-panel.glass, .pal-recent, .pal-it[aria-selected], .pal-more.' + SRC('web/js/palette.js (openPalette, palFill)'))}</div>`; }
 
 /* buttons */
-$('sg-buttons').innerHTML = `<div class="sg-row">
-  ${item(`<button type="button" class="add">${K.ic('plus')}Add</button>`, '.add, primary')}
-  ${item(`<button type="button" class="save" style="width:200px">Save</button>`, '.save, primary in sheets')}
-  ${item(`<button type="button" class="btn lbl">${K.ic('select')}<span class="t">Select</span></button>`, '.btn, quiet')}
-  ${item(`<button type="button" class="btn warn">${K.ic('trash')}Empty trash</button>`, '.btn.warn')}
-  ${item(`<button type="button" class="tbtn">Choose a folder</button>`, '.tbtn, text')}
-  ${item(`<button type="button" class="tbtn warn">Remove</button>`, '.tbtn.warn')}
-  ${item(`<button type="button" class="ib weak" aria-label="More">${K.ic('more')}</button>`, '.ib, icon')}</div>`;
+$('sg-buttons').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<div class="sg-row"><button type="button" class="add">${K.ic('plus')}Add</button><button type="button" class="add is-hover">${K.ic('plus')}Add</button></div>`, '.add, .add:hover')}
+  ${item(`<div style="display:grid;gap:var(--s-4)"><button type="button" class="save">Save</button><button type="button" class="save" disabled>Save</button><button type="button" class="save danger">Delete folder</button></div>`, '.save, .save[disabled], .save.danger')}
+  ${item(`<div class="sg-row"><button type="button" class="btn lbl">${K.ic('select')}<span class="t">Select</span></button><button type="button" class="btn lbl is-hover">${K.ic('select')}<span class="t">Select</span></button><button type="button" class="btn" aria-pressed="true">${K.ic('select')}Done</button><button type="button" class="btn" disabled>${K.ic('move')}Move</button></div>`, '.btn: default, hover, pressed, disabled')}
+  ${item(`<div class="sg-row"><button type="button" class="btn warn">${K.ic('trash')}Empty trash</button><button type="button" class="btn icon" aria-label="More">${K.ic('more')}</button></div>`, '.btn.warn, .btn.icon')}
+  ${item(`<div class="sg-row"><button type="button" class="tbtn">Choose a folder</button><button type="button" class="tbtn warn">Remove</button></div>`, '.tbtn, .tbtn.warn')}
+  ${item(`<div class="sg-row"><button type="button" class="ib weak" aria-label="More">${K.ic('more')}</button><button type="button" class="ib" aria-label="Close">${K.ic('close')}</button><button type="button" class="ib weak sel" aria-pressed="true" aria-label="Done">${K.ic('select')}</button><button type="button" class="padd" aria-label="Add">${K.ic('plus')}</button></div>`, '.ib.weak, .ib, .ib.sel pressed, .padd')}
+  ${item(`<div class="side" style="border:0;padding:0;width:256px"><div class="side-lbl"><span class="side-lt">Folders</span>${K.nfPlus('side-add')}</div></div><div class="sg-row">${K.nfPlus('ib weak vbar-add')}${cls(K.nfPlus('ib weak vbar-add'), 'nf-plus"', 'nf-plus is-hover"')}${cls(K.nfPlus('ib weak vbar-add'), 'nf-plus"', 'nf-plus is-focus"')}</div>`, '.nf-plus .nf-c: beside Folders in the sidebar, on the Folders tab; default, hover, focus')}
+  ${item(`<div class="sg-row"><button type="button" class="em-a">${K.ic('plus')}Add bookmark</button><button type="button" class="em-a is-hover">${K.ic('move')}Add existing</button></div>`, '.em-a, .em-a:hover')}</div>`;
 
-/* add tile and empty */
-$('sg-empty').innerHTML = `<div class="sg-grid">
-  ${item(`<div class="grid">${K.addTileHTML('addtile')}</div>`, '.addtile')}
-  ${item(`<div class="sg-ph"><div class="pgrid">${K.addTileHTML('pt-add')}</div></div>`, '.pt-add, phone')}
-  </div><div style="margin-top:24px">${item(K.emptyMerge('empty merge'), '.empty.merge, a folder with nothing in it')}</div>
-  <div style="margin-top:24px">${item(frame(`<div style="display:flex;flex-direction:column;height:100%">${K.sortedHTML(false)}</div>`, 460), '.calm, All sorted: centred both ways in the space under the title, the one centred block in the app')}</div>`;
+/* fields */
+U.view = 1; L.save = K.newSave({ title: 'Example', url: 'https://example.com/a/page', folder: 1 });
+$('sg-fields').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<label class="fld first"><span class="sh-lbl">Title</span><input class="fld-in" value="Example" aria-label="Title"></label>`, '.fld .sh-lbl .fld-in', 'Default')}
+  ${item(`<label class="fld first"><span class="sh-lbl">Title</span><input class="fld-in is-focus" value="Example" aria-label="Title"></label>`, '.fld-in:focus', 'Focus')}
+  ${item(`<label class="fld first"><span class="sh-lbl">Password</span><input class="fld-in" type="password" value="1234567" aria-label="Password"></label><p class="fld-err">Wrong password</p>`, '.fld-err', 'Error')}
+  ${item(`<label class="fld first"><span class="sh-lbl">URL</span><textarea class="fld-in" rows="2" aria-label="URL">https://example.com/a/long/address?with=a&query=string</textarea></label>`, 'textarea.fld-in, mono', 'Address')}</div>`;
 
-/* toast */
-$('sg-toast').innerHTML = item(frame(`<div class="toasts"><div class="toast"><span class="tx">Moved to Projects</span><button type="button">Undo</button></div><div class="toast solo"><span class="tx">Order saved</span></div></div>`, 150), '.toast, .toast.solo');
+/* sheets */
+{ const sheet = (inner, h, extra = '', label = 'Sample') => frame(`<div class="layer open ${extra}"><div class="scrim"></div><div class="sheet${extra.includes('tall') ? ' tall' : ''}" role="dialog" aria-label="${label}">${inner}</div></div>`, h);
+  const body = h => `${K.grab()}<div class="sh-body">${h}</div>`;
+  $('sg-sheets').innerHTML = `<div class="sg-grid wide sg-spec">
+  ${item(sheet(body(K.fHead(D.folders[0]) + K.rowsHTML([{ icon: 'plus', label: 'Add bookmarks' }, { icon: 'folder-plus', label: 'New folder inside' }, { icon: 'edit', label: 'Rename' }, { icon: 'move', label: 'Move to' }, '-', { icon: 'trash', label: 'Delete', warn: true }])), 520), '.sheet .sh-head .sh-rows .sh-row, .sh-row.warn: a folder\'s actions on the phone', 'Rows')}
+  ${item(sheet(body(K.saveHTML()) + `<div class="sh-foot">${K.saveActs()}</div>`, 640, '', 'Save'), '.sv-top, .fld, .dupe, .fpick, .sv-acts: the Save sheet, Add and the /save page', 'Save')}
+  ${item(sheet(body(K.textHead('Delete Projects?') + '<p class="sh-text">2 bookmarks go to Trash.</p><div class="sv-acts"><button type="button" class="tbtn">Cancel</button><button type="button" class="save danger">Delete folder</button></div>'), 360), '.sh-text, .save.danger: a confirm.' + SRC('web/js/sheets.js (fillSheet, type confirm)'), 'Confirm')}
+  ${item(sheet(body(K.shareHTML({}, D.folders[0])), 640, '', 'Share'), '.sh-switch, .share-link, .seg: sharing a folder', 'Share')}
+  ${item(sheet(body(K.tokensHTML({ list: [{ id: 1, name: 'Extension on my laptop', created_at: now - 9 * day, last_used_at: now - 3600 }, { id: 2, name: 'Backup script', created_at: now - 40 * day, last_used_at: null }] })), 560, '', 'API tokens'), '.tk-form, .tk-row: API tokens', 'API tokens')}
+  ${item(sheet(`<div class="sh-body">${K.lockHTML({ type: 'unlock', err: 'Wrong password' }, D.folders[5])}</div>`, 380, 'dialog', 'Unlock'), '.layer.dialog .sheet: password dialogs, centred at every width', 'Dialog')}</div>`; }
 
-/* badges */
-$('sg-badges').innerHTML = `<div class="sg-row">
-  ${item(`<span class="si-c">41</span>`, '.si-c')}
-  ${item(`<div class="tb" style="margin:0;height:auto"><h2>Inbox</h2><span class="cnt">3</span></div>`, '.tb .cnt')}
-  ${item(`<header class="ptbar home" style="padding:0"><h2 class="ptb-t">Inbox</h2><span class="ptb-c">3</span></header>`, '.ptb-c')}
-  ${item(`<span class="kcap">/</span>`, '.kcap')}
-  ${item(`<span class="ft-c num">12</span>`, '.ft-c')}</div>`;
+/* menu */
+$('sg-menu').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(frame(`<div class="menu" role="menu" style="left:16px;top:16px">${K.menuHTML(K.tileMenu(bms[0])).replace('<button', '<button class="is-hover"')}</div>`, 340), '.menu for a card, the first item under the pointer', 'Card')}
+  ${item(frame(`<div class="menu" role="menu" style="left:16px;top:16px">${K.menuHTML(K.tileMenu(Object.assign({}, bms[2], { deleted_at: now })))}</div>`, 160), '.menu for a card in Trash, .warn', 'In Trash')}
+  ${item(frame(`<div class="menu" role="menu" style="left:16px;top:16px">${K.menuHTML([{ label: 'Newest', check: true }, { label: 'A to Z', check: false }, { label: 'Last opened', check: false }, { label: 'Your order', check: false }])}</div>`, 190), '.menu with .ck: Sort.' + SRC('web/js/actions.js (sortItems)'), 'Sort')}</div>`;
 
-/* measured type sizes */
-document.fonts.ready.then(() => document.querySelectorAll('#sg-type [data-sel]').forEach(it => { const el = it.querySelector(it.dataset.sel); if (!el) return;
-  const s = getComputedStyle(el); it.querySelector('.sg-m').textContent = `${s.fontSize} / ${s.lineHeight}, ${s.fontWeight}`; }));
-})();
+/* selection */
+{ const two = new Set([1, 3]);
+  $('sg-sel').innerHTML = `<div class="sg-spec">${item(desk(`<div class="selecting"><div class="head">${as({ view: 'inbox', selecting: true, picked: two }, () => K.deskBulk())}</div></div>`), '.head .tb.bulk in place of the search: the count, Select all, Move, Copy, Share, Trash, More')}</div>
+  <div class="sg-spec">${item(`<div class="sg-scroll"><div style="width:540px" class="selecting"><div class="head">${as({ view: 'inbox', selecting: true, picked: two }, () => K.deskBulk()).replace(/class="btn lbl"([^>]*data-fit="[123]")/g, 'class="btn lbl ic"$1')}</div></div></div>`, 'Folded: .btn.lbl.ic where the words do not fit, Share first, Trash last')}</div>
+  <div class="sg-spec">${item(desk(`<div class="selecting"><div class="head">${as({ view: 'folders', selecting: true, picked: new Set([8]) }, () => K.deskBulk())}</div></div>`), '.tb.bulk on the Folders screen: Select all, Delete')}</div>
+  <div class="sg-grid sg-spec">
+  ${item(`<div class="sg-ph">${as({ view: 'inbox', selecting: true, picked: two }, () => K.phoneBulk())}</div>`, '.pbulk: .pall (the count and All), then .bb Move, Copy, Share, Trash, More', 'Phone')}
+  ${item(`<div class="sg-ph">${as({ view: 'inbox', selecting: true, picked: new Set() }, () => K.phoneBulk())}</div>`, '.pbulk with nothing picked: the actions disabled', 'Nothing picked')}
+  ${item(`<div class="sg-ph">${as({ view: 'trash', selecting: true, picked: two }, () => K.phoneBulk())}</div>`, '.pbulk in Trash: Restore, Delete', 'Trash')}</div>`; }
+
+/* toasts */
+$('sg-toast').innerHTML = `<div class="sg-spec">${item(frame(`<div class="toasts"><div class="toast"><span class="tx">Moved to Trash</span><button type="button">Undo</button></div><div class="toast solo"><span class="tx">Order saved</span></div></div>`, 150), '.toast with Undo, .toast.solo.' + SRC('web/js/toast.js'))}</div>`;
+
+/* empty and loading */
+$('sg-empty').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<div class="sg-frame" style="display:flex;flex-direction:column;height:400px">${K.sortedHTML(false)}</div>`, '.calm with .pile: All sorted', 'Inbox empty')}
+  ${item(`<div class="sg-frame" style="display:flex;flex-direction:column;height:400px">${K.freshHTML(false)}</div>`, '.calm: Nothing here yet, a fresh install', 'No bookmarks')}
+  ${item(`<div class="grid">${K.addTileHTML('addtile')}</div>`, '.addtile', 'Add tile')}
+  ${item(`<div class="sg-ph"><div class="pgrid">${K.addTileHTML('pt-add')}</div></div>`, '.pt-add, phone', 'Add tile, phone')}
+  ${item(as({ view: 1 }, () => K.emptyMerge('empty merge')), '.empty.merge: an empty folder', 'Empty folder')}
+  ${item(`<div class="empty">Nothing here yet.</div>`, '.empty: Trash with nothing in it.' + SRC('web/js/render.js (deskBody)'), 'Empty Trash')}
+  ${item(`<p class="nores">No matches.</p>`, '.nores: a search on a shared folder finds nothing, drawn as .empty.' + SRC('web/share.js (body)'), 'No matches, share page')}
+  ${item(`<div class="sg-ph"><p class="pnores">No matches.</p></div>`, '.pnores, phone, drawn as .pempty', 'No matches, share page, phone')}
+  ${item(K.noticeHTML(false), '.notice: the bookmarks could not load', 'Load failed')}
+  ${item(K.noticeHTML(true), '.pnotice, phone', 'Load failed, phone')}</div>`;
+
+/* small parts */
+$('sg-smalls').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<div class="sg-row"><span class="si-c">41</span><span class="kcap">/</span><span class="kcap">esc</span><span class="ptab-n num">4</span></div>`, '.si-c, .kcap, .ptab-n')}
+  ${item(`<span class="gc-chip hue-coral"><span class="dot"></span><span class="gc-cn">Projects</span></span>`, '.gc-chip in a folder hue')}
+  ${item(`<div class="sh-rows"><button type="button" class="sh-row sh-switch" role="switch" aria-checked="true">${K.ic('link')}<span class="sw-l">Share with a link</span><span class="sw"><span class="knob"></span></span></button><button type="button" class="sh-row sh-switch" role="switch" aria-checked="false">${K.ic('lock')}<span class="sw-l">Lock with a password</span><span class="sw"><span class="knob"></span></span></button></div>`, '.sh-switch on and off')}
+  ${item(`<div class="seg" role="radiogroup"><button type="button" role="radio" aria-checked="true">Never</button><button type="button" role="radio" aria-checked="false">1 day</button><button type="button" role="radio" aria-checked="false">7 days</button></div>`, '.seg, the share expiry')}
+  ${item(`<div style="position:relative;height:40px"><div class="tip" style="position:absolute;left:0;top:50%">Home lab notes and reading</div></div>`, '.tip, beside a rail icon.' + SRC('web/js/render.js (showTip)'))}
+  ${item(desk(K.deskDock()), '.dock .dk: pinned links on the desktop')}
+  ${item(`<div class="sg-ph">${as({ view: 'inbox', mode: 'phone' }, () => K.phoneRecents())}</div>`, '.phead, .precent .prc with .prc-pin: pinned on the phone')}</div>`;
+
+/* phone */
+$('sg-phone').innerHTML = `<div class="sg-grid sg-spec">
+  ${item(`<div class="sg-ph">${as({ view: 'dashboard', mode: 'phone' }, () => K.phoneTabs())}</div>`, '.ptbar.tabs: Dashboard chosen')}
+  ${item(`<div class="sg-ph">${as({ view: 'settings', mode: 'phone' }, () => K.settingsScreen())}</div>`, '.pset, .sr: Settings')}</div>
+  <div class="sg-row sg-spec">${item(`<div class="sg-scroll"><iframe class="sg-iframe" src="/" title="The app at phone width"></iframe></div>`, 'The app itself at 390 px, live')}</div>`;
+
+/* login and save, live */
+$('sg-pages').innerHTML = `<div class="sg-row sg-spec">
+  ${item(`<div class="sg-scroll"><iframe class="sg-iframe" src="/login" title="Login page" style="height:560px"></iframe></div>`, '/login, web/login.html')}
+  ${item(`<div class="sg-scroll"><iframe class="sg-iframe" src="/save?url=https%3A%2F%2Fexample.com%2Fan%2Farticle&amp;title=An%20article" title="Save page" style="height:760px"></iframe></div>`, '/save, web/save.html with the Save sheet from sheets.js')}</div>`;
+
+/* contents: built from the sections, so a new section shows up in it */
+{ const items = []; for (const el of document.querySelectorAll('.sg-part, .sg-sec')) items.push(el.classList.contains('sg-part') ? `<li class="h">${el.dataset.part}</li>` : `<li><a href="#${el.id}">${el.querySelector('h2').textContent}</a></li>`);
+  $('toc-list').innerHTML = items.join(''); const toc = $('toc'); const mq = matchMedia('(min-width:1100px)'); const set = () => { toc.open = mq.matches; }; set(); mq.addEventListener('change', set);
+  toc.addEventListener('click', e => { if (e.target.closest('a') && !mq.matches) toc.open = false; }); }
+/* the chosen tab's shape is placed by script in the app (placeTabInd in render.js); the same here */
+for (const ind of document.querySelectorAll('.sg-main .ptab-ind')) { const sel = ind.parentElement.querySelector('.ptab[aria-selected="true"]');
+  if (sel) { ind.style.transform = `translateX(${sel.offsetLeft}px)`; ind.style.width = sel.offsetWidth + 'px'; } }
+U.view = 4; U.mode = null;
 </script>
 </body>
 </html>

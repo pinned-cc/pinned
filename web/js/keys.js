@@ -1,5 +1,5 @@
-/* The keyboard map: / and Cmd K, arrows across tiles, Enter, Delete, F2, Escape, Cmd Z, Cmd A. */
-import { actions, nfCreate, startRename } from './actions.js';
+/* The keyboard map: / and Cmd K, arrows across tiles, Enter, Delete, F2, S, N, Escape, Cmd Z, Cmd A. */
+import { actions, newFolder, nfCreate, startRename } from './actions.js';
 import { closeMenu } from './menu.js';
 import { openPalette, palKey } from './palette.js';
 import { exitSelect, extendByKey, selSync } from './select.js';
@@ -54,6 +54,8 @@ export function onKey(e) {
   if (e.key === '/') { e.preventDefault(); openPalette(); return; } /* the same search at any width */
   /* S starts selecting, and ends it again, like the Select button */
   if (e.key.toLowerCase() === 's' && !layers.sheet && canSelect() && (ui.selecting || selectables().length)) { e.preventDefault(); if (ui.selecting) exitSelect(); else { ui.selecting = true; ui.picked.clear(); selSync(); } return; }
+  /* N opens New folder, like the + beside Folders; plain n only, and not in Trash */
+  if (e.key === 'n' && !e.shiftKey && ui.view !== 'trash') { e.preventDefault(); newFolder(null); return; }
   if (e.key.startsWith('Arrow')) { e.preventDefault(); moveFocus(e.key); return; }
   const art = t.closest && t.closest('#app article[data-id]');
   if (art && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); const b = bm(+art.dataset.id); if (!b) return;

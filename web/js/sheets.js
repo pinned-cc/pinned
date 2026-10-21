@@ -67,7 +67,7 @@ export function fillSheet() {
   el.classList.toggle('tall', s.type === 'addto');
   layer().classList.toggle('dialog', s.type === 'lock' || s.type === 'unlock' || s.type === 'unlockremove'); /* password dialogs sit in the middle */
   el.setAttribute('aria-label', label);
-  /* the sheet is the glass and never scrolls itself; its body scrolls when the content is taller */
+  /* the sheet never scrolls itself; its body scrolls when the content is taller */
   el.innerHTML = (s.type === 'addto' ? h : h.startsWith(grab()) ? grab() + `<div class="sh-body">${h.slice(grab().length)}</div>` : `<div class="sh-body">${h}</div>`) + (s.type === 'save' ? `<div class="sh-foot">${saveActs()}</div>` : '');
   if (s.type === 'addto') atAfterFill();
   if (hadFocus && !el.contains(document.activeElement)) el.focus({ preventScroll: true }); /* a redraw keeps focus inside the sheet */
@@ -348,10 +348,10 @@ export function installSheets() {
     const now = performance.now(), p = d.pts.filter(([t]) => now - t < 120), v = p.length > 1 ? (p[p.length - 1][1] - p[0][1]) / Math.max(1, p[p.length - 1][0] - p[0][0]) : 0;
     const clear = () => { el.style.transition = ''; el.style.transform = ''; if (sm) { sm.style.transition = ''; sm.style.opacity = ''; } };
     if (ev === 'pointerup' && (d.dy > d.h * .25 || v > .5)) {
-      el.style.transition = 'transform 200ms cubic-bezier(.23,1,.32,1)'; el.style.transform = 'translateY(100%)';
+      el.style.transition = 'transform 200ms var(--ease-out)'; el.style.transform = 'translateY(100%)';
       if (sm) { sm.style.transition = 'opacity 200ms ease'; sm.style.opacity = '0'; }
       setTimeout(() => { el.style.transition = 'none'; closeSheet(); requestAnimationFrame(() => requestAnimationFrame(clear)); }, 200); return; }
-    el.style.transition = 'transform 220ms cubic-bezier(.32,.72,0,1)'; el.style.transform = '';
+    el.style.transition = 'transform 220ms var(--ease-drawer)'; el.style.transform = '';
     if (sm) { sm.style.transition = 'opacity 220ms ease'; sm.style.opacity = ''; }
     setTimeout(() => { if (!sheetDrag) clear(); }, 240); }));
 }

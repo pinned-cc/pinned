@@ -29,9 +29,9 @@
     if (!S.checked) return h('span', { class: 'fav sv-ph', 'aria-hidden': 'true' }, h('span', { class: 'ph-in' }));
     var src = S.icon && iconSrc(S.icon.icon);
     if (!src) return h('span', { class: 'fav fade-in', 'aria-hidden': 'true', text: letter });
-    var box = h('span', { class: 'fav fade-in', 'aria-hidden': 'true', style: '--tile:' + (S.icon.tile || '#2a303b') });
+    var box = h('span', { class: 'fav fade-in', 'aria-hidden': 'true', style: '--tile:' + (S.icon.tile || 'var(--tile-blank)') });
     var img = h('img', { src: src, alt: '', width: 48, height: 48 });
-    img.addEventListener('error', function () { box.style.setProperty('--tile', '#2a303b'); box.textContent = letter; });
+    img.addEventListener('error', function () { box.style.setProperty('--tile', 'var(--tile-blank)'); box.textContent = letter; });
     box.appendChild(img);
     return box;
   }

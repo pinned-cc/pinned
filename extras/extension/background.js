@@ -15,7 +15,7 @@ var badgeTimer = null;
 function badge(text, color) {
   clearTimeout(badgeTimer);
   ext.action.setBadgeBackgroundColor({ color: color });
-  if (ext.action.setBadgeTextColor) ext.action.setBadgeTextColor({ color: '#071224' });
+  if (ext.action.setBadgeTextColor) ext.action.setBadgeTextColor({ color: '#04150c' });
   ext.action.setBadgeText({ text: text });
   badgeTimer = setTimeout(function () { ext.action.setBadgeText({ text: '' }); }, 2000);
 }
@@ -40,9 +40,9 @@ async function saveToInbox(url, title) {
   if (!/^https?:\/\//i.test(url || '')) { badge('!', '#ff9a9a'); return; }
   try {
     await Pinned.api(cfg, 'POST', '/api/bookmarks', { title: title, url: url, folder_id: null });
-    badge('✓', '#4f8cff');
+    badge('✓', '#5fd39a');
   } catch (e) {
-    if (e.status === 409) badge('=', '#9aa3b2');
+    if (e.status === 409) badge('=', '#9a9a9f');
     else badge('!', '#ff9a9a');
   }
 }

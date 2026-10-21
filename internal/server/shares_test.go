@@ -143,7 +143,7 @@ func TestSharePublicData(t *testing.T) {
 		t.Errorf("share page: %d %s", code, body)
 	}
 	code, body = v.get("/s/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-	if code != 404 || !strings.Contains(body, "This link is no longer available.") || !strings.Contains(body, "#0b0d10") {
+	if code != 404 || !strings.Contains(body, "This link is no longer available.") || !strings.Contains(body, "#0a0a0b") {
 		t.Errorf("unknown token page: %d %s", code, body)
 	}
 	if code, _ := v.get("/s/AAAA/data"); code != 404 {

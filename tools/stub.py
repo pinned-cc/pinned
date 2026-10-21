@@ -112,7 +112,7 @@ def import_html(text):
             stack.append(pending if pending is not None else stack[-1]); pending = None
         elif len(stack) > 1: stack.pop()
     return {'added': added, 'skipped': max(skipped, 0), 'folders': made}
-MANIFEST = {'name': 'Pinned', 'short_name': 'Pinned', 'start_url': '/', 'display': 'standalone', 'background_color': '#0b0d10', 'theme_color': '#0b0d10',
+MANIFEST = {'name': 'Pinned', 'short_name': 'Pinned', 'start_url': '/', 'display': 'standalone', 'background_color': '#0a0a0b', 'theme_color': '#0a0a0b',
             'icons': [{'src': f'/icon-{n}.png', 'sizes': f'{n}x{n}', 'type': 'image/png'} for n in (192, 512)],
             'share_target': {'action': '/save', 'method': 'GET', 'params': {'title': 'title', 'text': 'text', 'url': 'url'}}}
 class H(BaseHTTPRequestHandler):
@@ -145,6 +145,8 @@ class H(BaseHTTPRequestHandler):
         if method == 'GET' and path in statics: return self.file(*statics[path])
         if method == 'GET' and re.fullmatch(r'/static/fonts/[\w.-]+\.woff2', path): return self.file(path[8:], 'font/woff2')
         if method == 'GET' and re.fullmatch(r'/static/js/[\w.-]+\.js', path): return self.file(path[8:], 'text/javascript')
+        if method == 'GET' and path == '/health':  # the version only for a logged in session, as the server does
+            return self.send(200, {'ok': True, 'version': 'stub'} if self.authed() else {'ok': True})
         if method == 'GET' and path == '/manifest.webmanifest':
             return self.send(200, MANIFEST, 'application/manifest+json')
         if method == 'GET' and path.startswith('/icons/') and path[7:] in ICONS:
@@ -321,4 +323,5 @@ for _m in ('GET', 'POST', 'PATCH', 'PUT', 'DELETE'): setattr(H, 'do_' + _m, lamb
 
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 9095; print(f'stub on http://127.0.0.1:{port}')
+    ThreadingHTTPServer.request_queue_size = 128  # a page loads its modules at once; the default backlog of 5 resets some of them
     ThreadingHTTPServer(('127.0.0.1', port), H).serve_forever()

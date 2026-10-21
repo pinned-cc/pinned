@@ -2,6 +2,24 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## Unreleased
+
+### New
+
+- N opens New folder, and New folder is an action in the search palette.
+- The New folder plus beside Folders and on the phone Folders tab is a small filled circle.
+
+### Fixes
+
+- Add no longer turns blue on hover.
+- Every favicon and letter sits on the same graphite tile, also when an icon fails to load.
+- The faint text, the action bar on a card, the Save button page and the expired share page use the graphite palette.
+- The settings icons take the colour of their row.
+- No matches on a share page looks like the other empty states.
+- In the list while selecting, the date moves left of the tick instead of under it.
+- Every address line has the same line height.
+- The browser extension uses the graphite palette and the green accent of the app.
+
 ## 0.1.1, 2026-10-18
 
 ### Fixes
