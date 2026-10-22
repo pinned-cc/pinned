@@ -2,6 +2,13 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## Unreleased
+
+### Changes
+
+- A fresh install points to How to save from the empty Dashboard.
+- How to save tells you to keep the extension folder in place, to allow access to your server, and the Option Shift S shortcut.
+
 ## 0.1.3, 2026-10-22
 
 ### Changes

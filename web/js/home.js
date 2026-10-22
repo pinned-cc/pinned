@@ -25,9 +25,10 @@ const label = b => `${esc(b.title)}, ${esc(hostOf(b))}, in ${esc(folderName(b))}
 /* where a link is from: a small chip in the folder's hue */
 const chip = b => `<span class="gc-chip ${hueClass(fid(b))}"><span class="dot"></span><span class="gc-cn">${esc(folderName(b))}</span></span>`;
 
-/* calm empty states, centred in the space below the title: a fresh install, an empty Inbox, a Dashboard with nothing opened yet */
+/* calm empty states, centred in the space below the title: a fresh install, an empty Inbox, a Dashboard with nothing opened yet;
+   a fresh install points to How to save, which on the desktop otherwise sits under the sidebar's More */
 const calm = (phone, inner) => `<div class="calm${phone ? ' p' : ''}"><div class="calm-in">${inner}</div></div>`;
-export const freshHTML = phone => calm(phone, `<p class="calm-h">Nothing here yet</p><span class="calm-a"><button type="button" class="em-a" data-a="add-new">${ic('plus')}Add bookmark</button><button type="button" class="em-a" data-a="import">${ic('import')}Import</button></span>`);
+export const freshHTML = phone => calm(phone, `<p class="calm-h">Nothing here yet</p><span class="calm-a"><button type="button" class="em-a" data-a="add-new">${ic('plus')}Add bookmark</button><button type="button" class="em-a" data-a="import">${ic('import')}Import</button></span><p class="calm-t calm-tip">To save from your browser or phone, see <a href="/bookmarklet">How to save</a>.</p>`);
 /* the All sorted picture: three bookmark cards squared up in a tidy pile, the top one checked; the first time it
    shows in a session the cards settle from a slight fan (CSS, only when motion is allowed) */
 let settleAt = null; /* when the settle began; a redraw inside the 400 ms carries on from where it was */

@@ -1144,6 +1144,9 @@ body.share-page .share-foot{order:2}
 .calm-t{margin:var(--s-3) 0 0;font:400 var(--t-control)/22px var(--sans);color:var(--ink-weak)}
 .calm-a{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--s-2);margin:var(--s-6) 0 0}
 .calm-a .em-a{font-size:var(--t-control)}
+.calm-tip{margin-top:var(--s-8);font-size:var(--t-meta)}
+.calm-tip a{color:var(--accent-soft);font-weight:500}
+.calm-tip a:hover{text-decoration:underline;text-underline-offset:3px}
 .gal{min-width:0}
 body.desk .gal{margin-bottom:var(--s-12)}
 .gal-p{padding-bottom:var(--s-8)}
