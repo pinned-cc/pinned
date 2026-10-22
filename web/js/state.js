@@ -132,10 +132,16 @@ export function sections() {
   return mark(grouped(it, 'created_at'));
 }
 let loadSeq = 0;
-export async function load() {
+export async function load(again) {
   const my = ++loadSeq;
   try { const s = await api('GET', '/api/state'); if (my !== loadSeq) return; setData(s); data.has = true; data.error = null; }
-  catch (e) { if (e.auth) return; if (my !== loadSeq) return; data.error = e; }
+  catch (e) {
+    if (e.auth) return; if (my !== loadSeq) return;
+    /* back from another app, a phone's VPN can need a moment to wake: a refresh that never reached
+       the server tries once more before the warning shows, and the bookmarks on screen stay meanwhile */
+    if (!again && data.has && e.status === undefined) { setTimeout(() => { if (my === loadSeq) load(true); }, 1500); return; }
+    data.error = e;
+  }
   data.loaded = true;
   for (const id of [...ui.picked]) if (foldersSel() ? !folderById.has(id) : !bm(id)) ui.picked.delete(id);
   if (typeof ui.view === 'number' && !folderById.has(ui.view)) ui.view = 'dashboard';
