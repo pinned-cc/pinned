@@ -2,6 +2,13 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.5, 2026-10-22
+
+### Fixes
+
+- On iPhone, the login page no longer zooms in when a password manager fills it.
+- Coming back to the app on a phone no longer shows "Bookmarks could not load" when the first refresh is too early for the VPN: it tries once more after a moment, and warns only if that fails too.
+
 ## 0.1.4, 2026-10-22
 
 ### Changes
