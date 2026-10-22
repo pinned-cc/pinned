@@ -305,12 +305,27 @@ export async function doSave(inbox) {
     s.err = errorText(e, 'Could not save. Try again.'); fillSheet(); return; }
   s.busy = false; s.savedTitle = body.title; s.savedIn = pathOf(folder);
   announce(`Saved in ${s.savedIn}`);
-  if (document.body.dataset.page === 'save') { s.ticked = true; fillSheet(); await wait(600); closeWindow(true); return; }
+  /* the save page: the confirmation is patched into the sheet, not redrawn, so its motion runs (the tick draws in the
+     button, the pin settles on the favicon); a hold, then the sheet eases out and the window closes. Reduced motion: the
+     same finished states at once and the window closes after 600 ms */
+  if (document.body.dataset.page === 'save') { s.ticked = true; confirmSaved(); const r = reduce(); await wait(r ? 600 : 1000);
+    if (!r) { sheetEl().classList.add('leaving'); await wait(340); } closeWindow(true); return; }
   closeSheet(); await load();
+}
+/* the thumbtack of the Pinned icon, seen from the top, at 22 px */
+const TACK = `<svg class="tack" viewBox="0 0 28 28" aria-hidden="true"><defs><radialGradient id="tk-rim" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#e9b43a"/><stop offset=".7" stop-color="#c9900f"/><stop offset="1" stop-color="#8a6508"/></radialGradient>
+  <radialGradient id="tk-dome" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#f6cf5c"/><stop offset=".65" stop-color="#d9a21b"/><stop offset="1" stop-color="#a87a0a"/></radialGradient></defs>
+  <ellipse class="tack-sh" cx="14" cy="18" rx="12" ry="5" fill="#000" fill-opacity=".28"/><circle cx="14" cy="14" r="11" fill="url(#tk-rim)"/><circle cx="14" cy="14" r="7.5" fill="url(#tk-dome)"/>
+  <circle cx="14" cy="14" r="1.6" fill="#5a3f04" fill-opacity=".8"/><ellipse cx="11" cy="10.5" rx="3.2" ry="1.8" fill="#fff" fill-opacity=".45"/></svg>`;
+export function confirmSaved() {
+  const el = sheetEl(), b = el.querySelector('[data-a="save-go"]'), f = el.querySelector('.sv-fav');
+  if (b) { b.disabled = true; b.setAttribute('aria-label', 'Saved'); b.innerHTML = '<svg class="i tick-draw" viewBox="0 0 20 20" aria-hidden="true"><path pathLength="1" d="m5.5 10.25 3 3 6-6.5"/></svg>'; }
+  if (f && !f.querySelector('.tack')) f.insertAdjacentHTML('beforeend', TACK);
+  el.classList.add('saved');
 }
 export function closeWindow(saved) {
   try { window.close(); } catch (e) { /* not ours to close */ }
-  setTimeout(() => { if (window.closed) return; if (saved) { layers.sheet.type = 'done'; fillSheet(); const b = sheetEl().querySelector('[data-a="done"]'); if (b) b.focus(); } else location.href = '/'; }, 150);
+  setTimeout(() => { if (window.closed) return; if (saved) { sheetEl().classList.remove('leaving', 'saved'); sheetEl().classList.add('arrive'); layers.sheet.type = 'done'; fillSheet(); const b = sheetEl().querySelector('[data-a="done"]'); if (b) b.focus(); } else location.href = '/'; }, 150);
 }
 
 

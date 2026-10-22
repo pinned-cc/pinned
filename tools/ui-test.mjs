@@ -477,6 +477,118 @@ async function desktop(browser, engine) {
     assert((await page.textContent('#sheet')).includes('New folder'), 'click: not the New folder sheet'); await page.keyboard.press('Escape'); await sheetClosed(page);
   });
 
+  /* Raycast style actions on a result: Cmd K again or the Right arrow at the end of the field */
+  const palFind = async q => { await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.type(q);
+    await visible(page.locator('#pal-list .pal-it[data-open][aria-selected="true"]')); };
+  const palActs = async () => { await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal-acts')); };
+  const actSel = () => page.evaluate(() => { const s = document.querySelector('#pal-acts [aria-selected="true"]'); return s ? s.textContent.trim() : ''; });
+  await check('palette actions: Cmd K on a result lists them with Open first, the field points at the highlighted one, Escape and Left go back', async () => {
+    await palFind(stamp); await palActs();
+    const labels = (await page.locator('#pal-acts [role=option]').allTextContents()).map(x => x.trim());
+    assert(labels.join(',') === 'Open,Pin,Move to folder,Rename,Copy link,Move to Trash', 'actions: ' + labels.join(','));
+    assert(await actSel() === 'Open', 'Open is not preselected');
+    assert(await page.getAttribute('#pal-acts', 'role') === 'listbox' && await page.getAttribute('#pq', 'aria-activedescendant') === 'pal-a-0', 'the field does not point at the action');
+    assert(await page.evaluate(() => document.activeElement.id === 'pq'), 'focus left the field');
+    await page.keyboard.press('ArrowDown'); assert(await actSel() === 'Pin', 'ArrowDown did not move to Pin');
+    await page.keyboard.press('ArrowUp'); await page.keyboard.press('ArrowUp'); assert(await actSel() === 'Move to Trash', 'ArrowUp did not wrap to the last');
+    await shot(page, `${engine}-desktop-palette-actions`);
+    await page.keyboard.press('Escape'); await gone(page.locator('#pal-acts'));
+    assert(await page.locator('#pal.open').count() === 1 && await page.inputValue('#pq') === stamp, 'Escape left the results');
+    await page.keyboard.press('ArrowRight'); await visible(page.locator('#pal-acts'));
+    await page.keyboard.press('ArrowLeft'); await gone(page.locator('#pal-acts'));
+    await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal-acts')); await page.keyboard.press('ControlOrMeta+k'); await gone(page.locator('#pal-acts'));
+    /* Right arrow with the caret inside the text moves the caret, nothing opens */
+    await page.evaluate(() => document.getElementById('pq').setSelectionRange(0, 0)); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(150); assert(!(await page.locator('#pal-acts').count()), 'Right arrow mid text opened the actions');
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await gone(page.locator('#pal'));
+  });
+  await check('palette actions: Pin, Copy link, Move to folder and Rename run as their menu items do', async () => {
+    const b = (await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.url === T.url);
+    await palFind(stamp); await palActs(); await page.keyboard.press('p'); assert(await actSel() === 'Pin', 'type-ahead p');
+    await page.keyboard.press('Enter'); await gone(page.locator('#pal'));
+    await page.waitForTimeout(400);
+    assert((await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === b.id).pinned, 'Pin did not pin');
+    await palFind(stamp); await palActs(); assert((await page.locator('#pal-acts [role=option]').nth(1).textContent()).trim() === 'Unpin', 'a pinned link offers Pin');
+    await page.keyboard.press('u'); await page.keyboard.press('Enter'); await gone(page.locator('#pal')); await page.waitForTimeout(400);
+    assert(!(await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === b.id).pinned, 'Unpin did not unpin');
+    await palFind(stamp); await palActs(); await page.keyboard.press('c'); assert(await actSel() === 'Copy link', 'type-ahead c');
+    await page.keyboard.press('Enter'); await visible(page.locator('#toasts .toast', { hasText: /Copied|Could not copy/ }));
+    await palFind(stamp); await palActs(); await page.keyboard.press('m'); await page.keyboard.press('Enter'); await gone(page.locator('#pal')); await sheetOpen(page);
+    assert(await page.locator('#sheet .sh-lbl', { hasText: 'Folder' }).count() === 1, 'Move to folder: not the move sheet'); await page.keyboard.press('Escape'); await sheetClosed(page);
+    await palFind(stamp); await palActs(); await page.keyboard.press('r'); await page.keyboard.press('Enter'); await gone(page.locator('#pal'));
+    await until(page, id => !!document.querySelector(`[data-rename="${id}"]`) || !!document.querySelector('#layer.open #sheet input[name=v]'), b.id, 'a rename field');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    assert((await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === b.id).title === T.title, 'Escape renamed it');
+  });
+  await check('palette actions: Move to Trash with a click, Undo in the toast; a view row has no actions', async () => {
+    const t = (await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test paltrash ${stamp}`, url: `https://ui-test.example/${stamp}/paltrash`, folder_id: null })).data; await page.reload(); await visible(page.locator('#side .si'));
+    await palFind('paltrash'); await palActs(); await page.locator('#pal-acts [role=option]', { hasText: 'Move to Trash' }).click(); await gone(page.locator('#pal'));
+    await toastWith(page, 'Moved to Trash');
+    assert((await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === t.id).deleted_at, 'not in Trash');
+    await apiIn(page, 'DELETE', `/api/bookmarks/${t.id}?permanent=1`);
+    await page.keyboard.press('ControlOrMeta+k'); await visible(page.locator('#pal.open')); await page.keyboard.type('inbox');
+    await visible(page.locator('#pal .pal-view[aria-selected="true"]')); await page.keyboard.press('ControlOrMeta+k'); await page.waitForTimeout(200);
+    assert(!(await page.locator('#pal-acts').count()), 'a view row opened actions');
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await gone(page.locator('#pal'));
+  });
+
+  await check('How to save: the page, its sidebar link, and "a token" opens the app with API tokens open', async () => {
+    await openFoot(page); await visible(page.locator('#side a.si[href="/bookmarklet"]', { hasText: 'How to save' }));
+    await page.goto(BASE + '/bookmarklet');
+    assert(await page.title() === 'How to save' && (await page.textContent('h1')).trim() === 'How to save', 'the page is not How to save');
+    assert(!(await page.locator('body', { hasText: 'Save button' }).count()), 'the page still says Save button');
+    assert((await page.textContent('[data-bm-code]')).includes('height=544'), 'the bookmarklet window is not 544 tall');
+    await shot(page, `${engine}-desktop-how-to-save`);
+    await page.locator('.bm-page a', { hasText: 'a token' }).click();
+    await page.waitForURL(u => u.pathname === '/'); await sheetOpen(page);
+    await visible(page.locator('#sheet .at-title', { hasText: 'API tokens' }));
+    assert(await page.evaluate(() => location.hash === ''), 'the #tokens hash stayed');
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+    await page.reload(); await visible(page.locator('#side .si')); await page.waitForTimeout(400);
+    assert(!(await page.locator('#layer.open').count()), 'the tokens sheet opened again on reload');
+    await page.click('#side [data-view="inbox"]'); await visible(page.locator('#body article.tile[data-id]'));
+  });
+
+  await check('share page: no matches is an empty state with Clear search; inside a subfolder it names it and offers the whole folder', async () => {
+    const f = (await apiIn(page, 'POST', '/api/folders', { name: `ui-test share ${stamp}`, parent_id: null })).data;
+    const sub = (await apiIn(page, 'POST', '/api/folders', { name: 'ui-test sub', parent_id: f.id })).data;
+    await apiIn(page, 'POST', '/api/bookmarks', { title: 'ui-test share zebra', url: `https://ui-test.example/${stamp}/zebra`, folder_id: f.id });
+    await apiIn(page, 'POST', '/api/bookmarks', { title: 'ui-test share alpha', url: `https://ui-test.example/${stamp}/alpha`, folder_id: sub.id });
+    const sh = (await apiIn(page, 'POST', `/api/folders/${f.id}/share`, {})).data;
+    const url = sh.url || (await apiIn(page, 'GET', '/api/state')).data.folders.find(x => x.id === f.id).share.url;
+    for (const [w, h] of [[1440, 900], [390, 844]]) {
+      const c = await browser.newContext({ viewport: { width: w, height: h }, locale: 'en-US' }), sp = await c.newPage();
+      await sp.goto(url); await visible(sp.locator('#sq'));
+      await sp.fill('#sq', 'nomatchxyz'); await visible(sp.locator('#sbody .calm.nm'));
+      assert((await sp.textContent('#sbody .calm-h')).includes('Nothing matches') && (await sp.textContent('#sbody .calm-t')).includes(`in ui-test share ${stamp}`), 'the empty state does not say what was searched');
+      await shot(sp, `${engine}-${w}-share-empty`);
+      await sp.click('#sbody [data-clear]'); await visible(sp.locator('#sbody article'));
+      assert(await sp.inputValue('#sq') === '', 'Clear search left the query');
+      await sp.click('[data-sv]:has-text("ui-test sub")'); await sp.fill('#sq', 'zebra'); await visible(sp.locator('#sbody .calm.nm'));
+      assert((await sp.textContent('#sbody .calm-t')).includes('in ui-test sub'), 'the message does not name the subfolder');
+      await sp.click('#sbody .em-a[data-sv="all"]'); await visible(sp.locator('#sbody article', { hasText: 'ui-test share zebra' }));
+      await c.close();
+    }
+    await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
+  });
+
+  await check('save page in a popup sized window: the panel is the window, Save draws the tick and drops the pin', async () => {
+    const c = await browser.newContext({ viewport: { width: 392, height: 544 }, locale: 'en-US' }); await c.addCookies(await ctx.cookies());
+    const sp = await c.newPage(); const u = `https://ui-test.example/${stamp}/popup`;
+    await sp.goto(`${BASE}/save?url=${encodeURIComponent(u)}&title=${encodeURIComponent('ui-test popup ' + stamp)}`);
+    await visible(sp.locator('#layer.open #sheet [data-f=title]')); await sp.waitForTimeout(1300);
+    const g = await sp.evaluate(() => { const s = document.getElementById('sheet'), r = s.getBoundingClientRect(), cs = getComputedStyle(s), gr = s.querySelector('.grab');
+      return { top: r.top, radius: cs.borderTopLeftRadius, grab: gr ? getComputedStyle(gr).display : 'none', intro: document.body.classList.contains('intro'), bg: cs.backgroundImage }; });
+    assert(g.top === 0 && g.radius === '0px' && g.grab === 'none', 'the panel is not the window: ' + JSON.stringify(g));
+    assert(!g.intro && /gradient/.test(g.bg), 'no gradient, or the intro never ended');
+    await shot(sp, `${engine}-popup-save-panel`);
+    await sp.click('#sheet [data-a="save-go"]');
+    await visible(sp.locator('#sheet.saved .tack')); await visible(sp.locator('#sheet [aria-label="Saved"] .tick-draw'));
+    await visible(sp.locator('#sheet .done-state'), 8000);
+    const b = (await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.url === u && !x.deleted_at);
+    assert(b, 'not saved'); await apiIn(page, 'DELETE', `/api/bookmarks/${b.id}?permanent=1`);
+    await c.close();
+  });
+
   await check('share sheet from a folder menu: link, password, expiry', async () => {
     const ft = page.locator(`#side .sf[data-fid="${folderId}"]`);
     await ft.click({ button: 'right' });

@@ -8,6 +8,12 @@ Everything that changes for people who run the app goes here. Versions follow se
 
 - N opens New folder, and New folder is an action in the search palette.
 - The New folder plus beside Folders and on the phone Folders tab is a small filled circle.
+- The search palette has actions, as in Raycast: with a bookmark highlighted, Cmd K again (Ctrl K elsewhere) or the Right arrow at the end of the field lists Open, Pin or Unpin, Move to folder, Rename, Copy link and Move to Trash. Arrows move, Enter runs, Escape or the Left arrow go back. Enter on a result still opens it.
+- The save panel has a soft gradient and moves: it glides in, the Save button draws a tick and the icon's pin drops onto the favicon, then the panel eases out before the window closes.
+- The save window opened by the bookmarklet fits the panel, 392 by about 530 instead of 392 by 760, and grows when the folder list opens or the address is already saved.
+- One calm gradient sits behind the app, the phone layout and the share page. Cards and folders are a clear tint over it with a softer rim and a small shadow; the sidebar, sheets, menus and the search panel blur it. Anything moving, lifted, pressed, held or dragged stays solid.
+- The Save button page is now How to save. Its address stays /bookmarklet.
+- On How to save, "a token" in the extension steps opens the app with API tokens open (`/#tokens`).
 
 ### Fixes
 
@@ -15,10 +21,11 @@ Everything that changes for people who run the app goes here. Versions follow se
 - Every favicon and letter sits on the same graphite tile, also when an icon fails to load.
 - The faint text, the action bar on a card, the Save button page and the expired share page use the graphite palette.
 - The settings icons take the colour of their row.
-- No matches on a share page looks like the other empty states.
+- No matches on a share page is an empty state like the app's, with Clear search. Inside a subfolder it names that folder and offers the matches in the whole shared folder.
 - In the list while selecting, the date moves left of the tick instead of under it.
 - Every address line has the same line height.
 - The browser extension uses the graphite palette and the green accent of the app.
+- The browser extension's icons are the app icon instead of the old blue mark.
 
 ## 0.1.1, 2026-10-18
 

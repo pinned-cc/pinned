@@ -108,6 +108,8 @@ body.sg{background:var(--ground);color:var(--ink);font:400 var(--t-body)/var(--l
       <p class="sg-p">Each folder colour is a pair: the hue (left) tints icons, dots and fills; the pale (right) is text set on a tinted fill. Top level folders take cyan, coral, lilac, lime, mint and rose in the order they were created, and their subfolders take the parent's. The Inbox is tray, Trash is bin, places such as All bookmarks are ink, and plain is the fallback. A class such as <code>hue-cyan</code> sets <code>--h</code> and <code>--hp</code> for everything inside it, so markup never carries a style attribute for colour.</p>
       <div class="sg-tokens" data-tokens="--cyan --coral --lilac --lime --mint --rose --tray --bin --ink-h --plain" data-pair="1"></div>
       <h3>Interaction</h3><div class="sg-tokens" data-tokens="--hover --press --picked-edge --picked-fill --tile-blank"></div>
+      <h3>Ground and glass</h3><div class="sg-tokens" data-tokens="--ground-base --ground-light --card-tint --fold-tint --strip-tint --card-rim --card-rim-hover --glass-side --glass-menu --glass-panel --glass-sheet --glass-sheet-phone --glass-rows --blur-side --blur-menu --blur-panel"></div>
+      <h3>Save panel</h3><div class="sg-tokens" data-tokens="--save-ground --save-sheet --save-light --save-field"></div>
     </section>
 
     <section class="sg-sec" id="type"><h2>Type</h2>
@@ -120,7 +122,7 @@ body.sg{background:var(--ground);color:var(--ink);font:400 var(--t-body)/var(--l
       <ul class="sg-rules">
         <li><b>11.5, 12.5 and 13.5 px</b> sit between steps. 11.5 carries every address line and the small chips; 12.5 the tab count and the tooltip; 13.5 the sidebar rows, toasts and list titles. Each could move to its neighbour, but that shifts pixels, so they stay until it is decided by eye.</li>
         <li><b>Addresses at 12 px</b>: the palette and the Add to sheet set theirs one step up from the 11.5 px address line. One size would do.</li>
-        <li><b>One off line heights</b> left as numbers: 15 and 22 px, 1.25 (the heading of the Share, API tokens and Add to sheets) and 1.5 (the Save button page).</li>
+        <li><b>One off line heights</b> left as numbers: 15 and 22 px, 1.25 (the heading of the Share, API tokens and Add to sheets) and 1.5 (the How to save page).</li>
         <li><b>Favicon letters</b> scale with their tile, about 0.4 of its side (9 px on a 20 px tile up to 22 px on a 56 px tile). They are set beside the tile size, not from the type scale.</li>
       </ul>
     </section>
@@ -138,9 +140,9 @@ body.sg{background:var(--ground);color:var(--ink);font:400 var(--t-body)/var(--l
 
     <section class="sg-sec" id="elevation"><h2>Elevation and lines</h2>
       <p>Most surfaces are separated by a 1 px line, not a shadow. Shadows mark things that float: a card lifted under the pointer, the floating search on the phone, menus, sheets and the palette. The top edge highlight is the light catching a sheet's rim.</p>
-      <div class="sg-tokens" data-tokens="--edge-top --shadow-hover --shadow-lift --shadow-float --shadow-glass" data-elev="1"></div>
+      <div class="sg-tokens" data-tokens="--edge-top --card-shadow --shadow-hover --shadow-lift --shadow-float --shadow-glass --save-edge" data-elev="1"></div>
       <h3>Glass</h3>
-      <p class="sg-p">Where the browser supports backdrop blur, the palette, the floating plus on the phone and the search on the share page show 70 percent of their fill over a blur; on the phone the palette stays solid while it moves in and takes the blur once it has landed. Grid cards and folder tiles show 72 percent over a light blur. Sheets are near solid: 94 percent of #18181b over a heavy blur, 96 percent when the sheet holds rows of actions, and menus take 96 percent too, so no title reads through. The phone selection bar is solid. The palette's scrim blurs the page at every width, a dialog's scrim on the desktop only. Without blur support every one of these is a solid fill.</p>
+      <p class="sg-p">One calm ground sits behind the app, the share page and the other pages: three soft lights over <code>--ground-base</code>, a fixed layer that never scrolls. Grid cards and folder tiles carry no light of their own: a clear tint, a soft rim and a small shadow, no blur, so the ground's colour shows through each card where it sits. Anything that moves, is lifted, pressed, held or dragged is solid, and every card is solid while a drag runs. Where the browser supports backdrop blur, the panels over the ground blur it: the sidebar 42 percent over 24 px, the palette 72 percent over 32 px, sheets and menus 86 percent (sheets 94 on the phone), sheets of action rows 90. The floating plus on the phone and the search on the share page show 70 percent; on the phone the palette stays solid while it moves in and takes the blur once it has landed. The phone selection bar is solid. Without blur support every panel is a solid fill.</p>
     </section>
 
     <section class="sg-sec" id="motion"><h2>Motion</h2>
@@ -198,7 +200,7 @@ body.sg{background:var(--ground);color:var(--ink);font:400 var(--t-body)/var(--l
       <ul class="sg-rules">
         <li><b>Rows</b> are 40 px, 44 px on a touch screen. From 720 to 999 px the sidebar folds to a rail of icons; the names stay for screen readers and show in a tooltip.</li>
         <li><b>Folders</b> show their subfolders only along the path to the open folder.</li>
-        <li><b>More</b> folds Import, Export, API tokens, Save button, Log out and Source behind one row.</li>
+        <li><b>More</b> folds Import, Export, API tokens, How to save, Log out and Source behind one row.</li>
       </ul>
     </section>
 
@@ -344,7 +346,7 @@ const usedBy = tok => RULES.filter(r => r.sel !== ':root' && new RegExp('var\\('
 
 /* roles, written by hand; the values and the lists of rules come from the stylesheet */
 const NOTE = {
-  '--ground': 'The page itself: html and body, the fade under the phone bar.', '--screen': 'The app area on the desktop, the phone app, the share page.',
+  '--ground': 'The save page.', '--screen': 'The ring around the badge on an empty state pile.',
   '--recess': 'The back card of the All sorted pile.', '--fold': 'Folder tiles and picker tiles, one step below a card.',
   '--surface': 'Cards, fields at rest, the search, the layout switch.', '--sheet': 'Sheets, and the palette on the phone.',
   '--surface-up': 'Raised things: menus, the desktop palette, toasts, the tooltip, the chosen tab, a focused search.',
@@ -361,9 +363,15 @@ const NOTE = {
   '--t-label': 'Section and field labels, key caps, hints.', '--t-tag': 'The tab count and the tooltip.', '--t-meta': 'Desktop buttons, menus, notices, secondary lines.',
   '--t-ui': 'Sidebar rows, toasts, list titles, picker tiles.', '--t-body': 'Body text and card titles.', '--t-control': 'Phone actions, text buttons, phone list titles.',
   '--t-input': 'Fields and the search (never smaller on iOS), sheet rows, sheet titles.', '--t-heading': 'The phone title bar, the palette field, sheet headings.',
-  '--t-heading-l': 'Empty state headings.', '--t-title': 'The desktop view title.', '--t-page': 'Login and Save button page headings.', '--t-page-l': 'The share page title.',
+  '--t-heading-l': 'Empty state headings.', '--t-title': 'The desktop view title.', '--t-page': 'Login and How to save page headings.', '--t-page-l': 'The share page title.',
   '--t-display': 'The phone start screen head.',
   '--gut': 'The phone gutter, left and right.', '--pb': 'The height of the phone bottom bar, measured and kept up to date by render.js.',
+  '--ground-base': 'Under the ground lights: html, and the fade under the phone bar.', '--ground-light': 'The three soft lights of the ground, on the fixed layer behind every page (body::before).',
+  '--card-tint': 'Grid cards and Dashboard cards on the ground.', '--fold-tint': 'Folder tiles on the ground.', '--strip-tint': 'The strip at the foot of a card.',
+  '--card-rim': 'The border of a card or folder tile on the ground.', '--card-rim-hover': 'That border under the pointer.', '--card-shadow': 'The small shadow under a card or folder tile.',
+  '--glass-side': 'The sidebar over the ground.', '--glass-menu': 'Menus, and the actions on a palette result.', '--glass-panel': 'The palette.', '--glass-sheet': 'Sheets.', '--glass-sheet-phone': 'Sheets on the phone, near solid over the cards they act on.', '--glass-rows': 'Sheets of action rows.',
+  '--blur-side': 'The sidebar\'s backdrop filter.', '--blur-menu': 'The menus\' backdrop filter.', '--blur-panel': 'The palette\'s and the sheets\' backdrop filter.',
+  '--save-ground': 'The save window\'s light, over --ground.', '--save-sheet': 'The save panel\'s gradient.', '--save-light': 'The mint corner light inside the save panel.', '--save-field': 'Fields in the save panel.', '--save-edge': 'The lit edge of the save panel.',
   '--edge-top': 'The light rim along a sheet\'s top edge.', '--shadow-hover': 'A desktop card under the pointer.', '--shadow-lift': 'A card held or carried.',
   '--shadow-float': 'The floating search and plus on the phone.', '--shadow-glass': 'Menus, sheets, the palette and the phone bars on glass.',
   '--focus-glow': 'The search fields.', '--focus-field': 'Text fields and the inline rename field.',
@@ -383,7 +391,7 @@ for (const box of document.querySelectorAll('[data-tokens],[data-prefix]')) {
     if (n.startsWith('--icon')) return row(n, `<svg class="i" style="width:var(${n});height:var(${n})"><use href="#i-folder"/></svg>`);
     if (/^--(h-|tap)/.test(n)) return row(n, `<div style="height:var(${n});width:var(--s-32);border-radius:var(--r-s);background:var(--surface-up);border:1px solid var(--line-2)"></div>`);
     if (/^--(focus)/.test(n)) return row(n, `<div style="height:var(--s-16);width:var(--s-32);border-radius:var(--r-s);background:var(--surface);box-shadow:var(${n})"></div>`);
-    if (/^--(gut|pb)$/.test(n)) return row(n, '');
+    if (/^--(gut|pb)$/.test(n) || n.startsWith('--blur-')) return row(n, '');
     const pair = !!box.dataset.pair;
     return row(n, swatch(n, pair), pair ? `, ${n === '--ink-h' ? '--ink-hp' : n + '-p'} ${esc(val(n === '--ink-h' ? '--ink-hp' : n + '-p'))}` : '');
   }).join('');
@@ -565,6 +573,11 @@ $('sg-menu').innerHTML = `<div class="sg-grid sg-spec">
 /* toasts */
 $('sg-toast').innerHTML = `<div class="sg-spec">${item(frame(`<div class="toasts"><div class="toast"><span class="tx">Moved to Trash</span><button type="button">Undo</button></div><div class="toast solo"><span class="tx">Order saved</span></div></div>`, 150), '.toast with Undo, .toast.solo.' + SRC('web/js/toast.js'))}</div>`;
 
+/* empty and loading; the share page's no matches is written here as share.js draws it */
+const NOMATCH = phone => { const card = n => `<span class="pc pc${n}"><span class="pc-f"></span><span class="pc-l"></span><span class="pc-l s"></span></span>`;
+  return `<div class="calm nm${phone ? ' p' : ''}"><div class="calm-in"><div class="pile miss" aria-hidden="true">${card(3)}${card(2)}${card(1)}<span class="pc-ok">${K.ic('search')}</span></div>
+    <p class="calm-h">Nothing matches \u201c<span class="nm-q">router</span>\u201d</p><p class="calm-t">Searched 6 bookmarks in Personal.</p>
+    <span class="calm-a"><button type="button" class="em-a">${K.ic('close')}Clear search</button><button type="button" class="em-a">${K.ic('all')}Show 2 in all of Home</button></span></div></div>`; };
 /* empty and loading */
 $('sg-empty').innerHTML = `<div class="sg-grid sg-spec">
   ${item(`<div class="sg-frame" style="display:flex;flex-direction:column;height:400px">${K.sortedHTML(false)}</div>`, '.calm with .pile: All sorted', 'Inbox empty')}
@@ -573,8 +586,8 @@ $('sg-empty').innerHTML = `<div class="sg-grid sg-spec">
   ${item(`<div class="sg-ph"><div class="pgrid">${K.addTileHTML('pt-add')}</div></div>`, '.pt-add, phone', 'Add tile, phone')}
   ${item(as({ view: 1 }, () => K.emptyMerge('empty merge')), '.empty.merge: an empty folder', 'Empty folder')}
   ${item(`<div class="empty">Nothing here yet.</div>`, '.empty: Trash with nothing in it.' + SRC('web/js/render.js (deskBody)'), 'Empty Trash')}
-  ${item(`<p class="nores">No matches.</p>`, '.nores: a search on a shared folder finds nothing, drawn as .empty.' + SRC('web/share.js (body)'), 'No matches, share page')}
-  ${item(`<div class="sg-ph"><p class="pnores">No matches.</p></div>`, '.pnores, phone, drawn as .pempty', 'No matches, share page, phone')}
+  ${item(`<div class="sg-frame" style="display:flex;flex-direction:column;height:440px">${NOMATCH(false)}</div>`, '.calm.nm with .pile.miss: a search on a shared folder finds nothing; inside a subfolder chip it names the folder and offers the matches in all of it.' + SRC('web/share.js (noMatch)'), 'No matches, share page')}
+  ${item(`<div class="sg-ph" style="display:flex;flex-direction:column">${NOMATCH(true)}</div>`, '.calm.nm.p, phone', 'No matches, share page, phone')}
   ${item(K.noticeHTML(false), '.notice: the bookmarks could not load', 'Load failed')}
   ${item(K.noticeHTML(true), '.pnotice, phone', 'Load failed, phone')}</div>`;
 

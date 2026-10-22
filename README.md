@@ -99,7 +99,7 @@ The image runs `pinned -healthcheck` as its Docker health check every 30 seconds
 
 ## Ways to save
 
-Open Save button in the app's menu (the page is at `/bookmarklet`). It has every option below with the steps for each device.
+Open How to save in the app's menu (the page is at `/bookmarklet`). It has every option below with the steps for each device.
 
 **Bookmarklet.** A Save button for the bookmarks bar on a Mac (Brave, Chrome, Safari), or a Safari bookmark on the iPhone.
 It opens a small save page with the title and address filled in and your recent folders.
@@ -110,7 +110,7 @@ It opens without browser bars, like an app.
 **Android share target.** Once the app is on the Android home screen, it shows up in the share sheet as Pinned.
 Share a page to it and the save page opens.
 
-**Browser extension.** Download it from the Save button page and load it unpacked in Brave, Chrome or Edge, or as a temporary add-on in Firefox.
+**Browser extension.** Download it from the How to save page and load it unpacked in Brave, Chrome or Edge, or as a temporary add-on in Firefox.
 It has a save popup with your recent folders and a right click menu. See `extras/extension/README.md`.
 
 **The API with a token.** Scripts, Raycast, Home Assistant and n8n can save with an API token.

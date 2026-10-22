@@ -33,9 +33,22 @@ const phoneTile = b => `<article class="pt"><a class="pt-in" href="${esc(b.url)}
 const chips = () => { const t = tops(); if (!t.length) return '';
   const mini = (id, name, h) => `<button type="button" class="fmini hue-${h}${VIEW === id ? ' fill' : ''}" data-sv="${id}" aria-pressed="${VIEW === id}"><span class="v"><span class="nm">${ic(id === 'all' ? 'all' : 'folder', 'fi')}<span class="nt">${esc(name)}</span></span></span></button>`;
   return `<div class="prow-x frow share-chips" role="group" aria-label="Folders">${mini('all', 'All', 'ink-h')}${t.map(f => mini(f.id, f.name, hueOf(f.id))).join('')}</div>`; };
+/* no matches, in the app's calm empty state: the cards squared up with a lens on the top one. Clear search is the way
+   back; inside a subfolder chip the message names that folder, and a second button shows the matches in all of it */
+function noMatch(phone) {
+  const q = query.trim(), scope = VIEW === 'all' ? shared.folder.name : nameOf(VIEW);
+  const inScope = VIEW === 'all' ? shared.bookmarks.length : shared.bookmarks.filter(b => under(VIEW).has(b.folder_id)).length;
+  const ql = q.toLowerCase(), all = VIEW === 'all' ? 0 : shared.bookmarks.filter(b => (b.title + ' ' + b.url + ' ' + (b.host || '')).toLowerCase().includes(ql)).length;
+  const card = n => `<span class="pc pc${n}"><span class="pc-f"></span><span class="pc-l"></span><span class="pc-l s"></span></span>`;
+  return `<div class="calm nm${phone ? ' p' : ''}"><div class="calm-in">
+    <div class="pile miss" aria-hidden="true">${card(3)}${card(2)}${card(1)}<span class="pc-ok">${ic('search')}</span></div>
+    <p class="calm-h">Nothing matches \u201c<span class="nm-q">${esc(q)}</span>\u201d</p>
+    <p class="calm-t">Searched ${inScope} ${inScope === 1 ? 'bookmark' : 'bookmarks'} in ${esc(scope)}.</p>
+    <span class="calm-a"><button type="button" class="em-a" data-clear>${ic('close')}Clear search</button>${all ? `<button type="button" class="em-a" data-sv="all">${ic('all')}Show ${all} in all of ${esc(shared.folder.name)}</button>` : ''}</span></div></div>`;
+}
 function body() {
   const L = list(), phone = PHONE_MQ.matches;
-  if (!L.length) return query.trim() ? `<p class="${phone ? 'pnores' : 'nores'}">No matches.</p>` : `<div class="${phone ? 'pempty' : 'empty'}">Nothing here yet.</div>`;
+  if (!L.length) return query.trim() ? noMatch(phone) : `<div class="${phone ? 'pempty' : 'empty'}">Nothing here yet.</div>`;
   return phone ? `<div class="pgrid">${L.map(phoneTile).join('')}</div>` : `<div class="grid">${L.map(deskTile).join('')}</div>`;
 }
 function render() {
@@ -64,6 +77,7 @@ async function load() {
   shared = await r.json(); shared.folders = shared.folders || []; shared.bookmarks = shared.bookmarks || []; render();
 }
 document.addEventListener('input', e => { if (e.target.id === 'sq') { query = e.target.value; byId('sbody').innerHTML = body(); } });
+document.addEventListener('click', e => { if (e.target.closest('[data-clear]')) { query = ''; const i = byId('sq'); if (i) { i.value = ''; i.focus({ preventScroll: true }); } byId('sbody').innerHTML = body(); return; } });
 document.addEventListener('click', e => { const c = e.target.closest('[data-sv]'); if (!c) return; const v = c.dataset.sv; VIEW = v === 'all' ? 'all' : +v; render(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.id === 'sq') { query = ''; e.target.value = ''; byId('sbody').innerHTML = body(); }
   if (e.key === '/' && e.target.tagName !== 'INPUT' && byId('sq')) { e.preventDefault(); byId('sq').focus(); } });

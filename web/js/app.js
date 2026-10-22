@@ -11,7 +11,7 @@ import { installPalette, openPalette } from './palette.js';
 import { installPhone } from './phone.js';
 import { addTileHTML, backLink, deskBulk, deskDock, deskTile, deskToolbar, deskTree, emptyMerge, favHTML, fmini, ftileHTML, INBOX_F, installRender, nfMini, nfPlus, foldersScreen, noticeHTML, phoneBulk, phoneRecents, phoneTile, phoneTop, phoneTabs, phoneVbar, pskel, render, searchField, settingsScreen, shareBtn, sideItem, skel } from './render.js';
 import { installSelect } from './select.js';
-import { bmHead, checkUrl, doneHTML, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, rowsHTML, saveActs, saveHTML, shareHTML, textHead, tokensHTML } from './sheets.js';
+import { bmHead, checkUrl, doneHTML, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, openTokens, rowsHTML, saveActs, saveHTML, shareHTML, textHead, tokensHTML } from './sheets.js';
 import { data, layers, load, setData, ui } from './state.js';
 import { toast } from './toast.js';
 import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE } from './util.js';
@@ -39,7 +39,9 @@ function boot() {
 function bootApp() {
   /* /search?q= arrives as #q=: the search opens with the query at any width; results fill in once the bookmarks load */
   const m = /^#q=(.*)$/.exec(location.hash); let q = null; if (m) { try { q = decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { q = m[1]; } history.replaceState(null, '', location.pathname); }
-  render(); if (q && q.trim()) openPalette({ q }); load();
+  /* /#tokens (the token link on the How to save page) opens the API tokens sheet once */
+  const tokens = location.hash === '#tokens'; if (tokens) history.replaceState(null, '', location.pathname);
+  render(); if (q && q.trim()) openPalette({ q }); else if (tokens) openTokens(); load();
   /* the version, under Source in the app menu */
   fetch('/health', { credentials: 'same-origin' }).then(r => r.json()).then(h => { if (h && h.version) { ui.version = h.version; render(); } }).catch(() => {});
   let last = 0; const refresh = () => { if (Date.now() - last < 1500 || document.hidden) return; last = Date.now(); load(); };
@@ -57,6 +59,19 @@ async function bootSave() {
   layer().classList.add('page-sheet');
   openSheet({ type: 'save' }, false);
   if (url) checkUrl(true);
+  /* the parts rise in on the first open only, so a redraw never replays it */
+  setTimeout(() => document.body.classList.remove('intro'), 1100);
+  fitSaveWindow();
+}
+/* the popup fits the panel: a window the page opened grows or shrinks to the panel's full height, now and whenever the
+   panel changes (the folder list opening, the Already saved line, Saved) */
+function fitSaveWindow() {
+  let last = 0;
+  const need = () => { const s = byId('sheet'), b = s && s.querySelector('.sh-body'); return s && b ? Math.ceil(s.offsetHeight - b.clientHeight + b.scrollHeight) : 0; };
+  const fit = () => { if (innerWidth > 720 || !window.opener) return; const h = need(); if (!h || Math.abs(h - last) < 2) return; last = h;
+    try { window.resizeBy(0, h - innerHeight); } catch (e) { /* not ours to resize */ } };
+  new MutationObserver(() => requestAnimationFrame(fit)).observe(byId('layer'), { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
+  requestAnimationFrame(fit); addEventListener('load', () => requestAnimationFrame(fit));
 }
 function bootLogin() {
   const f = byId('login'), err = byId('login-err'), p = new URLSearchParams(location.search);
@@ -68,7 +83,7 @@ function bootLogin() {
 }
 function bootBookmarklet() {
   const base = (document.body.dataset.base || '').replace(/\/+$/, ''), origin = base && !base.includes('{{') ? base : location.origin;
-  const code = `javascript:(function(){var u=${JSON.stringify(origin + '/save?url=')}+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title);var w=window.open(u,'bookmarks-save','width=392,height=760,menubar=no,toolbar=no,location=no');if(!w)location.href=u;})();`;
+  const code = `javascript:(function(){var u=${JSON.stringify(origin + '/save?url=')}+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title);var w=window.open(u,'bookmarks-save','width=392,height=544,menubar=no,toolbar=no,location=no');if(!w)location.href=u;})();`;
   document.querySelectorAll('[data-bm]').forEach(a => { a.href = code; a.addEventListener('click', e => { e.preventDefault(); toast('Drag this button to the bookmarks bar.'); }); });
   document.querySelectorAll('[data-bm-code]').forEach(c => { c.textContent = code; });
   document.querySelectorAll('[data-bm-copy]').forEach(b => b.addEventListener('click', async () => { if (await copy(code)) toast('Copied'); }));

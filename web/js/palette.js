@@ -1,7 +1,8 @@
 /* The search palette: Cmd K on desktop, the search pill on the phone. Recent opens, then matches grouped by
-   folder. */
-import { actions, goView, newFolder } from './actions.js';
+   folder. Cmd K on a highlighted bookmark opens its actions. */
+import { actions, goView, newFolder, startRename } from './actions.js';
 import { closeMenu } from './menu.js';
+import { openSheet, renameSheet } from './sheets.js';
 import { favHTML, hl, hostLine, syncSearch } from './render.js';
 import { count, data, fid, hostOf, iconSrc, lastOpened, layers, live, pathOf, ui, viewName } from './state.js';
 import { announce, resultsText } from './toast.js';
@@ -24,6 +25,7 @@ export function palGroups(q) {
    /search link); o.swap reopens it, already open, after the layout changed under it */
 export function openPalette(o = {}) {
   if (layers.palette) { byId('pq').focus(); return; }
+  { const old = byId('pal'); if (old) old.remove(); } /* one still fading out goes at once, so the ids stay unique */
   closeMenu(); ui.q = o.q || ''; layers.palette = { idx: o.idx || 0, items: [], back: o.swap ? null : document.activeElement, at: performance.now() };
   const el = document.createElement('div'); el.className = o.swap ? 'pal open' : 'pal'; el.id = 'pal';
   el.innerHTML = `<div class="pal-scrim" data-pal="close"></div><div class="pal-panel" role="dialog" aria-modal="true" aria-label="Search bookmarks">
@@ -53,6 +55,7 @@ export function palRecentFill() {
 }
 /* results only: the panel and the Recent row stay as they are */
 export function palFill() {
+  if (layers.palette.acts) palActsClose();
   const q = ui.q.trim();
   layers.palette.items = []; layers.palette.had = data.has; let h = '', found = 0;
   if (q && data.has) {
@@ -100,7 +103,58 @@ export function palViewport(now) {
     p.style.setProperty('--vvh', h + 'px'); p.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px'); p.style.setProperty('--kb', kb + 'px'); });
   clearTimeout(vvT); if (now === true) apply(); else vvT = setTimeout(apply, 80);
 }
+/* ---------- actions on a result, Raycast style ----------
+   Cmd K again, or the Right arrow with the caret at the end of the field, opens what the app's menus do to the highlighted
+   bookmark, in the menu's look. The field keeps focus and points at the action (aria-activedescendant), as it does at the
+   results. Views and the New folder action have no actions of their own, so Cmd K on them only selects the field */
+export const palActItems = b => [
+  { icon: 'open', label: 'Open', run: () => actions.open(b) },
+  { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => actions.pin(b) },
+  { icon: 'move', label: 'Move to folder', run: () => openSheet({ type: 'move', ids: [b.id] }) },
+  /* in place when the card is on screen on the desktop, otherwise the rename sheet the phone uses */
+  { icon: 'edit', label: 'Rename', run: () => (ui.mode !== 'phone' && document.querySelector(`#app article[data-id="${b.id}"]`) ? startRename(b.id) : renameSheet(b)) },
+  { icon: 'link', label: 'Copy link', run: () => actions.copy(b) },
+  '-', { icon: 'trash', label: 'Move to Trash', warn: true, run: () => actions.trash([b.id]) }];
+export function palActsOpen() {
+  const P = layers.palette, b = P && P.items[P.idx], row = P && byId('pal-' + P.idx); if (!b || b.view || b.act || !row) return false;
+  const items = palActItems(b), m = document.createElement('div');
+  P.acts = { b, items, idx: 0 };
+  m.className = 'menu pal-acts'; m.id = 'pal-acts'; m.setAttribute('role', 'listbox'); m.setAttribute('aria-label', 'Actions for ' + b.title);
+  m.innerHTML = items.map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="option" id="pal-a-${i}" aria-selected="${i === 0}" tabindex="-1" data-pa="${i}"${it.warn ? ' class="warn"' : ''}>${ic(it.icon)}${esc(it.label)}</button>`).join('');
+  byId('pal').appendChild(m);
+  /* at the row's right edge, below it, or above it when there is no room */
+  const r = row.getBoundingClientRect(), W = m.offsetWidth, H = m.offsetHeight; let x = r.right - W - 6, y = r.bottom + 4; if (y + H > innerHeight - 8) y = r.top - H - 4;
+  m.style.left = Math.max(8, Math.min(x, innerWidth - W - 8)) + 'px'; m.style.top = Math.max(8, Math.min(y, innerHeight - H - 8)) + 'px';
+  const f = byId('pq'); f.setAttribute('aria-controls', 'pal-list pal-acts'); f.setAttribute('aria-activedescendant', 'pal-a-0');
+  announce('Actions for ' + b.title, 0);
+  return true;
+}
+export function palActsClose() {
+  const P = layers.palette; if (!P || !P.acts) return; P.acts = null; const m = byId('pal-acts'); if (m) m.remove();
+  const f = byId('pq'); if (f) { f.setAttribute('aria-controls', 'pal-list'); f.setAttribute('aria-activedescendant', P.items.length ? 'pal-' + P.idx : ''); }
+}
+export function palActSet(i) { const A = layers.palette.acts; if (!A || A.items[i] === '-' || !A.items[i]) return; A.idx = i;
+  document.querySelectorAll('#pal-acts [data-pa]').forEach(b => b.setAttribute('aria-selected', +b.dataset.pa === i)); byId('pq').setAttribute('aria-activedescendant', 'pal-a-' + i); }
+/* the action runs as its menu item does, once the palette is down */
+export function palActRun(i) { const A = layers.palette && layers.palette.acts, it = A && A.items[i]; if (!it || it === '-') return; closePalette(); it.run(); }
+function palActsKey(e, mod) {
+  const A = layers.palette.acts, n = A.items.length, step = d => { let i = A.idx; do i = (i + d + n) % n; while (A.items[i] === '-'); palActSet(i); };
+  if (e.key === 'Escape' || e.key === 'ArrowLeft' || (mod && e.key.toLowerCase() === 'k')) { e.preventDefault(); palActsClose(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); step(1); return; }
+  if (e.key === 'ArrowUp') { e.preventDefault(); step(-1); return; }
+  if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); A.idx = e.key === 'Home' ? n - 1 : 0; step(e.key === 'Home' ? 1 : -1); return; }
+  if (e.key === 'Enter') { e.preventDefault(); palActRun(A.idx); return; }
+  if (e.key === 'Tab') { e.preventDefault(); return; }
+  /* type-ahead, as in the menus: the next action starting with that letter */
+  if (e.key.length === 1 && e.key !== ' ' && !mod && !e.altKey) { e.preventDefault(); const k = e.key.toLowerCase();
+    const order = [...A.items.keys()].map(j => (A.idx + 1 + j) % n), hit = order.find(j => A.items[j] !== '-' && A.items[j].label.toLowerCase().startsWith(k)); if (hit != null) palActSet(hit); }
+}
 export function palKey(e, mod) {
+  if (layers.palette.acts) { palActsKey(e, mod); return; }
+  const f = byId('pq'), atEnd = f && f.selectionStart === f.value.length && f.selectionEnd === f.value.length;
+  if ((mod && e.key.toLowerCase() === 'k') || (e.key === 'ArrowRight' && atEnd && !mod && !e.shiftKey && !e.altKey)) {
+    if (palT) { clearTimeout(palT); palT = null; palFill(); }
+    if (palActsOpen()) { e.preventDefault(); return; } }
   if (e.key === 'Escape') { e.preventDefault(); clearTimeout(palT); if (ui.q) { ui.q = ''; byId('pq').value = ''; layers.palette.idx = 0; palFill(); syncSearch(); } else closePalette(); return; }
   if (e.key === 'ArrowDown') { e.preventDefault(); palSet(layers.palette.idx + 1); return; }
   if (e.key === 'ArrowUp') { e.preventDefault(); palSet(layers.palette.idx - 1); return; }
@@ -117,8 +171,12 @@ let palSwipe = null;
 export function installPalette() {
   if (window.visualViewport) { visualViewport.addEventListener('resize', () => { if (layers.palette) palViewport(); }); visualViewport.addEventListener('scroll', () => { if (layers.palette) palViewport(); }); }
   document.addEventListener('input', e => { if (layers.palette && e.target.id === 'pq') { ui.q = e.target.value; syncSearch(); layers.palette.idx = 0; clearTimeout(palT); palT = setTimeout(() => { if (layers.palette) palFill(); }, 60); } });
-  document.addEventListener('pointermove', e => { if (!layers.palette || e.pointerType === 'touch') return; const r = e.target.closest && e.target.closest('#pal .pal-it'); if (r && +r.dataset.pi !== layers.palette.idx) palSet(+r.dataset.pi); });
+  document.addEventListener('pointermove', e => { if (!layers.palette || e.pointerType === 'touch') return;
+    if (layers.palette.acts) { const a = e.target.closest && e.target.closest('#pal-acts [data-pa]'); if (a && +a.dataset.pa !== layers.palette.acts.idx) palActSet(+a.dataset.pa); return; }
+    const r = e.target.closest && e.target.closest('#pal .pal-it'); if (r && +r.dataset.pi !== layers.palette.idx) palSet(+r.dataset.pi); });
   document.addEventListener('click', e => { if (!layers.palette) return; const t = e.target;
+    const pa = t.closest('#pal-acts [data-pa]'); if (pa) { palActRun(+pa.dataset.pa); return; }
+    if (layers.palette.acts) { palActsClose(); if (t.closest('#pal-acts') || !t.closest('a[href], [data-pal]')) { e.preventDefault(); e.stopPropagation(); return; } }
     if (t.closest('[data-pal="close"]')) { closePalette(); return; }
     const ac = t.closest('#pal [data-act]'); if (ac) { layers.palette.idx = +ac.dataset.pi; palGo(); return; }
     const r = t.closest('#pal .pal-it, #pal .pal-rc'); if (r && !(e.metaKey || e.ctrlKey)) setTimeout(closePalette, 0); }, true); /* the link opens itself; onClick marks it opened */
@@ -133,4 +191,6 @@ export function installPalette() {
   ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, e => { if (!palSwipe || e.pointerId !== palSwipe.pid) return; const far = palSwipe.dy > 80; palSwipe = null;
     const p = document.querySelector('#pal .pal-panel'); if (p) p.style.transform = ''; if (far) closePalette(); }));
   addEventListener('popstate', () => { if (layers.palette) closePalette(true); });
+  /* the actions list sits at its row: it goes when the results scroll */
+  document.addEventListener('scroll', e => { if (layers.palette && layers.palette.acts && e.target.classList && e.target.classList.contains('pal-scroll')) palActsClose(); }, true);
 }

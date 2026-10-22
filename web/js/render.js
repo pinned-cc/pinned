@@ -183,7 +183,7 @@ export function renderDesk() {
     <div class="side-foot${ui.footOpen ? ' open' : ''}">${sideItem('trash', 'trash', 'trash')}<button type="button" class="si foot-tog" data-a="foot" aria-expanded="${!!ui.footOpen}" aria-controls="footacts"><span class="si-ic">${ic('more')}</span><span class="si-n">More</span><span class="foot-chev" aria-hidden="true">${ic('chev')}</span></button>
       <div class="foot-acts" id="footacts"><div class="foot-in">${sideAction('Import', 'import', 'import')}
       <a class="si" href="/api/export" download><span class="si-ic">${ic('export')}</span><span class="si-n">Export</span></a>${sideAction('API tokens', 'key', 'tokens')}
-      <a class="si" href="/bookmarklet"><span class="si-ic">${ic('all')}</span><span class="si-n">Save button</span></a>${sideAction('Log out', 'logout', 'logout')}
+      <a class="si" href="/bookmarklet"><span class="si-ic">${ic('all')}</span><span class="si-n">How to save</span></a>${sideAction('Log out', 'logout', 'logout')}
       <a class="si" href="${SOURCE_URL}" target="_blank" rel="noopener"><span class="si-ic">${ic('open')}</span><span class="si-n">Source</span></a>${ui.version ? `<p class="app-ver">Pinned ${esc(ui.version)}</p>` : ''}</div></div></div>`;
   if (side._h !== sh) { side.innerHTML = sh; side._h = sh; side.querySelector('.side-tree').scrollTop = sideScroll; }
   syncSearch();
@@ -305,7 +305,7 @@ export function settingsScreen() {
   return `<div class="pset">
     <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}</div></div></div>
     <div class="pset-lbl">Save</div>
-    ${link('/bookmarklet', 'all', 'Save button', 'Bookmarklet and extension')}${row('tokens', 'key', 'API tokens', tokens)}
+    ${link('/bookmarklet', 'all', 'How to save', 'Bookmarklet and extension')}${row('tokens', 'key', 'API tokens', tokens)}
     <div class="pset-lbl">Data</div>
     ${row('import', 'import', 'Import', 'A bookmarks file from any browser')}${link('/api/export', 'export', 'Export', 'bookmarks.html, written nightly too')}
     <div class="pset-lbl">About</div>
