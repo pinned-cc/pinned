@@ -11,7 +11,8 @@
 
   /* one line and a button, for setup and for errors that stop the popup */
   function notice(title, text, button) {
-    pop.replaceChildren(h('div', { class: 'setup rise' },
+    pop.classList.add('in');
+    pop.replaceChildren(h('div', { class: 'setup' },
       h('div', { class: 'sv-top' }, h('h1', { text: title }), h('button', { type: 'button', class: 'ib', 'aria-label': 'Close', onclick: close }, icon('close'))),
       text ? h('p', { text: text }) : null,
       button ? h('div', { class: 'sv-acts' }, h('button', { type: 'button', class: 'save', onclick: button.run }, button.label)) : null));
@@ -67,6 +68,7 @@
   }
 
   function render() {
+    if (S.ticked) return;
     var focusTitle = document.activeElement && document.activeElement.id === 'title';
     var caret = focusTitle ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
     var rec = S.recent.filter(F.has);
@@ -96,13 +98,14 @@
         h('button', { type: 'submit', class: 'save', 'data-a': 'save-go', disabled: S.hid || S.busy }, primaryLabel())));
     form.addEventListener('submit', function (e) { e.preventDefault(); save(false); });
 
+    pop.classList.add('in');
     pop.replaceChildren(h('div', { class: 'sv-top' }, favEl(), h('button', { type: 'button', class: 'ib', 'aria-label': 'Close', onclick: close }, icon('close'))), form);
     if (focusTitle || !S.rendered) { title.focus(); if (caret) title.setSelectionRange(caret[0], caret[1]); else title.select(); }
     S.rendered = true;
   }
 
   async function save(inbox) {
-    if (S.busy || S.hid) return;
+    if (S.busy || S.hid || S.ticked) return;
     var folder = inbox ? null : S.folder;
     var body = { title: S.title.trim() || hostOf(S.url), url: S.url, folder_id: folder };
     if (S.dup) body.force = true;
@@ -115,9 +118,26 @@
       S.err = e.message + '.'; render(); return;
     }
     await Pinned.remember(folder);
-    pop.replaceChildren(h('div', { class: 'state rise', role: 'status' }, h('span', { class: 'tick' }, icon('check')),
-      h('div', { class: 'tt' }, h('h1', { text: 'Saved to ' + F.path(folder) }), h('p', { text: body.title }))));
-    setTimeout(close, 1000);
+    saved('Saved to ' + F.path(folder));
+  }
+  /* as in the app's save panel: the tick draws in the Save button and the form steps back; a hold to 520 ms, a 200 ms
+     fade, and the popup closes. Reduced motion: the same finished state at once, closed after 600 ms */
+  function saved(said) {
+    S.ticked = true;
+    var b = pop.querySelector('[data-a="save-go"]');
+    if (b) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'), path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      svg.setAttribute('class', 'i tick-draw'); svg.setAttribute('viewBox', '0 0 20 20'); svg.setAttribute('aria-hidden', 'true');
+      path.setAttribute('pathLength', '1'); path.setAttribute('d', 'm5.5 10.25 3 3 6-6.5'); svg.appendChild(path);
+      b.disabled = true; b.setAttribute('aria-label', 'Saved'); b.replaceChildren(svg);
+    }
+    pop.appendChild(h('p', { class: 'vh', role: 'status', text: said }));
+    pop.classList.add('saved');
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(function () {
+      if (still) { close(); return; }
+      pop.classList.add('leaving'); setTimeout(close, 200);
+    }, still ? 600 : 520);
   }
 
   async function boot() {
