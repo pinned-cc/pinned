@@ -2,7 +2,7 @@
 
 A self-hosted bookmark manager and start page for the services you run at home. Folders instead of tags, one user, one SQLite file. No tags, no page archiving, no accounts.
 
-![The app on a desktop: the Inbox with folders, a pinned row of services and one saved link](docs/screenshot.png)
+![The app on a desktop: the Dashboard with a pinned row of services and recently opened bookmarks](docs/screenshot.png)
 
 Folders that nest, search, a pinned row, an Inbox for quick saves, a Trash that keeps things for 30 days, import and export in the format every browser uses, a Save button for every browser, and search from the browser address bar (`/opensearch.xml`). One password, one binary, one data folder.
 

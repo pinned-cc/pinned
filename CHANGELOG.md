@@ -2,7 +2,7 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
-## Unreleased
+## 0.1.2, 2026-10-22
 
 ### New
 
