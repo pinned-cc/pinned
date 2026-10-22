@@ -2,6 +2,12 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## Unreleased
+
+### Changes
+
+- The save panel and the extension popup move less: a short soft fade in, a tick on Save, and the window closes about 0.7 seconds after the press. The pin no longer drops onto the favicon.
+
 ## 0.1.2, 2026-10-22
 
 ### New

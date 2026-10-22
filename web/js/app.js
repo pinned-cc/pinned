@@ -59,8 +59,6 @@ async function bootSave() {
   layer().classList.add('page-sheet');
   openSheet({ type: 'save' }, false);
   if (url) checkUrl(true);
-  /* the parts rise in on the first open only, so a redraw never replays it */
-  setTimeout(() => document.body.classList.remove('intro'), 1100);
   fitSaveWindow();
 }
 /* the popup fits the panel: a window the page opened grows or shrinks to the panel's full height, now and whenever the

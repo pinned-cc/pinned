@@ -21,10 +21,10 @@
   --danger:#ff9a9a;
   --ease-out:cubic-bezier(.23,1,.32,1);
   --ease-drawer:cubic-bezier(.32,.72,0,1);
-  /* the save panel: a calm glide in, the tick's stroke, and away gathering speed */
+  /* the save panel: a long ease out that lands softly, a calm glide for its light and form, the tick's stroke */
+  --ease-soft:cubic-bezier(.16,1,.3,1);
   --ease-glide:cubic-bezier(.22,1,.36,1);
   --ease-draw:cubic-bezier(.65,0,.35,1);
-  --ease-away:cubic-bezier(.5,0,.75,0);
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --cyan:#7fcfe8;  --cyan-p:#b4e6f5;
@@ -898,10 +898,6 @@ body.save-page{background:var(--save-ground),var(--ground);min-height:100vh;min-
 .save-page .sheet.saved::before{opacity:1}
 /* fields sit one step below the surface, as in every sheet */
 .save-page .sheet .fld-in{background:var(--save-field)}
-/* the pin: the icon's thumbtack, 22 px, on the favicon's top right corner */
-.save-page .sv-fav{position:relative;display:inline-block}
-.save-page .sh-body{padding-top:var(--s-4);margin-top:calc(var(--s-4) * -1)}
-.save-page .tack{position:absolute;top:-7px;right:-8px;width:22px;height:22px;overflow:visible;filter:none}
 /* the Save button once saved: the accent stays full, a drawn tick in place of the word */
 .save-page .saved .save[disabled]{opacity:1;cursor:default}
 .save-page .tick-draw{width:var(--icon-xl);height:var(--icon-xl);fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
@@ -923,52 +919,24 @@ body.save-page{background:var(--save-ground),var(--ground);min-height:100vh;min-
   .save-page .sh-foot{padding-top:var(--s-5)}
   .save-page .sv-acts{gap:var(--s-2)}
 }
-/* the save panel's motion: transform and opacity, one stroke and one shadow. Nothing loops, nothing runs when idle. With
-   reduced motion the finished states show at once (tick drawn, pin in place, form at half) and nothing sinks */
+/* the save panel's motion, made for the twentieth save of the day: a short soft fade in, a tick on Save, the window
+   closes. Transform and opacity and one stroke; nothing loops, nothing runs when idle. With reduced motion the finished
+   states show at once (tick drawn, form at half) and nothing moves */
 @media (prefers-reduced-motion:no-preference){
-  /* in: the sheet glides 28 px up and fades in over 600 ms; the window's light comes up behind it */
-  @media (max-width:720px){.save-page .layer .sheet{transform:translateY(28px);opacity:0}.save-page .layer.open .sheet{transform:none;opacity:1}}
-  @media (min-width:721px){.save-page .layer.page-sheet .sheet{transform:translate(-50%,calc(-50% + 20px));opacity:0}
+  /* in: the sheet fades and rises 6 px; it settles over 420 ms on the soft curve, the fade done by 240 ms */
+  @media (max-width:720px){.save-page .layer .sheet{transform:translateY(6px);opacity:0}.save-page .layer.open .sheet{transform:none;opacity:1}}
+  @media (min-width:721px){.save-page .layer.page-sheet .sheet{transform:translate(-50%,calc(-50% + 6px));opacity:0}
     .save-page .layer.page-sheet.open .sheet{transform:translate(-50%,-50%);opacity:1}}
-  .save-page .layer .sheet{transition:transform 600ms var(--ease-glide),opacity 320ms var(--ease-glide),visibility 0s linear 600ms}
-  .save-page .layer.open .sheet{transition:transform 600ms var(--ease-glide),opacity 320ms var(--ease-glide),visibility 0s}
-  .save-page .sheet::before{transition:opacity 600ms var(--ease-glide)}
-  .intro .sheet::before{animation:sv-light 900ms var(--ease-glide) 100ms both}
-  @keyframes sv-light{from{opacity:0}}
-  /* then its parts rise 10 px into place, 460 ms each, 50 ms apart, from 120 ms; on the first open only (.intro) */
-  .intro .layer.open .sv-top,.intro .layer.open form>.fld,.intro .layer.open .sv-folder,.intro .layer.open .sv-pick,.intro .layer.open .sh-foot{animation:sv-rise 460ms var(--ease-glide) var(--d,120ms) both}
-  .intro .layer.open form>.fld:nth-of-type(1){--d:170ms}
-  .intro .layer.open form>.fld:nth-of-type(2){--d:220ms}
-  .intro .layer.open .sv-folder{--d:270ms}
-  .intro .layer.open .sv-pick{--d:310ms}
-  .intro .layer.open .sh-foot{--d:350ms}
-  @keyframes sv-rise{from{opacity:0;transform:translateY(10px)}}
-  /* saved, from the press: the tick draws over 360 ms from 40 ms */
-  .save-page .saved .tick-draw path{animation:sv-draw 360ms var(--ease-draw) 40ms both}
+  .save-page .layer .sheet{transition:transform 420ms var(--ease-soft),opacity 240ms var(--ease-soft),visibility 0s linear 420ms}
+  .save-page .layer.open .sheet{transition:transform 420ms var(--ease-soft),opacity 240ms var(--ease-soft),visibility 0s}
+  /* saved, from the press: the tick draws over 200 ms, the corner light comes to full, the form steps back to half */
+  .save-page .saved .tick-draw path{animation:sv-draw 200ms var(--ease-draw) both}
   @keyframes sv-draw{from{stroke-dashoffset:1}}
-  /* a soft ring leaves the button over 600 ms */
-  .save-page .saved .save{animation:sv-ring 600ms var(--ease-glide) both}
-  @keyframes sv-ring{from{box-shadow:0 0 0 0 rgba(95,211,154,.5)}to{box-shadow:0 0 0 12px rgba(95,211,154,0)}}
-  /* the pin drops onto the favicon's corner from 80 ms: in from above and turned, lands at 62 percent 1.5 px low and
-     4 degrees past, then settles, 520 ms */
-  .save-page .saved .tack{animation:sv-tack 520ms var(--ease-glide) 80ms both;transform-origin:50% 60%}
-  @keyframes sv-tack{0%{opacity:0;transform:translate(8px,-18px) rotate(-28deg) scale(1.3)}
-    62%{opacity:1;transform:translate(0,1.5px) rotate(4deg) scale(.95)}100%{opacity:1;transform:none}}
-  .save-page .saved .tack-sh{animation:sv-tack-sh 520ms var(--ease-glide) 80ms both}
-  @keyframes sv-tack-sh{0%{opacity:0;transform:translate(4px,6px)}62%{opacity:1;transform:none}}
-  /* the favicon gives under the pin as it lands, 400 ms in: 94 percent and back over 260 ms */
-  .save-page .saved .sv-fav>.fav{animation:sv-give 260ms var(--ease-glide) 400ms both}
-  @keyframes sv-give{40%{transform:translateY(1px) scale(.94)}}
-  /* the form steps back to half over 320 ms from 120 ms */
-  .save-page .sheet form{transition:opacity 320ms var(--ease-glide) 120ms}
-  /* out at 1000 ms: the sheet sinks 18 px and fades over 340 ms, then the window closes */
-  .save-page .layer.open .sheet.leaving{transform:translateY(18px) scale(.985);opacity:0;transition:transform 340ms var(--ease-away),opacity 280ms var(--ease-away) 60ms}
-  @media (min-width:721px){.save-page .layer.page-sheet.open .sheet.leaving{transform:translate(-50%,calc(-50% + 14px)) scale(.985)}}
-  /* a window that cannot close (a normal tab): Saved rises in place */
-  .save-page .arrive .done-state>*{animation:sv-rise 460ms var(--ease-glide) both}
-  .save-page .arrive .done-state>:nth-child(2){animation-delay:50ms}
-  .save-page .arrive .done-state>:nth-child(3){animation-delay:100ms}
-  .save-page .arrive .done-state>:nth-child(4){animation-delay:150ms}
+  .save-page .sheet::before{transition:opacity 600ms var(--ease-glide)}
+  .save-page .sheet form{transition:opacity 160ms var(--ease-glide)}
+  /* out at 520 ms: the sheet fades over 200 ms and drops 4 px, then the window closes, about 0.7 s after the press */
+  .save-page .layer.open .sheet.leaving{transform:translateY(4px);opacity:0;transition:transform 200ms var(--ease-soft),opacity 200ms ease}
+  @media (min-width:721px){.save-page .layer.page-sheet.open .sheet.leaving{transform:translate(-50%,calc(-50% + 4px))}}
 }
 
 /* ================= public share page ================= */

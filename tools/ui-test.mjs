@@ -571,18 +571,22 @@ async function desktop(browser, engine) {
     await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
   });
 
-  await check('save page in a popup sized window: the panel is the window, Save draws the tick and drops the pin', async () => {
+  await check('save page in a popup sized window: the panel is the window, Save draws the tick, a short fade, then Saved in place', async () => {
     const c = await browser.newContext({ viewport: { width: 392, height: 544 }, locale: 'en-US' }); await c.addCookies(await ctx.cookies());
     const sp = await c.newPage(); const u = `https://ui-test.example/${stamp}/popup`;
     await sp.goto(`${BASE}/save?url=${encodeURIComponent(u)}&title=${encodeURIComponent('ui-test popup ' + stamp)}`);
     await visible(sp.locator('#layer.open #sheet [data-f=title]')); await sp.waitForTimeout(1300);
     const g = await sp.evaluate(() => { const s = document.getElementById('sheet'), r = s.getBoundingClientRect(), cs = getComputedStyle(s), gr = s.querySelector('.grab');
-      return { top: r.top, radius: cs.borderTopLeftRadius, grab: gr ? getComputedStyle(gr).display : 'none', intro: document.body.classList.contains('intro'), bg: cs.backgroundImage }; });
+      return { top: r.top, radius: cs.borderTopLeftRadius, grab: gr ? getComputedStyle(gr).display : 'none', bg: cs.backgroundImage }; });
     assert(g.top === 0 && g.radius === '0px' && g.grab === 'none', 'the panel is not the window: ' + JSON.stringify(g));
-    assert(!g.intro && /gradient/.test(g.bg), 'no gradient, or the intro never ended');
+    assert(/gradient/.test(g.bg), 'no gradient');
     await shot(sp, `${engine}-popup-save-panel`);
+    await sp.evaluate(() => { const s = document.getElementById('sheet'); window.__sv = {}; new MutationObserver(() => { for (const k of ['saved', 'leaving']) if (s.classList.contains(k) && !window.__sv[k]) window.__sv[k] = performance.now(); }).observe(s, { attributes: true, attributeFilter: ['class'] }); });
     await sp.click('#sheet [data-a="save-go"]');
-    await visible(sp.locator('#sheet.saved .tack')); await visible(sp.locator('#sheet [aria-label="Saved"] .tick-draw'));
+    await visible(sp.locator('#sheet.saved [aria-label="Saved"] .tick-draw'));
+    assert(await sp.evaluate(() => getComputedStyle(document.querySelector('#sheet .tick-draw path')).animationDuration) === '0.2s', 'the tick does not draw over 200 ms');
+    await until(sp, () => window.__sv.leaving, null, 'the sheet fading out');
+    const held = await sp.evaluate(() => window.__sv.leaving - window.__sv.saved); assert(held > 480 && held < 700, 'the hold before the fade is not about 520 ms: ' + Math.round(held)); assert(!(await sp.locator('#sheet .tack').count()), 'the pin is back on the favicon');
     await visible(sp.locator('#sheet .done-state'), 8000);
     const b = (await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.url === u && !x.deleted_at);
     assert(b, 'not saved'); await apiIn(page, 'DELETE', `/api/bookmarks/${b.id}?permanent=1`);
