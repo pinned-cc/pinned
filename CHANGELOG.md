@@ -2,6 +2,13 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.8, 2026-10-23
+
+### Changes
+
+- How to save is lighter: the steps sit on the page without boxes, the text is brighter, and only the device you pick is marked in the tabs.
+- The iPhone steps show the Safari screens you tap through: the Share sheet, Edit Bookmark and your Favorites.
+
 ## 0.1.7, 2026-10-23
 
 ### New

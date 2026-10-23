@@ -1422,3 +1422,73 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
   .vsw button{width:var(--tap);height:var(--tap);border-radius:var(--r-l)}
   .ftrash{height:52px}
 }
+/* How to save without boxes. Steps sit on the page; only the drawings keep a frame */
+.hs-steps{gap:var(--s-14)}
+.hs-step{padding:0 0 0 40px;border-radius:0;background:none;box-shadow:none}
+.hs-step::before{left:0;top:0;width:auto;height:auto;padding-top:3px;border-radius:0;background:none;color:var(--ink-weak);font:500 var(--t-control)/1.4 var(--sans);font-variant-numeric:tabular-nums}
+.pv{background:rgba(255,255,255,.025);box-shadow:inset 0 0 0 1px var(--line);border-radius:14px;padding:4px 12px}
+.pv-sheet,.pv-edit{gap:0}
+.pv-row,.pv-field{background:none;border-radius:0;padding:11px 0;box-shadow:inset 0 -1px 0 var(--line)}
+.pv-row:last-child,.pv-field:last-child{box-shadow:none}
+.pv .hot{background:none;box-shadow:none;color:var(--accent)}
+.pv-row.hot,.pv-field.hot{box-shadow:inset 0 -1px 0 var(--line)}
+.pv-row.hot:last-child,.pv-field.hot:last-child{box-shadow:none}
+.pv-favs,.pv-share,.pv-bar{padding:10px 12px}
+.pv-fav.hot i,.pv-app.hot i{box-shadow:0 0 0 1.5px var(--accent)}
+.pv-mark{background:none;padding:6px 4px}
+.hs-fix{margin-top:var(--s-16);border-radius:0;background:none;box-shadow:inset 0 1px 0 var(--line)}
+.hs-fix + .hs-fix{margin-top:0}
+.hs-fix:last-of-type{box-shadow:inset 0 1px 0 var(--line),inset 0 -1px 0 var(--line)}
+.hs-fix summary{padding:var(--s-7) 0}
+.hs-fix-ic{background:none;width:24px}
+.hs-fix-in{padding:0 0 var(--s-9) 40px}
+@media (max-width:719px){.hs-fix-in{padding-left:40px}}
+.hs-fix summary{gap:12px}
+.hs-fix-ic{width:28px;justify-content:start}
+/* modern tabs, one light pill that slides to the device you pick */
+.hs-tabs{--tab:0;position:relative;border:0;background:none;border-radius:var(--r-pill);padding:4px;gap:0}
+.hs-tabs::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 4);border-radius:var(--r-pill);background:var(--ink);transform:translateX(calc(var(--tab) * 100%));transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.hs-tabs button{position:relative;z-index:1;height:40px;border-radius:var(--r-pill);color:var(--ink);opacity:.72;transition:color .2s ease,opacity .2s ease}
+.hs-tabs button:hover{opacity:1}
+.hs-tabs button[aria-selected="true"]{background:none;box-shadow:none;color:var(--ground);opacity:1;font-weight:600}
+@media (prefers-reduced-motion:reduce){.hs-tabs::before{transition:none}}
+/* brighter copy on this page; grey stays only for small notes */
+.bm-page{--ink-weak:#c9c9ce}
+.bm-page .lead{color:#b4b4b9}
+.hs-fix-tt span,.hs-keys span{color:#a4a4a9;opacity:1}
+/* the iPhone steps drawn as Safari lays them out, in Pinned's colours */
+.ios{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:22px;background:#151517;box-shadow:inset 0 0 0 1px var(--line);font:400 13px/1.2 var(--sans);color:var(--ink)}
+.ios svg{width:16px;height:16px;flex:none}
+.ios-head{display:flex;align-items:center;gap:10px;padding:2px 2px 4px}
+.ios-site{width:32px;height:32px;border-radius:8px;background:#232327;display:grid;place-items:center;color:#a4a4a9}
+.ios-host{flex:1;font-weight:500}
+.ios-x{width:24px;height:24px;border-radius:50%;background:#26262a;display:grid;place-items:center;color:#a4a4a9}
+.ios-x svg{width:15px;height:15px}
+.ios-apps{display:flex;gap:12px;padding:2px 2px 6px;overflow:hidden}
+.ios-apps > span{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;color:#a4a4a9}
+.ios-apps i{width:46px;height:46px;border-radius:12px;background:#232327}
+.ios-group{display:flex;flex-direction:column;border-radius:12px;background:#1f1f22;overflow:hidden}
+.ios-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:0 12px;box-shadow:inset 0 -1px 0 rgba(255,255,255,.06)}
+.ios-row:last-child{box-shadow:none}
+.ios-row svg{color:#a4a4a9}
+.ios-lead{justify-content:flex-start}
+.ios-lead svg:last-child:not(:first-child){margin-left:auto}
+.ios .hot{color:var(--accent);background:rgba(95,211,154,.09)}
+.ios .hot svg{color:var(--accent)}
+.ios-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:2px 4px 6px}
+.ios-bar b{font-weight:600}
+.ios-btn{display:flex;align-items:center;color:var(--accent)}
+.ios-btn:last-child{justify-content:flex-end}
+.ios-bar .ios-btn:first-child svg{transform:scaleX(-1)}
+.ios-form{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.ios-fav{flex:none;width:44px;height:44px;border-radius:10px;background:#232327;display:grid;place-items:center}
+.ios-fav img{width:28px;height:28px}
+.ios-fields{flex:1;min-width:0;display:flex;flex-direction:column}
+.ios-field{padding:9px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 -1px 0 rgba(255,255,255,.06)}
+.ios-field:last-child{box-shadow:none}
+.ios-field.hot{background:none}
+.ios-field.mono{font-family:var(--mono);font-size:12px}
+.ios-caret{display:inline-block;width:1.5px;height:14px;margin-left:1px;vertical-align:-2px;background:var(--accent);animation:ios-blink 1s steps(1) infinite}
+@keyframes ios-blink{50%{opacity:0}}
+.ios-cap{padding:6px 12px 0;font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:#a4a4a9}
+@media (prefers-reduced-motion:reduce){.ios-caret{animation:none}}

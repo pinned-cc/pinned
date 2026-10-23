@@ -99,7 +99,7 @@ function bootBookmarklet() {
   }));
   /* the device tabs: the one you are on opens first */
   const tabs = [...document.querySelectorAll('.hs-tabs [role=tab]')];
-  const pick = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; byId(x.getAttribute('aria-controls')).hidden = !on; });
+  const pick = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; byId(x.getAttribute('aria-controls')).hidden = !on; }); t.parentNode.style.setProperty('--tab', tabs.indexOf(t)); };
   if (tabs.length) {
     const ua = navigator.userAgent, ios = /iPhone|iPod/.test(ua), android = /Android/.test(ua);
     pick(byId(ios ? 't-iphone' : android ? 't-android' : 't-mac'));
