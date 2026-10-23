@@ -879,6 +879,73 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .bm-btn .mark{width:22px;height:22px}
 .bm-btn:hover{background:var(--surface-up)}
 .code{display:flex;gap:var(--s-4);align-items:stretch;margin:var(--s-4) 0 0}
+/* How to save: one device at a time, short numbered steps, each with a small drawing of the screen and the spot to tap lit */
+.hs-tabs{margin:0 0 var(--s-12)}
+.hs-tabs button[aria-selected="true"]{background:var(--surface-up);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.bm-page .hs-steps{padding:0}
+.hs-steps{display:flex;list-style:none;margin:0;padding:0;counter-reset:hs;display:flex;flex-direction:column;gap:var(--s-6)}
+.hs-step{counter-increment:hs;position:relative;margin:0;padding:var(--s-8) var(--s-8) var(--s-8) 52px;border-radius:var(--r-xl);background:var(--card-tint);box-shadow:inset 0 0 0 1px var(--card-rim)}
+.hs-step::before{content:counter(hs);position:absolute;left:var(--s-8);top:var(--s-8);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--surface-up);color:var(--ink);font:600 var(--t-label)/1 var(--sans)}
+.bm-page .hs-step p{margin:0}
+.bm-page .hs-t{color:var(--ink);font-size:var(--t-control);line-height:1.4;padding-top:2px}
+.hs-t b{font-weight:600}
+.bm-page .hs-keys{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-2) var(--s-3);color:var(--ink-weak);font-size:var(--t-meta)}
+.hs-keys span{color:var(--ink-faint, var(--ink-weak));min-width:0;margin-right:var(--s-3);opacity:.75}
+.hs-keys kbd{font:500 var(--t-label)/1 var(--sans);padding:4px 7px;border-radius:6px;background:var(--surface-up);box-shadow:inset 0 -1px 0 rgba(0,0,0,.35);color:var(--ink)}
+.hs-copy{display:inline-flex;align-items:center;gap:var(--s-4);height:var(--tap);padding:0 var(--s-9);border-radius:var(--r-pill);background:var(--accent);color:var(--accent-ink);font:600 var(--t-body)/1 var(--sans);text-decoration:none;position:relative;overflow:hidden}
+.hs-copy .i{width:16px;height:16px}
+.hs-copy-a,.hs-copy-b{display:inline-flex;align-items:center;gap:var(--s-4);transition:transform .25s cubic-bezier(.2,.8,.2,1),opacity .2s ease}
+.hs-copy-b{position:absolute;inset:0;justify-content:center;transform:translateY(100%);opacity:0}
+.hs-copy.done .hs-copy-a{transform:translateY(-100%);opacity:0}
+.hs-copy.done .hs-copy-b{transform:none;opacity:1}
+.hs-copy:active{transform:scale(.98)}
+.hs-dl{background:var(--surface-up);color:var(--ink)}
+.hs-code{margin-top:var(--s-14);color:var(--ink-weak);font-size:var(--t-meta)}
+.hs-code summary{cursor:pointer;width:max-content}
+.hs-code code{display:block;margin-top:var(--s-4);padding:var(--s-6) var(--s-7);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);font:400 var(--t-label)/var(--lh-18) var(--mono);word-break:break-all}
+/* the drawings: a few lines of the real screen, the one to tap in the accent */
+.hs-step{display:flex;flex-direction:column}
+.bm-page .hs-step > *{margin-top:0}
+.hs-step{gap:var(--s-6)}
+.hs-pic{margin:0;order:2}
+.hs-step > p:not(.hs-t){order:3}
+.pv{border-radius:12px;background:#1c1c1f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:8px;display:flex;font:500 12px/1 var(--sans);color:var(--ink-weak);overflow:hidden}
+.pv .hot{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--accent);background:rgba(95,211,154,.08)}
+.pv-sheet,.pv-edit{flex-direction:column;gap:4px}
+.pv-row{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04)}
+.pv-field{padding:9px 10px;border-radius:8px;background:rgba(255,255,255,.05);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-field.mono{font-family:var(--mono);font-weight:400}
+.pv-favs,.pv-share{gap:8px}
+.pv-fav,.pv-app{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border-radius:9px}
+.pv-fav i,.pv-app i{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.08)}
+.pv-fav i.pin,.pv-app i.pin{background:url(/favicon.svg) center/cover}
+.pv-bar{align-items:center;gap:6px}
+.pv-dots{display:flex;gap:4px;margin-right:4px}
+.pv-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.14)}
+.pv-mark{padding:6px 9px;border-radius:7px;background:rgba(255,255,255,.04);white-space:nowrap}
+/* the Private Relay fix under the iPhone steps: one quiet card that opens */
+.hs-fix{margin-top:var(--s-8);border-radius:var(--r-xl);background:var(--card-tint);box-shadow:inset 0 0 0 1px var(--card-rim)}
+.hs-fix summary{display:flex;align-items:center;gap:var(--s-6);padding:var(--s-7) var(--s-8);cursor:pointer;list-style:none;min-height:var(--tap)}
+.hs-fix summary::-webkit-details-marker{display:none}
+.hs-fix-ic{flex:none;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--surface-up);color:var(--ink-weak)}
+.hs-fix-ic .i{width:16px;height:16px}
+.hs-fix-tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--s-1);font-size:var(--t-control);line-height:1.35;color:var(--ink)}
+.hs-fix-tt b{font-weight:600}
+.hs-fix-tt span{font-size:var(--t-meta);color:var(--ink-weak)}
+.hs-fix-ch{flex:none;width:16px;height:16px;color:var(--ink-weak);transition:transform .2s ease}
+.hs-fix[open] .hs-fix-ch{transform:rotate(90deg)}
+.hs-fix-in{padding:0 var(--s-8) var(--s-8) 52px;font-size:var(--t-meta);line-height:1.5;color:var(--ink-weak)}
+.bm-page .hs-fix-in p{margin:0 0 var(--s-6)}
+.hs-fix-steps{margin:0;padding:0 0 0 var(--s-8);color:var(--ink)}
+.hs-fix-steps li{margin:0 0 var(--s-6)}
+.hs-fix-steps li::marker{color:var(--ink-weak)}
+.hs-fix-in b{font-weight:600}
+.hs-fix-in code{font:400 .95em/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up);color:var(--ink)}
+.hs-snip{margin:var(--s-4) 0 var(--s-4);padding:var(--s-6) var(--s-7);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);font:400 var(--t-label)/var(--lh-18) var(--mono);color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.hs-snip-copy{height:36px;padding:0 var(--s-7);font-size:var(--t-meta)}
+.bm-page .hs-fix-src{margin:0}
+@media (max-width:719px){.hs-fix-in{padding-left:var(--s-8)}}
+@media (prefers-reduced-motion:reduce){.hs-copy-a,.hs-copy-b{transition:none}}
 .code code{flex:1;min-width:0;display:block;padding:var(--s-6) var(--s-7);border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line);font:400 var(--t-label)/var(--lh-18) var(--mono);color:var(--ink-weak);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .code .btn{height:auto;min-height:var(--tap)}
 .back{display:inline-flex;align-items:center;gap:var(--s-3);min-height:var(--tap);margin:calc(var(--s-6) * -1) 0 var(--s-8) calc(var(--s-3) * -1);padding:0 var(--s-3);color:var(--ink-weak);font:500 var(--t-meta)/var(--lh-none) var(--sans)}
@@ -1093,8 +1160,31 @@ body.share-page .share-foot{order:2}
 /* reduced motion: nothing moves (was an inline style element in each page) */
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 /* the version under Source, in the sidebar and in the phone's More sheet */
-.app-ver{margin:0 0 var(--s-1) var(--s-22);font:400 var(--t-micro)/var(--lh-14) var(--sans);color:var(--ink-weak)}
+.app-ver{display:flex;align-items:baseline;gap:var(--s-3);margin:0 0 var(--s-1) var(--s-22);padding:var(--s-2) 0;background:none;border:0;cursor:pointer;font:400 var(--t-micro)/var(--lh-14) var(--sans);color:var(--ink-weak);text-align:left}
+.app-new{color:var(--accent)}
+@media (hover:hover){.app-ver:hover .app-new{text-decoration:underline;text-underline-offset:2px}}
 .sheet .app-ver{margin:var(--s-5) var(--s-8) 0}
+
+/* What's new: the changelog as a sheet, taller than the action sheets, the last three releases open */
+.sheet.notes{max-height:calc(var(--vvh,100dvh) * .86)}
+/* text all the way down: solid, so nothing reads through the glass */
+.layer:not(.page-sheet) .sheet.notes{background:var(--sheet)}
+@media (min-width:720px){.layer:not(.page-sheet) .sheet.notes{width:460px}}
+.rel{padding:var(--s-8) var(--s-1) var(--s-4);border-top:1px solid var(--line)}
+.sh-head + .rel{border-top:0;padding-top:0}
+.rel-h{display:flex;align-items:baseline;gap:var(--s-4);margin:0 0 var(--s-4);font:600 var(--t-control)/var(--lh-20) var(--sans);color:var(--ink)}
+.rel-v{font-variant-numeric:tabular-nums}
+.rel-now{font:500 var(--t-micro)/var(--lh-14) var(--sans);color:var(--accent)}
+.rel-d{margin-left:auto;font:400 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-weak)}
+.rel-p{margin:0 0 var(--s-4);font:400 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink-weak)}
+.rel-g{margin:var(--s-6) 0 var(--s-2);font:500 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-weak)}
+.rel-l{margin:0;padding:0 0 0 var(--s-8);font:400 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink)}
+.rel-l li{margin:0 0 var(--s-3)}
+.rel-l li::marker{color:var(--ink-weak)}
+.rel code{font:400 .92em/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up)}
+.rel-older{border-top:1px solid var(--line);padding:var(--s-6) var(--s-1) var(--s-4)}
+.rel-older summary{cursor:pointer;width:max-content;font:500 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink-weak)}
+.rel-older .rel:first-of-type{margin-top:var(--s-6)}
 
 /* ================= the Dashboard: recently opened links by day, and the calm empty states ================= */
 /* the phone Dashboard: the layout switch sits on the Recently opened row, 44 px targets */

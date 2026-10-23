@@ -61,10 +61,11 @@ export function fillSheet() {
   else if (s.type === 'lock' || s.type === 'unlock' || s.type === 'unlockremove') { const f = folderById.get(s.fid); if (!f) { closeSheet(); return; } label = lockTitle(s, f); h += lockHTML(s, f); }
   else if (s.type === 'share') { const f = folderById.get(s.fid); if (!f) { closeSheet(); return; } label = 'Share ' + f.name; h += shareHTML(s, f); }
   else if (s.type === 'tokens') { label = 'API tokens'; h += tokensHTML(s); }
+  else if (s.type === 'releases') { label = "What's new"; h += releasesHTML(s); }
   else if (s.type === 'addto') { label = 'Add to ' + atName(s.fid); h += addToHTML(s); }
   else if (s.type === 'save') { label = 'Save'; h += saveHTML(); }
   else if (s.type === 'done') { label = 'Saved'; h = doneHTML(); }
-  el.classList.toggle('tall', s.type === 'addto');
+  el.classList.toggle('tall', s.type === 'addto'); el.classList.toggle('notes', s.type === 'releases');
   layer().classList.toggle('dialog', s.type === 'lock' || s.type === 'unlock' || s.type === 'unlockremove'); /* password dialogs sit in the middle */
   el.setAttribute('aria-label', label);
   /* the sheet never scrolls itself; its body scrolls when the content is taller */
@@ -158,6 +159,32 @@ export const ago = ts => { const d = Math.max(0, nowS() - ts);
   if (d < 60) return 'just now'; if (d < 3600) return plural(Math.floor(d / 60), 'minute', 'minutes') + ' ago';
   if (dayDiff(ts) === 0) return plural(Math.floor(d / 3600), 'hour', 'hours') + ' ago'; if (dayDiff(ts) === 1) return 'yesterday';
   return dayDiff(ts) < 30 ? dayDiff(ts) + ' days ago' : 'on ' + fmtDay(ts); };
+/* ---------- What's new: CHANGELOG.md as it was built in, newest first, the last three open ---------- */
+export function openReleases() { openSheet({ type: 'releases', list: null, err: null }); releasesLoad(); }
+async function releasesLoad() { const s = layers.sheet;
+  try { const r = await fetch('/changelog', { credentials: 'same-origin' }); if (!r.ok) throw new Error(r.status); const md = await r.text(); if (layers.sheet !== s) return; s.list = parseChangelog(md); }
+  catch (e) { if (layers.sheet !== s) return; s.err = 'Could not load the releases.'; }
+  fillSheet(); }
+/* the changelog's own shape: "## 0.1.5, 2026-10-22", "### Fixes", "- item" with indented lines that carry on */
+export function parseChangelog(md) { const out = []; let rel = null, grp = null, items = null;
+  for (const line of md.split('\n')) { let m;
+    if ((m = line.match(/^## (\S+?)(?:, (\d{4}-\d{2}-\d{2}))?\s*$/))) { rel = { v: m[1], date: m[2] || '', intro: [], groups: [] }; out.push(rel); grp = items = null; }
+    else if (!rel) continue;
+    else if ((m = line.match(/^### (.+)/))) { grp = { h: m[1].trim(), items: [] }; rel.groups.push(grp); items = null; }
+    else if ((m = line.match(/^- (.+)/))) { if (!grp) { grp = { h: '', items: [] }; rel.groups.push(grp); } grp.items.push(m[1]); items = grp.items; }
+    else if (/^\s+\S/.test(line) && items) items[items.length - 1] += ' ' + line.trim();
+    else if (line.trim()) { if (grp) grp.items.push(line.trim()); else rel.intro.push(line.trim()); items = null; }
+    else items = null; }
+  return out; }
+const mdInline = t => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+const relDay = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const releaseHTML = r => `<section class="rel"><h3 class="rel-h"><span class="rel-v">${esc(r.v)}</span>${ui.version === r.v ? '<span class="rel-now">This version</span>' : ''}<span class="rel-d">${esc(relDay(r.date))}</span></h3>
+  ${r.intro.map(p => `<p class="rel-p">${mdInline(p)}</p>`).join('')}${r.groups.map(g => `${g.h ? `<p class="rel-g">${esc(g.h)}</p>` : ''}<ul class="rel-l">${g.items.map(i => `<li>${mdInline(i)}</li>`).join('')}</ul>`).join('')}</section>`;
+function releasesHTML(s) { const head = textHead("What's new");
+  if (s.err) return head + `<p class="sh-text">${esc(s.err)}</p>`;
+  if (!s.list) return head;
+  const older = s.list.slice(3);
+  return head + s.list.slice(0, 3).map(releaseHTML).join('') + (older.length ? `<details class="rel-older"><summary>${plural(older.length, 'older release', 'older releases')}</summary>${older.map(releaseHTML).join('')}</details>` : ''); }
 export function openTokens() { openSheet({ type: 'tokens', list: null, created: null, confirm: null }); tokensLoad(); }
 export async function tokensLoad() { const s = layers.sheet; try { const list = await api('GET', '/api/tokens'); if (layers.sheet !== s) return; s.list = list; s.err = null; }
   catch (e) { if (e.auth || layers.sheet !== s) return; s.err = 'Could not load the tokens.'; }

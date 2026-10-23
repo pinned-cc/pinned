@@ -170,6 +170,22 @@ On Nginx Proxy Manager, add a proxy host for your server and port 9095 with an S
 
 On Umbrel with the App Store package (`umbrel/` holds the draft), Umbrel's login sits in front of the app. These paths must get past it, because the extension, scripts and share links do not carry an Umbrel login: `/api/*`, `/s/*`, `/extras/*` and `/health`, and for share link pages `/static/*` and `/favicon.svg`. The app's own password, tokens and share links still protect them.
 
+## Troubleshooting
+
+**The Save bookmark opens a black page in Safari on the iPhone, marked Not Secure.** This happens with iCloud Private Relay on, when the app is reached through a Tailscale address (`*.ts.net`). Save runs inside the page you are on, and with Private Relay that page goes through Apple, which cannot reach your tailnet. Safari then falls back to http. Opening the app directly still works, which makes it look like a bookmark problem. It is not.
+
+The fix, with Private Relay left on: let Tailscale resolve the name on that iPhone. In the Tailscale admin, copy the iPhone's address under Machines, then add this to the policy file under Access controls and save:
+
+```json
+"nodeAttrs": [
+  { "target": ["100.x.y.z"], "attr": ["disable-split-dns-when-no-custom-resolvers"] }
+],
+```
+
+Turn Tailscale off and on again on the iPhone. How to save in the app has the same steps. Tailscale tracks the cause in [tailscale/tailscale#21677](https://github.com/tailscale/tailscale/issues/21677).
+
+**Behind `tailscale serve`, the Save code starts with http.** `tailscale serve` ends HTTPS but does not send `X-Forwarded-Proto`. How to save uses the address in your browser when it is on the same host. Set `BASE_URL` to the `https://` address to fix the search entry too.
+
 ## Your data and backups
 
 Everything is in the data folder:

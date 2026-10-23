@@ -171,6 +171,13 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "bookmarks": n, "version": s.cfg.Version})
 }
 
+// changelog serves CHANGELOG.md as it was built in, for the What's new sheet.
+func (s *Server) changelog(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	_, _ = w.Write(s.cfg.Changelog)
+}
+
 // appIcon serves one of the app's own icons from web/icons/.
 func (s *Server) appIcon(name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

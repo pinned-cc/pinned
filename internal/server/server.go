@@ -27,6 +27,7 @@ type Config struct {
 	BaseURL     string // optional, without trailing slash
 	SessionDays int
 	Version     string
+	Changelog   []byte // CHANGELOG.md, for What's new
 	// TrustedProxies are the reverse proxies whose X-Forwarded-For is
 	// believed for the rate limits (TRUSTED_PROXIES).
 	TrustedProxies []netip.Prefix
@@ -92,6 +93,7 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /opensearch.xml", s.openSearch)
 	m.HandleFunc("GET /manifest.webmanifest", s.manifest)
 	m.HandleFunc("GET /health", s.health)
+	m.HandleFunc("GET /changelog", s.requirePage(s.changelog))
 	for _, name := range []string{"icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.svg"} {
 		m.HandleFunc("GET /"+name, s.appIcon(name))
 	}

@@ -5,7 +5,7 @@ import { closeMenu, menuOrSheet, openMenu, selItems, tileMenu } from './menu.js'
 import { openPalette } from './palette.js';
 import { deskBody, render, switchLayout } from './render.js';
 import { FPICK, emptySpace, exitSelect, pickRange, selSync, toggle } from './select.js';
-import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
+import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openReleases, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
 import { FSORTS, SORTS, bm, chain, count, data, descSet, fid, folderById, foldersSel, hidesRecent, isLocked, layers, live, load, loadQuiet, lockedAt, ownLock, run, selectables, setFsort, setSort, ui } from './state.js';
 import { announce, toast } from './toast.js';
 import { byId, copy, errorText, plural, reduce, store, wait } from './util.js';
@@ -214,6 +214,7 @@ export function onClick(e) {
     case 'tab': { const to = a.dataset.tab; if (ui.view !== to) goView(to); break; } /* the tab's shape glides; the content is there at once */
     case 'import': byId('import-file').click(); break;
     case 'tokens': openTokens(); break;
+    case 'releases': openReleases(); break;
     case 'tk-copy': tokenCopy(); break;
     case 'tk-revoke': layers.sheet.confirm = +a.dataset.id; fillSheet(); { const y = sheetEl().querySelector('[data-a="tk-revoke-yes"]'); if (y) y.focus({ preventScroll: true }); } break;
     case 'tk-cancel': layers.sheet.confirm = null; fillSheet(); break;

@@ -2,6 +2,18 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## Unreleased
+
+### New
+
+- What's new: the version under More, and What's new in the phone's Settings, open the releases in a sheet. The last three are open, older ones fold away.
+- How to save is steps with small pictures instead of paragraphs, with a tab for iPhone, Computer, Android and the extension. The tab for your device opens first, and Copy shows a tick.
+- How to save explains the black page in Safari with iCloud Private Relay and a Tailscale address, with the one line to add in Tailscale and a Copy button.
+
+### Fixes
+
+- Behind `tailscale serve`, the Save code uses https when your browser is on https, instead of the http the server saw.
+
 ## 0.1.6, 2026-10-23
 
 ### Changes

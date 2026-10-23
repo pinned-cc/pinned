@@ -152,6 +152,7 @@ func run() error {
 		BaseURL:        os.Getenv("BASE_URL"),
 		SessionDays:    sessionDays,
 		Version:        version,
+		Changelog:      pinned.Changelog,
 		TrustedProxies: proxies,
 	}, st, web, icons, secret)
 

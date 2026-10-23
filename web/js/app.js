@@ -80,11 +80,33 @@ function bootLogin() {
   f.addEventListener('submit', () => { f.querySelector('button').disabled = true; });
 }
 function bootBookmarklet() {
-  const base = (document.body.dataset.base || '').replace(/\/+$/, ''), origin = base && !base.includes('{{') ? base : location.origin;
+  /* the server's view of the scheme can be wrong behind a proxy that ends https (tailscale serve): on the same host, trust the page */
+  let base = (document.body.dataset.base || '').replace(/\/+$/, ''); if (base.includes('{{')) base = '';
+  try { if (base && new URL(base).host === location.host) base = location.origin; } catch (e) { base = ''; }
+  const origin = base || location.origin;
   const code = `javascript:(function(){var u=${JSON.stringify(origin + '/save?url=')}+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title);var w=window.open(u,'bookmarks-save','width=392,height=544,menubar=no,toolbar=no,location=no');if(!w)location.href=u;})();`;
   document.querySelectorAll('[data-bm]').forEach(a => { a.href = code; a.addEventListener('click', e => { e.preventDefault(); toast('Drag this button to the bookmarks bar.'); }); });
   document.querySelectorAll('[data-bm-code]').forEach(c => { c.textContent = code; });
-  document.querySelectorAll('[data-bm-copy]').forEach(b => b.addEventListener('click', async () => { if (await copy(code)) toast('Copied'); }));
+  document.querySelectorAll('[data-bm-copy]').forEach(b => b.addEventListener('click', async () => {
+    if (!(await copy(code))) return;
+    if (b.classList.contains('hs-copy')) { b.classList.add('done'); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('done'), 1800); } else toast('Copied');
+  }));
+  /* a snippet's Copy takes the text of the block it names */
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    const el = byId(b.dataset.copy); if (!el || !(await copy(el.textContent))) return;
+    b.classList.add('done'); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('done'), 1800);
+  }));
+  /* the device tabs: the one you are on opens first */
+  const tabs = [...document.querySelectorAll('.hs-tabs [role=tab]')];
+  const pick = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; byId(x.getAttribute('aria-controls')).hidden = !on; });
+  if (tabs.length) {
+    const ua = navigator.userAgent, ios = /iPhone|iPod/.test(ua), android = /Android/.test(ua);
+    pick(byId(ios ? 't-iphone' : android ? 't-android' : 't-mac'));
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => pick(t));
+      t.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; e.preventDefault(); const n = tabs[(i + d + tabs.length) % tabs.length]; pick(n); n.focus(); });
+    });
+  }
 }
 
 /* the style guide (tools/styleguide.html) renders its specimens with these builders, so they match the app */

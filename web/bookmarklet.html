@@ -15,33 +15,118 @@
 <main class="bm-page">
   <a class="back" href="/"><svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.25 6.75 10l5.75 5.75"/></svg>Pinned</a>
   <h1>How to save</h1>
-  <p class="lead">Saves the page you are on to Pinned, from any browser.</p>
+  <p class="lead">Keep the page you are on, from any browser.</p>
 
-  <h2>Mac</h2>
-  <p>Show the bookmarks bar, then drag this button into it.</p>
-  <p><a class="bm-btn" data-bm href="#"><img class="mark" src="/favicon.svg" alt="" width="22" height="22" draggable="false">Save to Pinned</a></p>
-  <p>Brave and Chrome: <strong>Cmd Shift B</strong>. Safari: <strong>View, Show Favorites Bar</strong>.</p>
+  <div class="seg hs-tabs" role="tablist" aria-label="Device">
+    <button type="button" role="tab" id="t-iphone" aria-controls="p-iphone" aria-selected="true">iPhone</button>
+    <button type="button" role="tab" id="t-mac" aria-controls="p-mac" aria-selected="false">Computer</button>
+    <button type="button" role="tab" id="t-android" aria-controls="p-android" aria-selected="false">Android</button>
+    <button type="button" role="tab" id="t-ext" aria-controls="p-ext" aria-selected="false">Extension</button>
+  </div>
 
-  <h2>iPhone</h2>
-  <ol>
-    <li>In Safari, bookmark any page.</li>
-    <li>Edit that bookmark, name it Save, and paste this code as its address.
-      <div class="code"><code data-bm-code></code><button type="button" class="btn" data-bm-copy>Copy</button></div></li>
-    <li>On a page you want to keep, open your bookmarks and tap Save.</li>
-  </ol>
+  <!-- iPhone: a Safari bookmark whose address is the Save code -->
+  <section class="hs-panel" id="p-iphone" role="tabpanel" aria-labelledby="t-iphone">
+    <ol class="hs-steps">
+      <li class="hs-step">
+        <p class="hs-t">Copy the Save code.</p>
+        <button type="button" class="hs-copy" data-bm-copy><span class="hs-copy-a"><svg class="i" aria-hidden="true"><use href="#i-link"/></svg>Copy the Save code</span><span class="hs-copy-b"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Copied</span></button>
+      </li>
+      <li class="hs-step">
+        <figure class="hs-pic" aria-hidden="true"><div class="pv pv-sheet">
+          <span class="pv-row">Copy</span><span class="pv-row">Add to Reading List</span><span class="pv-row hot">Add Bookmark</span><span class="pv-row">Add to Home Screen</span>
+        </div></figure>
+        <p class="hs-t">Tap <b>Share</b>, then <b>Add Bookmark</b>. Name it <b>Save</b>, put it in <b>Favorites</b>.</p>
+      </li>
+      <li class="hs-step">
+        <figure class="hs-pic" aria-hidden="true"><div class="pv pv-edit">
+          <span class="pv-field">Save</span><span class="pv-field hot mono">javascript:(function()&#8230;</span>
+        </div></figure>
+        <p class="hs-t">Open bookmarks, hold <b>Save</b>, tap <b>Edit</b>. Paste the code as its address.</p>
+      </li>
+      <li class="hs-step">
+        <figure class="hs-pic" aria-hidden="true"><div class="pv pv-favs">
+          <span class="pv-fav"><i></i>Docs</span><span class="pv-fav hot"><i class="pin"></i>Save</span><span class="pv-fav"><i></i>News</span>
+        </div></figure>
+        <p class="hs-t">On a page you want to keep: bookmarks, <b>Save</b>.</p>
+      </li>
+    </ol>
 
-  <h2>Android</h2>
-  <p>Open Pinned in Chrome and add it to the home screen. Then use <strong>Share</strong> on any page and pick Pinned.</p>
+    <!-- iCloud Private Relay with a Tailscale address: the page goes through Apple, which cannot reach the tailnet -->
+    <details class="hs-fix">
+      <summary><span class="hs-fix-ic"><svg class="i" aria-hidden="true"><use href="#i-warn"/></svg></span><span class="hs-fix-tt"><b>Black page, or Not Secure?</b><span>iCloud Private Relay with Tailscale</span></span><svg class="i hs-fix-ch" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+      <div class="hs-fix-in">
+        <p>Save runs inside the page you are on, and with Private Relay on that page goes through Apple. Apple cannot reach your Tailscale address, so Safari falls back to http and the page stays black. Let Tailscale find the address on your iPhone instead.</p>
+        <ol class="hs-fix-steps">
+          <li>In the Tailscale admin, under <b>Machines</b>, copy your iPhone's address. It starts with 100.</li>
+          <li>Under <b>Access controls</b>, paste this right after the first <code>{</code> and put your iPhone's address in it. Save.
+            <pre class="hs-snip" id="relay-snip">"nodeAttrs": [
+  { "target": ["100.x.y.z"], "attr": ["disable-split-dns-when-no-custom-resolvers"] }
+],</pre>
+            <button type="button" class="hs-copy hs-dl hs-snip-copy" data-copy="relay-snip"><span class="hs-copy-a"><svg class="i" aria-hidden="true"><use href="#i-link"/></svg>Copy</span><span class="hs-copy-b"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Copied</span></button></li>
+          <li>On the iPhone, turn Tailscale off and on again.</li>
+        </ol>
+        <p class="hs-fix-src"><a class="bm-link" href="https://github.com/tailscale/tailscale/issues/21677" target="_blank" rel="noopener">The Tailscale issue</a></p>
+      </div>
+    </details>
+  </section>
 
-  <h2>Browser extension</h2>
-  <p><a class="bm-link" href="/extras/pinned-extension.zip" download>Download the extension</a></p>
-  <ol>
-    <li>Unzip it and keep the folder where it can stay, not in Downloads. If the folder moves, the browser drops the extension.</li>
-    <li>Brave, Chrome, Edge: open the extensions page, turn on developer mode, choose <strong>Load unpacked</strong> and pick the folder.</li>
-    <li>Firefox: open <strong>about:debugging</strong>, choose <strong>This Firefox</strong>, then <strong>Load temporary add-on</strong> and pick manifest.json.</li>
-    <li>Open the extension's options and enter your address and <a class="bm-link" href="/#tokens">a token</a>. When the browser asks for access to your server, allow it.</li>
-  </ol>
-  <p><strong>Option Shift S</strong> opens it, <strong>Alt Shift S</strong> on Windows and Linux.</p>
+  <!-- computer: the button dragged into the bookmarks bar -->
+  <section class="hs-panel" id="p-mac" role="tabpanel" aria-labelledby="t-mac" hidden>
+    <ol class="hs-steps">
+      <li class="hs-step">
+        <p class="hs-t">Show the bookmarks bar.</p>
+        <p class="hs-keys"><span>Brave, Chrome</span><kbd>Cmd</kbd><kbd>Shift</kbd><kbd>B</kbd></p>
+        <p class="hs-keys"><span>Safari</span>View, Show Favorites Bar</p>
+      </li>
+      <li class="hs-step">
+        <figure class="hs-pic" aria-hidden="true"><div class="pv pv-bar">
+          <span class="pv-dots"><i></i><i></i><i></i></span><span class="pv-mark">Docs</span><span class="pv-mark hot">Save to Pinned</span><span class="pv-mark">News</span>
+        </div></figure>
+        <p class="hs-t">Drag this button into the bar.</p>
+        <p><a class="bm-btn" data-bm href="#"><img class="mark" src="/favicon.svg" alt="" width="22" height="22" draggable="false">Save to Pinned</a></p>
+      </li>
+      <li class="hs-step">
+        <p class="hs-t">On a page you want to keep, click <b>Save to Pinned</b>.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Android: the app on the home screen takes shares -->
+  <section class="hs-panel" id="p-android" role="tabpanel" aria-labelledby="t-android" hidden>
+    <ol class="hs-steps">
+      <li class="hs-step"><p class="hs-t">Open Pinned in Chrome and add it to the home screen.</p></li>
+      <li class="hs-step">
+        <figure class="hs-pic" aria-hidden="true"><div class="pv pv-share">
+          <span class="pv-app"><i></i>Mail</span><span class="pv-app hot"><i class="pin"></i>Pinned</span><span class="pv-app"><i></i>Notes</span>
+        </div></figure>
+        <p class="hs-t">On any page, tap <b>Share</b> and pick <b>Pinned</b>.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- the extension, loaded unpacked -->
+  <section class="hs-panel" id="p-ext" role="tabpanel" aria-labelledby="t-ext" hidden>
+    <ol class="hs-steps">
+      <li class="hs-step">
+        <p class="hs-t">Download it, unzip it, and keep the folder where it can stay. If it moves, the browser drops the extension.</p>
+        <p><a class="hs-copy hs-dl" href="/extras/pinned-extension.zip" download><svg class="i" aria-hidden="true"><use href="#i-export"/></svg>Download the extension</a></p>
+      </li>
+      <li class="hs-step">
+        <p class="hs-t">Load the folder.</p>
+        <p class="hs-keys"><span>Brave, Chrome, Edge</span>Extensions, Developer mode, Load unpacked</p>
+        <p class="hs-keys"><span>Firefox</span>about:debugging, This Firefox, Load temporary add-on, manifest.json</p>
+      </li>
+      <li class="hs-step">
+        <p class="hs-t">In its options, enter your address and <a class="bm-link" href="/#tokens">a token</a>. Allow access to your server when asked.</p>
+      </li>
+      <li class="hs-step">
+        <p class="hs-keys"><span>Open it</span><kbd>Option</kbd><kbd>Shift</kbd><kbd>S</kbd></p>
+        <p class="hs-keys"><span>Windows, Linux</span><kbd>Alt</kbd><kbd>Shift</kbd><kbd>S</kbd></p>
+      </li>
+    </ol>
+  </section>
+
+  <details class="hs-code"><summary>Show the Save code</summary><code data-bm-code></code></details>
 </main>
 <div class="toasts" id="toasts"></div>
 <p class="vh" id="announce" role="status" aria-live="polite"></p>
