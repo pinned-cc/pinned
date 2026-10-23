@@ -186,6 +186,8 @@ Turn Tailscale off and on again on the iPhone. How to save in the app has the sa
 
 **Behind `tailscale serve`, the Save code starts with http.** `tailscale serve` ends HTTPS but does not send `X-Forwarded-Proto`. How to save uses the address in your browser when it is on the same host. Set `BASE_URL` to the `https://` address to fix the search entry too.
 
+**Pinned as the start page on the iPhone.** Safari, Chrome and Brave on iOS cannot open a page of your own as their start page. Firefox can (Settings, Homepage, Custom URL) and so can Vivaldi (Settings, General, Display Home Button, then Specific Site). In Safari the closest is Share, Add to Favorites, which shows Pinned as the first tile on every new tab. How to save in the app has the same steps and your address to copy.
+
 ## Your data and backups
 
 Everything is in the data folder:

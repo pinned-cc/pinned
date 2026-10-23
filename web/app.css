@@ -924,6 +924,7 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .pv-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.14)}
 .pv-mark{padding:6px 9px;border-radius:7px;background:rgba(255,255,255,.04);white-space:nowrap}
 /* the Private Relay fix under the iPhone steps: one quiet card that opens */
+.hs-fix + .hs-fix{margin-top:var(--s-4)}
 .hs-fix{margin-top:var(--s-8);border-radius:var(--r-xl);background:var(--card-tint);box-shadow:inset 0 0 0 1px var(--card-rim)}
 .hs-fix summary{display:flex;align-items:center;gap:var(--s-6);padding:var(--s-7) var(--s-8);cursor:pointer;list-style:none;min-height:var(--tap)}
 .hs-fix summary::-webkit-details-marker{display:none}
@@ -943,6 +944,7 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .hs-fix-in code{font:400 .95em/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up);color:var(--ink)}
 .hs-snip{margin:var(--s-4) 0 var(--s-4);padding:var(--s-6) var(--s-7);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);font:400 var(--t-label)/var(--lh-18) var(--mono);color:var(--ink);white-space:pre-wrap;word-break:break-word}
 .hs-snip-copy{height:36px;padding:0 var(--s-7);font-size:var(--t-meta)}
+.hs-snip-copy + .hs-fix-steps{margin-top:var(--s-7)}
 .bm-page .hs-fix-src{margin:0}
 @media (max-width:719px){.hs-fix-in{padding-left:var(--s-8)}}
 @media (prefers-reduced-motion:reduce){.hs-copy-a,.hs-copy-b{transition:none}}

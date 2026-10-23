@@ -87,6 +87,7 @@ function bootBookmarklet() {
   const code = `javascript:(function(){var u=${JSON.stringify(origin + '/save?url=')}+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title);var w=window.open(u,'bookmarks-save','width=392,height=544,menubar=no,toolbar=no,location=no');if(!w)location.href=u;})();`;
   document.querySelectorAll('[data-bm]').forEach(a => { a.href = code; a.addEventListener('click', e => { e.preventDefault(); toast('Drag this button to the bookmarks bar.'); }); });
   document.querySelectorAll('[data-bm-code]').forEach(c => { c.textContent = code; });
+  document.querySelectorAll('[data-origin]').forEach(c => { c.textContent = origin; });
   document.querySelectorAll('[data-bm-copy]').forEach(b => b.addEventListener('click', async () => {
     if (!(await copy(code))) return;
     if (b.classList.contains('hs-copy')) { b.classList.add('done'); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('done'), 1800); } else toast('Copied');

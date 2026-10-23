@@ -2,13 +2,14 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
-## Unreleased
+## 0.1.7, 2026-10-23
 
 ### New
 
 - What's new: the version under More, and What's new in the phone's Settings, open the releases in a sheet. The last three are open, older ones fold away.
 - How to save is steps with small pictures instead of paragraphs, with a tab for iPhone, Computer, Android and the extension. The tab for your device opens first, and Copy shows a tick.
 - How to save explains the black page in Safari with iCloud Private Relay and a Tailscale address, with the one line to add in Tailscale and a Copy button.
+- How to save says which iPhone browsers can open Pinned as the start page, with the steps for Firefox, Vivaldi and Safari and your address to copy.
 
 ### Fixes
 
