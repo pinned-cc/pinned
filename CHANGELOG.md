@@ -2,6 +2,12 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.6, 2026-10-23
+
+### Changes
+
+- Until you open a link, the Dashboard shows the links you saved last, under Recently saved, so a new install is not empty. After the first open it shows Recently opened as before.
+
 ## 0.1.5, 2026-10-22
 
 ### Fixes

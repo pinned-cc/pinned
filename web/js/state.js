@@ -74,7 +74,10 @@ export const ui = {
 /* what is open over the page: a sheet and its state, the save form, the palette, a menu, the toast with Undo */
 export const layers = { sheet: null, save: null, palette: null, menu: null, undo: null };
 /* every opened link that sits in a folder, newest open first: the Dashboard's gallery */
-export const galLinks = () => live().filter(b => b.opened_at && fid(b) != null && recentOk(b) && !lockedAt(b.folder_id)).sort((a, b) => b.opened_at - a.opened_at || a.id - b.id);
+const openedLinks = () => live().filter(b => b.opened_at && fid(b) != null && recentOk(b) && !lockedAt(b.folder_id)).sort((a, b) => b.opened_at - a.opened_at || a.id - b.id);
+/* until a link in a folder has been opened, the gallery shows the links saved last, the Inbox's too, so a new install is not empty */
+export const galSaved = () => !openedLinks().length;
+export const galLinks = () => galSaved() ? live().filter(b => recentOk(b) && !lockedAt(b.folder_id)).sort((a, b) => b.created_at - a.created_at || b.id - a.id) : openedLinks();
 /* the Dashboard shows the gallery */
 export const galleryOn = () => data.has && ui.view === 'dashboard';
 const GAL_CAP = 60; /* the Dashboard is a look back, not an archive: the 60 opened last */

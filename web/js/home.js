@@ -1,9 +1,9 @@
 /* The Dashboard, the start page: the links opened last, grouped by when they were opened (Today, Yesterday,
    Last 7 days, Last 30 days, Earlier). Everything here is a recently opened link, never a folder as an object;
    the folder only says where a link is from. It follows the toolbar's grid or list layout. Only opened links
-   count, folders hidden from Recent and locked folders stay out. */
+   count, folders hidden from Recent and locked folders stay out; until one is opened it shows the links saved last. */
 import { favHTML, hostLine, layoutSwitch, selIb } from './render.js';
-import { fid, folderById, galShown, hostOf, hueClass, live, ui } from './state.js';
+import { fid, folderById, galSaved, galShown, hostOf, hueClass, live, ui } from './state.js';
 import { dayDiff, esc, fmtDay, ic } from './util.js';
 
 
@@ -20,8 +20,10 @@ export const ago = ts => { const s = Math.max(0, Date.now() / 1000 - ts), n = da
   return fmtDay(ts); };
 const when = ts => `<time datetime="${new Date(ts * 1000).toISOString()}">${esc(ago(ts))}</time>`;
 const linkAttrs = b => `href="${esc(b.url)}" target="_blank" rel="noopener" data-open="${b.id}" draggable="false"`;
-const folderName = b => (folderById.get(b.folder_id) || { name: '' }).name;
-const label = b => `${esc(b.title)}, ${esc(hostOf(b))}, in ${esc(folderName(b))}, opened ${esc(ago(b.opened_at))}`;
+const folderName = b => b.folder_id == null ? 'Inbox' : (folderById.get(b.folder_id) || { name: '' }).name;
+/* the gallery's time: when a link was opened, or when it was saved while nothing has been opened yet */
+let at = 'opened_at';
+const label = b => `${esc(b.title)}, ${esc(hostOf(b))}, in ${esc(folderName(b))}, ${at === 'opened_at' ? 'opened' : 'saved'} ${esc(ago(b[at]))}`;
 /* where a link is from: a small chip in the folder's hue */
 const chip = b => `<span class="gc-chip ${hueClass(fid(b))}"><span class="dot"></span><span class="gc-cn">${esc(folderName(b))}</span></span>`;
 
@@ -49,22 +51,23 @@ export const galShell = (b, html) => ui.selecting
   ? `<button type="button" class="g-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}" aria-label="Select ${esc(b.title)}">${html}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
   : `<a class="g-in" ${linkAttrs(b)} aria-label="${label(b)}">${html}</a>`;
 const item = (cls, b, html) => `<article class="${cls}${ui.picked.has(b.id) ? ' picked' : ''}" data-id="${b.id}">${galShell(b, html)}</article>`;
-const card = b => item('gk', b, `${favHTML(b, 56)}<span class="gk-time">${when(b.opened_at)}</span>
+const card = b => item('gk', b, `${favHTML(b, 56)}<span class="gk-time">${when(b[at])}</span>
   <span class="gk-title">${esc(b.title)}</span>${hostLine(hostOf(b), 'gk-host')}
   <span class="gk-foot">${chip(b)}</span>`);
 const row = b => item('gc-row', b, `${favHTML(b, 28)}<span class="gc-tt"><span class="gc-t">${esc(b.title)}</span>${hostLine(hostOf(b), 'gc-host')}</span>
-    ${chip(b)}<span class="gc-time">${when(b.opened_at)}</span>`);
+    ${chip(b)}<span class="gc-time">${when(b[at])}</span>`);
 /* rows in two columns from 1100 px: the first half on the left, the rest on the right, both starting on one line */
 const rows = L => { const h = Math.ceil(L.length / 2); return `<div class="gl"><div class="gl-col">${L.slice(0, h).map(row).join('')}</div><div class="gl-col">${L.slice(h).map(row).join('')}</div></div>`; };
 
 export function galleryHTML(phone) {
   if (!live().length) return freshHTML(phone);
-  const L = galShown();
+  const L = galShown(); at = galSaved() ? 'created_at' : 'opened_at';
   if (!L.length) return calm(phone, `<p class="calm-h">Nothing opened yet</p><p class="calm-t">Links you open show up here, by day.</p>`);
   const list = ui.layout === 'list', groups = BANDS.map(() => []);
-  for (const b of L) groups[bandOf(b.opened_at)].push(b);
+  for (const b of L) groups[bandOf(b[at])].push(b);
   /* on the phone the Recently opened row carries Select and the layout, as the Inbox's view row does */
-  const head = phone ? `<div class="gal-hr"><h2 class="gal-h">Recently opened</h2><span class="ptb-sp"></span>${selIb()}${layoutSwitch(' p')}</div>` : `<h2 class="gal-h">Recently opened</h2>`;
+  const h2 = `<h2 class="gal-h">Recently ${at === 'opened_at' ? 'opened' : 'saved'}</h2>`;
+  const head = phone ? `<div class="gal-hr">${h2}<span class="ptb-sp"></span>${selIb()}${layoutSwitch(' p')}</div>` : h2;
   return `<div class="gal${list ? ' is-list' : ''}${phone ? ' gal-p' : ''}">${head}${groups.map((items, i) => items.length ? `<section class="gs" aria-labelledby="gs-${i}">
     <h3 class="gs-h" id="gs-${i}">${BANDS[i].name}<span class="gs-n num" aria-hidden="true">${items.length}</span></h3>
     ${list ? rows(items) : `<div class="gb">${items.map(card).join('')}</div>`}</section>` : '').join('')}</div>`;
