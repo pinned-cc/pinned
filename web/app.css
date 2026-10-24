@@ -1,7 +1,8 @@
 @font-face{font-family:"Geist";src:url("/static/fonts/Geist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"Geist Mono";src:url("/static/fonts/GeistMono-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 /* Pinned. Tokens and components ported from the approved desktop (1440) and phone (390) mockups.
-   Colour direction B, graphite with a green accent, chosen 2026-10-14. */
+   Colour direction B, graphite with a green accent, chosen 2026-10-14. Light mode, the paper of pinned.cc, added 2026-10-24. */
+
 :root{
   --ground:#0a0a0b;
   --screen:#101012;
@@ -10,8 +11,8 @@
   --sheet:#19191c;
   --recess:#111113;
   --fold:#131315;
-  --line:rgba(255,255,255,.07);
-  --line-2:rgba(255,255,255,.12);
+  --line:rgba(255,255,255,.055);
+  --line-2:rgba(255,255,255,.10);
   --ink:#f0f0f0;
   --ink-weak:#9a9a9f;
   --ink-faint:#636367;
@@ -27,6 +28,7 @@
   --ease-draw:cubic-bezier(.65,0,.35,1);
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
   --cyan:#7fcfe8;  --cyan-p:#b4e6f5;
   --coral:#ff9e8c; --coral-p:#ffc8bd;
   --lilac:#b7a3ff; --lilac-p:#d8ccff;
@@ -47,25 +49,23 @@
   --picked-edge:rgba(95,211,154,.65);
   --picked-fill:rgba(95,211,154,.08);
   /* elevation */
-  --edge-top:inset 0 1px 0 rgba(255,255,255,.10);
+  --edge-top:inset 0 1px 0 rgba(255,255,255,.06);
   --shadow-hover:0 10px 24px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.25);
   --shadow-lift:0 16px 32px -10px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.35);
   --shadow-float:0 8px 24px rgba(0,0,0,.45);
   --shadow-glass:0 0 0 1px var(--line-2),0 8px 32px -10px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.4);
-  /* the ground: one calm light across the whole screen, three soft lights over the base, held still behind the app (body::before) */
-  --ground-base:#0e0e11;
-  --ground-light:radial-gradient(70vw 60vh at 6% -8%,rgba(95,211,154,.085),rgba(95,211,154,0) 70%),
-    radial-gradient(60vw 70vh at 104% 18%,rgba(127,207,232,.06),rgba(127,207,232,0) 70%),
-    radial-gradient(80vw 60vh at 62% 112%,rgba(183,163,255,.05),rgba(183,163,255,0) 70%);
+  /* the ground: one flat colour behind the whole app, sidebar included (body::before) */
+  --ground-base:#0f0f11;
+  --ground-light:linear-gradient(transparent,transparent);
   /* glass on the ground: cards and folders are a clear tint with a soft rim and a small shadow, no blur and no light of
      their own; the panels over them (sidebar, sheets, menus, the search) blur what is behind */
   --card-tint:rgba(255,255,255,.04);
   --fold-tint:rgba(255,255,255,.034);
   --strip-tint:rgba(255,255,255,.012);
-  --card-rim:rgba(255,255,255,.075);
-  --card-rim-hover:rgba(255,255,255,.11);
+  --card-rim:rgba(255,255,255,.055);
+  --card-rim-hover:rgba(255,255,255,.09);
   --card-shadow:0 1px 2px rgba(0,0,0,.18);
-  --glass-side:rgba(14,14,17,.42);
+  --glass-side:transparent;
   --glass-menu:rgba(24,24,27,.86);
   --glass-panel:rgba(24,24,27,.72);
   --glass-sheet:rgba(24,24,27,.86);
@@ -1492,3 +1492,69 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 @keyframes ios-blink{50%{opacity:0}}
 .ios-cap{padding:6px 12px 0;font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:#a4a4a9}
 @media (prefers-reduced-motion:reduce){.ios-caret{animation:none}}
+
+/* ---------- Light: the paper, ink and green of pinned.cc. The bulb or the system picks it (js/theme.js) ---------- */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --ground-base:#f4f1ea;
+  --screen:#f4f1ea; --surface:#faf8f3; --surface-up:#fdfcf8; --sheet:#faf8f3; --recess:#ebe7dd; --fold:#f7f4ee;
+  --line:rgba(27,26,23,.10); --line-2:rgba(27,26,23,.16);
+  --ink:#1b1a17; --ink-weak:#6b675e; --ink-faint:#948f84; --ink-h:#1b1a17; --ink-hp:#1b1a17;
+  --accent:#1b1a17; --accent-ink:#f4f1ea; --accent-soft:#167a4a; --danger:#b42318;
+  --cyan:#2f7d93;  --cyan-p:#2f7d93;
+  --coral:#c0573c; --coral-p:#c0573c;
+  --lilac:#6a58b0; --lilac-p:#6a58b0;
+  --lime:#6a8a24;  --lime-p:#6a8a24;
+  --mint:#167a4a;  --mint-p:#167a4a;
+  --rose:#b14d7a;  --rose-p:#b14d7a;
+  --tray:#167a4a;  --tray-p:#167a4a;
+  --bin:#b42318;   --bin-p:#b42318;
+  --plain:#6b675e; --plain-p:#1b1a17;
+  --tile-blank:#ebe7dd;
+  --hover:rgba(27,26,23,.045); --press:rgba(27,26,23,.07);
+  --focus-glow:0 0 0 2px #167a4a,0 0 0 6px rgba(22,122,74,.12);
+  --focus-field:0 0 0 3px rgba(22,122,74,.16);
+  --picked-edge:rgba(22,122,74,.7); --picked-fill:rgba(22,122,74,.07);
+  --edge-top:inset 0 1px 0 rgba(255,255,255,.6);
+  --shadow-hover:0 1px 2px rgba(27,26,23,.08),0 12px 26px -12px rgba(27,26,23,.26);
+  --shadow-lift:0 1px 2px rgba(27,26,23,.10),0 16px 32px -12px rgba(27,26,23,.30),0 40px 72px -28px rgba(27,26,23,.30);
+  --shadow-float:0 1px 2px rgba(27,26,23,.10),0 10px 24px -8px rgba(27,26,23,.26);
+  --shadow-glass:0 0 0 1px rgba(27,26,23,.06),0 10px 24px -8px rgba(27,26,23,.26),0 28px 56px -20px rgba(27,26,23,.22);
+  --card-tint:#faf8f3; --fold-tint:#faf8f3; --strip-tint:transparent;
+  --card-rim:rgba(27,26,23,.09); --card-rim-hover:rgba(27,26,23,.15);
+  --card-shadow:0 1px 2px rgba(27,26,23,.06);
+  --glass-menu:rgba(250,248,243,.94); --glass-panel:rgba(250,248,243,.9);
+  --glass-sheet:rgba(250,248,243,.95); --glass-sheet-phone:rgba(250,248,243,.98); --glass-rows:rgba(250,248,243,.95);
+  --save-ground:none; --save-sheet:#faf8f3;
+}
+:root[data-theme="light"] .pal-scrim,:root[data-theme="light"] .scrim{background:rgba(244,241,234,.55)}
+:root[data-theme="light"] .si[aria-current="true"]{background:rgba(27,26,23,.06)}
+:root[data-theme="light"] .pbottom .padd,:root[data-theme="light"] .pbulk,:root[data-theme="light"] .share-bottom .ps{background:rgba(250,248,243,.82);border-color:var(--line)}
+:root[data-theme="light"] .pbottom .padd{color:var(--ink);box-shadow:var(--shadow-float)}
+:root[data-theme="light"] .sheet .fld-in,:root[data-theme="light"] .sheet .ps,:root[data-theme="light"] .sheet .seg{background:rgba(255,255,255,.7)}
+:root[data-theme="light"] .fgrid>.ftile .ft-faces .fav{box-shadow:0 0 0 2px rgba(250,248,243,.9)}
+:root[data-theme="light"] .chk{border-color:rgba(27,26,23,.3);background:rgba(250,248,243,.7)}
+
+/* ---------- One ground: the sidebar is a column of the page, no rules between it, the pins and the content ---------- */
+.side,.side-foot,.dock{border-color:transparent}
+.side{-webkit-backdrop-filter:none;backdrop-filter:none}
+.pal-scrim,.scrim{background:rgba(15,15,17,.6)}
+/* headlines in the serif of pinned.cc; everything else keeps Geist */
+.brand-t{font:400 22px/1 var(--serif);letter-spacing:-.01em}
+.tb.dash h2{font:400 30px/1.05 var(--serif);letter-spacing:-.02em}
+.gal-h{font:400 20px/1.2 var(--serif);letter-spacing:-.01em}
+.phead-t{font-family:var(--serif);font-weight:400;letter-spacing:-.02em}
+/* air between the search and the pins */
+#dockwrap{padding-top:20px}
+
+/* ---------- The bulb: light or dark. Lit in light, off in dark; bottom right on the desktop, beside the gear on the phone ---------- */
+.bulb{width:32px;height:32px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--ink-faint);opacity:.8;transition:opacity 160ms var(--ease-out),color 160ms var(--ease-out)}
+.bulb:hover{opacity:1;color:var(--ink-weak)}
+.bulb svg.i{width:16px;height:22px;overflow:visible;stroke-width:1.3}
+:root[data-theme="light"] .bulb{--bulb-glass:#fbe7b0;--bulb-rim:#bf9d4c;--bulb-fil:#b07a12}
+:root[data-theme="light"] .bulb svg{filter:drop-shadow(0 0 4px rgba(255,200,80,.35))}
+.bulb:focus-visible{outline:none;box-shadow:var(--focus-glow)}
+.bulb.desk{position:fixed;right:16px;bottom:14px;z-index:40}
+.desk-only{display:none}
+@media (min-width:900px){.desk-only{display:grid}}
+.phead .bulb{width:var(--tap);height:var(--tap);margin-left:auto;margin-right:var(--s-3)}

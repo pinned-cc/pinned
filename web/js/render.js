@@ -330,7 +330,7 @@ export function phoneBody() {
 }
 export function phoneRecents() {
   if (!data.has) return '';
-  const head = PHONE_TABS.includes(ui.view) ? `<div class="phead"><h1 class="phead-t">Pinned</h1><button type="button" class="ib gear" data-view="settings" aria-label="Settings">${ic('gear')}</button></div>` : '';
+  const head = PHONE_TABS.includes(ui.view) ? `<div class="phead"><h1 class="phead-t">Pinned</h1><button type="button" class="bulb" data-theme-toggle aria-label="${document.documentElement.dataset.theme === 'light' ? 'Dark mode' : 'Light mode'}">${ic('bulb')}</button><button type="button" class="ib gear" data-view="settings" aria-label="Settings">${ic('gear')}</button></div>` : '';
   /* the pinned links, marked with a pin: the phone's dock; the recently opened ones live on the Dashboard */
   const all = pinned();
   if (!all.length) return head;

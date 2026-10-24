@@ -2,6 +2,19 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.9, 2026-10-24
+
+### New
+
+- Light mode, in the paper and ink of pinned.cc. Pinned follows your system until you pick one with the bulb: bottom right on the desktop, next to the gear on the phone. Your pick is kept in that browser.
+
+### Changes
+
+- Dark mode is calmer: one flat background without the coloured glow, and softer card edges.
+- No more lines between the sidebar, the pinned row and the content. The background carries the whole screen.
+- The name, the page title and Recently opened are set in a serif.
+- A little more room under the search.
+
 ## 0.1.8, 2026-10-23
 
 ### Changes
