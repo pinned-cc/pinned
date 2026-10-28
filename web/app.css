@@ -1531,6 +1531,7 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 :root[data-theme="light"] .si[aria-current="true"]{background:rgba(27,26,23,.06)}
 :root[data-theme="light"] .pbottom .padd,:root[data-theme="light"] .pbulk,:root[data-theme="light"] .share-bottom .ps{background:rgba(250,248,243,.82);border-color:var(--line)}
 :root[data-theme="light"] .pbottom .padd{color:var(--ink);box-shadow:var(--shadow-float)}
+:root[data-theme="light"] .ptab-ind{box-shadow:0 0 0 1px var(--line-2),var(--card-shadow)}
 :root[data-theme="light"] .sheet .fld-in,:root[data-theme="light"] .sheet .ps,:root[data-theme="light"] .sheet .seg{background:rgba(255,255,255,.7)}
 :root[data-theme="light"] .fgrid>.ftile .ft-faces .fav{box-shadow:0 0 0 2px rgba(250,248,243,.9)}
 :root[data-theme="light"] .chk{border-color:rgba(27,26,23,.3);background:rgba(250,248,243,.7)}

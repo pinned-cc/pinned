@@ -2,6 +2,12 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.10, 2026-10-28
+
+### Fixes
+
+- In light mode on the phone, the selected tab no longer carries a heavy dark shadow. It now has a thin edge and a soft shadow, like the rest of light mode.
+
 ## 0.1.9, 2026-10-24
 
 ### New
