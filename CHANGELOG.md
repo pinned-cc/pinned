@@ -2,6 +2,23 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.11
+
+Not released yet.
+
+### Fixes
+
+- A site with a broken favicon.ico could stop the server, and it stopped again at every start until the bookmark was removed by hand. A broken icon now leaves the letter mark and the server keeps running.
+- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again.
+- An import file whose folders nest more than 256 deep could stop the server. It is now refused with a message.
+- Someone guessing passwords from many addresses could make every login wait, yours included. A browser that has logged in before now keeps a signed device cookie, is counted on its own and is no longer held by that limit. Other browsers keep the limit as before.
+
+### Changes
+
+- Over HTTPS the login cookie is named `__Host-pinned_session` and every answer sends `Strict-Transport-Security`. You stay logged in: the old cookie moves to the new name on your next visit. Plain http on your network works as before.
+- `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback, private and `100.64.0.0/10` addresses. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie behind `tailscale serve` is Secure too.
+- The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, restore a backup.
+
 ## 0.1.10, 2026-10-28
 
 ### Fixes
