@@ -307,7 +307,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 	exp := s.st.Now().Add(folderUnlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
 		Name: unlockCookieName(id), Value: s.folderUnlockValue(f, exp), Path: "/",
-		MaxAge: int(folderUnlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: isHTTPS(r),
+		MaxAge: int(folderUnlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -329,6 +329,6 @@ func (s *Server) apiRelockFolder(w http.ResponseWriter, r *http.Request) {
 func (s *Server) clearUnlockCookie(w http.ResponseWriter, r *http.Request, id int64) {
 	http.SetCookie(w, &http.Cookie{
 		Name: unlockCookieName(id), Value: "", Path: "/", MaxAge: -1,
-		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: isHTTPS(r),
+		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 }

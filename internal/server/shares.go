@@ -253,7 +253,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	exp := s.st.Now().Add(unlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
 		Name: shareCookie, Value: s.unlockValue(sh, exp), Path: "/s/" + sh.Token,
-		MaxAge: int(unlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: isHTTPS(r),
+		MaxAge: int(unlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -304,7 +304,7 @@ func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 		}
 		http.SetCookie(w, &http.Cookie{
 			Name: shareSeenCookie, Value: "1", Path: "/s/" + sh.Token,
-			MaxAge: 3600, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: isHTTPS(r),
+			MaxAge: 3600, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 		})
 	}
 

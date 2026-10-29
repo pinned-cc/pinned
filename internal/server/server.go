@@ -17,8 +17,17 @@ import (
 	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
-// CookieName is the session cookie.
+// CookieName is the session cookie. Over HTTPS it carries the __Host-
+// prefix, so the browser accepts it only with Secure, Path=/ and no Domain:
+// nothing on plain HTTP or another host can set or replace it.
 const CookieName = "pinned_session"
+
+// hostPrefix is the cookie name prefix used over HTTPS.
+const hostPrefix = "__Host-"
+
+// hstsHeader is sent on every HTTPS response. It has no includeSubDomains,
+// because other services of the same home domain may not run on HTTPS.
+const hstsHeader = "max-age=31536000"
 
 // Config is what the server needs from the environment.
 type Config struct {
@@ -46,6 +55,8 @@ type Server struct {
 	web    fs.FS // the web/ folder
 	icons  IconQueue
 	secret []byte
+	// baseHost is the host of BASE_URL when it starts with https, else "".
+	baseHost string
 	// Failure counters, kept apart so wrong tokens from a broken extension
 	// never lock the owner out of the login.
 	loginLimiter  *auth.Limiter // app password: login, removing a lock
@@ -68,12 +79,18 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 		shareLimiter: auth.NewLimiter(), folderLimiter: auth.NewLimiter(),
 		sleep: time.Sleep, mux: http.NewServeMux(),
 	}
+	if u, err := url.Parse(cfg.BaseURL); err == nil && strings.EqualFold(u.Scheme, "https") {
+		s.baseHost = strings.TrimSuffix(u.Host, ":443")
+	}
 	s.routes()
 	return s
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	securityHeaders(w.Header())
+	if s.isHTTPS(r) {
+		w.Header().Set("Strict-Transport-Security", hstsHeader)
+	}
 	if r.Method == http.MethodOptions && strings.HasPrefix(r.URL.Path, "/api/") {
 		preflight(w, r)
 		return
@@ -153,9 +170,12 @@ func (s *Server) sessionTTL() time.Duration {
 // loggedIn reports whether the request carries a valid session. With a
 // ResponseWriter, a session last renewed more than a day ago is renewed for
 // the full lifetime, in the database and in the cookie.
+//
+// A session cookie without the __Host- prefix on an HTTPS request, from
+// before 0.1.11, is renewed under the prefixed name the same way.
 func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
-	c, err := r.Cookie(CookieName)
-	if err != nil || c.Value == "" {
+	c, legacy := s.sessionCookie(r)
+	if c == nil {
 		return false
 	}
 	hash := auth.HashToken(s.secret, c.Value)
@@ -165,7 +185,7 @@ func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	ttl := s.sessionTTL()
-	if w != nil && now.Add(ttl).Sub(exp) > 24*time.Hour {
+	if w != nil && (legacy || now.Add(ttl).Sub(exp) > 24*time.Hour) {
 		if err := s.st.ExtendSession(hash, now.Add(ttl)); err != nil {
 			log.Printf("renew session: %v", err)
 		} else {
@@ -229,9 +249,31 @@ func (s *Server) startSession(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// sessionCookie returns the session cookie of r, the __Host- one first.
+// legacy is true when only the unprefixed one came with an HTTPS request.
+func (s *Server) sessionCookie(r *http.Request) (c *http.Cookie, legacy bool) {
+	if c, err := r.Cookie(hostPrefix + CookieName); err == nil && c.Value != "" {
+		return c, false
+	}
+	if c, err := r.Cookie(CookieName); err == nil && c.Value != "" {
+		return c, s.isHTTPS(r)
+	}
+	return nil, false
+}
+
 func (s *Server) setSessionCookie(w http.ResponseWriter, r *http.Request, token string, ttl time.Duration) {
+	secure := s.isHTTPS(r)
+	name := CookieName
+	if secure {
+		name = hostPrefix + CookieName
+		// Drop the unprefixed cookie of an older version, so the browser
+		// does not keep sending a second session.
+		if _, err := r.Cookie(CookieName); err == nil {
+			http.SetCookie(w, &http.Cookie{Name: CookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: true})
+		}
+	}
 	http.SetCookie(w, &http.Cookie{
-		Name:     CookieName,
+		Name:     name,
 		Value:    token,
 		Path:     "/",
 		MaxAge:   int(ttl.Seconds()),
@@ -239,23 +281,63 @@ func (s *Server) setSessionCookie(w http.ResponseWriter, r *http.Request, token 
 		// Lax, so the bookmarklet popup (a top level visit from another
 		// site) still carries the cookie.
 		SameSite: http.SameSiteLaxMode,
-		Secure:   isHTTPS(r),
+		Secure:   secure,
 	})
 }
 
+// endSession ends the session of either cookie name and clears both.
 func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
-	if c, err := r.Cookie(CookieName); err == nil {
-		if err := s.st.DeleteSession(auth.HashToken(s.secret, c.Value)); err != nil {
-			log.Printf("end session: %v", err)
+	secure := s.isHTTPS(r)
+	for _, name := range []string{hostPrefix + CookieName, CookieName} {
+		if c, err := r.Cookie(name); err == nil {
+			if err := s.st.DeleteSession(auth.HashToken(s.secret, c.Value)); err != nil {
+				log.Printf("end session: %v", err)
+			}
 		}
+		if name != CookieName && !secure {
+			continue // a __Host- cookie can only be set, or cleared, over HTTPS
+		}
+		http.SetCookie(w, &http.Cookie{Name: name, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: secure})
 	}
-	http.SetCookie(w, &http.Cookie{Name: CookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: isHTTPS(r)})
 }
 
-// isHTTPS decides the cookie's Secure flag. X-Forwarded-Proto can only make
-// the cookie stricter, so it is read without a trust check.
-func isHTTPS(r *http.Request) bool {
-	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+// cgnat is 100.64.0.0/10, where Tailscale addresses live.
+var cgnat = netip.MustParsePrefix("100.64.0.0/10")
+
+// isHTTPS reports whether the visitor reached the app over HTTPS. It
+// decides the Secure flag and __Host- prefix of cookies, HSTS, and the
+// scheme of links built from the request. It is true when:
+//
+//   - this connection is TLS;
+//   - X-Forwarded-Proto says https and comes from a trusted proxy:
+//     TRUSTED_PROXIES when set, otherwise any loopback, private or
+//     100.64.0.0/10 address, where a reverse proxy in front of a home
+//     server sits; from anywhere else the header is ignored;
+//   - no trusted X-Forwarded-Proto came and BASE_URL starts with https
+//     and names the host of the request, which covers proxies that send
+//     no header, such as tailscale serve.
+func (s *Server) isHTTPS(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" && s.protoTrusted(r) {
+		first, _, _ := strings.Cut(proto, ",")
+		return strings.EqualFold(strings.TrimSpace(first), "https")
+	}
+	return s.baseHost != "" && strings.EqualFold(r.Host, s.baseHost)
+}
+
+// protoTrusted reports whether X-Forwarded-Proto of r may be believed.
+func (s *Server) protoTrusted(r *http.Request) bool {
+	ap, err := netip.ParseAddrPort(r.RemoteAddr)
+	if err != nil {
+		return false
+	}
+	a := ap.Addr().Unmap()
+	if len(s.cfg.TrustedProxies) > 0 {
+		return s.trusted(a)
+	}
+	return a.IsLoopback() || a.IsPrivate() || cgnat.Contains(a)
 }
 
 // checkPassword compares the app password under the login limiter. It
@@ -274,7 +356,7 @@ func (s *Server) baseURL(r *http.Request) string {
 		return strings.TrimRight(s.cfg.BaseURL, "/")
 	}
 	scheme := "http"
-	if isHTTPS(r) {
+	if s.isHTTPS(r) {
 		scheme = "https"
 	}
 	return scheme + "://" + r.Host

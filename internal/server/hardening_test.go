@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	cryptotls "crypto/tls"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -587,5 +588,148 @@ func TestTitleAndFolderNameAreCapped(t *testing.T) {
 	f = decode[folderJSON](t, e.expect("PATCH", "/api/folders/"+itoa(f.ID), map[string]any{"name": long}, 200))
 	if n := len([]rune(f.Name)); n != store.MaxFolderName {
 		t.Errorf("renamed folder has %d characters", n)
+	}
+}
+
+func TestIsHTTPS(t *testing.T) {
+	proxies, _ := ParseProxies("192.0.2.7")
+	plain := New(Config{}, nil, testWeb, &fakeQueue{}, nil)
+	listed := New(Config{TrustedProxies: proxies}, nil, testWeb, &fakeQueue{}, nil)
+	base := New(Config{BaseURL: "https://pinned.example.ts.net"}, nil, testWeb, &fakeQueue{}, nil)
+	req := func(remote, host, proto string) *http.Request {
+		r := httptest.NewRequest("GET", "/", nil)
+		r.RemoteAddr, r.Host = remote, host
+		if proto != "" {
+			r.Header.Set("X-Forwarded-Proto", proto)
+		}
+		return r
+	}
+	for _, c := range []struct {
+		name string
+		s    *Server
+		r    *http.Request
+		want bool
+	}{
+		{"plain http", plain, req("192.168.1.5:1", "nas:9095", ""), false},
+		{"proxy on loopback", plain, req("127.0.0.1:1", "a", "https"), true},
+		{"proxy on docker bridge", plain, req("172.17.0.1:1", "a", "https"), true},
+		{"proxy on tailnet", plain, req("100.101.102.103:1", "a", "https"), true},
+		{"proxy on ula", plain, req("[fd00::1]:1", "a", "https"), true},
+		{"several proxies", plain, req("10.0.0.2:1", "a", "https, http"), true},
+		{"public client lies", plain, req("203.0.113.9:1", "a", "https"), false},
+		{"trusted list set, not on it", listed, req("127.0.0.1:1", "a", "https"), false},
+		{"trusted list set, on it", listed, req("192.0.2.7:1", "a", "https"), true},
+		{"proxy says http", plain, req("127.0.0.1:1", "a", "http"), false},
+		{"base url host, no header", base, req("172.17.0.1:1", "pinned.example.ts.net", ""), true},
+		{"base url host, proxy says http", base, req("172.17.0.1:1", "pinned.example.ts.net", "http"), false},
+		{"base url, other host", base, req("192.168.1.5:1", "192.168.1.10:9095", ""), false},
+	} {
+		if got := c.s.isHTTPS(c.r); got != c.want {
+			t.Errorf("%s: got %v", c.name, got)
+		}
+	}
+	tls := req("203.0.113.9:1", "a", "")
+	tls.TLS = &cryptotls.ConnectionState{}
+	if !plain.isHTTPS(tls) {
+		t.Error("TLS connection not https")
+	}
+}
+
+// loginOver logs in through e with or without X-Forwarded-Proto: https and
+// returns the response.
+func loginOver(t *testing.T, e *env, https bool) *http.Response {
+	t.Helper()
+	req, _ := http.NewRequest("POST", e.srv.URL+"/api/login", strings.NewReader(`{"password":"pw"}`))
+	req.Header.Set("X-Requested-With", "fetch")
+	if https {
+		req.Header.Set("X-Forwarded-Proto", "https")
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	return resp
+}
+
+func cookieNamed(resp *http.Response, name string) *http.Cookie {
+	for _, c := range resp.Cookies() {
+		if c.Name == name {
+			return c
+		}
+	}
+	return nil
+}
+
+func TestCookiePrefixAndHSTS(t *testing.T) {
+	e := newEnv(t, Config{})
+	// Plain HTTP, as on a LAN: no prefix, no Secure, no HSTS.
+	resp := loginOver(t, e, false)
+	if c := cookieNamed(resp, CookieName); resp.StatusCode != 204 || c == nil || c.Secure {
+		t.Fatalf("http login: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	if h := resp.Header.Get("Strict-Transport-Security"); h != "" {
+		t.Errorf("HSTS over http: %q", h)
+	}
+	// Behind an HTTPS proxy: __Host- prefix, Secure, HSTS.
+	resp = loginOver(t, e, true)
+	c := cookieNamed(resp, "__Host-"+CookieName)
+	if resp.StatusCode != 204 || c == nil || !c.Secure || c.Path != "/" || c.Domain != "" || !c.HttpOnly {
+		t.Fatalf("https login: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	if h := resp.Header.Get("Strict-Transport-Security"); h != "max-age=31536000" {
+		t.Errorf("HSTS over https: %q", h)
+	}
+	if cookieNamed(resp, CookieName) != nil {
+		t.Error("unprefixed cookie set over https")
+	}
+}
+
+func TestOldSessionCookieMovesToPrefix(t *testing.T) {
+	e := newEnv(t, Config{})
+	token := "old-session-token"
+	if err := e.st.CreateSession(hashOf(e, token), time.Now().Add(80*24*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	get := func(cookie string) *http.Response {
+		req, _ := http.NewRequest("GET", e.srv.URL+"/api/state", nil)
+		req.Header.Set("X-Forwarded-Proto", "https")
+		req.Header.Set("Cookie", cookie)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp
+	}
+	// A browser logged in before 0.1.11 stays logged in.
+	resp := get(CookieName + "=" + token)
+	if resp.StatusCode != 200 {
+		t.Fatalf("old cookie over https: %d", resp.StatusCode)
+	}
+	moved := cookieNamed(resp, "__Host-"+CookieName)
+	old := cookieNamed(resp, CookieName)
+	if moved == nil || moved.Value != token || !moved.Secure || old == nil || old.MaxAge >= 0 {
+		t.Fatalf("not moved to the prefix: %v", resp.Cookies())
+	}
+	if resp := get("__Host-" + CookieName + "=" + token); resp.StatusCode != 200 || len(resp.Cookies()) != 0 {
+		t.Errorf("prefixed cookie: %d %v", resp.StatusCode, resp.Cookies())
+	}
+
+	// Logout over https ends the session and clears both names.
+	req, _ := http.NewRequest("POST", e.srv.URL+"/api/logout", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("X-Requested-With", "fetch")
+	req.Header.Set("Cookie", "__Host-"+CookieName+"="+token)
+	out, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out.Body.Close()
+	if a, b := cookieNamed(out, "__Host-"+CookieName), cookieNamed(out, CookieName); out.StatusCode != 204 || a == nil || b == nil || a.MaxAge >= 0 || b.MaxAge >= 0 {
+		t.Errorf("logout: %d %v", out.StatusCode, out.Cookies())
+	}
+	if resp := get("__Host-" + CookieName + "=" + token); resp.StatusCode != 401 {
+		t.Errorf("after logout: %d", resp.StatusCode)
 	}
 }

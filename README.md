@@ -89,8 +89,8 @@ All settings are environment variables.
 |---|---|---|
 | `APP_PASSWORD` | none, required | The login password, at least 8 characters. The app does not start without it and never logs it. |
 | `TZ` | `UTC` | Time zone for the nightly export at 03:00. |
-| `BASE_URL` | taken from each request | The address people use, for example `https://bookmarks.example.com`. Used in the Save button code and the browser search entry. Set it when the app runs behind a proxy. |
-| `TRUSTED_PROXIES` | empty | Addresses or networks of your reverse proxies, comma separated, for example `172.16.0.0/12` or `10.0.0.1, fd00::/8`. Only for requests from these is `X-Forwarded-For` read. Empty means the header is ignored. |
+| `BASE_URL` | taken from each request | The address people use, for example `https://bookmarks.example.com`. Used in the Save button code and the browser search entry. Set it when the app runs behind a proxy. When it starts with `https://`, a request for that host name with no `X-Forwarded-Proto` counts as HTTPS (see Behind a reverse proxy). |
+| `TRUSTED_PROXIES` | empty | Addresses or networks of your reverse proxies, comma separated, for example `172.16.0.0/12` or `10.0.0.1, fd00::/8`. Only for requests from these is `X-Forwarded-For` read, and `X-Forwarded-Proto` only from these too. Empty means `X-Forwarded-For` is ignored and `X-Forwarded-Proto` is read only from loopback, private and `100.64.0.0/10` addresses. |
 | `SESSION_DAYS` | `90` | How long a login lasts. A login in use is renewed for the full time again. |
 | `DATA_DIR` | `/data` | The data folder. |
 | `PORT` | `8080` | The port inside the container. |
@@ -155,7 +155,9 @@ Wrong app passwords, wrong tokens, wrong share passwords and wrong folder passwo
 The app speaks plain HTTP on one port. For access from outside your home, put it behind a proxy that does HTTPS, such as Caddy, Nginx Proxy Manager or Traefik. It has to sit at the root of a host name, not under a path like `/bookmarks`.
 
 - Set `BASE_URL` to the public address, for example `https://bookmarks.example.com`. The Save button code and the browser search entry use it.
-- The login cookie is marked Secure when the request came over HTTPS, or when the proxy sends `X-Forwarded-Proto: https`. Caddy, Traefik and Nginx Proxy Manager send that header.
+- The app treats a request as HTTPS when the proxy sends `X-Forwarded-Proto: https`. Caddy, Traefik, Nginx Proxy Manager and Cloudflare Tunnel send that header. The header is believed only from the addresses in `TRUSTED_PROXIES`, or, when that is empty, from loopback, private and `100.64.0.0/10` addresses, where a proxy in front of a home server sits. From anyone else it is ignored.
+- A proxy that sends no `X-Forwarded-Proto`, such as `tailscale serve`, is covered by `BASE_URL`: when it starts with `https://` and the request is for that same host name, the request counts as HTTPS.
+- Over HTTPS the login cookie is named `__Host-pinned_session` and marked Secure, and every answer carries `Strict-Transport-Security: max-age=31536000`, so the browser uses HTTPS for that host name from then on. Over plain HTTP on your network, the cookie stays `pinned_session` and no such header is sent. Only open the `BASE_URL` host name over HTTPS: over plain HTTP the browser refuses its cookie and the login does not stick.
 - Set `TRUSTED_PROXIES` to the proxy's address or network. The app then reads the visitor's address from `X-Forwarded-For`. Without it, every visitor looks like the proxy, and wrong passwords from anyone slow down everyone, you included.
 
 Caddy, as a whole `Caddyfile`:
@@ -184,7 +186,7 @@ The fix, with Private Relay left on: let Tailscale resolve the name on that iPho
 
 Turn Tailscale off and on again on the iPhone. How to save in the app has the same steps. Tailscale tracks the cause in [tailscale/tailscale#21677](https://github.com/tailscale/tailscale/issues/21677).
 
-**Behind `tailscale serve`, the Save code starts with http.** `tailscale serve` ends HTTPS but does not send `X-Forwarded-Proto`. How to save uses the address in your browser when it is on the same host. Set `BASE_URL` to the `https://` address to fix the search entry too.
+**Behind `tailscale serve`, the Save code starts with http.** `tailscale serve` ends HTTPS but does not send `X-Forwarded-Proto`. How to save uses the address in your browser when it is on the same host. Set `BASE_URL` to the `https://` address to fix the search entry too; it also gives the login cookie its Secure flag behind `tailscale serve`.
 
 **Pinned as the start page on the iPhone.** Safari, Chrome and Brave on iOS cannot open a page of your own as their start page. Firefox can (Settings, Homepage, Custom URL) and so can Vivaldi (Settings, General, Display Home Button, then Specific Site). In Safari the closest is Share, Add to Favorites, which shows Pinned as the first tile on every new tab. How to save in the app has the same steps and your address to copy.
 
