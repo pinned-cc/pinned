@@ -11,7 +11,7 @@ icons/                the fetched site icons
 export/bookmarks.html the nightly export
 ```
 
-`secret.key` is the key for the hashes of sessions, API tokens and unlock cookies. Keep it with the database. Without it every session ends and every API token stops working.
+`secret.key` is the key for the hashes of sessions, API tokens, unlock cookies and device cookies. Keep it with the database. Without it every session ends and every API token stops working.
 
 ## The database
 
@@ -58,7 +58,7 @@ A bookmark with `deleted_at` NULL is live. Live bookmarks are unique by `url_key
 | `key` | TEXT PRIMARY KEY | |
 | `value` | TEXT | JSON. |
 
-Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to three folder ids, newest first), and `password_hmac`, an HMAC of `APP_PASSWORD` keyed with `secret.key`. When the password in the environment no longer matches it at start, every session is deleted.
+Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to three folder ids, newest first), and `password_hmac`, an HMAC of `APP_PASSWORD` keyed with `secret.key`. When the password in the environment no longer matches it at start, every session is deleted. `icon_failures_version` is the app version that recorded the rows of `icon_failures`; a start with another version empties that table.
 
 ### sessions
 
@@ -66,6 +66,14 @@ Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to th
 |---|---|---|
 | `token_hash` | TEXT PRIMARY KEY | HMAC-SHA256 of the session cookie value, keyed with `secret.key`. The cookie value itself is not stored. |
 | `expires_at` | INTEGER NOT NULL | |
+
+### icon_failures
+
+| Column | Type | Meaning |
+|---|---|---|
+| `bookmark_id` | INTEGER PRIMARY KEY | The bookmark. Deleted with it. |
+| `url_key` | TEXT NOT NULL | The address whose icon failed. A failure for another address starts the count again. |
+| `count` | INTEGER NOT NULL | Failed fetches in a row. At 3 the fetch at start skips the bookmark. A stored icon deletes the row. |
 
 ### tokens
 
