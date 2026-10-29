@@ -150,6 +150,14 @@ var migrations = []string{
 
 	// Hide from Recent, per folder; subfolders inherit it.
 	`ALTER TABLE folders ADD COLUMN hide_recent INTEGER NOT NULL DEFAULT 0;`,
+
+	// Failed icon fetches per bookmark, so a link whose icon never loads is
+	// not fetched again at every start. url_key is the address that failed.
+	`CREATE TABLE icon_failures (
+		bookmark_id INTEGER PRIMARY KEY REFERENCES bookmarks(id) ON DELETE CASCADE,
+		url_key TEXT NOT NULL,
+		count INTEGER NOT NULL
+	);`,
 }
 
 // NewerSchemaError means the database was written by a later version. That

@@ -553,3 +553,56 @@ func TestOpenRefusesNewerSchema(t *testing.T) {
 		t.Errorf("message %q", err)
 	}
 }
+
+func TestIconFailures(t *testing.T) {
+	s := open(t)
+	b, _, err := s.Create(NewBookmark{Title: "A", URL: "http://a.example/"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	given := func() map[int64]string {
+		t.Helper()
+		g, err := s.IconsGivenUp()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return g
+	}
+	for i := 1; i < IconGiveUp; i++ {
+		s.IconFailed(b.ID, b.URLKey, false)
+	}
+	if len(given()) != 0 {
+		t.Fatal("given up too early")
+	}
+	// A failure for another address starts again.
+	s.IconFailed(b.ID, "http://b.example/", false)
+	if len(given()) != 0 {
+		t.Fatal("a new address kept the old count")
+	}
+	s.IconFailed(b.ID, b.URLKey, true)
+	if given()[b.ID] != b.URLKey {
+		t.Fatal("final failure not given up at once")
+	}
+	// The same version keeps the failures, a new one forgets them.
+	if err := s.ResetIconFailures("v1"); err != nil {
+		t.Fatal(err)
+	}
+	s.IconFailed(b.ID, b.URLKey, true)
+	if err := s.ResetIconFailures("v1"); err != nil || len(given()) != 1 {
+		t.Fatalf("same version forgot: %v", err)
+	}
+	if err := s.ResetIconFailures("v2"); err != nil || len(given()) != 0 {
+		t.Fatalf("new version kept: %v", err)
+	}
+	// A stored icon clears the failures.
+	s.IconFailed(b.ID, b.URLKey, true)
+	if _, err := s.SetIcon(b.ID, b.URLKey, "1-x.png", nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(given()) != 0 {
+		t.Fatal("icon stored but still given up")
+	}
+	if err := s.IconFailed(999, "http://x/", false); !errors.Is(err, ErrNotFound) {
+		t.Errorf("missing bookmark: %v", err)
+	}
+}

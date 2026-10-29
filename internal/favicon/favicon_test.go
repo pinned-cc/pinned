@@ -323,3 +323,113 @@ func TestPoolStopsWithContext(t *testing.T) {
 		t.Fatal("workers did not stop")
 	}
 }
+
+// brokenICOs are the two files from the audit of 2026-10-29 (F-1) that made
+// the BMP decoder panic: slice bounds out of range in go-bmp.
+var brokenICOs = [][]byte{
+	[]byte("\x00\x00\x01\x00\x01\x00000000000\x00\x00\x00\x16\x00\x00\x00(\x00\x00\x000\x00\x00\x000\x00\x00\x00\x01\x00\x04\x00\x00\x00\x00\x00" + strings.Repeat("0", 28)),
+	[]byte("\x00\x00\x01\x00\x01\x0000000000 \x00\x00\x00\x16\x00\x00\x00(\x00\x00\x000\x00\x00\x000\x00\x00\x00\x01\x00\x04\x00\x00\x00\x00\x00" + strings.Repeat("0", 20)),
+}
+
+func TestProcessSurvivesBrokenICO(t *testing.T) {
+	for i, data := range brokenICOs {
+		if _, err := Process(data); err == nil {
+			t.Errorf("broken ico %d (%d bytes) accepted", i, len(data))
+		}
+	}
+}
+
+func newTestStore(t *testing.T) *store.Store {
+	t.Helper()
+	st, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	return st
+}
+
+func TestPoolRunSurvivesBrokenICOAndGivesUp(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("<title>x</title>")) })
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) { w.Write(brokenICOs[0]) })
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	st := newTestStore(t)
+	b, _, err := st.Create(store.NewBookmark{Title: "Evil", URL: srv.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := &Pool{dir: t.TempDir(), store: st}
+	for i := 1; i <= store.IconGiveUp; i++ {
+		p.Run(b.ID) // a panic here would fail the test
+		given, err := st.IconsGivenUp()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := given[b.ID]; ok != (i == store.IconGiveUp) {
+			t.Errorf("after %d failures given up = %v", i, ok)
+		}
+	}
+	if got, _ := st.Bookmark(b.ID); got.Icon != nil {
+		t.Errorf("broken icon stored: %v", *got.Icon)
+	}
+}
+
+// panickyStore breaks while storing an icon, to reach the recover in Run.
+type panickyStore struct{ *store.Store }
+
+func (panickyStore) SetIcon(int64, string, string, *string) (*string, error) { panic("boom") }
+
+func TestPoolRunRecoversAndGivesUpAtOnce(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Write(pngBytes(square(8, color.White, color.Black)))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	st := newTestStore(t)
+	b, _, err := st.Create(store.NewBookmark{Title: "Local", URL: srv.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := &Pool{dir: t.TempDir(), store: panickyStore{st}}
+	p.Run(b.ID)
+	given, _ := st.IconsGivenUp()
+	if key, ok := given[b.ID]; !ok || key != b.URLKey {
+		t.Errorf("a fetch that panicked is not given up: %v", given)
+	}
+}
+
+func TestPoolWorkerSurvivesBrokenICO(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) { w.Write(brokenICOs[1]) })
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	st := newTestStore(t)
+	b, _, err := st.Create(store.NewBookmark{Title: "Evil", URL: srv.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	p := NewPool(ctx, t.TempDir(), st)
+	for range store.IconGiveUp {
+		p.Enqueue(b.ID)
+	}
+	deadline := time.Now().Add(15 * time.Second)
+	for {
+		if given, _ := st.IconsGivenUp(); given[b.ID] != "" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the workers never gave up on the broken icon")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	cancel()
+	p.Wait()
+}

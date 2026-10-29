@@ -124,10 +124,22 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	icons := favicon.NewPool(ctx, filepath.Join(dataDir, "icons"), st)
-	// Bookmarks still showing a letter get another try at every start, so an
-	// improved icon search reaches links that were saved before it.
+	// Bookmarks still showing a letter get another try at start, so an
+	// improved icon search reaches links that were saved before it. A link
+	// whose icon failed store.IconGiveUp times is left alone until the next
+	// version, or until it is saved, edited or refetched.
+	if err := st.ResetIconFailures(version); err != nil {
+		log.Printf("icon failures: %v", err)
+	}
+	givenUp, err := st.IconsGivenUp()
+	if err != nil {
+		log.Printf("icon failures: %v", err)
+	}
 	if all, err := st.Bookmarks(); err == nil {
 		for _, b := range all {
+			if key, ok := givenUp[b.ID]; ok && key == b.URLKey {
+				continue
+			}
 			if b.Icon == nil && b.DeletedAt == nil {
 				icons.Enqueue(b.ID)
 			}

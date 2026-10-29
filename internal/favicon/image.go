@@ -42,8 +42,19 @@ func checkSize(w, h int) error {
 // Process checks what data is and turns it into an Icon. ICO files are
 // decoded and stored as a PNG of their largest frame. Raster images are
 // measured with DecodeConfig first and refused above 4096 by 4096 pixels or
-// 16 million pixels in total.
-func Process(data []byte) (Icon, error) {
+// 16 million pixels in total. A decoder that panics on a broken file (the
+// ICO and BMP decoders have done so) is caught and reported as an error, so
+// one bad icon on some site never stops the server.
+func Process(data []byte) (icon Icon, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			icon, err = Icon{}, fmt.Errorf("broken image: %v", r)
+		}
+	}()
+	return process(data)
+}
+
+func process(data []byte) (Icon, error) {
 	switch {
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
 		if err := checkConfig(png.DecodeConfig, data); err != nil {

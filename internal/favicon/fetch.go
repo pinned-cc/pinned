@@ -105,6 +105,7 @@ type Store interface {
 	Bookmark(id int64) (store.Bookmark, error)
 	SetIcon(id int64, forKey, icon string, tile *string) (*string, error)
 	IconInUse(icon string) bool
+	IconFailed(id int64, forKey string, final bool) error
 }
 
 // Pool fetches icons in the background, at most four at a time.
@@ -159,12 +160,21 @@ func (p *Pool) work() {
 	}
 }
 
-// Run fetches and stores the icon for one bookmark. Failures are silent.
+// Run fetches and stores the icon for one bookmark. Failures are silent,
+// and counted so the fetch at start gives up on a link after a few. A panic
+// anywhere in the fetch is caught: the bookmark is given up at once and the
+// server keeps running.
 func (p *Pool) Run(id int64) {
 	b, err := p.store.Bookmark(id)
 	if err != nil {
 		return
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("favicon: bookmark %d: icon fetch broke: %v", id, r)
+			p.failed(b, true)
+		}
+	}()
 	parent := p.ctx
 	if parent == nil {
 		parent = context.Background()
@@ -180,6 +190,7 @@ func (p *Pool) Run(id int64) {
 	}
 	icon, err := Find(ctx, client, b.URL)
 	if err != nil {
+		p.failed(b, false)
 		return
 	}
 	sum := sha256.Sum256(icon.Data)
@@ -198,6 +209,17 @@ func (p *Pool) Run(id int64) {
 	}
 	if prev != nil && *prev != name && !p.store.IconInUse(*prev) {
 		remove(filepath.Join(p.dir, *prev))
+	}
+}
+
+// failed counts a failed fetch for b, unless the pool is stopping and the
+// fetch was cut short.
+func (p *Pool) failed(b store.Bookmark, final bool) {
+	if p.ctx != nil && p.ctx.Err() != nil {
+		return
+	}
+	if err := p.store.IconFailed(b.ID, b.URLKey, final); err != nil && !errors.Is(err, store.ErrNotFound) {
+		log.Printf("favicon: bookmark %d: %v", b.ID, err)
 	}
 }
 

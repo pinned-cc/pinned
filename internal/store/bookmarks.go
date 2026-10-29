@@ -520,7 +520,10 @@ func (s *Store) SetIcon(id int64, forKey string, icon string, tile *string) (pre
 		if tile != nil {
 			t = *tile
 		}
-		_, err = tx.Exec(`UPDATE bookmarks SET icon = ?, tile = ? WHERE id = ?`, icon, t, id)
+		if _, err := tx.Exec(`UPDATE bookmarks SET icon = ?, tile = ? WHERE id = ?`, icon, t, id); err != nil {
+			return err
+		}
+		_, err = tx.Exec(`DELETE FROM icon_failures WHERE bookmark_id = ?`, id)
 		return err
 	})
 	return previous, err
