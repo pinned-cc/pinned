@@ -793,8 +793,9 @@ func TestKnownBrowserLogsInPastTheGlobalCap(t *testing.T) {
 	}
 }
 
-func TestOldSessionGetsDeviceCookie(t *testing.T) {
+func TestDeviceCookieOnlyFromPasswordAndEndsWithIt(t *testing.T) {
 	e := newEnv(t, Config{})
+	// A session alone never mints a device cookie.
 	token := "session-from-0.1.10"
 	if err := e.st.CreateSession(hashOf(e, token), time.Now().Add(80*24*time.Hour)); err != nil {
 		t.Fatal(err)
@@ -806,13 +807,23 @@ func TestOldSessionGetsDeviceCookie(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp.Body.Close()
-	c := cookieNamed(resp, deviceCookie)
-	if resp.StatusCode != 200 || c == nil {
-		t.Fatalf("no device cookie for a session in use: %d %v", resp.StatusCode, resp.Cookies())
+	if resp.StatusCode != 200 || cookieNamed(resp, deviceCookie) != nil {
+		t.Fatalf("session minted a device cookie: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	// A password login does, and it verifies.
+	login := loginOver(t, e, false)
+	c := cookieNamed(login, deviceCookie)
+	if c == nil {
+		t.Fatal("login gave no device cookie")
 	}
 	r := httptest.NewRequest("GET", "/", nil)
 	r.AddCookie(c)
 	if _, ok := e.server.deviceID(r); !ok {
-		t.Error("issued device cookie does not verify")
+		t.Fatal("issued device cookie does not verify")
+	}
+	// After a password change it no longer counts.
+	e.server.cfg.Password = "a new password"
+	if _, ok := e.server.deviceID(r); ok {
+		t.Error("device cookie survived a password change")
 	}
 }

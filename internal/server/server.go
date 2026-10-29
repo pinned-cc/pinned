@@ -192,9 +192,6 @@ func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
 			s.setSessionCookie(w, r, c.Value, ttl)
 		}
 	}
-	if w != nil {
-		s.rememberDevice(w, r) // browsers logged in before 0.1.11 get one too
-	}
 	return true
 }
 

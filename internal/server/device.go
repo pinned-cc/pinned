@@ -19,8 +19,10 @@ const deviceCookie = "pinned_device"
 // deviceTTL is the longest a browser keeps a cookie (400 days in Chrome).
 const deviceTTL = 400 * 24 * time.Hour
 
+// deviceMAC signs id together with the app password's fingerprint, so a
+// password change ends every device cookie at once.
 func (s *Server) deviceMAC(id string) string {
-	return auth.HashToken(s.secret, "device\x00"+id)
+	return auth.HashToken(s.secret, "device\x00"+auth.PasswordFingerprint(s.secret, s.cfg.Password)+"\x00"+id)
 }
 
 // deviceID returns the id of r's device cookie when its signature holds.
@@ -39,7 +41,8 @@ func (s *Server) deviceID(r *http.Request) (string, bool) {
 }
 
 // rememberDevice gives r's browser a device cookie unless it has one. It
-// is called only for a browser that logged in or holds a session.
+// is called only after the right app password: a session alone never
+// mints one, so a stolen session cannot collect cookies to spread guesses.
 func (s *Server) rememberDevice(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.deviceID(r); ok {
 		return
