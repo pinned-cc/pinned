@@ -33,11 +33,22 @@ type Link struct {
 	AddDate int64
 }
 
+// MaxNesting is how deep folders may nest in a file. Real files stay far
+// below it; a file past it is refused, because the tree is walked
+// recursively and a crafted file with a million levels would overflow the
+// stack. Folders past the app's own depth limit are still flattened on import.
+const MaxNesting = 256
+
+// ErrTooDeep is returned for a file whose folders nest deeper than MaxNesting.
+var ErrTooDeep = fmt.Errorf("folders in the file nest more than %d deep", MaxNesting)
+
 // Parse reads a Netscape bookmark file and returns its root folder.
 func Parse(r io.Reader) (*Folder, error) {
 	root := &Folder{}
 	stack := []*Folder{} // folders whose <DL> is open
+	depths := []int{}    // the nesting depth of each entry in stack
 	var pending *Folder  // folder named by the last <H3>, waiting for its <DL>
+	pendingDepth := 0
 	sawDL := false
 
 	z := nethtml.NewTokenizer(r)
@@ -62,21 +73,27 @@ func Parse(r io.Reader) (*Folder, error) {
 				switch {
 				case pending != nil:
 					stack = append(stack, pending)
+					depths = append(depths, pendingDepth)
 					pending = nil
 				case len(stack) == 0:
 					stack = append(stack, root)
+					depths = append(depths, 0)
 				default:
 					// A <DL> without a heading: keep its items in the current folder.
 					stack = append(stack, stack[len(stack)-1])
+					depths = append(depths, depths[len(depths)-1])
 				}
 			case "h3":
 				f := &Folder{Name: readText(z, "h3"), AddDate: parseDate(attrs["add_date"])}
-				parent := root
+				parent, depth := root, 0
 				if len(stack) > 0 {
-					parent = stack[len(stack)-1]
+					parent, depth = stack[len(stack)-1], depths[len(depths)-1]
+				}
+				if depth+1 > MaxNesting {
+					return nil, ErrTooDeep
 				}
 				parent.Folders = append(parent.Folders, f)
-				pending = f
+				pending, pendingDepth = f, depth+1
 			case "a":
 				href := strings.TrimSpace(attrs["href"])
 				title := readText(z, "a")
@@ -94,6 +111,7 @@ func Parse(r io.Reader) (*Folder, error) {
 			name, _ := z.TagName()
 			if string(name) == "dl" && len(stack) > 0 {
 				stack = stack[:len(stack)-1]
+				depths = depths[:len(depths)-1]
 			}
 		}
 	}

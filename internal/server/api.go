@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -654,6 +655,8 @@ func (s *Server) apiOrderFolders(w http.ResponseWriter, r *http.Request) {
 // maxImport caps the import request body.
 const maxImport = 20 << 20
 
+var tooDeepImport = fmt.Sprintf("The folders in this file nest more than %d deep. Pinned cannot import it.", netscape.MaxNesting)
+
 func (s *Server) apiImport(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxImport)
 	file, _, err := r.FormFile("file")
@@ -668,11 +671,19 @@ func (s *Server) apiImport(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 	root, err := netscape.Parse(file)
+	if errors.Is(err, netscape.ErrTooDeep) {
+		writeError(w, http.StatusBadRequest, tooDeepImport)
+		return
+	}
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "not a bookmark file")
 		return
 	}
 	res, err := s.st.Import(root)
+	if errors.Is(err, netscape.ErrTooDeep) {
+		writeError(w, http.StatusBadRequest, tooDeepImport)
+		return
+	}
 	if err != nil {
 		writeStoreError(w, err)
 		return

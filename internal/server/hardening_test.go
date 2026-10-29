@@ -449,6 +449,17 @@ func TestImportLimits(t *testing.T) {
 		t.Error("long folder not imported")
 	}
 
+	// The file from the audit of 2026-10-29 (F-2), 19.5 MB of unclosed
+	// folders, is refused with a clear message instead of killing the server.
+	evil := "<DL>" + strings.Repeat("<H3></H3><DL>", 1_500_000)
+	code, out = e.upload([]byte(evil))
+	if code != 400 || !strings.Contains(string(out), "nest more than") {
+		t.Errorf("deeply nested import: %d %s", code, out)
+	}
+	if resp := e.get("/health"); resp.StatusCode != 200 {
+		t.Errorf("health after the deep import: %d", resp.StatusCode)
+	}
+
 	// Bodies over 20 MB are refused.
 	big := bytes.Repeat([]byte("x"), maxImport+1)
 	if code, out := e.upload(big); code != 413 {

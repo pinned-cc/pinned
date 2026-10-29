@@ -2,6 +2,7 @@ package netscape
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -142,5 +143,33 @@ func TestWriteDeepTreeIsLinear(t *testing.T) {
 	Write(&buf, small)
 	if !strings.Contains(buf.String(), "\n        <DT><A HREF=\"https://a.example/\">a</A>\n") {
 		t.Errorf("indent changed:\n%s", buf.String())
+	}
+}
+
+func nested(levels int) string {
+	return "<DL><p>" + strings.Repeat("<DT><H3>f</H3><DL><p>", levels) + `<DT><A HREF="https://example.com/">x</A>` + strings.Repeat("</DL><p>", levels+1)
+}
+
+func TestParseNestingLimit(t *testing.T) {
+	root, err := Parse(strings.NewReader(nested(MaxNesting)))
+	if err != nil {
+		t.Fatalf("%d levels refused: %v", MaxNesting, err)
+	}
+	if links, folders := root.Count(); links != 1 || folders != MaxNesting {
+		t.Errorf("got %d links, %d folders", links, folders)
+	}
+	if _, err := Parse(strings.NewReader(nested(MaxNesting + 1))); !errors.Is(err, ErrTooDeep) {
+		t.Errorf("%d levels: %v", MaxNesting+1, err)
+	}
+	// The file from the audit of 2026-10-29 (F-2): unclosed folders, about
+	// 1.5 million levels in 19.5 MB.
+	evil := "<DL>" + strings.Repeat("<H3></H3><DL>", 1_500_000)
+	if _, err := Parse(strings.NewReader(evil)); !errors.Is(err, ErrTooDeep) {
+		t.Errorf("audit file: %v", err)
+	}
+	// Lists without a heading do not add a level.
+	flat := "<DL><p>" + strings.Repeat("<DL><p>", 10_000) + `<DT><A HREF="https://example.com/">x</A>`
+	if root, err := Parse(strings.NewReader(flat)); err != nil || len(root.Links) != 1 {
+		t.Errorf("headless lists: %v", err)
 	}
 }

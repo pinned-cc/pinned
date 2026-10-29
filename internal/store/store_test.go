@@ -402,7 +402,7 @@ func TestImportDeepFileExportsSmall(t *testing.T) {
 	s := open(t)
 	root := &netscape.Folder{}
 	f := root
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < netscape.MaxNesting; i++ { // the deepest file Parse accepts
 		sub := &netscape.Folder{Name: "n"}
 		f.Folders = append(f.Folders, sub)
 		f = sub
@@ -604,5 +604,23 @@ func TestIconFailures(t *testing.T) {
 	}
 	if err := s.IconFailed(999, "http://x/", false); !errors.Is(err, ErrNotFound) {
 		t.Errorf("missing bookmark: %v", err)
+	}
+}
+
+func TestImportRefusesTreeTooDeep(t *testing.T) {
+	s := open(t)
+	root := &netscape.Folder{}
+	f := root
+	for range 1_000_000 {
+		sub := &netscape.Folder{Name: "f"}
+		f.Folders = []*netscape.Folder{sub}
+		f = sub
+	}
+	f.Links = []netscape.Link{{Title: "x", URL: "https://example.com/"}}
+	if _, err := s.Import(root); !errors.Is(err, netscape.ErrTooDeep) {
+		t.Fatalf("a million levels: %v", err)
+	}
+	if fs, _ := s.Folders(); len(fs) != 0 {
+		t.Errorf("%d folders written", len(fs))
 	}
 }

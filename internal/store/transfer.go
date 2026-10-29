@@ -30,7 +30,13 @@ const MaxImportName = 200
 // Import never writes into a locked folder: a file folder whose name matches
 // a locked folder becomes a new folder beside it, named "<name> (imported)".
 // Folders deeper than MaxDepth are flattened into the folder at MaxDepth.
+//
+// A tree deeper than netscape.MaxNesting is refused with netscape.ErrTooDeep
+// before anything is written; Parse never returns one.
 func (s *Store) Import(root *netscape.Folder) (ImportResult, error) {
+	if treeDepth(root) > netscape.MaxNesting {
+		return ImportResult{}, netscape.ErrTooDeep
+	}
 	var res ImportResult
 	now := s.now()
 	err := s.withTx(func(tx *sql.Tx) error {
@@ -40,6 +46,26 @@ func (s *Store) Import(root *netscape.Folder) (ImportResult, error) {
 		return ImportResult{}, err
 	}
 	return res, nil
+}
+
+// treeDepth returns how deep folders nest below root, walking with a list
+// instead of recursion so any depth is safe to measure.
+func treeDepth(root *netscape.Folder) int {
+	type item struct {
+		f     *netscape.Folder
+		depth int
+	}
+	deepest := 0
+	todo := []item{{root, 0}}
+	for len(todo) > 0 {
+		it := todo[len(todo)-1]
+		todo = todo[:len(todo)-1]
+		deepest = max(deepest, it.depth)
+		for _, sub := range it.f.Folders {
+			todo = append(todo, item{sub, it.depth + 1})
+		}
+	}
+	return deepest
 }
 
 // importFolder adds f's links and subfolders into parentID, which sits at
