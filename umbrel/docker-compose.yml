@@ -1,22 +1,19 @@
-version: "3.7"
-
 services:
   app_proxy:
     environment:
       APP_HOST: pinned_web_1
       APP_PORT: 8080
-      # The extension, share links and the health check do not
-      # carry the Umbrel login. The app's own password and tokens guard them.
-      # A share link page also loads its CSS, script, fonts and icon from
-      # /static/* and /favicon.svg, which hold only the app's own files.
+      # The browser extension and scripts send an API token, share links are
+      # opened by people without an Umbrel login, and a share page loads the
+      # app's own CSS, scripts, fonts and icon. The app's password, tokens and
+      # share links protect these paths.
       PROXY_AUTH_WHITELIST: "/api/*,/s/*,/extras/*,/health,/static/*,/favicon.svg"
 
   web:
-    # The digest is filled in at release, from the multi-arch index:
-    # docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:0.1.0
-    image: ghcr.io/pinned-cc/pinned:0.1.0@sha256:PLACEHOLDER
+    image: ghcr.io/pinned-cc/pinned:0.1.10@sha256:cf19c3cc2fea817a85ea28e47e587baf36d38188242ead118b559d84470a4c2a
     user: "1000:1000"
     restart: on-failure
+    # The app writes only to /data.
     read_only: true
     tmpfs:
       - /tmp
@@ -26,7 +23,8 @@ services:
       - no-new-privileges:true
     environment:
       APP_PASSWORD: ${APP_PASSWORD}
-      BASE_URL: http://${DEVICE_DOMAIN_NAME}:9097
       TZ: UTC
+      # Read the visitor's address from Umbrel's proxy for the wrong password limits.
+      TRUSTED_PROXIES: "127.0.0.0/8,::1,${GATEWAY_IP}/32"
     volumes:
       - ${APP_DATA_DIR}/data:/data
