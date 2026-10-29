@@ -82,6 +82,11 @@ func LoadSecret(dataDir string) ([]byte, error) {
 // from one client run one at a time, and past GlobalMaxFails failures in
 // GlobalWindow across all clients everyone waits, which slows a guesser that
 // spreads over many addresses.
+//
+// The global cap would also stop the owner, so a client the caller knows
+// (a browser holding a device cookie from an earlier login) checks with
+// BeginKnown and FailKnown: only its own count applies to it, and its
+// failures do not count toward the cap.
 type Limiter struct {
 	mu      sync.Mutex
 	clients map[string]*attempts
@@ -120,7 +125,16 @@ func NewLimiter() *Limiter {
 // until then other checks from the same client queue here. done is nil with
 // a zero wait when ctx ends while queued.
 func (l *Limiter) Begin(ctx context.Context, client string) (done func(), wait time.Duration) {
-	if wait := l.Waiting(client); wait > 0 {
+	return l.begin(ctx, client, false)
+}
+
+// BeginKnown is Begin for a known client: the global cap does not apply.
+func (l *Limiter) BeginKnown(ctx context.Context, client string) (done func(), wait time.Duration) {
+	return l.begin(ctx, client, true)
+}
+
+func (l *Limiter) begin(ctx context.Context, client string, known bool) (done func(), wait time.Duration) {
+	if wait := l.waiting(client, known); wait > 0 {
 		return nil, wait
 	}
 	l.mu.Lock()
@@ -149,7 +163,7 @@ func (l *Limiter) Begin(ctx context.Context, client string) (done func(), wait t
 		leave()
 	}
 	// The check queued before this one may have started the wait.
-	if wait := l.Waiting(client); wait > 0 {
+	if wait := l.waiting(client, known); wait > 0 {
 		release()
 		return nil, wait
 	}
@@ -158,13 +172,18 @@ func (l *Limiter) Begin(ctx context.Context, client string) (done func(), wait t
 
 // Waiting returns how long client has to wait before its next check, zero
 // when it may check now.
-func (l *Limiter) Waiting(client string) time.Duration {
+func (l *Limiter) Waiting(client string) time.Duration { return l.waiting(client, false) }
+
+func (l *Limiter) waiting(client string, known bool) time.Duration {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	now := l.Now()
 	var wait time.Duration
 	if a := l.clients[client]; a != nil && now.Before(a.until) {
 		wait = a.until.Sub(now)
+	}
+	if known {
+		return wait
 	}
 	return max(wait, l.globalWait(now))
 }
@@ -185,15 +204,24 @@ func (l *Limiter) globalWait(now time.Time) time.Duration {
 
 // Fail records a failed check for client and returns how long the client
 // has to wait now, zero while it is under the limit.
-func (l *Limiter) Fail(client string) time.Duration {
+func (l *Limiter) Fail(client string) time.Duration { return l.fail(client, false) }
+
+// FailKnown is Fail for a known client: the failure does not count toward
+// the global cap, and the wait returned is the client's own.
+func (l *Limiter) FailKnown(client string) time.Duration { return l.fail(client, true) }
+
+func (l *Limiter) fail(client string, known bool) time.Duration {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	now := l.Now()
 	l.forgetOld(now)
-	if len(l.global) < GlobalMaxFails {
-		l.global = append(l.global, now)
+	var gw time.Duration
+	if !known {
+		if len(l.global) < GlobalMaxFails {
+			l.global = append(l.global, now)
+		}
+		gw = l.globalWait(now)
 	}
-	gw := l.globalWait(now)
 	a := l.clients[client]
 	if a == nil {
 		a = &attempts{}

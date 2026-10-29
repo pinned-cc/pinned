@@ -123,3 +123,38 @@ func TestLimiterGlobalCap(t *testing.T) {
 		t.Error("slot not released")
 	}
 }
+
+func TestLimiterKnownClientSkipsGlobalCap(t *testing.T) {
+	now := time.Unix(1000, 0)
+	l := NewLimiter()
+	l.Now = func() time.Time { return now }
+	for i := 0; i < GlobalMaxFails; i++ {
+		l.Fail(fmt.Sprintf("10.0.%d.%d", i/250, i%250))
+	}
+	if done, wait := l.Begin(context.Background(), "stranger"); done != nil || wait <= 0 {
+		t.Fatal("unknown client checks past the global cap")
+	}
+	done, wait := l.BeginKnown(context.Background(), "device:a")
+	if done == nil || wait != 0 {
+		t.Fatalf("known client held by the global cap: %v", wait)
+	}
+	done()
+	// Its own count still applies.
+	for i := 0; i < MaxFails-1; i++ {
+		if wait := l.FailKnown("device:a"); wait != 0 {
+			t.Fatalf("known client waits after %d failures: %v", i+1, wait)
+		}
+	}
+	if wait := l.FailKnown("device:a"); wait != Wait {
+		t.Fatalf("known client after %d failures: %v", MaxFails, wait)
+	}
+	if done, wait := l.BeginKnown(context.Background(), "device:a"); done != nil || wait <= 0 {
+		t.Fatal("known client checks during its own wait")
+	}
+	// Known failures leave the global count alone.
+	fresh := NewLimiter()
+	fresh.FailKnown("device:b")
+	if len(fresh.global) != 0 {
+		t.Errorf("known failure counted globally: %d", len(fresh.global))
+	}
+}

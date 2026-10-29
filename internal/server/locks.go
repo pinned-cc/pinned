@@ -297,7 +297,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	key := s.clientKey(r) + "|" + strconv.FormatInt(id, 10)
-	ok, wait := s.attempt(r, s.folderLimiter, key, func() bool {
+	ok, wait := s.attempt(r, s.folderLimiter, key, false, func() bool {
 		return bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.Password)) == nil
 	})
 	if !ok {

@@ -101,9 +101,14 @@ func (s *Server) fail(l *auth.Limiter, key string) time.Duration {
 
 // attempt runs one password check for key under l. While the client has to
 // wait it returns the wait without running check; checks from one client run
-// one at a time; a failed check waits failDelay and counts.
-func (s *Server) attempt(r *http.Request, l *auth.Limiter, key string, check func() bool) (ok bool, wait time.Duration) {
-	done, wait := l.Begin(r.Context(), key)
+// one at a time; a failed check waits failDelay and counts. A known client
+// (see auth.Limiter) is held only by its own count.
+func (s *Server) attempt(r *http.Request, l *auth.Limiter, key string, known bool, check func() bool) (ok bool, wait time.Duration) {
+	begin, fail := l.Begin, l.Fail
+	if known {
+		begin, fail = l.BeginKnown, l.FailKnown
+	}
+	done, wait := begin(r.Context(), key)
 	if done == nil {
 		return false, wait
 	}
@@ -112,7 +117,8 @@ func (s *Server) attempt(r *http.Request, l *auth.Limiter, key string, check fun
 		l.Success(key)
 		return true, 0
 	}
-	return false, s.fail(l, key)
+	s.sleep(failDelay)
+	return false, fail(key)
 }
 
 // refuse answers a failed check: 429 when the client is over the limit,

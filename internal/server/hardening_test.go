@@ -712,7 +712,7 @@ func TestOldSessionCookieMovesToPrefix(t *testing.T) {
 	if moved == nil || moved.Value != token || !moved.Secure || old == nil || old.MaxAge >= 0 {
 		t.Fatalf("not moved to the prefix: %v", resp.Cookies())
 	}
-	if resp := get("__Host-" + CookieName + "=" + token); resp.StatusCode != 200 || len(resp.Cookies()) != 0 {
+	if resp := get("__Host-" + CookieName + "=" + token); resp.StatusCode != 200 || cookieNamed(resp, "__Host-"+CookieName) != nil || cookieNamed(resp, CookieName) != nil {
 		t.Errorf("prefixed cookie: %d %v", resp.StatusCode, resp.Cookies())
 	}
 
@@ -731,5 +731,88 @@ func TestOldSessionCookieMovesToPrefix(t *testing.T) {
 	}
 	if resp := get("__Host-" + CookieName + "=" + token); resp.StatusCode != 401 {
 		t.Errorf("after logout: %d", resp.StatusCode)
+	}
+}
+
+// fillGlobalCap makes the login limiter's global cap full, as guessers on
+// many addresses would.
+func fillGlobalCap(e *env) {
+	for i := 0; i < auth.GlobalMaxFails; i++ {
+		e.server.loginLimiter.Fail(fmt.Sprintf("198.51.100.%d", i))
+	}
+}
+
+func TestKnownBrowserLogsInPastTheGlobalCap(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	var device *http.Cookie
+	for _, c := range e.client.Jar.Cookies(mustURL(e.srv.URL + "/")) {
+		if c.Name == deviceCookie {
+			device = c
+		}
+	}
+	if device == nil {
+		t.Fatal("login gave no device cookie")
+	}
+	e.expect("POST", "/api/logout", nil, 204)
+	fillGlobalCap(e)
+
+	// A browser that never logged in waits, as before.
+	stranger := func(cookie string) int {
+		req, _ := http.NewRequest("POST", e.srv.URL+"/api/login", strings.NewReader(`{"password":"pw"}`))
+		req.Header.Set("X-Requested-With", "fetch")
+		if cookie != "" {
+			req.Header.Set("Cookie", cookie)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	if code := stranger(""); code != 429 {
+		t.Errorf("unknown browser past the cap: %d", code)
+	}
+	// A forged device cookie is an unknown browser.
+	if code := stranger(deviceCookie + "=abc.0123"); code != 429 {
+		t.Errorf("forged device cookie past the cap: %d", code)
+	}
+	// The owner's browser still logs in.
+	if code, body := e.do("POST", "/api/login", map[string]string{"password": "pw"}); code != 204 {
+		t.Fatalf("known browser locked out by the global cap: %d %s", code, body)
+	}
+	e.expect("POST", "/api/logout", nil, 204)
+
+	// It is still limited on its own count.
+	for i := 0; i < auth.MaxFails; i++ {
+		e.do("POST", "/api/login", map[string]string{"password": "wrong"})
+	}
+	if code, _ := e.do("POST", "/api/login", map[string]string{"password": "pw"}); code != 429 {
+		t.Errorf("known browser not limited after %d wrong tries: %d", auth.MaxFails, code)
+	}
+}
+
+func TestOldSessionGetsDeviceCookie(t *testing.T) {
+	e := newEnv(t, Config{})
+	token := "session-from-0.1.10"
+	if err := e.st.CreateSession(hashOf(e, token), time.Now().Add(80*24*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	req, _ := http.NewRequest("GET", e.srv.URL+"/api/state", nil)
+	req.Header.Set("Cookie", CookieName+"="+token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	c := cookieNamed(resp, deviceCookie)
+	if resp.StatusCode != 200 || c == nil {
+		t.Fatalf("no device cookie for a session in use: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	r := httptest.NewRequest("GET", "/", nil)
+	r.AddCookie(c)
+	if _, ok := e.server.deviceID(r); !ok {
+		t.Error("issued device cookie does not verify")
 	}
 }

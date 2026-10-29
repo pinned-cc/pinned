@@ -192,6 +192,9 @@ func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
 			s.setSessionCookie(w, r, c.Value, ttl)
 		}
 	}
+	if w != nil {
+		s.rememberDevice(w, r) // browsers logged in before 0.1.11 get one too
+	}
 	return true
 }
 
@@ -246,6 +249,7 @@ func (s *Server) startSession(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	s.setSessionCookie(w, r, token, ttl)
+	s.rememberDevice(w, r)
 	return nil
 }
 
@@ -343,8 +347,16 @@ func (s *Server) protoTrusted(r *http.Request) bool {
 // checkPassword compares the app password under the login limiter. It
 // returns the wait instead when the client is over the limit; then the
 // password is not compared at all.
+//
+// A browser with a valid device cookie is counted on its own and never
+// held by the global cap, so guessers on other addresses cannot lock the
+// owner out of a browser that has logged in before.
 func (s *Server) checkPassword(r *http.Request, password string) (ok bool, wait time.Duration) {
-	return s.attempt(r, s.loginLimiter, s.clientKey(r), func() bool {
+	key, known := s.clientKey(r), false
+	if id, ok := s.deviceID(r); ok {
+		key, known = "device:"+id, true
+	}
+	return s.attempt(r, s.loginLimiter, key, known, func() bool {
 		return auth.PasswordOK(s.cfg.Password, password)
 	})
 }

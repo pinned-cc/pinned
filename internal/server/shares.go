@@ -242,7 +242,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if sh.PasswordHash != nil {
-		ok, wait := s.attempt(r, s.shareLimiter, s.clientKey(r), func() bool {
+		ok, wait := s.attempt(r, s.shareLimiter, s.clientKey(r), false, func() bool {
 			return bcrypt.CompareHashAndPassword([]byte(*sh.PasswordHash), []byte(in.Password)) == nil
 		})
 		if !ok {
