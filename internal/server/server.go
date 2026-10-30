@@ -268,7 +268,11 @@ func (s *Server) requirePage(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// startSession starts a new session after a login. A session the browser
+// already holds, under either cookie name, ends first, so a login never
+// leaves an older cookie working beside the new one.
 func (s *Server) startSession(w http.ResponseWriter, r *http.Request) error {
+	s.dropSessions(r)
 	token, err := auth.NewToken()
 	if err != nil {
 		return err
@@ -318,15 +322,22 @@ func (s *Server) setSessionCookie(w http.ResponseWriter, r *http.Request, token 
 	})
 }
 
-// endSession ends the session of either cookie name and clears both.
-func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
-	secure := s.isHTTPS(r)
+// dropSessions deletes the sessions of r's cookies, under either name.
+func (s *Server) dropSessions(r *http.Request) {
 	for _, name := range []string{hostPrefix + CookieName, CookieName} {
-		if c, err := r.Cookie(name); err == nil {
+		if c, err := r.Cookie(name); err == nil && c.Value != "" {
 			if err := s.st.DeleteSession(auth.HashToken(s.secret, c.Value)); err != nil {
 				log.Printf("end session: %v", err)
 			}
 		}
+	}
+}
+
+// endSession ends the session of either cookie name and clears both.
+func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
+	s.dropSessions(r)
+	secure := s.isHTTPS(r)
+	for _, name := range []string{hostPrefix + CookieName, CookieName} {
 		if name != CookieName && !secure {
 			continue // a __Host- cookie can only be set, or cleared, over HTTPS
 		}

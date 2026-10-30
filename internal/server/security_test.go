@@ -133,3 +133,37 @@ func TestLogValueQuotes(t *testing.T) {
 		}
 	}
 }
+
+func TestLoginEndsTheSessionTheBrowserHeld(t *testing.T) {
+	for _, form := range []bool{false, true} {
+		e := newEnv(t, Config{})
+		e.login()
+		old := cookieOf(e, CookieName)
+		if form {
+			resp, err := e.client.PostForm(e.srv.URL+"/login", map[string][]string{"password": {"pw"}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			resp.Body.Close()
+		} else {
+			e.login()
+		}
+		if cookieOf(e, CookieName) == old {
+			t.Fatal("no new session cookie")
+		}
+		if _, ok := e.st.SessionExpiry(hashOf(e, old)); ok {
+			t.Errorf("form=%v: the old session still exists after a new login", form)
+		}
+		e.expect("GET", "/api/state", nil, 200)
+	}
+}
+
+// cookieOf returns the value of the cookie name in e's jar.
+func cookieOf(e *env, name string) string {
+	for _, c := range e.client.Jar.Cookies(mustURL(e.srv.URL)) {
+		if c.Name == name {
+			return c.Value
+		}
+	}
+	return ""
+}
