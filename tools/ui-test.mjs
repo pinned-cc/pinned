@@ -697,7 +697,15 @@ async function desktop(browser, engine) {
     await openFoot(page); await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
     await visible(page.locator('#sheet .at-title', { hasText: 'API tokens' })); await visible(page.locator('#sheet .tk-sec:not([aria-busy])'));
     await page.fill('#sheet form[data-token] input[name=name]', T.token);
+    /* Enter in the name asks for the app password; a wrong one says so and keeps the name */
     await page.press('#sheet form[data-token] input[name=name]', 'Enter');
+    await until(page, () => document.activeElement && document.activeElement.name === 'password', null, 'focus in the password');
+    await page.fill('#sheet form[data-token] input[name=password]', 'not the password');
+    await page.press('#sheet form[data-token] input[name=password]', 'Enter');
+    await visible(page.locator('#sheet form[data-token] .fld-err', { hasText: 'Wrong password' }));
+    assert(await page.inputValue('#sheet form[data-token] input[name=name]') === T.token, 'the name was lost');
+    await page.fill('#sheet form[data-token] input[name=password]', PASSWORD);
+    await page.press('#sheet form[data-token] input[name=password]', 'Enter');
     await until(page, () => /^tk_/.test((document.querySelector('#sheet .tk-val') || {}).textContent || ''), null, 'token value');
     await visible(page.locator('#sheet', { hasText: 'Copy it now. It is not shown again.' }));
     await visible(page.locator('#sheet [data-a="tk-copy"]'));

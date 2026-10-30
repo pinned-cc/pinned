@@ -146,11 +146,24 @@ func (s *Server) apiTokens(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
+// apiCreateToken asks for the app password again, under the login limiter,
+// so a session alone (a stolen cookie, a browser left open) cannot mint a
+// credential.
 func (s *Server) apiCreateToken(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Name string `json:"name"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
 	}
 	if !readJSON(w, r, &in) {
+		return
+	}
+	if strings.TrimSpace(in.Name) == "" {
+		writeStoreError(w, store.ErrEmptyName)
+		return
+	}
+	if ok, wait := s.checkPassword(r, in.Password); !ok {
+		s.failed(r, "reauth", wait, "for", "token.create")
+		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
 		return
 	}
 	raw, err := auth.NewToken()

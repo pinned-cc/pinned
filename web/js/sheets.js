@@ -188,15 +188,17 @@ function releasesHTML(s) { const head = textHead("What's new");
 export function openTokens() { openSheet({ type: 'tokens', list: null, created: null, confirm: null }); tokensLoad(); }
 export async function tokensLoad() { const s = layers.sheet; try { const list = await api('GET', '/api/tokens'); if (layers.sheet !== s) return; s.list = list; s.err = null; }
   catch (e) { if (e.auth || layers.sheet !== s) return; s.err = 'Could not load the tokens.'; }
-  /* the list arrives while the name may already be typed: the redraw keeps the name, its caret and its focus */
-  const i = sheetEl().querySelector('form[data-token] [name=name]'), v = i ? i.value : '', on = i && document.activeElement === i;
-  fillSheet(); const n = sheetEl().querySelector('form[data-token] [name=name]');
-  if (n && v) n.value = v; if (n && on) { n.focus({ preventScroll: true }); try { n.setSelectionRange(v.length, v.length); } catch (e) { /* ok */ } } }
+  /* the list arrives while the name or the password may already be typed: the redraw keeps them, the caret and the focus */
+  const keep = ['name', 'password'].map(k => { const i = sheetEl().querySelector(`form[data-token] [name=${k}]`); return { k, v: i ? i.value : '', on: !!i && document.activeElement === i }; });
+  fillSheet();
+  for (const { k, v, on } of keep) { const n = sheetEl().querySelector(`form[data-token] [name=${k}]`); if (!n) continue;
+    if (v) n.value = v; if (on) { n.focus({ preventScroll: true }); try { n.setSelectionRange(v.length, v.length); } catch (e) { /* ok */ } } } }
 export function tokensHTML(s) {
   let h = `<div class="at-head"><h2 class="at-title">API tokens</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
   if (s.created) h += `<div class="tk-new"><span class="sh-lbl">${esc(s.created.name)}</span><div class="share-link"><div class="fld-in tk-val" tabindex="0" aria-label="Token">${esc(s.created.token)}</div><button type="button" class="tbtn" data-a="tk-copy">Copy</button></div>
     <p class="share-meta">Copy it now. It is not shown again.</p></div>`;
-  else h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Extension on my laptop" autocomplete="off" spellcheck="false" enterkeyhint="done" aria-label="Token name"${isPhone() ? '' : ' data-autofocus'}><button type="submit" class="tbtn">Create</button></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
+  else h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Extension on my laptop" autocomplete="off" spellcheck="false" enterkeyhint="next" aria-label="Token name"${isPhone() ? '' : ' data-autofocus'}></div>
+    <div class="share-pwf"><div class="share-row"><input class="fld-in" type="password" name="password" placeholder="App password" autocomplete="current-password" enterkeyhint="done" aria-label="App password"><button type="submit" class="tbtn">Create</button></div></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
   if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
   if (!s.list) return h + `<div class="tk-sec" aria-busy="true"></div>`;
   if (!s.list.length) return h + `<p class="share-meta tk-sec">A token lets the extension or a script read your folders and save links. It cannot export, share, lock or delete anything.</p>`;
@@ -204,11 +206,14 @@ export function tokensHTML(s) {
     ? `<div class="tk-row confirm"><span class="tk-tt"><span class="tk-n">Revoke ${esc(t.name)}?</span><span class="tk-m">Anything using it stops working.</span></span><span class="tk-acts"><button type="button" class="tbtn" data-a="tk-cancel">Cancel</button><button type="button" class="tbtn warn" data-a="tk-revoke-yes" data-id="${t.id}">Revoke</button></span></div>`
     : `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(t.name)}</span><span class="tk-m">Created ${fmtDay(t.created_at)}, ${t.last_used_at ? 'last used ' + ago(t.last_used_at) : 'never used'}</span></span><button type="button" class="tbtn warn" data-a="tk-revoke" data-id="${t.id}" aria-label="Revoke ${esc(t.name)}">Revoke</button></div>`).join('') + `</div></div>`;
 }
+/* making a token asks for the app password again; a wrong one keeps the name and puts the caret back in the password */
 export async function tokenCreate(f) {
-  const s = layers.sheet, inp = f.elements.name, name = inp.value.trim(); if (!name) { inp.focus(); return; }
+  const s = layers.sheet, inp = f.elements.name, name = inp.value.trim(), pw = f.elements.password; if (!name) { inp.focus(); return; }
+  if (!pw.value) { pw.focus(); return; }
   const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
-  try { const t = await api('POST', '/api/tokens', { name }); if (layers.sheet !== s) return; s.created = t; s.formErr = null; s.confirm = null; await tokensLoad(); const c = sheetEl().querySelector('[data-a="tk-copy"]'); if (c) c.focus({ preventScroll: true }); }
-  catch (e) { if (e.auth || layers.sheet !== s) return; s.formErr = errorText(e, 'That did not work. Try again.'); fillSheet(); }
+  try { const t = await api('POST', '/api/tokens', { name, password: pw.value }); if (layers.sheet !== s) return; s.created = t; s.formErr = null; s.confirm = null; await tokensLoad(); const c = sheetEl().querySelector('[data-a="tk-copy"]'); if (c) c.focus({ preventScroll: true }); }
+  catch (e) { if (e.auth || layers.sheet !== s) return; s.formErr = e.status === 403 ? 'Wrong password' : errorText(e, 'That did not work. Try again.'); fillSheet();
+    const n = sheetEl().querySelector('form[data-token] [name=name]'), p = sheetEl().querySelector('form[data-token] [name=password]'); if (n) n.value = name; if (p) p.focus(); }
 }
 export async function tokenCopy() { if (!layers.sheet || !layers.sheet.created) return; if (await copy(layers.sheet.created.token)) toast('Copied'); else toast('Could not copy the token.'); }
 export async function tokenRevoke(id) { const s = layers.sheet;

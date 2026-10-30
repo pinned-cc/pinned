@@ -33,7 +33,7 @@ func (e *env) bearer(method, path, token string, body any) *http.Response {
 
 func (e *env) newToken(name string) string {
 	e.t.Helper()
-	out := decode[tokenJSON](e.t, e.expect("POST", "/api/tokens", map[string]string{"name": name}, 201))
+	out := decode[tokenJSON](e.t, e.expect("POST", "/api/tokens", map[string]string{"name": name, "password": "pw"}, 201))
 	if !strings.HasPrefix(out.Token, "tk_") || out.ID == 0 || out.Name != name || out.CreatedAt == 0 {
 		e.t.Fatalf("bad token answer: %+v", out)
 	}
@@ -288,4 +288,23 @@ func TestPatchFolderRemembersFolder(t *testing.T) {
 	if st2, _ := e.st.Settings(); *st2.LastFolder != b.ID || len(st2.RecentFolders) != 2 {
 		t.Fatalf("settings after move to Inbox: %v %v", st2.LastFolder, st2.RecentFolders)
 	}
+}
+
+func TestCreatingATokenAsksForTheAppPassword(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	e.expect("POST", "/api/tokens", map[string]string{"name": "laptop"}, 403)
+	e.expect("POST", "/api/tokens", map[string]string{"name": "laptop", "password": "wrong"}, 403)
+	if list := decode[[]tokenJSON](t, e.expect("GET", "/api/tokens", nil, 200)); len(list) != 0 {
+		t.Fatalf("a token was made without the password: %+v", list)
+	}
+	e.wantEvent("reauth.fail", 2)
+	// Wrong passwords count in the login limiter: three more start the wait,
+	// and then the login waits too.
+	for i := 0; i < 3; i++ {
+		e.do("POST", "/api/tokens", map[string]string{"name": "laptop", "password": "wrong"})
+	}
+	e.expect("POST", "/api/tokens", map[string]string{"name": "laptop", "password": "pw"}, 429)
+	e.expect("POST", "/api/login", map[string]string{"password": "pw"}, 429)
+	e.wantEvent("reauth.wait", 1)
 }
