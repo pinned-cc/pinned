@@ -252,7 +252,7 @@ func TestExtras(t *testing.T) {
 		resp.Header.Get("Cache-Control") != "no-cache" {
 		t.Errorf("zip: %d %v", resp.StatusCode, resp.Header)
 	}
-	for _, p := range []string{"/extras/missing.zip", "/extras/..%2fapp.js", "/extras/"} {
+	for _, p := range []string{"/extras/missing.zip", "/extras/..%2fapp.js", "/extras/", "/extras/README.txt"} {
 		resp = e.get(p)
 		readAll(resp)
 		if resp.StatusCode != 404 {

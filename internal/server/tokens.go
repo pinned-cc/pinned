@@ -214,10 +214,11 @@ func (s *Server) apiFolderList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// extras serves the downloads in web/extras: the browser extension.
+// extras serves the downloads in web/extras: the browser extension zip.
+// Nothing but a .zip is served from there.
 func (s *Server) extras(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("file")
-	if name == "" || name != path.Base(name) || strings.HasPrefix(name, ".") {
+	if name == "" || name != path.Base(name) || strings.HasPrefix(name, ".") || path.Ext(name) != ".zip" {
 		http.NotFound(w, r)
 		return
 	}
@@ -228,14 +229,7 @@ func (s *Server) extras(w http.ResponseWriter, r *http.Request) {
 	}
 	h := w.Header()
 	h.Set("Cache-Control", "no-cache")
-	switch path.Ext(name) {
-	case ".zip":
-		h.Set("Content-Type", "application/zip")
-		h.Set("Content-Disposition", `attachment; filename="`+name+`"`)
-	case ".txt":
-		h.Set("Content-Type", "text/plain; charset=utf-8")
-	default:
-		h.Set("Content-Type", "application/octet-stream")
-	}
+	h.Set("Content-Type", "application/zip")
+	h.Set("Content-Disposition", `attachment; filename="`+name+`"`)
 	w.Write(data)
 }
