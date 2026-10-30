@@ -302,7 +302,7 @@ func TestSecurityHeaders(t *testing.T) {
 		if !strings.Contains(h.Get("Content-Security-Policy"), "frame-ancestors 'none'") ||
 			!strings.Contains(h.Get("Content-Security-Policy"), "script-src 'self'") ||
 			h.Get("X-Content-Type-Options") != "nosniff" ||
-			h.Get("Referrer-Policy") != "strict-origin-when-cross-origin" ||
+			h.Get("Referrer-Policy") != "no-referrer" ||
 			h.Get("Permissions-Policy") != "camera=(), microphone=(), geolocation=()" ||
 			h.Get("X-Frame-Options") != "DENY" {
 			t.Errorf("%s headers: %v", path, h)

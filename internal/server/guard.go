@@ -156,7 +156,10 @@ const contentSecurityPolicy = "default-src 'self'; img-src 'self' data:; style-s
 func securityHeaders(h http.Header) {
 	h.Set("Content-Security-Policy", contentSecurityPolicy)
 	h.Set("X-Content-Type-Options", "nosniff")
-	h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+	// No referrer at all: a bookmark opened from the app must not tell the
+	// site the app's address, which is often an internal host name. Nothing
+	// here reads Referer, and the CSRF check reads X-Requested-With.
+	h.Set("Referrer-Policy", "no-referrer")
 	h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 	h.Set("X-Frame-Options", "DENY")
 }
