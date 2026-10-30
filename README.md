@@ -200,6 +200,7 @@ Everything is in the data folder:
 - `secret.key`, the key for sessions and tokens. Without it every session ends and every token stops working.
 - `icons/`, the site icons.
 - `export/bookmarks.html`, written every night at 03:00 (in `TZ`) and on start when it is older than a day. It is a normal browser bookmarks file with your folders and links. It leaves out Trash, pins, locks and shares.
+- `bookmarks-schema6-2026-10-30-154210.db` and the like, copies of the database taken before an upgrade (see Upgrading).
 
 The tables and the export format are described in `docs/data-format.md`. You can read the database with any SQLite tool.
 
@@ -219,11 +220,13 @@ Keep `secret.key` and `icons/` with the database.
 
 **Restoring.** Stop the container, put the files back in the data folder (a `.backup` copy goes back as `bookmarks.db`, with no `-wal` or `-shm` files next to it), make sure user 1000 owns them, and start it.
 
-**Upgrading.** `docker compose pull` and then `docker compose up -d`. The database is upgraded on start. There is no way back to an older version, so take a backup first.
+**Upgrading.** `docker compose pull` and then `docker compose up -d`. The database is upgraded on start. When a new version changes the database, Pinned first saves a copy of it as it was in the data folder, named with the old schema number and the date and time, for example `bookmarks-schema6-2026-10-30-154210.db`, and the log names the file. The last three copies are kept; older ones are removed. If the copy cannot be written (a full disk, a folder it cannot write to), Pinned does not upgrade and stops with a message saying why; the database stays as it was. The copies hold your bookmarks, so treat them like `bookmarks.db`.
+
+**Going back to an older version.** An older version does not start on a database a newer one has upgraded. Stop the container, move `bookmarks.db` aside, copy the backup from before the upgrade to `bookmarks.db` (no `-wal` or `-shm` files next to it; remove them if they are there), make sure user 1000 owns it, set the image back to the older version and start it. Links saved since the upgrade are not in that copy, so export them first from the newer version if you need them. Keep `secret.key` and `icons/` as they are.
 
 **Changing the password.** Change `APP_PASSWORD` and run `docker compose up -d`. Every browser is logged out. API tokens keep working.
 
-**Import.** Export a bookmarks file from your browser and use Import in the app. Folders are kept. Links that are already saved are skipped, so importing the same file twice adds nothing. Files can be up to 20 MB. Folders nest at most 32 deep; anything deeper in the file lands in the folder at depth 32. Tested with files in Brave's export format.
+**Import.** Export a bookmarks file from your browser and use Import in the app. Folders are kept. Links that are already saved are skipped, so importing the same file twice adds nothing. Files can be up to 20 MB. Folders nest at most 32 deep; anything deeper in the file lands in the folder at depth 32. A file whose folders nest more than 256 deep is refused with a message. Tested with files in Brave's export format.
 
 ## Locked folders and share links
 

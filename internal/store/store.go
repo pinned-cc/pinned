@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -56,7 +57,10 @@ type Store struct {
 	Now func() time.Time
 }
 
-// Open opens (and creates or migrates) the database at path.
+// Open opens (and creates or migrates) the database at path. Before it
+// upgrades an existing database to a newer schema, it writes a copy of it
+// next to path (see backupPath) and keeps the last KeepBackups of them. If
+// that copy fails, the database is left as it was and Open fails.
 func Open(path string) (*Store, error) {
 	// WAL lets reads run while one write is open. Every transaction takes
 	// the write lock when it begins (_txlock=immediate), so two writers wait
@@ -71,10 +75,11 @@ func Open(path string) (*Store, error) {
 	db.SetMaxOpenConns(4)
 	db.SetMaxIdleConns(4)
 	s := &Store{db: db, Now: time.Now}
-	if err := s.migrate(); err != nil {
+	if err := s.migrate(path); err != nil {
 		db.Close()
 		var newer *NewerSchemaError
-		if errors.As(err, &newer) {
+		var backup *BackupError
+		if errors.As(err, &newer) || errors.As(err, &backup) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("migrate: %w", err)
@@ -169,7 +174,20 @@ func (e *NewerSchemaError) Error() string {
 	return fmt.Sprintf("database was written by a newer Pinned (schema %d); this version knows %d. Update the image or restore a backup.", e.Have, e.Know)
 }
 
-func (s *Store) migrate() error {
+// BackupError means the copy taken before a schema upgrade failed, so the
+// upgrade did not run and the database is unchanged.
+type BackupError struct {
+	Version int
+	Err     error
+}
+
+func (e *BackupError) Error() string {
+	return fmt.Sprintf("could not back up the database before upgrading it from schema %d, so it was not upgraded and is unchanged: %v. Check free space and that the data folder is writable.", e.Version, e.Err)
+}
+
+func (e *BackupError) Unwrap() error { return e.Err }
+
+func (s *Store) migrate(path string) error {
 	if _, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)`); err != nil {
 		return err
 	}
@@ -184,6 +202,14 @@ func (s *Store) migrate() error {
 	}
 	if version > len(migrations) {
 		return &NewerSchemaError{Have: version, Know: len(migrations)}
+	}
+	// A new database (version 0) has nothing to keep.
+	if version > 0 && version < len(migrations) {
+		dst, err := backupBeforeMigrate(s.db, path, version)
+		if err != nil {
+			return &BackupError{Version: version, Err: err}
+		}
+		log.Printf("database: upgrading from schema %d to %d; the database as it was is saved at %s", version, len(migrations), dst)
 	}
 	for i := version; i < len(migrations); i++ {
 		tx, err := s.db.Begin()
