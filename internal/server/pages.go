@@ -201,6 +201,10 @@ func (s *Server) appIcon(name string) http.HandlerFunc {
 	}
 }
 
+// iconPolicy replaces the app's policy on fetched icons: no script, no
+// loads, and no framing by any page.
+const iconPolicy = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox"
+
 // siteIcon serves a fetched favicon from DATA_DIR/icons. File names carry a
 // content hash, so they can be cached for a long time.
 func (s *Server) siteIcon(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +216,7 @@ func (s *Server) siteIcon(w http.ResponseWriter, r *http.Request) {
 	h := w.Header()
 	h.Set("Cache-Control", "private, max-age=31536000, immutable")
 	// SVG icons come from other sites: never let them run script here.
-	h.Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+	h.Set("Content-Security-Policy", iconPolicy)
 	http.ServeFile(w, r, filepath.Join(s.cfg.DataDir, "icons", name))
 }
 

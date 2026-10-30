@@ -311,6 +311,11 @@ func TestSecurityHeaders(t *testing.T) {
 	if csp := check("/static/save.html").Get("Content-Security-Policy"); csp != contentSecurityPolicy {
 		t.Errorf("save.html CSP %q", csp)
 	}
+	for _, want := range []string{"object-src 'none'", "base-uri 'none'"} {
+		if !strings.Contains(contentSecurityPolicy, want) {
+			t.Errorf("CSP lacks %s", want)
+		}
+	}
 }
 
 func TestHealthWithSession(t *testing.T) {

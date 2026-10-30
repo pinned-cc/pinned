@@ -151,7 +151,7 @@ func tooMany(w http.ResponseWriter, wait time.Duration) {
 
 // Security headers on every response. /icons and the share pages narrow
 // them further in their own handlers.
-const contentSecurityPolicy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+const contentSecurityPolicy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 
 func securityHeaders(h http.Header) {
 	h.Set("Content-Security-Policy", contentSecurityPolicy)
