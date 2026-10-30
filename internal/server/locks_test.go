@@ -83,9 +83,9 @@ func TestLockHidesEverythingInside(t *testing.T) {
 	e.expect("PATCH", "/api/folders/"+itoa(f.reading.ID), map[string]any{"parent_id": f.work.ID}, 404)
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID), nil, 404)
 
-	// The save page learns nothing: the link answers as not saved.
+	// The save page learns only what a save would tell: saved, in a locked folder.
 	chk := e.expect("GET", "/api/check?url="+url.QueryEscape("https://example.org/portal"), nil, 200)
-	if strings.TrimSpace(string(chk)) != `{"duplicate":null,"icon":null}` {
+	if strings.TrimSpace(string(chk)) != `{"duplicate":null,"icon":null,"locked":true}` {
 		t.Errorf("check: %s", chk)
 	}
 	// The remembered folders never name a hidden folder, even when the
@@ -101,11 +101,6 @@ func TestLockHidesEverythingInside(t *testing.T) {
 		t.Errorf("save anyway leaks or moves: %s", out)
 	}
 
-	// Export still holds everything.
-	body := string(readAll(e.get("/api/export")))
-	if !strings.Contains(body, "https://example.org/portal") || !strings.Contains(body, ">Client</H3>") {
-		t.Error("export lost the locked links")
-	}
 }
 
 func TestUnlockRelockAndExpiry(t *testing.T) {

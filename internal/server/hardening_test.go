@@ -323,7 +323,7 @@ func TestHealthWithSession(t *testing.T) {
 	e.login()
 	e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.com"}, 201)
 	h := decode[map[string]any](t, readAll(e.get("/health")))
-	if h["ok"] != true || h["bookmarks"] != 1.0 || h["version"] != "test" {
+	if h["ok"] != true || h["version"] != "test" || len(h) != 2 {
 		t.Errorf("health with a session: %v", h)
 	}
 	if code, body := e.visitor().get("/health"); code != 200 || strings.TrimSpace(body) != `{"ok":true}` {

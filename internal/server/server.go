@@ -164,7 +164,7 @@ func (s *Server) routes() {
 	for _, name := range []string{"icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.svg"} {
 		m.HandleFunc("GET /"+name, s.appIcon(name))
 	}
-	m.HandleFunc("GET /icons/{file}", s.requirePage(s.siteIcon))
+	m.HandleFunc("GET /icons/{file}", s.requirePage(s.appSiteIcon))
 	m.HandleFunc("GET /extras/{file}", s.extras)
 	m.Handle("GET /static/", http.StripPrefix("/static/", s.static()))
 

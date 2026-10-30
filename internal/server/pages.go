@@ -175,12 +175,12 @@ func (s *Server) manifest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(m)
 }
 
-// health answers {"ok":true} to anyone, and adds the bookmark count and the
-// version for a logged in session. 503 when the database fails.
+// health answers {"ok":true} to anyone, and adds the version for a logged
+// in session. 503 when the database fails. It gives no bookmark count: one
+// would count what sits in locked folders, and nothing read it.
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
-	n, err := s.st.CountLive()
-	if err != nil {
+	if _, err := s.st.CountLive(); err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false})
 		return
 	}
@@ -188,7 +188,7 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "bookmarks": n, "version": s.cfg.Version})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "version": s.cfg.Version})
 }
 
 // changelog serves CHANGELOG.md as it was built in, for the What's new sheet.
@@ -215,6 +215,30 @@ func (s *Server) appIcon(name string) http.HandlerFunc {
 // iconPolicy replaces the app's policy on fetched icons: no script, no
 // loads, and no framing by any page.
 const iconPolicy = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; sandbox"
+
+// appSiteIcon serves a fetched favicon to a session, only when a bookmark
+// it can see uses it: icon names are a hash of the file, so anyone can work
+// out the name of a site's icon, and must not learn from it what sits in a
+// locked folder.
+func (s *Server) appSiteIcon(w http.ResponseWriter, r *http.Request) {
+	folders, err := s.st.IconFolders(r.PathValue("file"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	v, err := s.lockView(r)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	for _, id := range folders {
+		if id == nil || !v.hidden(*id) {
+			s.siteIcon(w, r)
+			return
+		}
+	}
+	http.NotFound(w, r)
+}
 
 // siteIcon serves a fetched favicon from DATA_DIR/icons. File names carry a
 // content hash, so they can be cached for a long time.

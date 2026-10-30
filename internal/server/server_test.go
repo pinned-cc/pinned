@@ -589,7 +589,8 @@ func TestLoggedInPages(t *testing.T) {
 		t.Errorf("android share: %d %s", resp.StatusCode, resp.Header.Get("Location"))
 	}
 
-	os.WriteFile(filepath.Join(e.dir, "icons", "5-abcd.png"), []byte("\x89PNG\r\n\x1a\nxx"), 0o644)
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.com/i"}, 201))
+	e.iconFor(b.ID, "https://example.com/i", "5-abcd.png")
 	resp = e.get("/icons/5-abcd.png")
 	resp.Body.Close()
 	if resp.StatusCode != 200 || !strings.Contains(resp.Header.Get("Cache-Control"), "max-age=31536000") {

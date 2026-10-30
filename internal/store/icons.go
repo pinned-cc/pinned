@@ -79,3 +79,27 @@ func (s *Store) ResetIconFailures(version string) error {
 		return err
 	})
 }
+
+// IconFolders returns the folders of the bookmarks that use icon, Trash
+// included; a nil entry stands for Inbox. The caller decides which of them
+// may see the icon.
+func (s *Store) IconFolders(icon string) ([]*int64, error) {
+	rows, err := s.db.Query(`SELECT DISTINCT folder_id FROM bookmarks WHERE icon = ?`, icon)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*int64
+	for rows.Next() {
+		var id sql.NullInt64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		if id.Valid {
+			out = append(out, &id.Int64)
+		} else {
+			out = append(out, nil)
+		}
+	}
+	return out, rows.Err()
+}

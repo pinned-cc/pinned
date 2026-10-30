@@ -173,7 +173,10 @@ func (s *Server) visibleBookmark(r *http.Request, id int64) (store.Bookmark, *lo
 }
 
 // writeLockedDuplicate answers a duplicate whose original is hidden without
-// telling anything about it.
+// telling anything about it but that it exists. The unique key on live
+// URLs allows one live bookmark per address, so the save cannot go through
+// beside it; answering as if it had would lose the save without a word.
+// apiCheck and an import's skipped count say the same.
 func writeLockedDuplicate(w http.ResponseWriter) {
 	writeJSON(w, http.StatusConflict, map[string]any{"error": "Already saved", "duplicate": nil, "locked": true})
 }

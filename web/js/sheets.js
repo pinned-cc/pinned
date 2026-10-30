@@ -345,7 +345,7 @@ export function checkUrl(now) {
   clearTimeout(checkT); const go = async () => { const u = layers.save.url.trim(), my = ++checkSeq;
     if (!validUrl(u)) { layers.save.dup = null; layers.save.hid = false; layers.save.icon = null; layers.save.checking = false; patchSave(); return; }
     layers.save.checking = true; patchSave();
-    try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.checking = false; layers.save.dup = r.duplicate || null; layers.save.hid = false; layers.save.icon = r.icon || null; patchSave(); /* hid comes only from a refused save (409 with locked) */ } catch (e) { if (my === checkSeq && layers.save) { layers.save.checking = false; patchSave(); } /* the save itself reports */ } };
+    try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.checking = false; layers.save.dup = r.duplicate || null; layers.save.hid = !!r.locked; layers.save.icon = r.icon || null; patchSave(); /* locked: saved in a locked folder, as a save would answer */ } catch (e) { if (my === checkSeq && layers.save) { layers.save.checking = false; patchSave(); } /* the save itself reports */ } };
   if (now) go(); else checkT = setTimeout(go, 220);
 }
 export async function doSave(inbox) {

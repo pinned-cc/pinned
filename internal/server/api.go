@@ -184,7 +184,8 @@ func (s *Server) apiState(w http.ResponseWriter, r *http.Request) {
 
 // apiCheck tells the save page whether the URL is already saved, and offers
 // the icon of another bookmark on the same host and port. A URL saved in a
-// hidden folder answers as if it were not saved at all, without an icon.
+// hidden folder answers "locked": true with no duplicate and no icon, the
+// same as a save of it would (see writeLockedDuplicate).
 func (s *Server) apiCheck(w http.ResponseWriter, r *http.Request) {
 	raw := r.URL.Query().Get("url")
 	if _, err := urlkey.Key(raw); err != nil {
@@ -199,6 +200,7 @@ func (s *Server) apiCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	if b, err := s.st.FindLive(raw); err == nil {
 		if v.bookmarkHidden(b) {
+			out["locked"] = true
 			writeJSON(w, http.StatusOK, out)
 			return
 		}
@@ -702,8 +704,15 @@ func (s *Server) apiImport(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// apiExport leaves out folders that are locked and not unlocked in this
+// browser. The nightly export on disk keeps everything: it is the backup.
 func (s *Server) apiExport(w http.ResponseWriter, r *http.Request) {
-	tree, err := s.st.ExportTree()
+	v, err := s.lockView(r)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	tree, err := s.st.ExportTreeSkipping(v.hidden)
 	if err != nil {
 		writeStoreError(w, err)
 		return

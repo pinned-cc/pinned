@@ -364,7 +364,12 @@ func (imp *importer) level(parentID *int64) (map[string]folderMatch, error) {
 
 // ExportTree returns the live bookmarks as a tree for the Netscape writer.
 // Inbox bookmarks sit at the root; Trash is left out.
-func (s *Store) ExportTree() (*netscape.Folder, error) {
+func (s *Store) ExportTree() (*netscape.Folder, error) { return s.ExportTreeSkipping(nil) }
+
+// ExportTreeSkipping is ExportTree without the folders for which skip
+// returns true, and their bookmarks; skip must also return true for every
+// folder below such a folder. A nil skip keeps everything.
+func (s *Store) ExportTreeSkipping(skip func(folderID int64) bool) (*netscape.Folder, error) {
 	folders, err := s.Folders()
 	if err != nil {
 		return nil, err
@@ -375,10 +380,15 @@ func (s *Store) ExportTree() (*netscape.Folder, error) {
 	}
 	root := &netscape.Folder{Name: "Bookmarks"}
 	byID := map[int64]*netscape.Folder{}
+	kept := folders[:0:0]
 	for _, f := range folders {
+		if skip != nil && skip(f.ID) {
+			continue
+		}
+		kept = append(kept, f)
 		byID[f.ID] = &netscape.Folder{Name: f.Name, AddDate: f.CreatedAt}
 	}
-	for _, f := range folders { // already ordered by position
+	for _, f := range kept { // already ordered by position
 		parent := root
 		if f.ParentID != nil {
 			if p, ok := byID[*f.ParentID]; ok {
@@ -388,6 +398,9 @@ func (s *Store) ExportTree() (*netscape.Folder, error) {
 		parent.Folders = append(parent.Folders, byID[f.ID])
 	}
 	for _, b := range bookmarks {
+		if b.FolderID != nil && skip != nil && skip(*b.FolderID) {
+			continue
+		}
 		parent := root
 		if b.FolderID != nil {
 			if p, ok := byID[*b.FolderID]; ok {

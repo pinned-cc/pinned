@@ -793,14 +793,11 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
     await until(page, () => !document.querySelector('#pal'), null, 'palette closed');
     await page.click('#side [data-view="inbox"]');
-    /* saving a link that sits in the locked folder: the check says nothing, the refused save says Already saved */
+    /* saving a link that sits in the locked folder: the check says Already saved, as the save would, and nothing about where */
     const sp = await ctx.newPage();
     await sp.goto(`${BASE}/save?url=${encodeURIComponent(T.url)}&title=x`);
-    await visible(sp.locator('#sheet [data-a="save-go"]')); await sp.waitForTimeout(500);
-    assert(await sp.locator('#sheet .dupe.off').count() === 1, 'the check revealed the locked link');
-    const inboxBtn = sp.locator('#sheet [data-a="save-inbox"]');
-    if (await inboxBtn.count()) await inboxBtn.click(); else await sp.click('#sheet [data-a="save-go"]');
     await visible(sp.locator('#sheet .dupe:not(.off)', { hasText: 'Already saved' }));
+    assert((await sp.locator('#sheet .dupe').innerText()).trim() === 'Already saved', 'the check told more than Already saved');
     assert(await sp.locator('#sheet [data-a="save-go"][disabled]').count() === 1, 'Save still enabled');
     await sp.close();
     await page.click(`#side .sf[data-fid="${folderId}"]`);
