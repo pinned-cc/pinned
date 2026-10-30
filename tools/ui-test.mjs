@@ -1,16 +1,16 @@
-// UI smoke test for the web front end, Chromium and WebKit, desktop 1440x900 (and 768 to 1280 for the sidebar), phone 390x844 (and 320),
+// UI smoke test for the web front end, Chromium, WebKit and Firefox, desktop 1440x900 (and 768 to 1280 for the sidebar), phone 390x844 (and 320),
 // and a mouse in a 700 px window.
 //
 // Run against a running instance whose data you do not mind changing (it adds and removes a
 // folder, bookmarks and a token, all named "ui-test ..."):
 //
-//   node tools/ui-test.mjs http://127.0.0.1:9098 <app password> [--shots <dir>] [--only chromium|webkit]
+//   node tools/ui-test.mjs http://127.0.0.1:9098 <app password> [--shots <dir>] [--only chromium|webkit|firefox]
 //
 // Playwright is not a dependency of the repo. The script takes the first that loads:
 //   1. PLAYWRIGHT_MODULE=/path/to/playwright (a folder or its index.mjs)
 //   2. import('playwright') from a global or local node_modules
 //   3. the driver bundled with the Python package (pip install playwright), found with python3
-// Browsers come from `npx playwright install chromium webkit` (or `python3 -m playwright install`)
+// Browsers come from `npx playwright install chromium webkit firefox` (or `python3 -m playwright install`)
 // for the same Playwright version.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -1651,9 +1651,13 @@ async function barParity(browser, engine) {
 }
 
 const pw = await loadPlaywright();
-for (const engine of ['chromium', 'webkit']) {
+for (const engine of ['chromium', 'webkit', 'firefox']) {
   if (only && only !== engine) continue;
-  const browser = await pw[engine].launch();
+  console.log(`\n${engine}`);
+  let browser;
+  /* a browser that does not start is a failure of the run, and the other engines still run */
+  try { browser = await pw[engine].launch({ timeout: 60000 }); }
+  catch (e) { failures++; console.log(`  FAIL  ${engine} did not start\n        ${String(e.message || e).split('\n')[0]}`); continue; }
   try { await desktop(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); } finally { await browser.close(); }
 }
 console.log(`\n${passes} passed, ${failures} failed`);
