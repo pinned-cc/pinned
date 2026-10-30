@@ -31,6 +31,8 @@ Out of scope:
 - Your reverse proxy, your Umbrel or NAS, or your network.
 - Missing hardening that is already documented as a limit in the README, for example that a folder lock does not encrypt anything in the data folder.
 
+The limits the server enforces, its keys and algorithms, what it stores and what it logs are in [docs/security.md](docs/security.md).
+
 ## What happens next
 
 This is a project run in spare time by one person. You should hear back within a week that the report arrived. A fix comes as soon as it is ready, in a new release, and the release notes say what was fixed. If you want to be credited, say so in the report.
