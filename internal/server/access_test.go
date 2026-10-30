@@ -1,11 +1,14 @@
 package server
 
 import (
+	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // iconFor gives bookmark id the icon file name in DATA_DIR/icons.
@@ -177,5 +180,110 @@ func TestLeftoverShareUnderLock(t *testing.T) {
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"app_password": "pw"}, 204)
 	if _, err := e.st.ShareByToken(sh.Token); err == nil {
 		t.Error("leftover share came back with the lock removed")
+	}
+}
+
+// withToken sends a request from v with the share token in the header, the
+// way share.js does for a link of the form /s/#<token>.
+func (v *visitor) withToken(method, path, token, body string) (int, string) {
+	v.t.Helper()
+	req, _ := http.NewRequest(method, v.e.srv.URL+path, strings.NewReader(body))
+	if token != "" {
+		req.Header.Set("X-Share-Token", token)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := v.client.Do(req)
+	if err != nil {
+		v.t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	b, _ := io.ReadAll(resp.Body)
+	return resp.StatusCode, string(b)
+}
+
+// New share links carry the token in the fragment; the page sends it in a
+// header, so it is never in a path a proxy logs.
+func TestShareTokenInFragment(t *testing.T) {
+	e := newEnv(t, Config{BaseURL: "http://homelab:9095"})
+	e.login()
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"title": "Docs", "url": "https://example.com/docs", "folder_id": f.ID}, 201))
+	e.iconFor(b.ID, "https://example.com/docs", "d.png")
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame"}, 201))
+	if sh.URL != "http://homelab:9095/s/#"+sh.Token {
+		t.Fatalf("link: %s", sh.URL)
+	}
+	v := e.visitor()
+	resp, err := v.client.Get(e.srv.URL + "/s/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 200 || !strings.Contains(resp.Header.Get("Content-Security-Policy"), "img-src 'self' data: blob:") ||
+		resp.Header.Get("Referrer-Policy") != "no-referrer" {
+		t.Errorf("share page: %d %v", resp.StatusCode, resp.Header)
+	}
+	if code, _ := v.withToken("GET", "/s/-/data", "", ""); code != 404 {
+		t.Errorf("data without a token: %d", code)
+	}
+	if code, _ := v.withToken("GET", "/s/-/data", "nope", ""); code != 404 {
+		t.Errorf("data with a wrong token: %d", code)
+	}
+	if code, body := v.withToken("GET", "/s/-/data", sh.Token, ""); code != 200 || !strings.Contains(body, `"locked":true`) {
+		t.Errorf("locked data: %d %s", code, body)
+	}
+	if code, _ := v.withToken("POST", "/s/-/unlock", sh.Token, `{"password":"wrong"}`); code != 401 {
+		t.Errorf("wrong password: %d", code)
+	}
+	if code, _ := v.withToken("POST", "/s/-/unlock", sh.Token, `{"password":"open sesame"}`); code != 204 {
+		t.Fatalf("right password: %d", code)
+	}
+	code, body := v.withToken("GET", "/s/-/data", sh.Token, "")
+	d := decode[sharedData](t, []byte(body))
+	if code != 200 || len(d.Bookmarks) != 1 || d.Bookmarks[0].Icon == nil || *d.Bookmarks[0].Icon != "/s/-/icons/d.png" || strings.Contains(body, sh.Token) {
+		t.Errorf("data: %d %s", code, body)
+	}
+	if code, _ := v.withToken("GET", "/s/-/icons/d.png", sh.Token, ""); code != 200 {
+		t.Errorf("icon with the token: %d", code)
+	}
+	if code, _ := v.withToken("GET", "/s/-/icons/d.png", "", ""); code != 404 {
+		t.Errorf("icon without the token: %d", code)
+	}
+	// The unlock cookie is the share's own, for every share route.
+	var found bool
+	for _, c := range v.client.Jar.Cookies(mustURL(e.srv.URL + "/s/")) {
+		if strings.HasPrefix(c.Name, "pinned_share_") && !strings.Contains(c.Name, "seen") {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("no unlock cookie under /s/")
+	}
+	// The same browser opens the old form of the link without the password again.
+	if code, body := v.get("/s/" + sh.Token + "/data"); code != 200 || strings.Contains(body, `"locked"`) {
+		t.Errorf("old link after unlock: %d %s", code, body)
+	}
+}
+
+// An unlock cookie from before 0.1.11, set on the path of the old link,
+// still opens it.
+func TestOldShareCookieStillWorks(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
+	tok := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame"}, 201)).Token
+	sh, err := e.st.ShareByToken(tok)
+	if err != nil {
+		t.Fatal(err)
+	}
+	exp := e.st.Now().Add(time.Hour).Unix()
+	req, _ := http.NewRequest("GET", e.srv.URL+"/s/"+tok+"/data", nil)
+	req.AddCookie(&http.Cookie{Name: "pinned_share", Value: e.server.unlockValue(sh, exp)})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := string(readAll(resp)); resp.StatusCode != 200 || strings.Contains(body, `"locked"`) {
+		t.Errorf("old cookie: %d %s", resp.StatusCode, body)
 	}
 }

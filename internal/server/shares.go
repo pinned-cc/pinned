@@ -24,12 +24,60 @@ import (
 )
 
 const (
+	// Before 0.1.11 these two were set per link path, /s/<token>; they are
+	// still read there. Now each share has its own cookie under /s/.
 	shareCookie      = "pinned_share"      // proves the password was given
 	shareSeenCookie  = "pinned_share_seen" // counts one open per hour
 	unlockTTL        = 7 * 24 * time.Hour
 	maxShareDays     = 3650
 	minSharePassword = 8
+	// shareTokenHeader carries the token from the fragment of a link.
+	shareTokenHeader = "X-Share-Token"
+	// sharePath is the path of share cookies: every share route.
+	sharePath = "/s/"
 )
+
+// shareToken is the token of a share request: from the path of an old
+// /s/<token> link, otherwise from the X-Share-Token header.
+func shareToken(r *http.Request) string {
+	if t := r.PathValue("token"); t != "" {
+		return t
+	}
+	return r.Header.Get(shareTokenHeader)
+}
+
+// shareBase is where the share's data and icons are asked for: the old
+// link's own path, or /s/- for a link with the token in the fragment.
+func shareBase(r *http.Request, sh store.Share) string {
+	if r.PathValue("token") != "" {
+		return "/s/" + sh.Token
+	}
+	return "/s/-"
+}
+
+// shareCookieName is the unlock cookie of one share, seen the open counter.
+func shareCookieName(sh store.Share, seen bool) string {
+	name := shareCookie
+	if seen {
+		name = shareSeenCookie
+	}
+	return name + "_" + strconv.FormatInt(sh.ID, 10)
+}
+
+// shareCookieValue returns the value of the share's cookie, under its
+// current name or the name before 0.1.11.
+func shareCookieValue(r *http.Request, sh store.Share, seen bool) (string, bool) {
+	old := shareCookie
+	if seen {
+		old = shareSeenCookie
+	}
+	for _, name := range []string{shareCookieName(sh, seen), old} {
+		if c, err := r.Cookie(name); err == nil {
+			return c.Value, true
+		}
+	}
+	return "", false
+}
 
 type shareJSON struct {
 	Token        string `json:"token"`
@@ -42,7 +90,7 @@ type shareJSON struct {
 
 func (s *Server) shareToJSON(r *http.Request, sh store.Share) *shareJSON {
 	return &shareJSON{
-		Token: sh.Token, URL: s.baseURL(r) + "/s/" + sh.Token, HasPassword: sh.PasswordHash != nil,
+		Token: sh.Token, URL: s.baseURL(r) + "/s/#" + sh.Token, HasPassword: sh.PasswordHash != nil,
 		ExpiresAt: sh.ExpiresAt, Opens: sh.Opens, LastOpenedAt: sh.LastOpenedAt,
 	}
 }
@@ -211,16 +259,25 @@ func shareGone(w http.ResponseWriter) {
 	w.Write([]byte(goneHTML))
 }
 
+// sharePagePolicy is the app's policy plus blob: images: share.js fetches
+// icons with the token in a header and shows them from blob: URLs.
+var sharePagePolicy = strings.Replace(contentSecurityPolicy, "img-src 'self' data:", "img-src 'self' data: blob:", 1)
+
+// sharePage serves the share page. For /s/ the token is in the fragment,
+// so the page itself finds out whether the link works.
 func (s *Server) sharePage(w http.ResponseWriter, r *http.Request) {
 	shareHeaders(w)
-	if _, err := s.st.ActiveShare(r.PathValue("token")); err != nil {
-		shareGone(w)
-		return
+	if t := r.PathValue("token"); t != "" {
+		if _, err := s.st.ActiveShare(t); err != nil {
+			shareGone(w)
+			return
+		}
 	}
 	if _, err := fs.Stat(s.web, "share.html"); err != nil {
 		shareGone(w)
 		return
 	}
+	w.Header().Set("Content-Security-Policy", sharePagePolicy)
 	s.page("share.html", false)(w, r)
 }
 
@@ -244,11 +301,11 @@ func (s *Server) shareUnlocked(r *http.Request, sh store.Share) bool {
 	if sh.PasswordHash == nil {
 		return true
 	}
-	c, err := r.Cookie(shareCookie)
-	if err != nil {
+	v, ok := shareCookieValue(r, sh, false)
+	if !ok {
 		return false
 	}
-	v := signedPayload(c.Value)
+	v = signedPayload(v)
 	expStr, _, ok := strings.Cut(v, ".")
 	exp, err := strconv.ParseInt(expStr, 10, 64)
 	if !ok || err != nil || exp <= s.st.Now().Unix() {
@@ -260,7 +317,7 @@ func (s *Server) shareUnlocked(r *http.Request, sh store.Share) bool {
 func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	shareHeaders(w)
 	w.Header().Set("Cache-Control", "no-store")
-	sh, err := s.st.ActiveShare(r.PathValue("token"))
+	sh, err := s.st.ActiveShare(shareToken(r))
 	if err != nil {
 		writeError(w, http.StatusNotFound, "This link is no longer available.")
 		return
@@ -283,7 +340,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	}
 	exp := s.st.Now().Add(unlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
-		Name: shareCookie, Value: signedVersion + s.unlockValue(sh, exp), Path: "/s/" + sh.Token,
+		Name: shareCookieName(sh, false), Value: signedVersion + s.unlockValue(sh, exp), Path: sharePath,
 		MaxAge: int(unlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusNoContent)
@@ -304,7 +361,7 @@ type sharedBookmarkJSON struct {
 func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 	shareHeaders(w)
 	w.Header().Set("Cache-Control", "no-store")
-	sh, err := s.st.ActiveShare(r.PathValue("token"))
+	sh, err := s.st.ActiveShare(shareToken(r))
 	if err != nil {
 		writeError(w, http.StatusNotFound, "This link is no longer available.")
 		return
@@ -331,12 +388,12 @@ func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Count one open per browser per hour.
-	if _, err := r.Cookie(shareSeenCookie); err != nil {
+	if _, seen := shareCookieValue(r, sh, true); !seen {
 		if err := s.st.RecordShareOpen(sh.Token); err != nil {
 			log.Printf("share open count: %v", err)
 		}
 		http.SetCookie(w, &http.Cookie{
-			Name: shareSeenCookie, Value: "1", Path: "/s/" + sh.Token,
+			Name: shareCookieName(sh, true), Value: "1", Path: sharePath,
 			MaxAge: 3600, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 		})
 	}
@@ -367,7 +424,7 @@ func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 		}
 		var icon *string
 		if b.Icon != nil {
-			u := "/s/" + sh.Token + "/icons/" + *b.Icon
+			u := shareBase(r, sh) + "/icons/" + *b.Icon
 			icon = &u
 		}
 		bj = append(bj, sharedBookmarkJSON{
@@ -384,7 +441,7 @@ func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) shareIcon(w http.ResponseWriter, r *http.Request) {
 	shareHeaders(w)
-	sh, err := s.st.ActiveShare(r.PathValue("token"))
+	sh, err := s.st.ActiveShare(shareToken(r))
 	name := r.PathValue("file")
 	if err != nil || !s.shareUnlocked(r, sh) || name != filepath.Base(name) || !s.st.ShareHasIcon(sh.FolderID, name) {
 		http.NotFound(w, r)

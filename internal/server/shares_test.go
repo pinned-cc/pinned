@@ -63,7 +63,7 @@ func TestShareCreateAndState(t *testing.T) {
 	e.login()
 	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Reading"}, 201))
 	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{}, 201))
-	if len(sh.Token) != 32 || sh.URL != "http://homelab:9095/s/"+sh.Token || sh.HasPassword || sh.ExpiresAt != nil || sh.Opens != 0 {
+	if len(sh.Token) != 32 || sh.URL != "http://homelab:9095/s/#"+sh.Token || sh.HasPassword || sh.ExpiresAt != nil || sh.Opens != 0 {
 		t.Errorf("share: %+v", sh)
 	}
 	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{}, 409)
@@ -245,9 +245,12 @@ func TestSharePassword(t *testing.T) {
 	sh2 := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "new one here"}, 201))
 	var unlock string
 	for _, c := range cookie {
-		if c.Name == shareCookie {
+		if strings.HasPrefix(c.Name, "pinned_share_") && !strings.Contains(c.Name, "seen") {
 			unlock = c.Value
 		}
+	}
+	if unlock == "" {
+		t.Fatal("no unlock cookie value")
 	}
 	req, _ := http.NewRequest("GET", e.srv.URL+"/s/"+sh2.Token+"/data", nil)
 	req.AddCookie(&http.Cookie{Name: shareCookie, Value: unlock})

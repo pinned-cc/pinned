@@ -2,13 +2,29 @@
 import { byId, esc, fmtDate, highlight, ic, installIconFallback, PHONE_MQ, SPRITE, truncStart } from './js/util.js';
 
 const HUES = ['cyan', 'coral', 'lilac', 'lime', 'mint', 'rose'];
-const base = '/s/' + location.pathname.split('/')[2];
+/* a link is /s/#<token>: the token stays in the fragment, which no request carries, and goes to the server in a header.
+   An old link, /s/<token>, keeps its own path. */
+const inPath = location.pathname.split('/')[2] || '';
+const token = inPath || (() => { try { return decodeURIComponent(location.hash.slice(1)); } catch (e) { return ''; } })();
+const base = inPath ? '/s/' + inPath : '/s/-';
+const withToken = (h = {}) => Object.assign({ 'X-Share-Token': token }, h);
 let shared = null, query = '', VIEW = 'all';
+
+/* icons come with the token in a header too, so they are fetched and shown from blob: URLs, once each, when they come near the screen */
+const iconURL = new Map(), iconLoad = new Map();
+const iconFail = img => { const p = img.parentElement; if (p) { p.style.setProperty('--tile', 'var(--tile-blank)'); p.textContent = p.dataset.l; } };
+const fillIcon = img => { const src = img.dataset.src; if (!src) return;
+  if (!iconLoad.has(src)) iconLoad.set(src, fetch(src, { credentials: 'same-origin', headers: withToken() }).then(r => r.ok ? r.blob() : null)
+    .then(b => { const u = b ? URL.createObjectURL(b) : null; iconURL.set(src, u); return u; }).catch(() => { iconURL.set(src, null); return null; }));
+  iconLoad.get(src).then(u => { if (u) img.src = u; else iconFail(img); }); };
+const iconSeen = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { iconSeen.unobserve(e.target); fillIcon(e.target); } }), { rootMargin: '200px' }) : null;
+const loadIcons = () => document.querySelectorAll('#share img[data-src]').forEach(img => { if (iconSeen) iconSeen.observe(img); else fillIcon(img); });
 
 const hl = s => highlight(s, query);
 const hostLine = (h, cls = '') => truncStart(hl(h), cls);
 const fav = (b, size) => { const l = esc(b.letter || (b.title || '?').charAt(0).toUpperCase());
-  return `<span class="fav" data-l="${l}"${b.icon ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${b.icon ? `<img src="${esc(b.icon)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`; };
+  const u = b.icon && iconURL.get(b.icon), src = u ? `src="${esc(u)}"` : `data-src="${esc(b.icon || '')}"`;
+  return `<span class="fav" data-l="${l}"${b.icon ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${b.icon ? `<img ${src} alt="" width="${size}" height="${size}" draggable="false">` : l}</span>`; };
 
 /* folders inside the shared one: the root has no id in the response, its children point at it */
 const folders = () => shared.folders || [];
@@ -59,6 +75,7 @@ function render() {
     ? `<div class="share-phone"><header class="ptbar home"><h2 class="ptb-t">${esc(shared.folder.name)}</h2><span class="ptb-c">${n}</span></header>${chips() ? `<div class="share-chipwrap">${chips()}</div>` : ''}<div class="bd" id="sbody">${body()}</div></div>
        <div class="pbottom share-bottom"><div class="psrow">${field}</div></div>`
     : `<div class="share-col"><header class="share-head"><h2>${esc(shared.folder.name)}</h2><span class="cnt">${n}</span><span class="sp"></span>${field}</header>${chips()}<div class="body" id="sbody">${body()}</div></div>`;
+  loadIcons();
 }
 function locked(name) {
   byId('share').innerHTML = `<main class="lone share-lock"><div class="lone-box"><span class="lock-ic">${ic('lock')}</span><h2>${esc(name || 'Shared folder')}</h2>
@@ -66,24 +83,25 @@ function locked(name) {
     <p class="fld-err" id="uerr" role="alert"></p><button type="submit" class="save">Open</button></form></div></main>`;
   const f = byId('unlock');
   f.addEventListener('submit', async e => { e.preventDefault(); const btn = f.querySelector('button'); btn.disabled = true;
-    const r = await fetch(base + '/unlock', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'fetch' }, body: JSON.stringify({ password: f.elements.password.value }) }).catch(() => null);
+    const r = await fetch(base + '/unlock', { method: 'POST', credentials: 'same-origin', headers: withToken({ 'Content-Type': 'application/json', 'X-Requested-With': 'fetch' }), body: JSON.stringify({ password: f.elements.password.value }) }).catch(() => null);
     if (r && r.status === 204) { load(); return; }
     btn.disabled = false; byId('uerr').textContent = r && r.status === 429 ? 'Wait 30 seconds and try again.' : 'Wrong password.'; f.elements.password.select(); });
 }
 async function load() {
-  const r = await fetch(base + '/data', { credentials: 'same-origin' }).catch(() => null);
+  const r = token ? await fetch(base + '/data', { credentials: 'same-origin', headers: withToken() }).catch(() => null) : null;
   const j = r && r.ok ? await r.json().catch(() => null) : null;
   if (!j) { byId('share').innerHTML = `<main class="lone"><div class="lone-box"><h2>This link does not work.</h2></div></main>`; return; }
   /* a password protected share answers 200 with locked, so the browser logs no error */
   if (j.locked) { const name = j.folder && j.folder.name; if (name) { document.title = name; byId('share-h1').textContent = name; } locked(name); return; }
   shared = j; shared.folders = shared.folders || []; shared.bookmarks = shared.bookmarks || []; render();
 }
-document.addEventListener('input', e => { if (e.target.id === 'sq') { query = e.target.value; byId('sbody').innerHTML = body(); } });
-document.addEventListener('click', e => { if (e.target.closest('[data-clear]')) { query = ''; const i = byId('sq'); if (i) { i.value = ''; i.focus({ preventScroll: true }); } byId('sbody').innerHTML = body(); return; } });
+document.addEventListener('input', e => { if (e.target.id === 'sq') { query = e.target.value; byId('sbody').innerHTML = body(); loadIcons(); } });
+document.addEventListener('click', e => { if (e.target.closest('[data-clear]')) { query = ''; const i = byId('sq'); if (i) { i.value = ''; i.focus({ preventScroll: true }); } byId('sbody').innerHTML = body(); loadIcons(); return; } });
 document.addEventListener('click', e => { const c = e.target.closest('[data-sv]'); if (!c) return; const v = c.dataset.sv; VIEW = v === 'all' ? 'all' : +v; render(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.id === 'sq') { query = ''; e.target.value = ''; byId('sbody').innerHTML = body(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.id === 'sq') { query = ''; e.target.value = ''; byId('sbody').innerHTML = body(); loadIcons(); }
   if (e.key === '/' && e.target.tagName !== 'INPUT' && byId('sq')) { e.preventDefault(); byId('sq').focus(); } });
 { const on = () => shared && render(); if (PHONE_MQ.addEventListener) PHONE_MQ.addEventListener('change', on); else PHONE_MQ.addListener(on); }
+if (!inPath) addEventListener('hashchange', () => location.reload()); /* another link pasted into this tab */
 installIconFallback();
 document.body.insertAdjacentHTML('afterbegin', SPRITE);
 load();

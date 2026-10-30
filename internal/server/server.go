@@ -168,7 +168,14 @@ func (s *Server) routes() {
 	m.HandleFunc("GET /extras/{file}", s.extras)
 	m.Handle("GET /static/", http.StripPrefix("/static/", s.static()))
 
-	// Shared folders, public
+	// Shared folders, public. A link is /s/#<token>: the token stays in the
+	// fragment, which never reaches the server or a proxy, and share.js
+	// sends it in the X-Share-Token header to the /s/-/ routes. Links of
+	// the form /s/<token> from before 0.1.11 keep working.
+	m.HandleFunc("GET /s/{$}", s.sharePage)
+	m.HandleFunc("GET /s/-/data", s.shareData)
+	m.HandleFunc("GET /s/-/icons/{file}", s.shareIcon)
+	m.HandleFunc("POST /s/-/unlock", s.shareUnlock)
 	m.HandleFunc("GET /s/{token}", s.sharePage)
 	m.HandleFunc("GET /s/{token}/data", s.shareData)
 	m.HandleFunc("GET /s/{token}/icons/{file}", s.shareIcon)
