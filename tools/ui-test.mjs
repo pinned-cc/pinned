@@ -423,6 +423,27 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await until(page, () => !document.querySelector('#pal'), null, 'palette closed');
   });
 
+  await check('Tab goes on past the search field: the palette it opens steps aside for Tab and Shift Tab, Escape leaves focus in the field', async () => {
+    await page.click('#side [data-view="inbox"]'); await visible(page.locator('#body article.tile[data-id]'));
+    const palOn = what => until(page, () => !!document.querySelector('#pal.open') && document.activeElement.id === 'pq', null, what);
+    const palOff = what => until(page, () => !document.querySelector('#pal'), null, what);
+    const where = () => page.evaluate(() => { const a = document.activeElement; return { id: a.id, main: !!a.closest('#content'), side: !!a.closest('#side'), label: a.getAttribute('aria-label') || a.textContent.trim().slice(0, 20) }; });
+    const toQ = () => page.evaluate(() => { document.activeElement.blur(); document.getElementById('q').focus(); });
+    await toQ(); await palOn('palette open from focus in the field');
+    await page.keyboard.press('Tab'); await palOff('palette closed by Tab');
+    let w = await where(); assert(w.main && w.id !== 'q', 'Tab did not move past the search: ' + JSON.stringify(w));
+    await toQ(); await palOn('palette open again');
+    await page.keyboard.press('Shift+Tab'); await palOff('palette closed by Shift Tab');
+    w = await where(); assert(w.side, 'Shift Tab did not move to the sidebar: ' + JSON.stringify(w));
+    await toQ(); await palOn('palette open for Escape');
+    await page.keyboard.press('Escape'); await palOff('palette closed by Escape');
+    await page.waitForTimeout(200);
+    assert(await page.evaluate(() => document.activeElement.id === 'q' && !document.querySelector('#pal')), 'Escape did not leave focus in the search field, or the palette came back');
+    await page.keyboard.press('Enter'); await palOn('Enter in the field opens the palette');
+    await page.keyboard.press('Escape'); await palOff('palette closed');
+    await page.keyboard.press('Escape'); /* out of the field */
+  });
+
   await check('Cmd K palette: grouped results, Enter opens, Escape closes', async () => {
     await page.locator('body').click({ position: { x: 700, y: 5 } }).catch(() => {});
     await page.keyboard.press('ControlOrMeta+k');

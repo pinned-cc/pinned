@@ -46,7 +46,7 @@ export function onKey(e) {
   if (mod && !e.shiftKey && e.key.toLowerCase() === 'z' && !typing) { if (layers.undo) { e.preventDefault(); runUndo(); } return; }
   if (layers.sheet || layers.menu) return;
   if (t.id === 'q' && e.key === 'ArrowDown' && ui.mode === 'desk') { e.preventDefault(); moveFocus('ArrowDown'); return; }
-  if (t.id === 'q' && e.key === 'Enter' && ui.mode === 'desk') { const first = document.querySelector('#body .t-title'); if (first) { e.preventDefault(); first.click(); } return; } /* the link itself opens, so it counts as opened */
+  if (t.id === 'q' && e.key === 'Enter' && ui.mode === 'desk') { e.preventDefault(); openPalette(); return; } /* back in the field after Escape: Enter opens the search again */
   /* a keyboard means a keyboard at any width: Cmd A and Shift arrows select in the phone layout too */
   if (mod && !e.shiftKey && e.key.toLowerCase() === 'a' && !typing && canSelect() && selectables().length) { e.preventDefault(); ui.selecting = true; selectables().forEach(id => ui.picked.add(id)); selSync(); return; }
   if (e.shiftKey && !mod && e.key.startsWith('Arrow') && !typing && !foldersSel()) { e.preventDefault(); extendByKey(e.key); return; }

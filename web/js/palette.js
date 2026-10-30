@@ -92,7 +92,15 @@ export function closePalette(fromPop, swap) { if (!layers.palette) return; const
   if (hist && !fromPop && history.state && history.state.pal) history.back(); document.body.classList.remove('pal-on'); clearTimeout(palT);
   const panel = el.querySelector('.pal-panel'); if (isPhone()) { panel.classList.remove('glass'); panel.style.willChange = 'transform, opacity'; }
   el.classList.remove('open'); setTimeout(() => el.remove(), reduce() ? 90 : 130);
+  if (back && back.id === 'q' && focusQ()) return;
   if (back && back.isConnected && back !== document.body && back.id !== 'q') back.focus({ preventScroll: true }); else if (document.activeElement) document.activeElement.blur(); }
+/* desktop: back in the search field without opening the palette again; Enter, a click or typing there opens it */
+let quietQ = false;
+export function focusQ() { const q = byId('q'); if (!q || ui.mode !== 'desk') return false; quietQ = true; q.focus({ preventScroll: true }); quietQ = false; return document.activeElement === q; }
+/* Tab from a palette opened by the search field goes on from the field, as if the palette was not there */
+const tabbable = () => [...document.querySelectorAll('a[href], button:not([disabled]), input:not([type=hidden]), textarea, select, [tabindex]')]
+  .filter(x => x.tabIndex >= 0 && !x.closest('#pal') && (x.checkVisibility ? x.checkVisibility({ visibilityProperty: true }) : x.getClientRects().length));
+function tabOn(back) { closePalette(); const q = byId('q'); if (document.activeElement !== q) return; const all = tabbable(), n = all[all.indexOf(q) + (back ? -1 : 1)]; if (n) n.focus(); }
 /* on the phone the panel fits above the keyboard */
 /* on the phone the panel sits at the top and stops above the keyboard */
 /* the panel height is fixed from the visual viewport once the keyboard settles: debounced, applied in one frame */
@@ -159,7 +167,7 @@ export function palKey(e, mod) {
   if (e.key === 'ArrowDown') { e.preventDefault(); palSet(layers.palette.idx + 1); return; }
   if (e.key === 'ArrowUp') { e.preventDefault(); palSet(layers.palette.idx - 1); return; }
   if (e.key === 'Enter') { e.preventDefault(); if (palT) { clearTimeout(palT); palT = null; palFill(); } palGo(mod); return; }
-  if (e.key === 'Tab') { e.preventDefault(); byId('pq').focus(); return; }
+  if (e.key === 'Tab') { e.preventDefault(); if (layers.palette.back && layers.palette.back.id === 'q' && ui.mode === 'desk') tabOn(e.shiftKey); else byId('pq').focus(); return; }
   if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); byId('pq').focus(); byId('pq').select(); }
 }
 let palT = null; /* typing renders after a 60 ms pause */
@@ -184,7 +192,10 @@ export function installPalette() {
   document.addEventListener('pointerdown', e => { if (layers.palette && e.target.closest && e.target.closest('.pal-cancel')) { e.preventDefault(); ui.suppressClick = performance.now() + 350; closePalette(); } }, true);
   document.addEventListener('pointerup', e => { if (layers.palette && e.target.classList && e.target.classList.contains('pal-scrim') && performance.now() - layers.palette.at > 400) { ui.suppressClick = performance.now() + 350; closePalette(); } });
   /* desktop: focus in the search field opens the palette, like Spotlight; the field itself never filters inline */
-  document.addEventListener('focusin', e => { if (e.target.id === 'q' && ui.mode === 'desk' && !layers.palette && !layers.sheet) openPalette(); });
+  const fromQ = t => t.id === 'q' && ui.mode === 'desk' && !layers.palette && !layers.sheet;
+  document.addEventListener('focusin', e => { if (!quietQ && fromQ(e.target)) openPalette(); });
+  document.addEventListener('click', e => { if (fromQ(e.target)) openPalette(); });
+  document.addEventListener('input', e => { if (fromQ(e.target)) openPalette({ q: e.target.value }); });
   document.addEventListener('pointerdown', e => { if (!layers.palette || !isPhone()) return; const h = e.target.closest('#pal .pal-panel'); if (!h || e.target.closest('a, .pal-scroll')) return;
     palSwipe = { y: e.clientY, pid: e.pointerId, dy: 0 }; });
   document.addEventListener('pointermove', e => { if (!palSwipe || e.pointerId !== palSwipe.pid) return; palSwipe.dy = e.clientY - palSwipe.y; const p = document.querySelector('#pal .pal-panel'); if (p && palSwipe.dy > 0) p.style.transform = `translateY(${palSwipe.dy}px)`; });
