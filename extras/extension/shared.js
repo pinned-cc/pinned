@@ -8,6 +8,7 @@ var Pinned = (function () {
   function cleanAddress(raw) {
     var s = String(raw || '').trim();
     if (!s) return '';
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s) && !/^https?:\/\//i.test(s)) return ''; /* ftp:// and the like */
     if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
     var u;
     try { u = new URL(s); } catch (e) { return ''; }
