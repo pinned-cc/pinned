@@ -52,12 +52,13 @@ func (s *Server) cookieOpens(r *http.Request, f store.Folder) bool {
 	if err != nil {
 		return false
 	}
-	expStr, _, ok := strings.Cut(c.Value, ".")
+	v := signedPayload(c.Value)
+	expStr, _, ok := strings.Cut(v, ".")
 	exp, err := strconv.ParseInt(expStr, 10, 64)
 	if !ok || err != nil || exp <= s.st.Now().Unix() {
 		return false
 	}
-	return hmac.Equal([]byte(c.Value), []byte(s.folderUnlockValue(f, exp)))
+	return hmac.Equal([]byte(v), []byte(s.folderUnlockValue(f, exp)))
 }
 
 // lockView answers lock questions for one request. A nil request means a
@@ -325,7 +326,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 	}
 	key := s.clientKey(r) + "|" + strconv.FormatInt(id, 10)
 	ok, wait := s.attempt(r, s.folderLimiter, key, false, func() bool {
-		return bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.Password)) == nil
+		return checkStored(*f.LockHash, in.Password, func(h string) { s.rehashLock(&f, h) })
 	})
 	if !ok {
 		s.failed(r, "lock", wait, "folder", id)
@@ -334,7 +335,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 	}
 	exp := s.st.Now().Add(folderUnlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
-		Name: unlockCookieName(id), Value: s.folderUnlockValue(f, exp), Path: "/",
+		Name: unlockCookieName(id), Value: signedVersion + s.folderUnlockValue(f, exp), Path: "/",
 		MaxAge: int(folderUnlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusNoContent)

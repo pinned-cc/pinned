@@ -18,6 +18,12 @@ func (s *Store) SetLock(folderID int64, hash string) error {
 	})
 }
 
+// ReplaceLockHash replaces the hash of a folder's lock password with
+// another hash of the same password, made at a higher cost.
+func (s *Store) ReplaceLockHash(folderID int64, hash string) error {
+	return s.execOne(`UPDATE folders SET lock_hash = ? WHERE id = ? AND lock_hash IS NOT NULL`, hash, folderID)
+}
+
 // RemoveLock takes the folder's own password away.
 func (s *Store) RemoveLock(folderID int64) error {
 	return s.execOne(`UPDATE folders SET lock_hash = NULL WHERE id = ?`, folderID)

@@ -15,6 +15,8 @@ Only the user the app runs as can read them: folders are 0700 and files 0600 (th
 
 `secret.key` is the key for the hashes of sessions, API tokens, unlock cookies and device cookies. Keep it with the database. Without it every session ends and every API token stops working.
 
+Device and unlock cookies carry a version marker, `v1.`, before the signed value; values without it, from before 0.1.11, are read the same way. bcrypt hashes (lock, share and app passwords) made with a lower cost than the current one are replaced by a hash at the current cost at the next successful check.
+
 ## The database
 
 SQLite in WAL mode, with foreign keys on. Times are Unix seconds. The schema is created and upgraded by numbered migrations when the app starts; the table `schema_version` holds the number of the last one that ran. Migrations only go forward. Before migrating an existing database, the app writes a copy of it with `VACUUM INTO` next to it as `bookmarks-schema<N>-<YYYY-MM-DD-HHMMSS>.db`, where N is the schema number before the upgrade, and keeps the newest three by modification time, always including the one for this start. An older copy of the same schema with the same bytes is removed. The copy is created with mode 0600. If the copy fails, it does not migrate.

@@ -32,7 +32,7 @@ func (s *Server) deviceID(r *http.Request) (string, bool) {
 		if err != nil {
 			continue
 		}
-		id, mac, ok := strings.Cut(c.Value, ".")
+		id, mac, ok := strings.Cut(signedPayload(c.Value), ".")
 		if ok && id != "" && hmac.Equal([]byte(mac), []byte(s.deviceMAC(id))) {
 			return id, true
 		}
@@ -57,7 +57,7 @@ func (s *Server) rememberDevice(w http.ResponseWriter, r *http.Request) {
 		name = hostPrefix + deviceCookie
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name: name, Value: id + "." + s.deviceMAC(id), Path: "/",
+		Name: name, Value: signedVersion + id + "." + s.deviceMAC(id), Path: "/",
 		MaxAge: int(deviceTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: secure,
 	})
 }

@@ -158,3 +158,25 @@ func TestLimiterKnownClientSkipsGlobalCap(t *testing.T) {
 		t.Errorf("known failure counted globally: %d", len(fresh.global))
 	}
 }
+
+func TestCheckPasswordHash(t *testing.T) {
+	h, err := HashPassword("right")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok, rehash := CheckPasswordHash(h, "right"); !ok || rehash {
+		t.Errorf("current hash: ok=%v rehash=%v", ok, rehash)
+	}
+	if ok, rehash := CheckPasswordHash(h, "wrong"); ok || rehash {
+		t.Errorf("wrong password: ok=%v rehash=%v", ok, rehash)
+	}
+	old := BcryptCost
+	BcryptCost = old + 1
+	defer func() { BcryptCost = old }()
+	if ok, rehash := CheckPasswordHash(h, "right"); !ok || !rehash {
+		t.Errorf("hash below the cost: ok=%v rehash=%v", ok, rehash)
+	}
+	if _, err := HashPassword(strings.Repeat("x", 73)); err == nil {
+		t.Error("a password over 72 bytes was hashed")
+	}
+}

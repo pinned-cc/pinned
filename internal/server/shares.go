@@ -221,12 +221,13 @@ func (s *Server) shareUnlocked(r *http.Request, sh store.Share) bool {
 	if err != nil {
 		return false
 	}
-	expStr, _, ok := strings.Cut(c.Value, ".")
+	v := signedPayload(c.Value)
+	expStr, _, ok := strings.Cut(v, ".")
 	exp, err := strconv.ParseInt(expStr, 10, 64)
 	if !ok || err != nil || exp <= s.st.Now().Unix() {
 		return false
 	}
-	return hmac.Equal([]byte(c.Value), []byte(s.unlockValue(sh, exp)))
+	return hmac.Equal([]byte(v), []byte(s.unlockValue(sh, exp)))
 }
 
 func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
@@ -245,7 +246,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	}
 	if sh.PasswordHash != nil {
 		ok, wait := s.attempt(r, s.shareLimiter, s.clientKey(r), false, func() bool {
-			return bcrypt.CompareHashAndPassword([]byte(*sh.PasswordHash), []byte(in.Password)) == nil
+			return checkStored(*sh.PasswordHash, in.Password, func(h string) { s.rehashShare(&sh, h) })
 		})
 		if !ok {
 			s.failed(r, "share", wait, "folder", sh.FolderID)
@@ -255,7 +256,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	}
 	exp := s.st.Now().Add(unlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
-		Name: shareCookie, Value: s.unlockValue(sh, exp), Path: "/s/" + sh.Token,
+		Name: shareCookie, Value: signedVersion + s.unlockValue(sh, exp), Path: "/s/" + sh.Token,
 		MaxAge: int(unlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusNoContent)
