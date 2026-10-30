@@ -151,7 +151,7 @@ func TestLoginEndsTheSessionTheBrowserHeld(t *testing.T) {
 		if cookieOf(e, CookieName) == old {
 			t.Fatal("no new session cookie")
 		}
-		if _, ok := e.st.SessionExpiry(hashOf(e, old)); ok {
+		if _, ok := e.st.Session(hashOf(e, old)); ok {
 			t.Errorf("form=%v: the old session still exists after a new login", form)
 		}
 		e.expect("GET", "/api/state", nil, 200)

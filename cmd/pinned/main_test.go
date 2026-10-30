@@ -50,6 +50,11 @@ func TestRefusesBadSettings(t *testing.T) {
 		t.Fatalf("bad session days: %v", err)
 	}
 	t.Setenv("SESSION_DAYS", "")
+	t.Setenv("SESSION_MAX_DAYS", "forever")
+	if err := run(); err == nil || !strings.Contains(err.Error(), "SESSION_MAX_DAYS") {
+		t.Fatalf("bad session max days: %v", err)
+	}
+	t.Setenv("SESSION_MAX_DAYS", "")
 	t.Setenv("HSTS", "yes please")
 	if err := run(); err == nil || !strings.Contains(err.Error(), "HSTS") {
 		t.Fatalf("bad hsts: %v", err)

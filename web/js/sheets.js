@@ -61,6 +61,7 @@ export function fillSheet() {
   else if (s.type === 'lock' || s.type === 'unlock' || s.type === 'unlockremove') { const f = folderById.get(s.fid); if (!f) { closeSheet(); return; } label = lockTitle(s, f); h += lockHTML(s, f); }
   else if (s.type === 'share') { const f = folderById.get(s.fid); if (!f) { closeSheet(); return; } label = 'Share ' + f.name; h += shareHTML(s, f); }
   else if (s.type === 'tokens') { label = 'API tokens'; h += tokensHTML(s); }
+  else if (s.type === 'sessions') { label = 'Signed in'; h += sessionsHTML(s); }
   else if (s.type === 'releases') { label = "What's new"; h += releasesHTML(s); }
   else if (s.type === 'addto') { label = 'Add to ' + atName(s.fid); h += addToHTML(s); }
   else if (s.type === 'save') { label = 'Save'; h += saveHTML(); }
@@ -218,6 +219,26 @@ export async function tokenCreate(f) {
 export async function tokenCopy() { if (!layers.sheet || !layers.sheet.created) return; if (await copy(layers.sheet.created.token)) toast('Copied'); else toast('Could not copy the token.'); }
 export async function tokenRevoke(id) { const s = layers.sheet;
   try { await api('DELETE', `/api/tokens/${id}`); if (layers.sheet !== s) return; s.confirm = null; if (s.created && s.created.id === id) s.created = null; await tokensLoad(); toast('Token revoked'); }
+  catch (e) { if (!e.auth) toast('That did not work. Try again.'); } }
+
+/* ---------- signed in browsers: when each signed in and was last used, sign out one or all others ---------- */
+export function openSessions() { openSheet({ type: 'sessions', list: null, err: null }); sessionsLoad(); }
+async function sessionsLoad() { const s = layers.sheet; try { const list = await api('GET', '/api/sessions'); if (layers.sheet !== s) return; s.list = list; s.err = null; }
+  catch (e) { if (e.auth || layers.sheet !== s) return; s.err = 'Could not load the browsers.'; }
+  fillSheet(); }
+export function sessionsHTML(s) {
+  const h = `<div class="at-head"><h2 class="at-title">Signed in</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
+  if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
+  if (!s.list) return h + `<div class="tk-sec" aria-busy="true"></div>`;
+  const name = x => x.browser || 'Browser';
+  return h + `<div class="tk-sec"><span class="sh-lbl">Browsers</span><div class="sh-rows tk-list">` + s.list.map(x => `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(name(x))}</span><span class="tk-m">${x.current ? 'This browser, signed in on' : 'Signed in on'} ${fmtDay(x.created_at)}${x.current ? '' : ', last used ' + ago(x.used_at)}</span></span>${x.current ? '' : `<button type="button" class="tbtn warn" data-a="ss-end" data-id="${x.id}" aria-label="Sign out ${esc(name(x))}">Sign out</button>`}</div>`).join('') + `</div></div>`
+    + (s.list.some(x => !x.current) ? `<div class="sv-acts"><button type="button" class="tbtn warn" data-a="ss-others">Sign out all others</button></div>` : '');
+}
+export async function sessionEnd(id) { const s = layers.sheet;
+  try { await api('DELETE', `/api/sessions/${id}`); if (layers.sheet !== s) return; await sessionsLoad(); toast('Signed out'); }
+  catch (e) { if (!e.auth) toast('That did not work. Try again.'); } }
+export async function sessionsEndOthers() { const s = layers.sheet;
+  try { await api('DELETE', '/api/sessions'); if (layers.sheet !== s) return; await sessionsLoad(); toast('Other browsers signed out'); }
   catch (e) { if (!e.auth) toast('That did not work. Try again.'); } }
 
 /* ---------- "Add to <folder>": pick existing bookmarks into a folder ---------- */

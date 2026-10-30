@@ -252,7 +252,8 @@ func TestSessionRenewedOnUse(t *testing.T) {
 		return nil
 	}
 	hash := func() string { return hashOf(e, cookie().Value) }
-	first, _ := e.st.SessionExpiry(hash())
+	expiry := func() time.Time { x, _ := e.st.Session(hash()); return time.Unix(x.ExpiresAt, 0) }
+	first := expiry()
 
 	// Used within a day: unchanged.
 	e.st.Now = func() time.Time { return time.Now().Add(12 * time.Hour) }
@@ -261,7 +262,7 @@ func TestSessionRenewedOnUse(t *testing.T) {
 	if len(resp.Cookies()) != 0 {
 		t.Error("renewed within a day")
 	}
-	if exp, _ := e.st.SessionExpiry(hash()); !exp.Equal(first) {
+	if exp := expiry(); !exp.Equal(first) {
 		t.Error("expiry moved within a day")
 	}
 
@@ -273,7 +274,7 @@ func TestSessionRenewedOnUse(t *testing.T) {
 	if resp.StatusCode != 200 || len(resp.Cookies()) != 1 || resp.Cookies()[0].MaxAge != 90*86400 {
 		t.Fatalf("renew: %d %v", resp.StatusCode, resp.Cookies())
 	}
-	if exp, _ := e.st.SessionExpiry(hash()); exp.Unix() != later.Add(90*24*time.Hour).Unix() {
+	if exp := expiry(); exp.Unix() != later.Add(90*24*time.Hour).Unix() {
 		t.Errorf("expiry %v", exp)
 	}
 
@@ -713,7 +714,7 @@ func TestParseHSTS(t *testing.T) {
 func TestOldSessionCookieMovesToPrefix(t *testing.T) {
 	e := newEnv(t, Config{})
 	token := "old-session-token"
-	if err := e.st.CreateSession(hashOf(e, token), time.Now().Add(80*24*time.Hour)); err != nil {
+	if err := e.st.CreateSession(hashOf(e, token), "", time.Now().Add(80*24*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 	get := func(cookie string) *http.Response {
@@ -822,7 +823,7 @@ func TestDeviceCookieOnlyFromPasswordAndEndsWithIt(t *testing.T) {
 	e := newEnv(t, Config{})
 	// A session alone never mints a device cookie.
 	token := "session-from-0.1.10"
-	if err := e.st.CreateSession(hashOf(e, token), time.Now().Add(80*24*time.Hour)); err != nil {
+	if err := e.st.CreateSession(hashOf(e, token), "", time.Now().Add(80*24*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 	req, _ := http.NewRequest("GET", e.srv.URL+"/api/state", nil)

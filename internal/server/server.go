@@ -39,9 +39,12 @@ type Config struct {
 	Password    string
 	DataDir     string
 	BaseURL     string // optional, without trailing slash
-	SessionDays int
-	Version     string
-	Changelog   []byte // CHANGELOG.md, for What's new
+	SessionDays int    // idle timeout: a session unused this long ends
+	// SessionMaxDays is the absolute lifetime: a session this old ends
+	// however much it is used (SESSION_MAX_DAYS).
+	SessionMaxDays int
+	Version        string
+	Changelog      []byte // CHANGELOG.md, for What's new
 	// TrustedProxies are the reverse proxies whose X-Forwarded-For is
 	// believed for the rate limits (TRUSTED_PROXIES).
 	TrustedProxies []netip.Prefix
@@ -67,8 +70,12 @@ func ParseHSTS(s string) (int, error) {
 	return n, nil
 }
 
-// DefaultSessionDays is the session lifetime when SESSION_DAYS is not set.
+// DefaultSessionDays is the idle timeout when SESSION_DAYS is not set.
 const DefaultSessionDays = 90
+
+// DefaultSessionMaxDays is the absolute session lifetime when
+// SESSION_MAX_DAYS is not set.
+const DefaultSessionMaxDays = 365
 
 // IconQueue starts a background icon fetch for a bookmark.
 type IconQueue interface{ Enqueue(id int64) }
@@ -103,6 +110,9 @@ type Server struct {
 func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte) *Server {
 	if cfg.SessionDays <= 0 {
 		cfg.SessionDays = DefaultSessionDays
+	}
+	if cfg.SessionMaxDays <= 0 {
+		cfg.SessionMaxDays = DefaultSessionMaxDays
 	}
 	s := &Server{
 		cfg: cfg, st: st, web: web, icons: icons, secret: secret,
@@ -159,6 +169,9 @@ func (s *Server) routes() {
 	// API
 	m.HandleFunc("POST /api/login", s.csrf(s.apiLogin))
 	m.HandleFunc("POST /api/logout", s.api(s.apiLogout))
+	m.HandleFunc("GET /api/sessions", s.api(s.apiSessions))
+	m.HandleFunc("DELETE /api/sessions", s.api(s.apiEndOtherSessions))
+	m.HandleFunc("DELETE /api/sessions/{id}", s.api(s.apiEndSession))
 	m.HandleFunc("GET /api/state", s.api(s.apiState))
 	m.HandleFunc("GET /api/check", s.api(s.apiCheck))
 	m.HandleFunc("POST /api/bookmarks", s.api(s.apiCreate))
@@ -199,9 +212,22 @@ func (s *Server) sessionTTL() time.Duration {
 	return time.Duration(s.cfg.SessionDays) * 24 * time.Hour
 }
 
+// sessionEnd is the end of a session's absolute lifetime.
+func (s *Server) sessionEnd(sess store.Session) time.Time {
+	return time.Unix(sess.CreatedAt, 0).Add(time.Duration(s.cfg.SessionMaxDays) * 24 * time.Hour)
+}
+
+// sessionLive reports whether sess has neither been idle too long nor
+// passed its absolute lifetime.
+func (s *Server) sessionLive(sess store.Session, now time.Time) bool {
+	return time.Unix(sess.ExpiresAt, 0).After(now) && s.sessionEnd(sess).After(now)
+}
+
 // loggedIn reports whether the request carries a valid session. With a
 // ResponseWriter, a session last renewed more than a day ago is renewed for
-// the full lifetime, in the database and in the cookie.
+// SESSION_DAYS, in the database and in the cookie, but never past its
+// absolute lifetime of SESSION_MAX_DAYS from the login. Its last use is
+// recorded at most once an hour.
 //
 // A session cookie without the __Host- prefix on an HTTPS request, from
 // before 0.1.11, is renewed under the prefixed name the same way.
@@ -211,17 +237,29 @@ func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	hash := auth.HashToken(s.secret, c.Value)
-	exp, ok := s.st.SessionExpiry(hash)
+	sess, ok := s.st.Session(hash)
 	now := s.st.Now()
-	if !ok || !exp.After(now) {
+	if !ok || !s.sessionLive(sess, now) {
 		return false
 	}
-	ttl := s.sessionTTL()
-	if w != nil && (legacy || now.Add(ttl).Sub(exp) > 24*time.Hour) {
-		if err := s.st.ExtendSession(hash, now.Add(ttl)); err != nil {
+	if w == nil {
+		return true
+	}
+	exp := time.Unix(sess.ExpiresAt, 0)
+	renewed := now.Add(s.sessionTTL())
+	if end := s.sessionEnd(sess); renewed.After(end) {
+		renewed = end
+	}
+	switch {
+	case legacy || renewed.Sub(exp) > 24*time.Hour:
+		if err := s.st.ExtendSession(hash, renewed); err != nil {
 			log.Printf("renew session: %v", err)
 		} else {
-			s.setSessionCookie(w, r, c.Value, ttl)
+			s.setSessionCookie(w, r, c.Value, renewed.Sub(now))
+		}
+	case now.Sub(time.Unix(sess.UsedAt, 0)) > time.Hour:
+		if err := s.st.ExtendSession(hash, exp); err != nil {
+			log.Printf("session use: %v", err)
 		}
 	}
 	return true
@@ -277,8 +315,8 @@ func (s *Server) startSession(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	ttl := s.sessionTTL()
-	if err := s.st.CreateSession(auth.HashToken(s.secret, token), s.st.Now().Add(ttl)); err != nil {
+	ttl := min(s.sessionTTL(), time.Duration(s.cfg.SessionMaxDays)*24*time.Hour)
+	if err := s.st.CreateSession(auth.HashToken(s.secret, token), browserName(r.UserAgent()), s.st.Now().Add(ttl)); err != nil {
 		return err
 	}
 	s.setSessionCookie(w, r, token, ttl)

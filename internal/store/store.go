@@ -177,6 +177,13 @@ var migrations = []string{
 	// is read from this index instead of scanning the folder, so saving,
 	// moving and importing into a full folder stay quick.
 	`CREATE INDEX bookmarks_folder_position ON bookmarks(folder_id, position) WHERE deleted_at IS NULL;`,
+	// Sessions remember when they started (for the absolute lifetime),
+	// when they were last used and a short browser name, for the list of
+	// signed in browsers. Sessions from before count from the upgrade.
+	`ALTER TABLE sessions ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0;
+	ALTER TABLE sessions ADD COLUMN used_at INTEGER NOT NULL DEFAULT 0;
+	ALTER TABLE sessions ADD COLUMN agent TEXT NOT NULL DEFAULT '';
+	UPDATE sessions SET created_at = CAST(strftime('%s', 'now') AS INTEGER), used_at = CAST(strftime('%s', 'now') AS INTEGER);`,
 }
 
 // NewerSchemaError means the database was written by a later version. That

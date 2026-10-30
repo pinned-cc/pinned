@@ -67,7 +67,12 @@ Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to th
 | Column | Type | Meaning |
 |---|---|---|
 | `token_hash` | TEXT PRIMARY KEY | HMAC-SHA256 of the session cookie value, keyed with `secret.key`. The cookie value itself is not stored. |
-| `expires_at` | INTEGER NOT NULL | |
+| `expires_at` | INTEGER NOT NULL | Moves forward by `SESSION_DAYS` when the session is used, never past `created_at` plus `SESSION_MAX_DAYS`. |
+| `created_at` | INTEGER NOT NULL | The login. Sessions from before schema 9 carry the time of the upgrade. |
+| `used_at` | INTEGER NOT NULL | Last use, updated at most once an hour. |
+| `agent` | TEXT NOT NULL | A short browser name taken from the User-Agent at login, such as `Firefox on macOS`, for the list of signed in browsers. |
+
+The list of signed in browsers names a session by its SQLite `rowid`.
 
 ### icon_failures
 

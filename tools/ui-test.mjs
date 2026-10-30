@@ -728,6 +728,23 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await sheetClosed(page);
   });
 
+  await check('Signed in: this browser is marked, another one shows up and goes with Sign out all others', async () => {
+    const other = await browser.newContext({ viewport: { width: 1440, height: 900 } }), op = await other.newPage();
+    try {
+      await login(op);
+      await openFoot(page); await page.click('#side [data-a="sessions"]'); await sheetOpen(page);
+      await visible(page.locator('#sheet .at-title', { hasText: 'Signed in' }));
+      await visible(page.locator('#sheet .tk-row', { hasText: 'This browser' }));
+      assert(!(await page.locator('#sheet .tk-row', { hasText: 'This browser' }).locator('[data-a="ss-end"]').count()), 'this browser has a Sign out button');
+      await page.click('#sheet [data-a="ss-others"]');
+      await toastWith(page, 'Other browsers signed out');
+      await gone(page.locator('#sheet [data-a="ss-others"]'));
+      assert((await apiIn(op, 'GET', '/api/state')).status === 401, 'the other browser is still signed in');
+      assert((await apiIn(page, 'GET', '/api/state')).status === 200, 'this browser was signed out');
+      await page.keyboard.press('Escape'); await sheetClosed(page);
+    } finally { await other.close(); }
+  });
+
   await check('locked folder: lock from the menu, it hides, unlock shows it', async () => {
     await page.click(`#side .sf[data-fid="${folderId}"]`);
     await until(page, n => (document.querySelector('#tbwrap h2') || {}).textContent === n, T.folder, 'folder view');

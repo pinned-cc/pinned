@@ -182,7 +182,7 @@ export function renderDesk() {
     <div class="side-lbl"><span class="side-lt">Folders</span>${nfPlus('side-add')}</div><div class="side-tree">${deskTree()}</div>
     <div class="side-foot${ui.footOpen ? ' open' : ''}">${sideItem('trash', 'trash', 'trash')}<button type="button" class="si foot-tog" data-a="foot" aria-expanded="${!!ui.footOpen}" aria-controls="footacts"><span class="si-ic">${ic('more')}</span><span class="si-n">More</span><span class="foot-chev" aria-hidden="true">${ic('chev')}</span></button>
       <div class="foot-acts" id="footacts"><div class="foot-in">${sideAction('Import', 'import', 'import')}
-      <a class="si" href="/api/export" download><span class="si-ic">${ic('export')}</span><span class="si-n">Export</span></a>${sideAction('API tokens', 'key', 'tokens')}
+      <a class="si" href="/api/export" download><span class="si-ic">${ic('export')}</span><span class="si-n">Export</span></a>${sideAction('API tokens', 'key', 'tokens')}${sideAction('Signed in', 'lock', 'sessions')}
       <a class="si" href="/bookmarklet"><span class="si-ic">${ic('all')}</span><span class="si-n">How to save</span></a>${sideAction('Log out', 'logout', 'logout')}
       <a class="si" href="${SOURCE_URL}" target="_blank" rel="noopener"><span class="si-ic">${ic('open')}</span><span class="si-n">Source</span></a>${ui.version ? `<button type="button" class="si rail-only" data-a="releases"><span class="si-ic">${ic('clock')}</span><span class="si-n">What's new</span></button><button type="button" class="app-ver" data-a="releases">Pinned ${esc(ui.version)}<span class="app-new">What's new</span></button>` : ''}</div></div></div>`;
   if (side._h !== sh) { side.innerHTML = sh; side._h = sh; side.querySelector('.side-tree').scrollTop = sideScroll; }
@@ -311,7 +311,7 @@ export function settingsScreen() {
     <div class="pset-lbl">About</div>
     ${row('releases', 'clock', "What's new", ui.version ? `Pinned ${esc(ui.version)}` : 'The releases')}${link(SOURCE_URL, 'open', 'Source', 'Open source, AGPL-3.0', true)}
     <div class="pset-lbl"></div>
-    ${row('logout', 'logout', 'Log out', '', true)}
+    ${row('sessions', 'lock', 'Signed in', 'Your browsers, sign out others')}${row('logout', 'logout', 'Log out', '', true)}
   </div>`;
 }
 export function phoneBody() {

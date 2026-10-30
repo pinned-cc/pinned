@@ -6,25 +6,75 @@ import (
 	"time"
 )
 
+// Session is a signed in browser. The token itself is never stored, only
+// its hash; ID is the row id, for listing and ending a session.
+type Session struct {
+	ID        int64
+	Agent     string // a short browser name taken at login
+	CreatedAt int64  // the login; the absolute lifetime counts from here
+	UsedAt    int64  // last use, updated at most once an hour
+	ExpiresAt int64
+}
+
 // CreateSession stores a hashed session token.
-func (s *Store) CreateSession(tokenHash string, expires time.Time) error {
-	_, err := s.exec(`INSERT INTO sessions (token_hash, expires_at) VALUES (?, ?)`, tokenHash, expires.Unix())
+func (s *Store) CreateSession(tokenHash, agent string, expires time.Time) error {
+	now := s.now()
+	_, err := s.exec(`INSERT INTO sessions (token_hash, expires_at, created_at, used_at, agent) VALUES (?, ?, ?, ?, ?)`,
+		tokenHash, expires.Unix(), now, now, agent)
 	return err
 }
 
-// SessionExpiry returns when the session with this hashed token expires.
-// ok is false when there is no such session.
-func (s *Store) SessionExpiry(tokenHash string) (expires time.Time, ok bool) {
-	var exp int64
-	if err := s.db.QueryRow(`SELECT expires_at FROM sessions WHERE token_hash = ?`, tokenHash).Scan(&exp); err != nil {
-		return time.Time{}, false
-	}
-	return time.Unix(exp, 0), true
+const sessionColumns = `rowid, agent, created_at, used_at, expires_at`
+
+func scanSession(sc scanner) (Session, error) {
+	var x Session
+	err := sc.Scan(&x.ID, &x.Agent, &x.CreatedAt, &x.UsedAt, &x.ExpiresAt)
+	return x, err
 }
 
-// ExtendSession moves the session's expiry.
+// Session returns the session with this hashed token, expired or not. ok
+// is false when there is no such session.
+func (s *Store) Session(tokenHash string) (Session, bool) {
+	x, err := scanSession(s.db.QueryRow(`SELECT `+sessionColumns+` FROM sessions WHERE token_hash = ?`, tokenHash))
+	return x, err == nil
+}
+
+// Sessions lists the sessions that have not expired, last used first.
+func (s *Store) Sessions() ([]Session, error) {
+	rows, err := s.db.Query(`SELECT `+sessionColumns+` FROM sessions WHERE expires_at > ? ORDER BY used_at DESC, rowid DESC`, s.now())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []Session{}
+	for rows.Next() {
+		x, err := scanSession(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, x)
+	}
+	return out, rows.Err()
+}
+
+// ExtendSession moves the session's expiry and records a use now.
 func (s *Store) ExtendSession(tokenHash string, expires time.Time) error {
-	return s.execOne(`UPDATE sessions SET expires_at = ? WHERE token_hash = ?`, expires.Unix(), tokenHash)
+	return s.execOne(`UPDATE sessions SET expires_at = ?, used_at = ? WHERE token_hash = ?`, expires.Unix(), s.now(), tokenHash)
+}
+
+// DeleteSessionByID ends the session with this row id.
+func (s *Store) DeleteSessionByID(id int64) error {
+	return s.execOne(`DELETE FROM sessions WHERE rowid = ?`, id)
+}
+
+// DeleteOtherSessions ends every session but the one with keepHash and
+// returns how many ended.
+func (s *Store) DeleteOtherSessions(keepHash string) (int64, error) {
+	res, err := s.exec(`DELETE FROM sessions WHERE token_hash != ?`, keepHash)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
 // DeleteSession removes a session.

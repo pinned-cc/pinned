@@ -317,14 +317,14 @@ func TestBulkAndOrder(t *testing.T) {
 
 // valid reports whether the hashed token names a session that has not expired.
 func valid(s *Store, hash string) bool {
-	exp, ok := s.SessionExpiry(hash)
-	return ok && exp.After(s.Now())
+	x, ok := s.Session(hash)
+	return ok && x.ExpiresAt > s.Now().Unix()
 }
 
 func TestSessions(t *testing.T) {
 	s := open(t)
-	s.CreateSession("h1", time.Now().Add(time.Hour))
-	s.CreateSession("h2", time.Now().Add(-time.Hour))
+	s.CreateSession("h1", "", time.Now().Add(time.Hour))
+	s.CreateSession("h2", "", time.Now().Add(-time.Hour))
 	if !valid(s, "h1") || valid(s, "h2") || valid(s, "nope") {
 		t.Error("session validity wrong")
 	}
@@ -357,7 +357,7 @@ func TestSyncPasswordSignsOutSessions(t *testing.T) {
 		}
 		return out
 	}
-	s.CreateSession("old", time.Now().Add(time.Hour))
+	s.CreateSession("old", "", time.Now().Add(time.Hour))
 	s.CreateToken("phone", "tokenhash")
 	if changed, err := sync("pw1"); err != nil || changed {
 		t.Fatalf("first start: changed=%v err=%v", changed, err)
@@ -389,7 +389,7 @@ func TestSyncPasswordMovesTheOldHMAC(t *testing.T) {
 	}{{"pw1", false}, {"pw2", true}} {
 		s := open(t)
 		s.db.Exec(`INSERT INTO settings (key, value) VALUES ('password_hmac', 'hmac:pw1')`)
-		s.CreateSession("old", time.Now().Add(time.Hour))
+		s.CreateSession("old", "", time.Now().Add(time.Hour))
 		changed, err := s.SyncPassword(func(stored string, legacy bool) (bool, bool) {
 			return legacy && stored == "hmac:"+tc.pw, true
 		}, func() (string, error) { return "hash:" + tc.pw, nil })
@@ -408,13 +408,13 @@ func TestSyncPasswordMovesTheOldHMAC(t *testing.T) {
 
 func TestExtendSession(t *testing.T) {
 	s := open(t)
-	s.CreateSession("h", time.Now().Add(time.Hour))
+	s.CreateSession("h", "", time.Now().Add(time.Hour))
 	later := time.Now().Add(48 * time.Hour).Truncate(time.Second)
 	if err := s.ExtendSession("h", later); err != nil {
 		t.Fatal(err)
 	}
-	if exp, ok := s.SessionExpiry("h"); !ok || !exp.Equal(later) {
-		t.Errorf("expiry %v %v", exp, ok)
+	if x, ok := s.Session("h"); !ok || x.ExpiresAt != later.Unix() {
+		t.Errorf("expiry %v %v", x.ExpiresAt, ok)
 	}
 	if err := s.ExtendSession("nope", later); !errors.Is(err, ErrNotFound) {
 		t.Errorf("unknown session: %v", err)
@@ -763,7 +763,7 @@ func TestWritesDuringImport(t *testing.T) {
 	if _, _, err := s.Create(NewBookmark{Title: "x", URL: "https://side.example/"}); err != nil {
 		t.Errorf("save during import: %v", err)
 	}
-	if err := s.CreateSession("hash", time.Now().Add(time.Hour)); err != nil {
+	if err := s.CreateSession("hash", "", time.Now().Add(time.Hour)); err != nil {
 		t.Errorf("sign in during import: %v", err)
 	}
 	select {
@@ -814,5 +814,46 @@ func TestLongURLRefused(t *testing.T) {
 	res, err := s.Import(root)
 	if err != nil || res.Added != 1 || res.Skipped != 1 {
 		t.Errorf("import: %+v %v", res, err)
+	}
+}
+
+// Sessions from before the session columns keep working and count their
+// absolute lifetime from the upgrade.
+func TestSessionColumnsMigration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "old.db")
+	oldDB(t, path, 7)
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	exp := time.Now().Add(time.Hour).Unix()
+	if _, err := db.Exec(`INSERT INTO sessions (token_hash, expires_at) VALUES ('old', ?)`, exp); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	before := time.Now().Unix()
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	x, ok := s.Session("old")
+	if !ok || x.ExpiresAt != exp || x.CreatedAt < before || x.UsedAt < before || x.Agent != "" || x.ID == 0 {
+		t.Errorf("old session after the upgrade: %+v %v", x, ok)
+	}
+	s.CreateSession("new", "Firefox on macOS", time.Now().Add(time.Hour))
+	list, err := s.Sessions()
+	if err != nil || len(list) != 2 {
+		t.Fatalf("sessions %+v %v", list, err)
+	}
+	if n, err := s.DeleteOtherSessions("new"); err != nil || n != 1 {
+		t.Errorf("delete others: %d %v", n, err)
+	}
+	cur, _ := s.Session("new")
+	if err := s.DeleteSessionByID(cur.ID); err != nil {
+		t.Error(err)
+	}
+	if err := s.DeleteSessionByID(cur.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("second delete: %v", err)
 	}
 }

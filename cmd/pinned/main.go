@@ -158,6 +158,10 @@ func run() error {
 	if err != nil || sessionDays <= 0 {
 		return fmt.Errorf("SESSION_DAYS must be a positive number of days")
 	}
+	sessionMaxDays, err := strconv.Atoi(env("SESSION_MAX_DAYS", strconv.Itoa(server.DefaultSessionMaxDays)))
+	if err != nil || sessionMaxDays <= 0 {
+		return fmt.Errorf("SESSION_MAX_DAYS must be a positive number of days")
+	}
 	proxies, err := server.ParseProxies(os.Getenv("TRUSTED_PROXIES"))
 	if err != nil {
 		return err
@@ -247,6 +251,7 @@ func run() error {
 		DataDir:        dataDir,
 		BaseURL:        os.Getenv("BASE_URL"),
 		SessionDays:    sessionDays,
+		SessionMaxDays: sessionMaxDays,
 		Version:        version,
 		Changelog:      pinned.Changelog,
 		TrustedProxies: proxies,
