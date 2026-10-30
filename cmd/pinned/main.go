@@ -106,10 +106,35 @@ func env(key, fallback string) string {
 	return fallback
 }
 
+// secretSetting reads a secret setting from the environment, or from the
+// file named by name_FILE, the way Docker and compose secrets pass them.
+// One trailing newline of the file is dropped. Setting both is an error.
+func secretSetting(name string) (string, error) {
+	v, file := os.Getenv(name), os.Getenv(name+"_FILE")
+	if file == "" {
+		return v, nil
+	}
+	if v != "" {
+		return "", fmt.Errorf("%s and %s_FILE are both set. Set only one of them, then start again", name, name)
+	}
+	b, err := os.ReadFile(file)
+	if err != nil {
+		return "", fmt.Errorf("%s_FILE: %w", name, err)
+	}
+	s := strings.TrimSuffix(strings.TrimSuffix(string(b), "\n"), "\r")
+	if s == "" {
+		return "", fmt.Errorf("%s_FILE names an empty file: %s", name, file)
+	}
+	return s, nil
+}
+
 func run() error {
-	password := os.Getenv("APP_PASSWORD")
+	password, err := secretSetting("APP_PASSWORD")
+	if err != nil {
+		return err
+	}
 	if password == "" {
-		return errors.New("APP_PASSWORD is not set. Set it to the password you want to log in with, then start again")
+		return errors.New("APP_PASSWORD is not set. Set it, or APP_PASSWORD_FILE, to the password you want to log in with, then start again")
 	}
 	if utf8.RuneCountInString(password) < minPassword {
 		return fmt.Errorf("APP_PASSWORD is shorter than %d characters. Choose a longer password, then start again", minPassword)

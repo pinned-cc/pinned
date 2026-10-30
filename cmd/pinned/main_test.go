@@ -136,3 +136,33 @@ func TestLogLinesCarryUTC(t *testing.T) {
 		t.Errorf("log line %q", got)
 	}
 }
+
+func TestPasswordFromFile(t *testing.T) {
+	dir := t.TempDir()
+	file := dir + "/pw"
+	os.WriteFile(file, []byte("from a file \n"), 0o600)
+	t.Setenv("APP_PASSWORD", "")
+	t.Setenv("APP_PASSWORD_FILE", file)
+	if got, err := secretSetting("APP_PASSWORD"); err != nil || got != "from a file " {
+		t.Errorf("got %q, %v: one trailing newline goes, the rest stays", got, err)
+	}
+	os.WriteFile(file, []byte("windows\r\n"), 0o600)
+	if got, _ := secretSetting("APP_PASSWORD"); got != "windows" {
+		t.Errorf("got %q", got)
+	}
+	t.Setenv("APP_PASSWORD", "long enough")
+	t.Setenv("DATA_DIR", dir)
+	if err := run(); err == nil || !strings.Contains(err.Error(), "both set") {
+		t.Errorf("both set: %v", err)
+	}
+	t.Setenv("APP_PASSWORD", "")
+	t.Setenv("APP_PASSWORD_FILE", dir+"/missing")
+	if err := run(); err == nil || !strings.Contains(err.Error(), "APP_PASSWORD_FILE") {
+		t.Errorf("missing file: %v", err)
+	}
+	os.WriteFile(file, []byte("\n"), 0o600)
+	t.Setenv("APP_PASSWORD_FILE", file)
+	if err := run(); err == nil || !strings.Contains(err.Error(), "empty") {
+		t.Errorf("empty file: %v", err)
+	}
+}
