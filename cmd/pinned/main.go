@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -68,6 +69,17 @@ func checkHealth(port string) error {
 	return nil
 }
 
+// parseIcons reads ICONS: on (the default) or off.
+func parseIcons(v string) (off bool, err error) {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "", "on":
+		return false, nil
+	case "off":
+		return true, nil
+	}
+	return false, fmt.Errorf("ICONS must be on or off, not %q", v)
+}
+
 func env(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
@@ -94,6 +106,14 @@ func run() error {
 		return err
 	}
 	hstsMaxAge, err := server.ParseHSTS(os.Getenv("HSTS"))
+	if err != nil {
+		return err
+	}
+	iconsOff, err := parseIcons(os.Getenv("ICONS"))
+	if err != nil {
+		return err
+	}
+	iconHosts, err := favicon.ParseHosts(os.Getenv("ICON_HOSTS"))
 	if err != nil {
 		return err
 	}
@@ -128,6 +148,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	icons := favicon.NewPool(ctx, filepath.Join(dataDir, "icons"), st)
+	icons.Configure(iconsOff, iconHosts)
 	// Bookmarks still showing a letter get another try at start, so an
 	// improved icon search reaches links that were saved before it. A link
 	// whose icon failed store.IconGiveUp times is left alone until the next

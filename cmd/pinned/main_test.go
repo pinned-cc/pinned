@@ -105,3 +105,22 @@ func TestRunServesAndStops(t *testing.T) {
 		t.Fatal("run did not return after SIGTERM")
 	}
 }
+
+func TestRefusesBadIconSettings(t *testing.T) {
+	t.Setenv("APP_PASSWORD", "long enough")
+	t.Setenv("DATA_DIR", t.TempDir())
+	t.Setenv("ICONS", "maybe")
+	if err := run(); err == nil || !strings.Contains(err.Error(), "ICONS must be on or off") {
+		t.Fatalf("bad ICONS: %v", err)
+	}
+	t.Setenv("ICONS", "off")
+	t.Setenv("ICON_HOSTS", "https://example.com")
+	if err := run(); err == nil || !strings.Contains(err.Error(), "ICON_HOSTS") {
+		t.Fatalf("bad ICON_HOSTS: %v", err)
+	}
+	for v, off := range map[string]bool{"": false, "on": false, "OFF": true, " off ": true} {
+		if got, err := parseIcons(v); err != nil || got != off {
+			t.Errorf("ICONS=%q: %v %v", v, got, err)
+		}
+	}
+}

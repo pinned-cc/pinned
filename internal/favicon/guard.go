@@ -88,6 +88,7 @@ type guard struct {
 	owner   string // the bookmark's host, lower case
 	private bool   // the owner resolves to a private address
 	port    string // the port of the bookmark's own address; 80 and 443 always pass
+	hosts   Hosts  // when set, the only host names a fetch may connect to
 }
 
 var errBlocked = errors.New("address not allowed")
@@ -119,7 +120,11 @@ func (g guard) allow(host string, orig netip.Addr) error {
 // address actually dialled, so a name that changes its answer between the
 // lookup and the connection gains nothing.
 func NewClient(ctx context.Context, pageURL string) *http.Client {
-	g := guard{}
+	return newClient(ctx, pageURL, nil)
+}
+
+func newClient(ctx context.Context, pageURL string, hosts Hosts) *http.Client {
+	g := guard{hosts: hosts}
 	if u, err := url.Parse(pageURL); err == nil && u.Hostname() != "" {
 		g.owner = strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
 		g.private = resolvesPrivate(ctx, g.owner)
@@ -162,6 +167,9 @@ func (g guard) client() *http.Client {
 			if err := g.allowPort(host, port); err != nil {
 				return nil, err
 			}
+			if !g.hosts.Allow(host) {
+				return nil, fmt.Errorf("%s is not in ICON_HOSTS: %w", host, errBlocked)
+			}
 			d := &net.Dialer{
 				Timeout: budget,
 				// Control sees each resolved address just before connecting.
@@ -197,4 +205,39 @@ func (g guard) client() *http.Client {
 			return nil
 		},
 	}
+}
+
+// Hosts is the list of ICON_HOSTS: host names icon fetches may connect to,
+// each with its subdomains. An empty list allows every host the guard
+// allows.
+type Hosts []string
+
+// ParseHosts reads a comma separated list of host names.
+func ParseHosts(s string) (Hosts, error) {
+	var out Hosts
+	for _, h := range strings.Split(s, ",") {
+		h = strings.ToLower(strings.Trim(strings.TrimSpace(h), "."))
+		if h == "" {
+			continue
+		}
+		if strings.ContainsAny(h, "/:@ *") {
+			return nil, fmt.Errorf("ICON_HOSTS: %q is not a host name (write example.com, without scheme, port or wildcard)", h)
+		}
+		out = append(out, h)
+	}
+	return out, nil
+}
+
+// Allow reports whether host is in the list or below a name in it.
+func (hs Hosts) Allow(host string) bool {
+	if len(hs) == 0 {
+		return true
+	}
+	host = strings.ToLower(strings.TrimSuffix(host, "."))
+	for _, h := range hs {
+		if host == h || strings.HasSuffix(host, "."+h) {
+			return true
+		}
+	}
+	return false
 }

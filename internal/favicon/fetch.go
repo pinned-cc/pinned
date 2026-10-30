@@ -173,6 +173,16 @@ type Pool struct {
 	jobs   chan int64
 	ctx    context.Context
 	wg     sync.WaitGroup
+	// off and hosts come from ICONS and ICON_HOSTS, set with Configure
+	// before the first Enqueue.
+	off   bool
+	hosts Hosts
+}
+
+// Configure applies ICONS=off (no fetch at all, every bookmark keeps its
+// letter mark) and ICON_HOSTS. Call it before the first Enqueue.
+func (p *Pool) Configure(off bool, hosts Hosts) {
+	p.off, p.hosts = off, hosts
 }
 
 // NewPool starts the workers. Icons are written to dir. The workers stop,
@@ -197,6 +207,9 @@ func (p *Pool) Wait() { p.wg.Wait() }
 // Enqueue asks for an icon for bookmark id. It never blocks; when the queue
 // is full the request is dropped and the bookmark keeps its letter mark.
 func (p *Pool) Enqueue(id int64) {
+	if p.off {
+		return
+	}
 	select {
 	case p.jobs <- id:
 	default:
@@ -225,8 +238,16 @@ func (p *Pool) work() {
 // anywhere in the fetch is caught: the bookmark is given up at once and the
 // server keeps running.
 func (p *Pool) Run(id int64) {
+	if p.off {
+		return
+	}
 	b, err := p.store.Bookmark(id)
 	if err != nil {
+		return
+	}
+	// A bookmark on a host outside ICON_HOSTS is not fetched, and not
+	// counted as a failure: the list may change.
+	if u, err := url.Parse(b.URL); err != nil || !p.hosts.Allow(u.Hostname()) {
 		return
 	}
 	defer func() {
@@ -245,7 +266,7 @@ func (p *Pool) Run(id int64) {
 	if client == nil {
 		// Self hosted services often use self signed certificates; the
 		// default verification stays on, so those simply get no icon.
-		client = NewClient(ctx, b.URL)
+		client = newClient(ctx, b.URL, p.hosts)
 		defer client.CloseIdleConnections()
 	}
 	icon, err := Find(ctx, client, b.URL)
