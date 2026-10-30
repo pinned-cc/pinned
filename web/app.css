@@ -648,6 +648,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .sv-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--s-2)}
 .sv-top .fav{width:48px;height:48px;border-radius:var(--r-l);font-size:19px}
 .sv-top .ib{margin:var(--s-1) calc(var(--s-5) * -1) 0 0;color:var(--ink-weak)}
+.sv-top .sv-out{margin:var(--s-1) var(--s-3) 0 auto;color:var(--ink-weak);font-size:var(--t-meta)}
 .fld{display:block;margin-top:var(--s-7)}
 .fld-in{display:block;width:100%;min-height:var(--h-field);margin:0;border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line);padding:13px var(--s-7);font:400 var(--t-input)/var(--lh-20) var(--sans);color:var(--ink);outline:0}
 input.fld-in{height:var(--h-field)}
@@ -953,6 +954,7 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .back{display:inline-flex;align-items:center;gap:var(--s-3);min-height:var(--tap);margin:calc(var(--s-6) * -1) 0 var(--s-8) calc(var(--s-3) * -1);padding:0 var(--s-3);color:var(--ink-weak);font:500 var(--t-meta)/var(--lh-none) var(--sans)}
 .back:hover{color:var(--ink)}
 .back svg.i{width:var(--icon-s);height:var(--icon-s)}
+.bm-out{margin:var(--s-12) 0 0 calc(var(--s-3) * -1)}
 body.save-page{background:var(--save-ground),var(--ground);min-height:100vh;min-height:100dvh}
 /* /save opened in a normal wide tab: a centred panel, not a full width sheet */
 @media (min-width:721px){

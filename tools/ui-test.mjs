@@ -851,6 +851,18 @@ async function desktop(browser, engine) {
     }
   });
 
+  await check('the save page and How to save each have a Log out that ends the session', async () => {
+    for (const path of ['/save', '/bookmarklet']) {
+      const c = await browser.newContext({ viewport: { width: 392, height: 600 } }), p = await c.newPage();
+      try {
+        await login(p); await p.goto(BASE + path);
+        const out = p.locator('[data-a="logout"]'); await visible(out);
+        await Promise.all([p.waitForURL(u => u.pathname === '/login'), out.click()]);
+        await p.goto(BASE + '/'); assert(new URL(p.url()).pathname === '/login', `${path}: still signed in after Log out`);
+      } finally { await c.close(); }
+    }
+  });
+
   await check('dates read the same in every locale: 4 Oct this year, 4 Oct 2025 before (de-DE too)', async () => {
     const de = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'de-DE' });
     const dp = await de.newPage(); await login(dp); await dp.click('#side [data-view="inbox"]'); await visible(dp.locator('#body article time'));

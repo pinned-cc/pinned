@@ -280,7 +280,9 @@ export function saveHTML() {
   let rec = s.recent.filter(pickable);
   if (!rec.length) rec = kids(null).filter(f => pickable(f.id)).slice(0, 3).map(f => f.id);
   const none = s.folder == null;
-  return `<div class="sv-top"><span class="sv-fav">${svFav(s)}</span><button type="button" class="ib" data-a="close" aria-label="Close">${ic('close')}</button></div>
+  /* the save page is a page of its own, so it offers a way out of the session too */
+  const out = document.body.dataset.page === 'save' ? `<button type="button" class="tbtn sv-out" data-a="logout">Log out</button>` : '';
+  return `<div class="sv-top"><span class="sv-fav">${svFav(s)}</span>${out}<button type="button" class="ib" data-a="close" aria-label="Close">${ic('close')}</button></div>
   <form data-save id="svf" novalidate>
   <label class="fld"><span class="sh-lbl">Title</span><input class="fld-in" data-f="title" value="${esc(s.title)}" autocomplete="off" enterkeyhint="next"></label>
   <label class="fld"><span class="sh-lbl">URL</span><textarea class="fld-in" data-f="url" rows="1" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" enterkeyhint="done">${esc(s.url)}</textarea></label>
