@@ -37,7 +37,7 @@ Folders nest at most 32 deep.
 | `id` | INTEGER PRIMARY KEY | |
 | `folder_id` | INTEGER NULL | The folder. NULL means Inbox. |
 | `title` | TEXT NOT NULL | |
-| `url` | TEXT NOT NULL | The address as saved. |
+| `url` | TEXT NOT NULL | The address as saved. New and changed addresses are at most 8192 bytes. |
 | `url_key` | TEXT NOT NULL | The identity of the address, see below. |
 | `position` | INTEGER NOT NULL | Order in its folder. |
 | `pinned` | INTEGER NOT NULL | 1 when pinned, 0 when not. |

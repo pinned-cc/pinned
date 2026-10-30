@@ -211,6 +211,9 @@ type NewBookmark struct {
 // Create saves a bookmark. created is false when Force updated an existing
 // one instead. Without Force an existing URL returns a *DuplicateError.
 func (s *Store) Create(in NewBookmark) (b Bookmark, created bool, err error) {
+	if err := urlkey.CheckLen(in.URL); err != nil {
+		return b, false, err
+	}
 	key, err := urlkey.Key(in.URL)
 	if err != nil {
 		return b, false, err
@@ -313,6 +316,9 @@ func (s *Store) Update(id int64, p Patch) (b Bookmark, urlChanged bool, err erro
 		}
 		if p.URL != nil {
 			raw := strings.TrimSpace(*p.URL)
+			if err := urlkey.CheckLen(raw); err != nil {
+				return err
+			}
 			key, err := urlkey.Key(raw)
 			if err != nil {
 				return err

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pinned-cc/pinned/internal/netscape"
+	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
 func open(t *testing.T) *Store {
@@ -743,5 +744,24 @@ func TestImportStopsWhenFolderLockedMidway(t *testing.T) {
 	}
 	if n, _ := s.CountLive(); n != 1 {
 		t.Errorf("want 1 bookmark, got %d", n)
+	}
+}
+
+// An address longer than urlkey.MaxLen is refused on save and edit, and
+// skipped on import.
+func TestLongURLRefused(t *testing.T) {
+	s := open(t)
+	long := "https://example.com/" + strings.Repeat("a", urlkey.MaxLen)
+	if _, _, err := s.Create(NewBookmark{URL: long}); !errors.Is(err, urlkey.ErrTooLong) {
+		t.Errorf("create: %v", err)
+	}
+	b := mustCreate(t, s, "a", "https://example.com/a", nil)
+	if _, _, err := s.Update(b.ID, Patch{URL: &long}); !errors.Is(err, urlkey.ErrTooLong) {
+		t.Errorf("update: %v", err)
+	}
+	root := &netscape.Folder{Links: []netscape.Link{{URL: long}, {URL: "https://example.com/b"}}}
+	res, err := s.Import(root)
+	if err != nil || res.Added != 1 || res.Skipped != 1 {
+		t.Errorf("import: %+v %v", res, err)
 	}
 }

@@ -1,6 +1,10 @@
 package urlkey
 
-import "testing"
+import (
+	"errors"
+	"strings"
+	"testing"
+)
 
 func TestKeyEquality(t *testing.T) {
 	same := [][2]string{
@@ -82,5 +86,17 @@ func TestHost(t *testing.T) {
 		if got := Host(in); got != want {
 			t.Errorf("Host(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestCheckLen(t *testing.T) {
+	base := "https://example.com/"
+	ok := base + strings.Repeat("a", MaxLen-len(base))
+	if err := CheckLen("  " + ok + " "); err != nil {
+		t.Errorf("an address of %d bytes: %v", len(ok), err)
+	}
+	err := CheckLen(ok + "a")
+	if !errors.Is(err, ErrTooLong) || !errors.Is(err, ErrInvalid) {
+		t.Errorf("an address of %d bytes: %v", len(ok)+1, err)
 	}
 }

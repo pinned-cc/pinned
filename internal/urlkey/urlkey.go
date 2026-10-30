@@ -13,6 +13,29 @@ import (
 // ErrInvalid is returned for anything that is not an http or https URL with a host.
 var ErrInvalid = errors.New("url must start with http:// or https:// and have a host")
 
+// MaxLen is the longest address a bookmark may have, in bytes. Real
+// addresses stay far below it; common web servers refuse longer request
+// lines anyway.
+const MaxLen = 8192
+
+// ErrTooLong is returned by CheckLen. errors.Is(ErrTooLong, ErrInvalid)
+// holds, so callers that handle a bad address handle it too.
+var ErrTooLong error = tooLong{}
+
+type tooLong struct{}
+
+func (tooLong) Error() string        { return "url is longer than 8192 bytes" }
+func (tooLong) Is(target error) bool { return target == ErrInvalid }
+
+// CheckLen refuses an address longer than MaxLen. New and changed addresses
+// pass through it; addresses already saved are left alone.
+func CheckLen(raw string) error {
+	if len(strings.TrimSpace(raw)) > MaxLen {
+		return ErrTooLong
+	}
+	return nil
+}
+
 // Key returns the identity key for raw. The rule:
 //   - scheme and host are lowercased
 //   - :80 is removed for http and :443 for https

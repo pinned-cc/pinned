@@ -25,8 +25,8 @@ const MaxImportName = 200
 
 // Import adds the bookmarks of a parsed file. Folders are matched by name
 // under the same parent and created when missing. Links whose identity is
-// already saved, or that are not http or https, are skipped. Links at the
-// root of the file land in Inbox.
+// already saved, that are not http or https, or whose address is longer than
+// urlkey.MaxLen are skipped. Links at the root of the file land in Inbox.
 //
 // Import never writes into a locked folder: a file folder whose name matches
 // a locked folder becomes a new folder beside it, named "<name> (imported)".
@@ -228,6 +228,9 @@ func (imp *importer) folder(f *netscape.Folder, parentID *int64, depth int) erro
 
 func (imp *importer) link(l netscape.Link, parentID *int64) error {
 	key, err := urlkey.Key(l.URL)
+	if err == nil {
+		err = urlkey.CheckLen(l.URL)
+	}
 	if err != nil {
 		imp.res.Skipped++
 		return nil
