@@ -88,7 +88,10 @@ func process(data []byte) (Icon, error) {
 			return Icon{}, err
 		}
 		return Icon{Ext: "png", Data: buf.Bytes(), Tile: EdgeColor(img)}, nil
-	case isSVG(data):
+	case looksLikeSVG(data):
+		if err := checkSVG(data); err != nil {
+			return Icon{}, err
+		}
 		return Icon{Ext: "svg", Data: data}, nil
 	}
 	return Icon{}, errUnknownFormat
@@ -158,14 +161,6 @@ func largest(frames []image.Image) image.Image {
 		}
 	}
 	return best
-}
-
-func isSVG(data []byte) bool {
-	head := data
-	if len(head) > 1024 {
-		head = head[:1024]
-	}
-	return bytes.Contains(bytes.ToLower(head), []byte("<svg"))
 }
 
 // EdgeColor returns the median colour of the outer 2 pixel ring of img as
