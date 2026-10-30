@@ -1,5 +1,5 @@
 /* The keyboard map: / and Cmd K, arrows across tiles, Enter, Delete, F2, S, N, Escape, Cmd Z, Cmd A. */
-import { actions, newFolder, nfCreate, startRename } from './actions.js';
+import { actions, newFolder, nfCreate, purgeAsk, startRename } from './actions.js';
 import { closeMenu } from './menu.js';
 import { openPalette, palKey } from './palette.js';
 import { exitSelect, extendByKey, selSync } from './select.js';
@@ -60,6 +60,7 @@ export function onKey(e) {
   const art = t.closest && t.closest('#app article[data-id]');
   if (art && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); const b = bm(+art.dataset.id); if (!b) return;
     const next = art.nextElementSibling || art.previousElementSibling;
-    (b.deleted_at ? actions.purge([b.id]) : actions.trash([b.id])).then(() => { const n = next && document.querySelector(`#app article[data-id="${next.dataset.id}"] :is(.t-title, .pt-in, .g-in)`); if (n) n.focus(); }); return; }
+    const focusNext = () => { const n = next && document.querySelector(`#app article[data-id="${next.dataset.id}"] :is(.t-title, .pt-in, .g-in)`); if (n) n.focus(); };
+    if (b.deleted_at) purgeAsk([b.id], ids => actions.purge(ids).then(() => setTimeout(focusNext, 0))); else actions.trash([b.id]).then(focusNext); return; }
   if (art && e.key === 'F2') { e.preventDefault(); const b = bm(+art.dataset.id); if (b && !b.deleted_at) startRename(b.id); }
 }

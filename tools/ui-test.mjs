@@ -779,6 +779,31 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await apiIn(page, 'DELETE', `/api/bookmarks/${t.id}?permanent=1`);
   });
 
+  await check('1440: deleting from Trash for good asks first, from Delete now in the menu, the Delete key and Select then Delete; Cancel keeps it', async () => {
+    const mk = async n => (await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test purge ${n}`, url: `https://ui-test.example/seed/purge-${n}`, folder_id: null })).data;
+    const a = await mk('a'), b = await mk('b'); await apiIn(page, 'DELETE', `/api/bookmarks/${a.id}`); await apiIn(page, 'DELETE', `/api/bookmarks/${b.id}`);
+    const exists = async id => ((await apiIn(page, 'GET', '/api/state')).data.bookmarks || []).some(x => x.id === id);
+    await page.reload(); await page.click('#side [data-view="trash"]');
+    const card = id => page.locator(`#body article.tile[data-id="${id}"]`); await visible(card(a.id));
+    await card(a.id).locator('.t-title').click(); await menuItem(page, 'Delete now').click(); await sheetOpen(page);
+    assert(/deleted for good/.test(await page.textContent('#sheet')), 'Delete now did not ask');
+    await page.click('#sheet [data-a="close"]'); await sheetClosed(page); await page.waitForTimeout(300);
+    assert(await exists(a.id), 'Cancel deleted it');
+    await card(a.id).locator('.t-title').focus(); await page.keyboard.press('Delete'); await sheetOpen(page);
+    assert(await exists(a.id), 'the Delete key deleted before asking');
+    await page.click('#sheet [data-a="confirm"]'); await sheetClosed(page);
+    await until(page, id => !document.querySelector(`#body article.tile[data-id="${id}"]`), a.id, 'the card gone');
+    assert(!(await exists(a.id)), 'confirmed, but still there');
+    await page.click('#tbwrap [data-a="select"]'); await card(b.id).locator('.t-title').click();
+    await page.click('#dbulk [data-a="bulk-purge"]'); await sheetOpen(page);
+    assert(await exists(b.id), 'bulk Delete deleted before asking');
+    await page.click('#sheet [data-a="close"]'); await sheetClosed(page);
+    assert(await page.locator('#screen.selecting').count(), 'Cancel ended selecting');
+    await page.click('#dbulk [data-a="bulk-purge"]'); await sheetOpen(page); await page.click('#sheet [data-a="confirm"]'); await sheetClosed(page);
+    await until(page, id => !document.querySelector(`#body article.tile[data-id="${id}"]`), b.id, 'the picked card gone');
+    assert(!(await exists(b.id)), 'bulk confirmed, but still there');
+  });
+
   await check('1024, 900 and 800: the selection bar keeps every word; at 720 the least needed folds first and Trash keeps its word longest', async () => {
     await page.click('#side [data-view="inbox"]'); await visible(page.locator('#body article.tile'));
     const state = () => page.evaluate(() => { const bar = document.querySelector('#dbulk .bulk');

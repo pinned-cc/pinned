@@ -87,6 +87,10 @@ export function deleteFolders(ids) { ids = ids.filter(id => folderById.has(id));
     if (typeof ui.view === 'number' && all.has(ui.view)) ui.view = 'dashboard';
     ui.selecting = false; ui.picked.clear(); ui.anchor = null; await load();
     if (held) toast('Unlock the folders inside first'); else if (n) toast(`${plural(n, 'bookmark', 'bookmarks')} moved to Trash`); } }); }
+/* deleting from Trash for good asks first, as Empty trash does; then runs once confirmed */
+export function purgeAsk(ids, then) { const L = ids.map(bm).filter(Boolean); if (!L.length) return; const one = L.length === 1;
+  openSheet({ type: 'confirm', title: one ? 'Delete now?' : `Delete ${L.length} bookmarks?`, text: one ? `${L[0].title} will be deleted for good.` : `${plural(L.length, 'bookmark', 'bookmarks')} will be deleted for good.`, button: one ? 'Delete now' : 'Delete',
+    run: async () => { await (then ? then(L.map(b => b.id)) : actions.purge(L.map(b => b.id))); } }); }
 export function emptyTrash() { const n = count('trash'); if (!n) return;
   openSheet({ type: 'confirm', title: 'Empty trash?', text: `${plural(n, 'bookmark', 'bookmarks')} will be deleted for good.`, button: 'Empty trash',
     run: async () => { await api('DELETE', '/api/trash'); await load(); } }); }
@@ -188,7 +192,7 @@ export function onClick(e) {
     case 'open': actions.open(b); break;
     case 'trash': actions.trash([b.id]); break;
     case 'restore': actions.restore([b.id]); break;
-    case 'purge': actions.purge([b.id]); break;
+    case 'purge': purgeAsk([b.id]); break;
     case 'more': if (layers.menu && layers.menu.anchor === a) closeMenu(); else openMenu(a, tileMenu(b)); break;
     case 'tile-acts': openSheet({ type: 'acts', id: b.id }); break;
     /* a card in Trash never opens its link: a click offers Restore and Delete, in the menu at the card on the desktop */
@@ -207,7 +211,7 @@ export function onClick(e) {
     case 'bulk-ftrash': deleteFolders([...ui.picked]); break;
     case 'bulk-trash': { const ids = [...ui.picked]; ui.selecting = false; actions.trash(ids).then(() => { ui.picked.clear(); render(); }); break; }
     case 'bulk-restore': { const ids = [...ui.picked]; ui.selecting = false; ui.picked.clear(); actions.restore(ids); break; }
-    case 'bulk-purge': { const ids = [...ui.picked]; ui.selecting = false; ui.picked.clear(); actions.purge(ids); break; }
+    case 'bulk-purge': purgeAsk([...ui.picked], ids => { ui.selecting = false; ui.picked.clear(); return actions.purge(ids); }); break;
     case 'folder-menu': menuOrSheet(a, folderItems(ui.view), folderById.get(ui.view)); break;
     case 'empty-trash': emptyTrash(); break;
     case 'new-folder': newFolder(null); break;

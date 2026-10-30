@@ -1,5 +1,5 @@
 /* The small popup menu on desktop (the phone shows the same rows in a sheet). */
-import { actions, startRename } from './actions.js';
+import { actions, purgeAsk, startRename } from './actions.js';
 import { render } from './render.js';
 import { openSheet } from './sheets.js';
 import { bm, layers, ui } from './state.js';
@@ -37,7 +37,7 @@ export const oneCardItems = b => [
   { icon: 'edit', label: 'Rename', run: () => startRename(b.id) },
   { icon: 'pin', label: b.pinned ? 'Unpin' : 'Pin', run: () => actions.pin(b) }];
 export const tileMenu = b => b.deleted_at
-  ? [{ icon: 'restore', label: 'Restore', run: () => actions.restore([b.id]) }, '-', { icon: 'trash', label: 'Delete now', warn: true, run: () => actions.purge([b.id]) }]
+  ? [{ icon: 'restore', label: 'Restore', run: () => actions.restore([b.id]) }, '-', { icon: 'trash', label: 'Delete now', warn: true, run: () => purgeAsk([b.id]) }]
   : [{ icon: 'move', label: 'Move', run: () => openSheet({ type: 'move', ids: [b.id] }) },
     { icon: 'link', label: 'Copy', run: () => actions.copy(b) },
     { icon: 'share', label: 'Share', run: () => actions.share(b) },
