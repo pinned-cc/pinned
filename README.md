@@ -73,7 +73,7 @@ The image is published at `ghcr.io/pinned-cc/pinned` for amd64 and arm64, from v
 
 4. Open `http://<your server>:9095` and log in with that password.
 
-To see what it is doing: `docker compose logs pinned`.
+To see what it is doing: `docker compose logs pinned`. What it logs, and how to keep the log or send it elsewhere, is in [docs/security.md](docs/security.md#logs).
 
 ### Portainer on Umbrel
 
@@ -87,16 +87,46 @@ All settings are environment variables.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `APP_PASSWORD` | none, required | The login password, at least 8 characters. The app does not start without it and never logs it. |
+| `APP_PASSWORD` | none, required | The login password, at least 8 characters and at most 72 bytes. The app does not start without it and never logs it. |
+| `APP_PASSWORD_FILE` | empty | A file that holds the password instead, such as a Docker secret. One trailing newline is dropped. Set this or `APP_PASSWORD`, not both. |
 | `TZ` | `UTC` | Time zone for the nightly export at 03:00. |
 | `BASE_URL` | taken from each request | The address people use, for example `https://bookmarks.example.com`. Used in the Save button code and the browser search entry. Set it when the app runs behind a proxy. When it starts with `https://`, a request for that host name with no `X-Forwarded-Proto` counts as HTTPS (see Behind a reverse proxy). |
-| `TRUSTED_PROXIES` | empty | Addresses or networks of your reverse proxies, comma separated, for example `172.16.0.0/12` or `10.0.0.1, fd00::/8`. Only for requests from these is `X-Forwarded-For` read, and `X-Forwarded-Proto` only from these too. Empty means `X-Forwarded-For` is ignored and `X-Forwarded-Proto` is read only from loopback, private and `100.64.0.0/10` addresses. |
+| `TRUSTED_PROXIES` | empty | Addresses or networks of your reverse proxies, comma separated, for example `172.16.0.0/12` or `10.0.0.1, fd00::/8`. Only from these are `X-Forwarded-For` and `X-Forwarded-Proto` read. Empty means `X-Forwarded-For` is ignored and `X-Forwarded-Proto` is believed from any loopback, private or `100.64.0.0/10` address, so set it when a proxy does HTTPS (see Behind a reverse proxy). |
 | `HSTS` | off | `true` sends `Strict-Transport-Security: max-age=31536000` on HTTPS answers, a number of seconds sets another max-age. Off by default because it applies to the whole host name on every port (see Behind a reverse proxy). |
-| `SESSION_DAYS` | `90` | How long a login lasts. A login in use is renewed for the full time again. |
+| `SESSION_DAYS` | `90` | How long a login lasts when it is not used. Using it renews it for this many days again, up to `SESSION_MAX_DAYS`. |
+| `SESSION_MAX_DAYS` | `365` | The longest a login lasts from the moment you logged in, however much it is used. Then you log in again. |
+| `TOTP_SECRET` | empty, off | Turns on a second factor: the login also asks for a code from an authenticator app. 20 random bytes in base32, at least 16 bytes (26 characters). See Second factor. |
+| `TOTP_SECRET_FILE` | empty | A file that holds `TOTP_SECRET` instead. One trailing newline is dropped. Set this or `TOTP_SECRET`, not both. |
+| `ICONS` | `on` | `off` stops every icon fetch. Icons already stored stay. |
+| `ICON_HOSTS` | empty | Host names icon fetches may connect to, comma separated, each with its subdomains, for example `github.com, example.org`. Bookmarks on other hosts keep their letter. Empty means any public host. |
 | `DATA_DIR` | `/data` | The data folder. |
 | `PORT` | `8080` | The port inside the container. |
 
 The image runs `pinned -healthcheck` as its Docker health check every 30 seconds, so the compose file needs none. Without a login, `/health` answers only `{"ok":true}`.
+
+The limits the server enforces, its keys, what it stores and what it logs are listed in [docs/security.md](docs/security.md).
+
+## Second factor
+
+The login can ask for a code from an authenticator app as well as the password. It is off until you set `TOTP_SECRET`.
+
+1. Make a secret of 20 random bytes in base32:
+
+   ```sh
+   head -c 20 /dev/urandom | base32
+   ```
+
+   On a Mac, which has no `base32`:
+
+   ```sh
+   python3 -c 'import base64, os; print(base64.b32encode(os.urandom(20)).decode())'
+   ```
+
+2. Set it as `TOTP_SECRET` in the `.env` file or the compose file, or put it in a file and set `TOTP_SECRET_FILE` to that file. Run `docker compose up -d`.
+3. In your authenticator app, add an account by hand with the secret as the setup key: time based, 6 digits, 30 seconds.
+4. The login now asks for the code. Each code works once.
+
+Browsers that are already logged in stay logged in; end them under Signed in. API tokens work without a code. If you lose the authenticator app, remove `TOTP_SECRET` and run `docker compose up -d`: the login asks for the password only again.
 
 ## Ways to save
 
@@ -143,13 +173,21 @@ A token can do four things, and nothing else:
 - save a bookmark (`POST /api/bookmarks`),
 - change a saved bookmark's title or folder (`PATCH /api/bookmarks/{id}` with only `title` and `folder_id`).
 
-Everything else answers 403 with a token: export, import, Trash and delete, creating, renaming, moving or deleting folders, shares, locks, and creating or revoking tokens.
+Everything else answers 403 with a token: export, import, Trash and delete, creating, renaming, moving or deleting folders, shares, locks, creating or revoking tokens, and the list of signed in browsers.
 
-A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage.
+Creating a token asks for the app password again, so a browser left open cannot hand out tokens.
+
+A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage. A token belongs to the first copy of the extension that uses it; any other extension gets 403 with it. After you reinstall the extension in Firefox or Safari, create a new token for it. Scripts are not affected.
+
+## Signed in browsers
+
+Signed in, in the app's menu, lists the browsers that are logged in, with when each logged in and when it was last used. Sign out ends one of them; Sign out all others ends every one but the browser you are using.
 
 ## Wrong passwords and tokens
 
-Wrong app passwords, wrong tokens, wrong share passwords and wrong folder passwords are counted apart, per address (IPv6 per /64). Every wrong try waits one second before it answers, and tries from one address are checked one at a time. After 5 wrong tries the address has to wait 30 seconds (status 429); during the wait no password is checked, not even the right one. After 100 wrong tries within 10 minutes from all addresses together, every browser that has not logged in before waits until the count drops. A browser that has logged in with the password keeps a signed `pinned_device` cookie (`__Host-pinned_device` over HTTPS) for 400 days, until the app password changes: it is counted on its own, by that cookie instead of its address, and the 100 try limit does not apply to it, so someone guessing from many addresses cannot lock you out of your own browsers. The cookie is not a login; it only changes how wrong tries are counted. A valid token always gets through, and wrong tokens are counted apart from the login, so a broken script with an old token does not lock you out.
+Wrong app passwords and wrong tokens are counted apart, per address (IPv6 per /64). Wrong share passwords are counted for each share link on its own, and wrong folder passwords for each folder, so tries at one never hold another. A wrong second factor code counts as a wrong app password. Every wrong try waits one second before it answers, and password tries from one address are checked one at a time. After 5 wrong tries the address has to wait 30 seconds (status 429); during the wait no password is checked, not even the right one. After 100 wrong tries within 10 minutes from all addresses together, every browser that has not logged in before waits until the count drops. For share and folder passwords that limit of 100 counts per share link and per folder.
+
+A browser that has logged in with the password keeps a signed `pinned_device` cookie (`__Host-pinned_device` over HTTPS) for 400 days, until the app password changes. It is counted on its own, by that cookie instead of its address, for the app password and for share and folder passwords, and the limit of 100 does not apply to it, so someone guessing from many addresses cannot lock you out of your own browsers. The cookie is not a login; it only changes how wrong tries are counted. A valid token always gets through, and wrong tokens are counted apart from the login, so a broken script with an old token does not lock you out.
 
 ## Behind a reverse proxy
 
@@ -224,9 +262,9 @@ Keep `secret.key` and `icons/` with the database.
 
 **Going back to an older version.** An older version does not start on a database a newer one has upgraded. Stop the container, move `bookmarks.db` aside, copy the backup from before the upgrade to `bookmarks.db` (no `-wal` or `-shm` files next to it; remove them if they are there), make sure user 1000 owns it, set the image back to the older version and start it. Links saved since the upgrade are not in that copy, so export them first from the newer version if you need them. Keep `secret.key` and `icons/` as they are.
 
-**Changing the password.** Change `APP_PASSWORD` and run `docker compose up -d`. Every browser is logged out. API tokens keep working.
+**Changing the password.** Change `APP_PASSWORD` and run `docker compose up -d`. Every browser is logged out, every API token is revoked and every device cookie ends. Create new tokens for the extension and your scripts.
 
-**Import.** Export a bookmarks file from your browser and use Import in the app. Folders are kept. Links that are already saved are skipped, so importing the same file twice adds nothing. Files can be up to 20 MB. Folders nest at most 32 deep; anything deeper in the file lands in the folder at depth 32. A file whose folders nest more than 256 deep is refused with a message. Tested with files in Brave's export format.
+**Import.** Export a bookmarks file from your browser and use Import in the app. Folders are kept. Links that are already saved are skipped, so importing the same file twice adds nothing. Files can be up to 20 MB. Links whose address is longer than 8192 bytes are skipped. Folders nest at most 32 deep; anything deeper in the file lands in the folder at depth 32. A file whose folders nest more than 256 deep is refused with a message. A large file is saved in short steps, so saving and logging in from other browsers go on meanwhile. If a folder it writes into is deleted or locked meanwhile, the import stops with a message saying how many links came in; import the file again to add the rest. Tested with files in Brave's export format.
 
 ## Locked folders and share links
 
