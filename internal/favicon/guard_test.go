@@ -200,3 +200,24 @@ func TestGuardPorts(t *testing.T) {
 		t.Errorf("redirect to another port of the own host: %v", err)
 	}
 }
+
+// A redirect from https to plain http is refused; http to https is fine.
+func TestClientRefusesDowngrade(t *testing.T) {
+	c := guard{}.client()
+	req := func(u string) *http.Request {
+		r, _ := http.NewRequest("GET", u, nil)
+		return r
+	}
+	if err := c.CheckRedirect(req("http://example.com/i.png"), []*http.Request{req("https://example.com/")}); err == nil {
+		t.Error("https to http followed")
+	}
+	if err := c.CheckRedirect(req("http://example.com/b"), []*http.Request{req("https://example.com/"), req("https://example.com/a")}); err == nil {
+		t.Error("https to http followed after two hops")
+	}
+	if err := c.CheckRedirect(req("https://example.com/i.png"), []*http.Request{req("http://example.com/")}); err != nil {
+		t.Errorf("http to https refused: %v", err)
+	}
+	if err := c.CheckRedirect(req("http://example.com/b"), []*http.Request{req("http://example.com/")}); err != nil {
+		t.Errorf("http to http refused: %v", err)
+	}
+}

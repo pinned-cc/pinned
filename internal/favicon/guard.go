@@ -186,6 +186,14 @@ func (g guard) client() *http.Client {
 			if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
 				return fmt.Errorf("redirect to %s refused", req.URL.Scheme)
 			}
+			// Once on https, never step down to plain http.
+			if req.URL.Scheme == "http" {
+				for _, v := range via {
+					if v.URL.Scheme == "https" {
+						return errors.New("redirect from https to http refused")
+					}
+				}
+			}
 			return nil
 		},
 	}
