@@ -1,16 +1,24 @@
 # Weekly pull requests for the Go builder image, the Go modules and the
 # pinned GitHub Actions, so a patched Go or library does not wait for an audit.
+# A new version is proposed only once it is 7 days old, so a release that is
+# pulled or found hijacked in its first days never reaches a pull request.
 version: 2
 updates:
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
   - package-ecosystem: gomod
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
