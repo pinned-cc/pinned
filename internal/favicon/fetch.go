@@ -327,7 +327,7 @@ func writeFile(path string, data []byte) error {
 		os.Remove(tmp.Name())
 		return err
 	}
-	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+	if err := os.Chmod(tmp.Name(), 0o600); err != nil {
 		os.Remove(tmp.Name())
 		return err
 	}

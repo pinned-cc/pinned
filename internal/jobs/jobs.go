@@ -23,7 +23,7 @@ func ExportFile(dataDir string) string { return filepath.Join(dataDir, "export",
 // WriteExport writes the export file atomically: temp file, then rename.
 func WriteExport(st *store.Store, dataDir string) error {
 	dir := filepath.Join(dataDir, "export")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
 	tree, err := st.ExportTree()
@@ -42,7 +42,7 @@ func WriteExport(st *store.Store, dataDir string) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+	if err := os.Chmod(tmp.Name(), 0o600); err != nil {
 		return err
 	}
 	return os.Rename(tmp.Name(), ExportFile(dataDir))

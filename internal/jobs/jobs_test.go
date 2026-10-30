@@ -55,6 +55,13 @@ func TestWriteExportAndPurge(t *testing.T) {
 	if len(entries) != 1 {
 		t.Errorf("temp files left behind: %v", entries)
 	}
+	// Only the app's user may read the export and its folder.
+	if fi, _ := os.Stat(ExportFile(dir)); fi.Mode().Perm() != 0o600 {
+		t.Errorf("export mode %v", fi.Mode().Perm())
+	}
+	if fi, _ := os.Stat(filepath.Join(dir, "export")); fi.Mode().Perm() != 0o700 {
+		t.Errorf("export folder mode %v", fi.Mode().Perm())
+	}
 
 	// Purge removes an orphaned icon file.
 	os.MkdirAll(filepath.Join(dir, "icons"), 0o755)

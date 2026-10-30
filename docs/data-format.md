@@ -11,6 +11,8 @@ icons/                the fetched site icons
 export/bookmarks.html the nightly export
 ```
 
+Only the user the app runs as can read them: folders are 0700 and files 0600 (the process runs with umask 077). At start the app makes folders and files written by an older version, which were readable by everyone, private too; where the volume does not allow it, it logs that once and carries on.
+
 `secret.key` is the key for the hashes of sessions, API tokens, unlock cookies and device cookies. Keep it with the database. Without it every session ends and every API token stops working.
 
 ## The database

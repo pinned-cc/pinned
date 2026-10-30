@@ -118,11 +118,13 @@ func run() error {
 		return err
 	}
 
+	privateUmask()
 	for _, dir := range []string{dataDir, filepath.Join(dataDir, "icons"), filepath.Join(dataDir, "export")} {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, dirMode); err != nil {
 			return fmt.Errorf("cannot create %s: %w (check that DATA_DIR is writable)", dir, err)
 		}
 	}
+	tightenModes(dataDir)
 	secret, err := auth.LoadSecret(dataDir)
 	if err != nil {
 		return fmt.Errorf("secret key: %w", err)

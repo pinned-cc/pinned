@@ -234,8 +234,10 @@ func TestPoolRunStoresIcon(t *testing.T) {
 	if got.Icon == nil || got.Tile == nil || *got.Tile != "#0a141e" {
 		t.Fatalf("icon not stored: %+v", got)
 	}
-	if _, err := os.Stat(filepath.Join(dir, *got.Icon)); err != nil {
+	if fi, err := os.Stat(filepath.Join(dir, *got.Icon)); err != nil {
 		t.Errorf("icon file missing: %v", err)
+	} else if fi.Mode().Perm() != 0o600 {
+		t.Errorf("icon file mode %v", fi.Mode().Perm())
 	}
 }
 
