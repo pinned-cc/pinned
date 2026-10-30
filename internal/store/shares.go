@@ -98,13 +98,21 @@ func (s *Store) ShareByToken(token string) (Share, error) {
 	return sh, err
 }
 
-// ActiveShare returns a share only when it exists and has not expired.
+// ActiveShare returns a share only when it exists, has not expired and its
+// folder is not under a lock. Such a share is left only by an older version.
 func (s *Store) ActiveShare(token string) (Share, error) {
 	sh, err := s.ShareByToken(token)
 	if err != nil {
 		return sh, err
 	}
 	if sh.ExpiresAt != nil && *sh.ExpiresAt <= s.now() {
+		return sh, ErrNotFound
+	}
+	locked, err := underLock(s.db, sh.FolderID)
+	if err != nil {
+		return sh, err
+	}
+	if locked {
 		return sh, ErrNotFound
 	}
 	return sh, nil

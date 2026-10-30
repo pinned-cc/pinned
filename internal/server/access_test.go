@@ -137,3 +137,45 @@ func TestIconsOnlyOfVisibleBookmarks(t *testing.T) {
 		t.Errorf("icon after unlock: %d", code)
 	}
 }
+
+// Moving a shared folder into a locked one ends its share, in the same
+// step, as locking does.
+func TestMoveIntoLockedFolderEndsShare(t *testing.T) {
+	f := newLockFixture(t)
+	e := f.e
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/share", map[string]any{}, 201))
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("PATCH", "/api/folders/"+itoa(f.reading.ID), map[string]any{"parent_id": f.client.ID}, 200)
+	if _, err := e.st.ShareByToken(sh.Token); err == nil {
+		t.Error("share survived the move into a locked folder")
+	}
+	if code, _ := e.visitor().get("/s/" + sh.Token + "/data"); code != 404 {
+		t.Errorf("share data after the move: %d", code)
+	}
+}
+
+// A share left under a lock by an older version is dead while locked, hidden
+// from the owner's writes while locked, and removed with the lock.
+func TestLeftoverShareUnderLock(t *testing.T) {
+	f := newLockFixture(t)
+	e := f.e
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	// What an older version left: a share inside the locked folder.
+	sh, err := e.st.CreateShare(f.client.ID, "leftoverleftoverleftoverleftover", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := e.visitor()
+	for _, p := range []string{"", "/data"} {
+		if code, _ := v.get("/s/" + sh.Token + p); code != 404 {
+			t.Errorf("leftover share %q: %d", p, code)
+		}
+	}
+	e.expect("PATCH", "/api/shares/"+sh.Token, map[string]any{"expires_days": 1}, 404)
+	e.expect("DELETE", "/api/shares/"+sh.Token, nil, 404)
+	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"app_password": "pw"}, 204)
+	if _, err := e.st.ShareByToken(sh.Token); err == nil {
+		t.Error("leftover share came back with the lock removed")
+	}
+}

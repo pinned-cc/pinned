@@ -217,6 +217,19 @@ func (s *Store) UpdateFolder(id int64, name *string, parentSet bool, parentID *i
 			if _, err := tx.Exec(`UPDATE folders SET parent_id = ?, position = ? WHERE id = ?`, nullable(parentID), pos, id); err != nil {
 				return err
 			}
+			// A locked folder cannot be shared: moving into one ends the
+			// shares of everything moved, as SetLock does.
+			if parentID != nil {
+				locked, err := underLock(tx, *parentID)
+				if err != nil {
+					return err
+				}
+				if locked {
+					if _, err := tx.Exec(subtree+`DELETE FROM shares WHERE folder_id IN (SELECT id FROM sub)`, id); err != nil {
+						return err
+					}
+				}
+			}
 		}
 		f, err = getFolder(tx, id)
 		return err

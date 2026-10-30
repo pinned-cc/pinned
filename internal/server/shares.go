@@ -143,7 +143,31 @@ func (s *Server) apiCreateShare(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, s.shareToJSON(r, sh))
 }
 
+// visibleShare answers 404 and returns false when the share does not exist
+// or its folder is hidden by a lock in this browser, like any other write
+// inside a locked folder.
+func (s *Server) visibleShare(w http.ResponseWriter, r *http.Request) bool {
+	sh, err := s.st.ShareByToken(r.PathValue("token"))
+	if err != nil {
+		writeStoreError(w, err)
+		return false
+	}
+	v, err := s.lockView(r)
+	if err != nil {
+		writeStoreError(w, err)
+		return false
+	}
+	if f, ok := v.folders[sh.FolderID]; !ok || !v.listed(f) || v.hidden(f.ID) {
+		writeError(w, http.StatusNotFound, "not found")
+		return false
+	}
+	return true
+}
+
 func (s *Server) apiPatchShare(w http.ResponseWriter, r *http.Request) {
+	if !s.visibleShare(w, r) {
+		return
+	}
 	in, ok := s.readShareInput(w, r)
 	if !ok {
 		return
@@ -158,6 +182,9 @@ func (s *Server) apiPatchShare(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) apiDeleteShare(w http.ResponseWriter, r *http.Request) {
+	if !s.visibleShare(w, r) {
+		return
+	}
 	s.done(w, s.logged(r, "share.delete", s.st.DeleteShare(r.PathValue("token"))))
 }
 

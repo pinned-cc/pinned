@@ -24,7 +24,30 @@ func (s *Store) ReplaceLockHash(folderID int64, hash string) error {
 	return s.execOne(`UPDATE folders SET lock_hash = ? WHERE id = ? AND lock_hash IS NOT NULL`, hash, folderID)
 }
 
-// RemoveLock takes the folder's own password away.
+// RemoveLock takes the folder's own password away. A share left in the
+// folder's subtree by an older version, which moved shared folders into
+// locked ones without removing the share, is deleted too, so it does not
+// come back to life with the lock gone.
 func (s *Store) RemoveLock(folderID int64) error {
-	return s.execOne(`UPDATE folders SET lock_hash = NULL WHERE id = ?`, folderID)
+	return s.withTx(func(tx *sql.Tx) error {
+		res, err := tx.Exec(`UPDATE folders SET lock_hash = NULL WHERE id = ?`, folderID)
+		if err != nil {
+			return err
+		}
+		if n, _ := res.RowsAffected(); n == 0 {
+			return ErrNotFound
+		}
+		_, err = tx.Exec(subtree+`DELETE FROM shares WHERE folder_id IN (SELECT id FROM sub)`, folderID)
+		return err
+	})
+}
+
+// underLock reports whether the folder or one of its parents has a lock.
+func underLock(q querier, folderID int64) (bool, error) {
+	var n int
+	err := q.QueryRow(`WITH RECURSIVE up(id, depth) AS (
+		SELECT ?, 0 UNION ALL SELECT f.parent_id, up.depth + 1 FROM folders f JOIN up ON f.id = up.id
+		WHERE f.parent_id IS NOT NULL AND up.depth < 1000)
+		SELECT COUNT(*) FROM folders WHERE id IN (SELECT id FROM up) AND lock_hash IS NOT NULL`, folderID).Scan(&n)
+	return n > 0, err
 }
