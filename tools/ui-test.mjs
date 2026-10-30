@@ -334,6 +334,17 @@ async function desktop(browser, engine) {
     await page.setViewportSize({ width: 1440, height: 900 }); await page.waitForTimeout(250);
   });
 
+  await check('768: What\'s new stays in the folded rail under More and opens the releases; the full sidebar keeps the version line instead', async () => {
+    await page.setViewportSize({ width: 768, height: 900 }); await page.waitForTimeout(250);
+    await openFoot(page);
+    const it = page.locator('#side .rail-only[data-a="releases"]'); await visible(it);
+    await it.click(); await sheetOpen(page);
+    await until(page, () => (window.Pinned.L.sheet || {}).type === 'releases', null, 'the releases sheet');
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+    await page.setViewportSize({ width: 1440, height: 900 }); await page.waitForTimeout(250);
+    assert(!(await it.isVisible()), 'the rail item shows in the full sidebar');
+  });
+
   await check('new folder from the + beside the Folders head', async () => {
     await page.click('#side .side-add'); await sheetOpen(page);
     await page.fill('#sheet input[name=v]', T.folder); await page.keyboard.press('Enter');

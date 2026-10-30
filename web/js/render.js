@@ -184,7 +184,7 @@ export function renderDesk() {
       <div class="foot-acts" id="footacts"><div class="foot-in">${sideAction('Import', 'import', 'import')}
       <a class="si" href="/api/export" download><span class="si-ic">${ic('export')}</span><span class="si-n">Export</span></a>${sideAction('API tokens', 'key', 'tokens')}
       <a class="si" href="/bookmarklet"><span class="si-ic">${ic('all')}</span><span class="si-n">How to save</span></a>${sideAction('Log out', 'logout', 'logout')}
-      <a class="si" href="${SOURCE_URL}" target="_blank" rel="noopener"><span class="si-ic">${ic('open')}</span><span class="si-n">Source</span></a>${ui.version ? `<button type="button" class="app-ver" data-a="releases">Pinned ${esc(ui.version)}<span class="app-new">What's new</span></button>` : ''}</div></div></div>`;
+      <a class="si" href="${SOURCE_URL}" target="_blank" rel="noopener"><span class="si-ic">${ic('open')}</span><span class="si-n">Source</span></a>${ui.version ? `<button type="button" class="si rail-only" data-a="releases"><span class="si-ic">${ic('clock')}</span><span class="si-n">What's new</span></button><button type="button" class="app-ver" data-a="releases">Pinned ${esc(ui.version)}<span class="app-new">What's new</span></button>` : ''}</div></div></div>`;
   if (side._h !== sh) { side.innerHTML = sh; side._h = sh; side.querySelector('.side-tree').scrollTop = sideScroll; }
   syncSearch();
   const dk = byId('dockwrap'), dh = deskDock(); if (dk._h !== dh) { dk.innerHTML = dh; dk._h = dh; }

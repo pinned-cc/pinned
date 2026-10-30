@@ -1390,6 +1390,7 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 .nf-plus:active{transform:none}
 .nf-plus:active .nf-c{transform:scale(.97)}
 .brand-mark{display:none;width:32px;height:32px}
+.side .rail-only{display:none}
 /* the name beside a rail icon, or a cut name in the full sidebar */
 .tip{position:fixed;z-index:95;transform:translateY(-50%);padding:var(--s-3) var(--s-5);border-radius:var(--r-s);background:var(--surface-up);box-shadow:0 0 0 1px var(--line-2),0 8px 20px -6px rgba(0,0,0,.6);
   font:500 var(--t-tag)/var(--lh-16) var(--sans);color:var(--ink);white-space:nowrap;pointer-events:none;max-width:320px;overflow:hidden;text-overflow:ellipsis}
@@ -1404,6 +1405,7 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
   .side .si-ic{width:28px;height:28px;border-radius:var(--r-s)}
   .side .si-n{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .side .si-c,.side .lk,.side .foot-chev,.side .app-ver,.side .subs{display:none}
+  .side .si.rail-only{display:flex}
   .side .si[aria-current="true"]{background:color-mix(in srgb,var(--h) 18%,transparent)}
   .side-lbl{justify-content:center;margin:var(--s-9) 0 var(--s-3);padding-top:var(--s-6);border-top:1px solid var(--line)}
   .side-lt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
