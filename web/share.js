@@ -72,9 +72,11 @@ function locked(name) {
 }
 async function load() {
   const r = await fetch(base + '/data', { credentials: 'same-origin' }).catch(() => null);
-  if (r && r.status === 401) { const j = await r.json().catch(() => ({})); const name = j && j.folder && j.folder.name; if (name) { document.title = name; byId('share-h1').textContent = name; } locked(name); return; }
-  if (!r || !r.ok) { byId('share').innerHTML = `<main class="lone"><div class="lone-box"><h2>This link does not work.</h2></div></main>`; return; }
-  shared = await r.json(); shared.folders = shared.folders || []; shared.bookmarks = shared.bookmarks || []; render();
+  const j = r && r.ok ? await r.json().catch(() => null) : null;
+  if (!j) { byId('share').innerHTML = `<main class="lone"><div class="lone-box"><h2>This link does not work.</h2></div></main>`; return; }
+  /* a password protected share answers 200 with locked, so the browser logs no error */
+  if (j.locked) { const name = j.folder && j.folder.name; if (name) { document.title = name; byId('share-h1').textContent = name; } locked(name); return; }
+  shared = j; shared.folders = shared.folders || []; shared.bookmarks = shared.bookmarks || []; render();
 }
 document.addEventListener('input', e => { if (e.target.id === 'sq') { query = e.target.value; byId('sbody').innerHTML = body(); } });
 document.addEventListener('click', e => { if (e.target.closest('[data-clear]')) { query = ''; const i = byId('sq'); if (i) { i.value = ''; i.focus({ preventScroll: true }); } byId('sbody').innerHTML = body(); return; } });

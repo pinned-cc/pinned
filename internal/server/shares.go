@@ -311,11 +311,13 @@ func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 	}
 	if !s.shareUnlocked(r, sh) {
 		// The folder name is shown on the unlock page; nothing else leaks.
+		// 200, not 401: the password form is the expected answer, and
+		// browsers log every 401 as an error in the console.
 		out := map[string]any{"locked": true}
 		if f, err := s.st.Folder(sh.FolderID); err == nil {
 			out["folder"] = map[string]string{"name": f.Name}
 		}
-		writeJSON(w, http.StatusUnauthorized, out)
+		writeJSON(w, http.StatusOK, out)
 		return
 	}
 	root, folders, bookmarks, err := s.st.ShareContents(sh.FolderID)

@@ -313,7 +313,7 @@ def _public_share(self, method, path):
         good = json.loads(self.body() or b'{}').get('password') == sh['password']
         return self.send(204, headers=[('Set-Cookie', f'share_{t}=ok; Path=/s/{t}; HttpOnly; SameSite=Lax')]) if good else self.send(401, {'error': 'wrong password'})
     if part != '/data': return self.file('share.html', 'text/html')
-    if not ok: return self.send(401, {'locked': True, 'folder': {'name': db.folders[sh['folder_id']]['name']}})
+    if not ok: return self.send(200, {'locked': True, 'folder': {'name': db.folders[sh['folder_id']]['name']}})
     ids = [x for x in db.descendants(sh['folder_id']) if x not in db.hidden(public=True)]; sh['opens'] += 1; sh['last'] = int(time.time())
     bms = [dict({k: b[k] for k in ('id', 'folder_id', 'title', 'url', 'tile', 'created_at')}, host=host_of(b['url']), letter=b['title'][:1].upper(),
                 icon=b['icon'] and f'/s/{t}/icons/' + b['icon'].split('/')[-1]) for b in db.bms.values() if b['folder_id'] in ids and not b['deleted_at']]

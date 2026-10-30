@@ -216,7 +216,7 @@ func TestSharePassword(t *testing.T) {
 	}
 	v := e.visitor()
 	code, body := v.get("/s/" + sh.Token + "/data")
-	if code != 401 || strings.TrimSpace(body) != `{"folder":{"name":"Work"},"locked":true}` {
+	if code != 200 || strings.TrimSpace(body) != `{"folder":{"name":"Work"},"locked":true}` {
 		t.Errorf("locked: %d %s", code, body)
 	}
 	if v.unlock(sh.Token, "wrong") != 401 {
@@ -225,8 +225,8 @@ func TestSharePassword(t *testing.T) {
 	if v.unlock(sh.Token, "open sesame") != 204 {
 		t.Fatal("right password refused")
 	}
-	if code, _ := v.get("/s/" + sh.Token + "/data"); code != 200 {
-		t.Errorf("after unlock: %d", code)
+	if code, body := v.get("/s/" + sh.Token + "/data"); code != 200 || strings.Contains(body, `"locked"`) {
+		t.Errorf("after unlock: %d %s", code, body)
 	}
 	cookie := v.client.Jar.Cookies(mustURL(e.srv.URL + "/s/" + sh.Token))
 	if len(cookie) == 0 {
@@ -235,8 +235,8 @@ func TestSharePassword(t *testing.T) {
 
 	// Changing the password locks old cookies out.
 	e.expect("PATCH", "/api/shares/"+sh.Token, map[string]any{"password": "new one here"}, 200)
-	if code, _ := v.get("/s/" + sh.Token + "/data"); code != 401 {
-		t.Errorf("old cookie after password change: %d", code)
+	if _, body := v.get("/s/" + sh.Token + "/data"); !strings.Contains(body, `"locked":true`) {
+		t.Errorf("old cookie after password change: %s", body)
 	}
 	v.unlock(sh.Token, "new one here")
 
@@ -252,17 +252,15 @@ func TestSharePassword(t *testing.T) {
 	req, _ := http.NewRequest("GET", e.srv.URL+"/s/"+sh2.Token+"/data", nil)
 	req.AddCookie(&http.Cookie{Name: shareCookie, Value: unlock})
 	resp, _ := http.DefaultClient.Do(req)
-	resp.Body.Close()
-	if resp.StatusCode != 401 {
-		t.Errorf("old cookie opened the new share: %d", resp.StatusCode)
+	if body := string(readAll(resp)); !strings.Contains(body, `"locked":true`) {
+		t.Errorf("old cookie opened the new share: %s", body)
 	}
 	// A forged cookie with a far expiry fails too.
 	req, _ = http.NewRequest("GET", e.srv.URL+"/s/"+sh2.Token+"/data", nil)
 	req.AddCookie(&http.Cookie{Name: shareCookie, Value: "9999999999.00"})
 	resp, _ = http.DefaultClient.Do(req)
-	resp.Body.Close()
-	if resp.StatusCode != 401 {
-		t.Errorf("forged cookie: %d", resp.StatusCode)
+	if body := string(readAll(resp)); !strings.Contains(body, `"locked":true`) {
+		t.Errorf("forged cookie: %s", body)
 	}
 
 	// Unlock is rate limited like the login.
