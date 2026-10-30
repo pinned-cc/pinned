@@ -28,7 +28,7 @@ The server speaks plain HTTP on `PORT` (8080 in the container). HTTPS is the job
 | Bookmark title | Trimmed and cut to 500 characters. An empty title on a new bookmark becomes the host. |
 | Folder name | Trimmed, cut to 200 characters, not empty. Folders nest at most 32 deep. |
 | API token name | Trimmed, cut to 80 characters, not empty. |
-| `APP_PASSWORD` | At least 8 characters and at most 72 bytes, the longest bcrypt takes. The app does not start otherwise. |
+| `APP_PASSWORD` | At least 8 characters, no upper limit: the stored hash is bcrypt over its SHA-256. The app does not start with a shorter one. |
 | Folder password | At least 4 characters, at most 72 bytes. |
 | Share password | At least 8 characters, at most 72 bytes. |
 | Share expiry | 1 to 3650 days, or never. |
@@ -102,7 +102,7 @@ A fetch goes only to public addresses, except that a bookmark whose host is priv
 | API token | `tk_` and 32 random bytes; the database keeps HMAC-SHA256 of it, keyed with `secret.key` | Scripts and the extension. Shown once, never stored. |
 | Share token | 24 random bytes, stored as is | The share link. |
 | Signed cookies: device, folder unlock, share unlock | `v1.`, the value, and an HMAC-SHA256 keyed with `secret.key` | The device cookie signs its id and the app password's fingerprint. A folder unlock signs the folder, its password hash and the expiry. A share unlock signs the token, the share's creation time, its password hash and the expiry. A new password, a new share or a new key makes the old cookies worthless. `v1.` marks the format; a later format can take another marker. |
-| App password | bcrypt, cost 10, in the database | Only to notice at start that `APP_PASSWORD` changed. |
+| App password | bcrypt, cost 10, over the SHA-256 of the password, in the database | Only to notice at start that `APP_PASSWORD` changed. |
 | App password at login | Both sides hashed with SHA-256, then compared in constant time | The login checks the password in the environment, held in memory. |
 | App password fingerprint | HMAC-SHA256 of the password, keyed with `secret.key`, held in memory only | Part of what the device cookie signs. |
 | Folder and share passwords | bcrypt, cost 10 | A hash made at a lower cost is replaced at the next right password. |

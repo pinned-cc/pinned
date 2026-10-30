@@ -87,7 +87,7 @@ All settings are environment variables.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `APP_PASSWORD` | none, required | The login password, at least 8 characters and at most 72 bytes. The app does not start without it and never logs it. |
+| `APP_PASSWORD` | none, required | The login password, at least 8 characters. The app does not start without it and never logs it. |
 | `APP_PASSWORD_FILE` | empty | A file that holds the password instead, such as a Docker secret. One trailing newline is dropped. Set this or `APP_PASSWORD`, not both. |
 | `TZ` | `UTC` | Time zone for the nightly export at 03:00. |
 | `BASE_URL` | taken from each request | The address people use, for example `https://bookmarks.example.com`. Used in the Save button code and the browser search entry. Set it when the app runs behind a proxy. When it starts with `https://`, a request for that host name with no `X-Forwarded-Proto` counts as HTTPS (see Behind a reverse proxy). |

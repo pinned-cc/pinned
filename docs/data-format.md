@@ -101,7 +101,7 @@ The list of signed in browsers names a session by its SQLite `rowid`.
 |---|---|---|
 | `id` | INTEGER PRIMARY KEY | |
 | `folder_id` | INTEGER NOT NULL UNIQUE | The shared folder. One share per folder. Deleted with the folder. |
-| `token` | TEXT NOT NULL UNIQUE | The random part of the link, `/s/<token>`. Stored as is, because it is the link. |
+| `token` | TEXT NOT NULL UNIQUE | The random part of the link, `/s/#<token>` (links made before 0.1.11: `/s/<token>`). Stored as is, because it is the link. |
 | `password_hash` | TEXT NULL | bcrypt hash of the share password. NULL when there is none. |
 | `expires_at` | INTEGER NULL | NULL when it never expires. |
 | `created_at` | INTEGER NOT NULL | |
