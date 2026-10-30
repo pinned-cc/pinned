@@ -1425,6 +1425,9 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
   .vsw{height:auto;padding:var(--s-1);border-radius:calc(var(--r-l) + 3px)}
   .vsw button{width:var(--tap);height:var(--tap);border-radius:var(--r-l)}
   .ftrash{height:52px}
+  .ab{width:var(--tap);height:var(--tap)}
+  .tb-share{position:relative}
+  .tb-share::after{content:"";position:absolute;inset:-6px;border-radius:50%}
 }
 /* How to save without boxes. Steps sit on the page; only the drawings keep a frame */
 .hs-steps{gap:var(--s-14)}
@@ -1454,6 +1457,7 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 .hs-tabs::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 4);border-radius:var(--r-pill);background:var(--ink);transform:translateX(calc(var(--tab) * 100%));transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .hs-tabs button{position:relative;z-index:1;height:40px;border-radius:var(--r-pill);color:var(--ink);opacity:.72;transition:color .2s ease,opacity .2s ease}
 .hs-tabs button:hover{opacity:1}
+.hs-tabs button::after{content:"";position:absolute;inset:-2px 0}
 .hs-tabs button[aria-selected="true"]{background:none;box-shadow:none;color:var(--ground);opacity:1;font-weight:600}
 @media (prefers-reduced-motion:reduce){.hs-tabs::before{transition:none}}
 /* brighter copy on this page; grey stays only for small notes */

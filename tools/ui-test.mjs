@@ -855,6 +855,24 @@ async function desktop(browser, engine) {
     await page.setViewportSize({ width: 1440, height: 900 }); await visible(page.locator('#side .si'));
   });
 
+  await check('768 with touch: the How to save device tabs, the folder title share button and the card actions take a 44 px tap', async () => {
+    const c = await browser.newContext({ viewport: { width: 768, height: 900 }, hasTouch: true, locale: 'en-US' }); await c.addCookies(await ctx.cookies()); const p = await c.newPage();
+    try {
+      await p.goto(BASE + '/bookmarklet'); await visible(p.locator('.hs-tabs [role=tab]'));
+      const tabs = await p.evaluate(() => [...document.querySelectorAll('.hs-tabs [role=tab]')].map(t => { const r = t.getBoundingClientRect(), x = r.left + r.width / 2;
+        const at = y => { const e = document.elementFromPoint(x, y); return !!e && e.closest('[role=tab]') === t; }; const cy = r.top + r.height / 2; return at(cy - 21.5) && at(cy + 21.5) ? 0 : t.textContent; }).filter(Boolean));
+      assert(!tabs.length, 'device tabs under 44 px: ' + tabs.join(', '));
+      const seedF = (await apiIn(p, 'GET', '/api/state')).data.folders.find(f => f.name === 'ui-test seed');
+      await p.goto(BASE + '/'); await visible(p.locator('#side .si')); await p.click(`#side [data-view="${seedF.id}"]`); await visible(p.locator('#body article.tile .ab'));
+      const g = await p.evaluate(() => { const s = document.querySelector('#tbwrap .tb-share'), r = s.getBoundingClientRect(), cy = r.top + r.height / 2;
+        const hit = x => { const e = document.elementFromPoint(x, cy); return !!e && e.closest('.tb-share') === s; };
+        const ab = document.querySelector('#body article.tile .ab').getBoundingClientRect();
+        return { share: hit(r.left + r.width / 2 - 21.5) && hit(r.left + r.width / 2 + 21.5), ab: [ab.width, ab.height] }; });
+      assert(g.share, 'the share button beside the folder title is under 44 px');
+      assert(g.ab[0] >= 44 && g.ab[1] >= 44, 'card action buttons ' + g.ab.join(' by '));
+    } finally { await c.close(); }
+  });
+
   await check('login, How to save and save pages follow the system scheme and the bulb\'s pick, as the app does', async () => {
     const WANT = { light: ['rgb(244, 241, 234)', 'rgb(27, 26, 23)'], dark: ['rgb(15, 15, 17)', 'rgb(240, 240, 240)'] };
     const look = async (p, want, where) => { const g = await p.evaluate(() => ({ t: document.documentElement.dataset.theme, bg: getComputedStyle(document.documentElement).backgroundColor, ink: getComputedStyle(document.body).color }));
