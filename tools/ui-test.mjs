@@ -349,6 +349,16 @@ async function desktop(browser, engine) {
     await announced(page, /^Saved in /, 'saved');
   });
 
+  await check('Tab in the Add sheet moves through its controls: Title, URL and Save are reached, Shift Tab goes back', async () => {
+    await page.click('#tbwrap .add'); await sheetOpen(page);
+    const at = () => page.evaluate(() => { const a = document.activeElement; return a.dataset.f || a.dataset.a || a.getAttribute('aria-label') || a.tagName; });
+    const seen = [];
+    for (let i = 0; i < 10; i++) { await page.keyboard.press('Tab'); seen.push(await at()); assert(await focusIn(page), 'focus left the sheet'); }
+    for (const k of ['title', 'url', 'save-go']) assert(seen.includes(k), `Tab never reached ${k}: ${seen.join(',')}`);
+    const fwd = await at(); await page.keyboard.press('Shift+Tab'); assert(await at() !== fwd, 'Shift Tab stays on ' + fwd);
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+  });
+
   const menuLabels = async () => (await page.locator('.menu [role="menuitem"]').allTextContents()).map(x => x.trim()).join(',');
   await check('right click on a card: Move, Copy, Share and Trash, then Open, Rename and Pin, as the selection bar and its More; the three dots on a card show the same', async () => {
     await page.click('#side [data-view="inbox"]'); await visible(page.locator('#body article.tile[data-id]'));

@@ -38,7 +38,7 @@ export function onKey(e) {
   if (layers.sheet && layers.sheet.type === 'addto' && atKey(e, t)) return;
   if (document.body.dataset.page !== 'app') return;
   /* Tab stays inside an open sheet or dialog, and comes back into it if a redraw dropped focus outside */
-  if (layers.sheet && e.key === 'Tab') { const el = sheetEl(), f = [...el.querySelectorAll('button:not([disabled]), input:not([type=hidden]), textarea, [href], [tabindex="0"]')].filter(x => x.getClientRects().length); if (!f.length) return;
+  if (layers.sheet && e.key === 'Tab') { const el = sheetEl(), f = [...el.querySelectorAll('button:not([disabled]), input:not([type=hidden]), textarea, a[href], [tabindex="0"]')].filter(x => x.getClientRects().length); if (!f.length) return;
     /* moved by hand, so WebKit (which only tabs to text fields by default) cycles through the buttons too */
     const i = f.indexOf(document.activeElement); e.preventDefault();
     f[i < 0 ? (e.shiftKey ? f.length - 1 : 0) : (i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); return; }
