@@ -15,7 +15,8 @@ Not released yet.
 
 ### Changes
 
-- Over HTTPS the login cookie is named `__Host-pinned_session` and every answer sends `Strict-Transport-Security`. You stay logged in: the old cookie moves to the new name on your next visit. Plain http on your network works as before.
+- Over HTTPS the login cookie is named `__Host-pinned_session`. You stay logged in: the old cookie moves to the new name on your next visit. Plain http on your network works as before.
+- New setting `HSTS`, off by default. `HSTS=true` sends `Strict-Transport-Security` on HTTPS answers. Switch it on only when Pinned has its own host name on the public internet and the proxy does not already send it, since it applies to every port of that host name.
 - `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback, private and `100.64.0.0/10` addresses. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie behind `tailscale serve` is Secure too.
 - The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, restore a backup.
 

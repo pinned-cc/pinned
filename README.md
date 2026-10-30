@@ -91,6 +91,7 @@ All settings are environment variables.
 | `TZ` | `UTC` | Time zone for the nightly export at 03:00. |
 | `BASE_URL` | taken from each request | The address people use, for example `https://bookmarks.example.com`. Used in the Save button code and the browser search entry. Set it when the app runs behind a proxy. When it starts with `https://`, a request for that host name with no `X-Forwarded-Proto` counts as HTTPS (see Behind a reverse proxy). |
 | `TRUSTED_PROXIES` | empty | Addresses or networks of your reverse proxies, comma separated, for example `172.16.0.0/12` or `10.0.0.1, fd00::/8`. Only for requests from these is `X-Forwarded-For` read, and `X-Forwarded-Proto` only from these too. Empty means `X-Forwarded-For` is ignored and `X-Forwarded-Proto` is read only from loopback, private and `100.64.0.0/10` addresses. |
+| `HSTS` | off | `true` sends `Strict-Transport-Security: max-age=31536000` on HTTPS answers, a number of seconds sets another max-age. Off by default because it applies to the whole host name on every port (see Behind a reverse proxy). |
 | `SESSION_DAYS` | `90` | How long a login lasts. A login in use is renewed for the full time again. |
 | `DATA_DIR` | `/data` | The data folder. |
 | `PORT` | `8080` | The port inside the container. |
@@ -157,7 +158,8 @@ The app speaks plain HTTP on one port. For access from outside your home, put it
 - Set `BASE_URL` to the public address, for example `https://bookmarks.example.com`. The Save button code and the browser search entry use it.
 - The app treats a request as HTTPS when the proxy sends `X-Forwarded-Proto: https`. Caddy, Traefik, Nginx Proxy Manager and Cloudflare Tunnel send that header. The header is believed only from the addresses in `TRUSTED_PROXIES`, or, when that is empty, from loopback, private and `100.64.0.0/10` addresses, where a proxy in front of a home server sits. From anyone else it is ignored.
 - A proxy that sends no `X-Forwarded-Proto`, such as `tailscale serve`, is covered by `BASE_URL`: when it starts with `https://` and the request is for that same host name, the request counts as HTTPS.
-- Over HTTPS the login cookie is named `__Host-pinned_session` and marked Secure, and every answer carries `Strict-Transport-Security: max-age=31536000`, so the browser uses HTTPS for that host name from then on. Over plain HTTP on your network, the cookie stays `pinned_session` and no such header is sent. Only open the `BASE_URL` host name over HTTPS: over plain HTTP the browser refuses its cookie and the login does not stick.
+- Over HTTPS the login cookie is named `__Host-pinned_session` and marked Secure. Over plain HTTP on your network, the cookie stays `pinned_session`. Only open the `BASE_URL` host name over HTTPS: over plain HTTP the browser refuses its cookie and the login does not stick.
+- Set `HSTS=true` only when Pinned has its own host name on the public internet and your proxy does not already send `Strict-Transport-Security`. It is off by default because the browser then uses HTTPS for the whole host name on every port, which breaks other plain http services on the same NAS or Tailscale name.
 - Set `TRUSTED_PROXIES` to the proxy's address or network. The app then reads the visitor's address from `X-Forwarded-For`. Without it, every visitor looks like the proxy, and wrong passwords from anyone slow down everyone, you included.
 
 Caddy, as a whole `Caddyfile`:

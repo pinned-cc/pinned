@@ -93,6 +93,10 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	hstsMaxAge, err := server.ParseHSTS(os.Getenv("HSTS"))
+	if err != nil {
+		return err
+	}
 
 	for _, dir := range []string{dataDir, filepath.Join(dataDir, "icons"), filepath.Join(dataDir, "export")} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -166,6 +170,7 @@ func run() error {
 		Version:        version,
 		Changelog:      pinned.Changelog,
 		TrustedProxies: proxies,
+		HSTSMaxAge:     hstsMaxAge,
 	}, st, web, icons, secret)
 
 	httpServer := &http.Server{

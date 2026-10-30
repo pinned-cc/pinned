@@ -671,17 +671,42 @@ func TestCookiePrefixAndHSTS(t *testing.T) {
 	if h := resp.Header.Get("Strict-Transport-Security"); h != "" {
 		t.Errorf("HSTS over http: %q", h)
 	}
-	// Behind an HTTPS proxy: __Host- prefix, Secure, HSTS.
+	// Behind an HTTPS proxy: __Host- prefix, Secure, and still no HSTS by
+	// default, since it would cover other plain http ports of the host name.
 	resp = loginOver(t, e, true)
 	c := cookieNamed(resp, "__Host-"+CookieName)
 	if resp.StatusCode != 204 || c == nil || !c.Secure || c.Path != "/" || c.Domain != "" || !c.HttpOnly {
 		t.Fatalf("https login: %d %v", resp.StatusCode, resp.Cookies())
 	}
-	if h := resp.Header.Get("Strict-Transport-Security"); h != "max-age=31536000" {
-		t.Errorf("HSTS over https: %q", h)
+	if h := resp.Header.Get("Strict-Transport-Security"); h != "" {
+		t.Errorf("HSTS over https without HSTS set: %q", h)
 	}
 	if cookieNamed(resp, CookieName) != nil {
 		t.Error("unprefixed cookie set over https")
+	}
+
+	// HSTS switched on: sent over https, never over http.
+	on := newEnv(t, Config{HSTSMaxAge: DefaultHSTSMaxAge})
+	if h := loginOver(t, on, true).Header.Get("Strict-Transport-Security"); h != "max-age=31536000" {
+		t.Errorf("HSTS on, over https: %q", h)
+	}
+	if h := loginOver(t, on, false).Header.Get("Strict-Transport-Security"); h != "" {
+		t.Errorf("HSTS on, over http: %q", h)
+	}
+}
+
+func TestParseHSTS(t *testing.T) {
+	for in, want := range map[string]int{
+		"": 0, "false": 0, "FALSE": 0, "0": 0, " true ": DefaultHSTSMaxAge, "True": DefaultHSTSMaxAge, "86400": 86400,
+	} {
+		if got, err := ParseHSTS(in); err != nil || got != want {
+			t.Errorf("ParseHSTS(%q) = %d, %v; want %d", in, got, err, want)
+		}
+	}
+	for _, in := range []string{"yes", "-1", "1.5", "max-age=1"} {
+		if _, err := ParseHSTS(in); err == nil {
+			t.Errorf("ParseHSTS(%q) accepted", in)
+		}
 	}
 }
 

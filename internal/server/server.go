@@ -4,11 +4,13 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"net/netip"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,9 +27,11 @@ const CookieName = "pinned_session"
 // hostPrefix is the cookie name prefix used over HTTPS.
 const hostPrefix = "__Host-"
 
-// hstsHeader is sent on every HTTPS response. It has no includeSubDomains,
-// because other services of the same home domain may not run on HTTPS.
-const hstsHeader = "max-age=31536000"
+// DefaultHSTSMaxAge is the max-age sent when HSTS=true. HSTS is off unless
+// HSTS is set, because it covers the whole host name on every port, and other
+// services on the same NAS or Tailscale name may only speak plain http. It
+// never has includeSubDomains, for the same reason one level down.
+const DefaultHSTSMaxAge = 31536000
 
 // Config is what the server needs from the environment.
 type Config struct {
@@ -40,6 +44,26 @@ type Config struct {
 	// TrustedProxies are the reverse proxies whose X-Forwarded-For is
 	// believed for the rate limits (TRUSTED_PROXIES).
 	TrustedProxies []netip.Prefix
+	// HSTSMaxAge is the Strict-Transport-Security max-age in seconds sent
+	// on HTTPS responses (HSTS). 0, the default, sends no header.
+	HSTSMaxAge int
+}
+
+// ParseHSTS reads HSTS: empty, "false" or "0" is off, "true" is
+// DefaultHSTSMaxAge, and a positive whole number is that max-age in seconds.
+func ParseHSTS(s string) (int, error) {
+	s = strings.TrimSpace(s)
+	switch strings.ToLower(s) {
+	case "", "false", "0":
+		return 0, nil
+	case "true":
+		return DefaultHSTSMaxAge, nil
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil || n <= 0 {
+		return 0, fmt.Errorf("HSTS must be true, false or a max-age in seconds, not %q", s)
+	}
+	return n, nil
 }
 
 // DefaultSessionDays is the session lifetime when SESSION_DAYS is not set.
@@ -88,8 +112,8 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	securityHeaders(w.Header())
-	if s.isHTTPS(r) {
-		w.Header().Set("Strict-Transport-Security", hstsHeader)
+	if s.cfg.HSTSMaxAge > 0 && s.isHTTPS(r) {
+		w.Header().Set("Strict-Transport-Security", "max-age="+strconv.Itoa(s.cfg.HSTSMaxAge))
 	}
 	if r.Method == http.MethodOptions && strings.HasPrefix(r.URL.Path, "/api/") {
 		preflight(w, r)
