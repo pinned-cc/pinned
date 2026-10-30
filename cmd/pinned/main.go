@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -48,10 +49,28 @@ func main() {
 		}
 		return
 	}
+	log.SetFlags(0)
+	log.SetOutput(stampWriter{w: os.Stderr, now: time.Now})
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "pinned:", err)
 		os.Exit(1)
 	}
+}
+
+// stampWriter starts every log line with the time in UTC as RFC 3339, so
+// lines read the same whatever TZ the container has. The log package calls
+// Write once per line.
+type stampWriter struct {
+	w   io.Writer
+	now func() time.Time
+}
+
+func (s stampWriter) Write(p []byte) (int, error) {
+	line := append([]byte(s.now().UTC().Format(time.RFC3339)+" "), p...)
+	if _, err := s.w.Write(line); err != nil {
+		return 0, err
+	}
+	return len(p), nil
 }
 
 // checkHealth is the container health check: the scratch image has no shell

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -122,5 +124,15 @@ func TestRefusesBadIconSettings(t *testing.T) {
 		if got, err := parseIcons(v); err != nil || got != off {
 			t.Errorf("ICONS=%q: %v %v", v, got, err)
 		}
+	}
+}
+
+func TestLogLinesCarryUTC(t *testing.T) {
+	var buf bytes.Buffer
+	zone := time.FixedZone("CET", 3600)
+	l := log.New(stampWriter{w: &buf, now: func() time.Time { return time.Date(2026, 10, 31, 9, 5, 0, 0, zone) }}, "", 0)
+	l.Print("listening")
+	if got := buf.String(); got != "2026-10-31T08:05:00Z listening\n" {
+		t.Errorf("log line %q", got)
 	}
 }
