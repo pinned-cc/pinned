@@ -124,9 +124,10 @@ func fetch(ctx context.Context, client *http.Client, u string, limit int64) (dat
 }
 
 // outage reports whether err is a network failure that may pass: a DNS
-// failure, a timeout, a refused, reset or unroutable connection. A refusal
-// by the guard, a certificate error, a redirect error and anything else
-// count as lasting.
+// failure other than "no such host", a timeout, a refused, reset or
+// unroutable connection. A name the resolver answers does not exist
+// (NXDOMAIN) counts as lasting, like an HTTP error, as do a refusal by the
+// guard, a certificate error, a redirect error and anything else.
 func outage(err error) bool {
 	if errors.Is(err, errBlocked) {
 		return false
@@ -136,7 +137,7 @@ func outage(err error) bool {
 	}
 	var dns *net.DNSError
 	if errors.As(err, &dns) {
-		return true
+		return !dns.IsNotFound || dns.IsTimeout || dns.IsTemporary
 	}
 	var ne net.Error
 	if errors.As(err, &ne) && ne.Timeout() {
@@ -217,8 +218,9 @@ func (p *Pool) work() {
 // Run fetches and stores the icon for one bookmark. Failures are silent,
 // and counted so the fetch at start gives up on a link after a few. Only a
 // lasting answer counts: a bad or missing icon, an HTTP error, a refused
-// certificate or redirect. A site that could not be reached (DNS, no route,
-// refused, timeout) is not counted, so a network outage at start does not
+// certificate or redirect, a domain that does not exist. A site that could
+// not be reached (a DNS server that does not answer, no route, refused,
+// reset, timeout) is not counted, so a network outage at start does not
 // give up on links. A panic
 // anywhere in the fetch is caught: the bookmark is given up at once and the
 // server keeps running.

@@ -470,7 +470,9 @@ func TestPoolRunDoesNotCountNetworkErrors(t *testing.T) {
 		client *http.Client
 	}{
 		{"refused", closed, nil},
-		{"dns", "http://nohost.example/", &http.Client{Transport: failingTransport{&net.DNSError{Err: "no such host", Name: "nohost.example", IsNotFound: true}}}},
+		{"dns server down", "http://nohost.example/", &http.Client{Transport: failingTransport{&net.DNSError{Err: "server misbehaving", Name: "nohost.example", IsTemporary: true}}}},
+		{"dns timeout", "http://nohost.example/", &http.Client{Transport: failingTransport{&net.DNSError{Err: "i/o timeout", Name: "nohost.example", IsTimeout: true, IsTemporary: true}}}},
+		{"reset", "http://reset.example/", &http.Client{Transport: failingTransport{&net.OpError{Op: "read", Net: "tcp", Err: syscall.ECONNRESET}}}},
 		{"offline", "http://offline.example/", &http.Client{Transport: failingTransport{&net.OpError{Op: "dial", Net: "tcp", Err: errors.New("network is unreachable")}}}},
 		{"timeout", slow.URL + "/", &http.Client{Timeout: 50 * time.Millisecond}},
 	}
@@ -533,7 +535,7 @@ func TestPoolRunCountsHTTPErrors(t *testing.T) {
 }
 
 // Lasting failures count even without an HTTP answer: a certificate the
-// check refuses, a redirect loop. Otherwise those links would be fetched at
+// check refuses, a redirect loop, a domain that does not exist. Otherwise those links would be fetched at
 // every start for ever.
 func TestPoolRunCountsLastingFailures(t *testing.T) {
 	selfSigned := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -552,6 +554,8 @@ func TestPoolRunCountsLastingFailures(t *testing.T) {
 		{"self signed", selfSigned.URL + "/", &http.Client{Transport: &http.Transport{}}},
 		// The real guarded client, whose CheckRedirect stops the loop.
 		{"redirect loop", loop.URL + "/", nil},
+		// The resolver answered: no such host (NXDOMAIN), on every address.
+		{"no such host", "http://gone.example/", &http.Client{Transport: failingTransport{&url.Error{Op: "Get", URL: "http://gone.example/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", Name: "gone.example", IsNotFound: true}}}}}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -579,7 +583,11 @@ func TestOutage(t *testing.T) {
 		want bool
 	}{
 		{"guard refusal", blocked, false},
-		{"dns", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", IsNotFound: true}}}, true},
+		{"no such host", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", IsNotFound: true}}}, false},
+		{"dns timeout", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "i/o timeout", IsTimeout: true, IsTemporary: true}}}, true},
+		{"dns server down", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "server misbehaving", IsTemporary: true}}}, true},
+		{"no such host but temporary", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", IsNotFound: true, IsTemporary: true}}}, true},
+		{"offline", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: syscall.ENETUNREACH}}, true},
 		{"refused", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: syscall.ECONNREFUSED}}, true},
 		{"reset", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "read", Net: "tcp", Err: syscall.ECONNRESET}}, true},
 		{"deadline", &url.Error{Op: "Get", URL: "http://x/", Err: context.DeadlineExceeded}, true},
