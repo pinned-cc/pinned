@@ -139,6 +139,7 @@ func (s *Server) apiCreateShare(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	s.security(r, "share.create", "folder", sh.FolderID, "password", sh.PasswordHash != nil)
 	writeJSON(w, http.StatusCreated, s.shareToJSON(r, sh))
 }
 
@@ -152,11 +153,12 @@ func (s *Server) apiPatchShare(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	s.security(r, "share.change", "folder", sh.FolderID, "password", sh.PasswordHash != nil)
 	writeJSON(w, http.StatusOK, s.shareToJSON(r, sh))
 }
 
 func (s *Server) apiDeleteShare(w http.ResponseWriter, r *http.Request) {
-	s.done(w, s.st.DeleteShare(r.PathValue("token")))
+	s.done(w, s.logged(r, "share.delete", s.st.DeleteShare(r.PathValue("token"))))
 }
 
 // ---- public side ----
@@ -246,6 +248,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 			return bcrypt.CompareHashAndPassword([]byte(*sh.PasswordHash), []byte(in.Password)) == nil
 		})
 		if !ok {
+			s.failed(r, "share", wait, "folder", sh.FolderID)
 			refuseAttempt(w, wait, http.StatusUnauthorized, "Wrong password")
 			return
 		}

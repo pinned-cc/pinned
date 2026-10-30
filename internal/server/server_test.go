@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
@@ -64,6 +65,7 @@ type env struct {
 	queue  *fakeQueue
 	dir    string
 	slept  *atomic.Int64 // failed checks that waited failDelay
+	logs   *lockedBuffer // the security log
 }
 
 func newEnv(t *testing.T, cfg Config) *env {
@@ -88,6 +90,8 @@ func newEnv(t *testing.T, cfg Config) *env {
 		}
 		slept.Add(1)
 	}
+	logs := &lockedBuffer{}
+	s.log = log.New(logs, "", 0)
 	srv := httptest.NewServer(s)
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
@@ -95,7 +99,7 @@ func newEnv(t *testing.T, cfg Config) *env {
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	t.Cleanup(func() { srv.Close(); st.Close() })
-	return &env{t: t, srv: srv, server: s, client: client, st: st, queue: q, dir: dir, slept: slept}
+	return &env{t: t, srv: srv, server: s, client: client, st: st, queue: q, dir: dir, slept: slept, logs: logs}
 }
 
 // do sends a request with the CSRF header and returns status and body.

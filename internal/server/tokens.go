@@ -105,10 +105,11 @@ func (s *Server) serveBearer(w http.ResponseWriter, r *http.Request, token strin
 			writeStoreError(w, err)
 			return
 		}
-		s.refuse(w, s.tokenLimiter, s.clientKey(r), http.StatusUnauthorized, "invalid token")
+		s.refuse(w, r, s.tokenLimiter, s.clientKey(r), "token", http.StatusUnauthorized, "invalid token")
 		return
 	}
 	if !tokenRoutes[r.Pattern] {
+		s.security(r, "token.refused", "token", t.ID, "route", r.Pattern)
 		writeError(w, http.StatusForbidden, "not allowed with a token")
 		return
 	}
@@ -163,11 +164,12 @@ func (s *Server) apiCreateToken(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	s.security(r, "token.create", "token", t.ID, "name", t.Name)
 	writeJSON(w, http.StatusCreated, map[string]any{"id": t.ID, "name": t.Name, "token": value, "created_at": t.CreatedAt})
 }
 
 func (s *Server) apiDeleteToken(w http.ResponseWriter, r *http.Request) {
-	s.byID(w, r, s.st.DeleteToken)
+	s.byID(w, r, func(id int64) error { return s.logged(r, "token.delete", s.st.DeleteToken(id), "token", id) })
 }
 
 // apiFolderList is the light folder list for the pickers in the extension

@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pinned-cc/pinned/internal/auth"
@@ -90,6 +91,12 @@ type Server struct {
 	// sleep waits after a failed check; tests replace it.
 	sleep func(time.Duration)
 	mux   *http.ServeMux
+	// log takes the security events; tests replace it.
+	log *log.Logger
+	// waitLogged holds, per area and client, the end of a wait already
+	// logged (see failed).
+	waitMu     sync.Mutex
+	waitLogged map[string]time.Time
 }
 
 // New builds the server. web is the web/ folder (pages at its root).
@@ -102,6 +109,7 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 		loginLimiter: auth.NewLimiter(), tokenLimiter: auth.NewLimiter(),
 		shareLimiter: auth.NewLimiter(), folderLimiter: auth.NewLimiter(),
 		sleep: time.Sleep, mux: http.NewServeMux(),
+		log: log.Default(), waitLogged: map[string]time.Time{},
 	}
 	if u, err := url.Parse(cfg.BaseURL); err == nil && strings.EqualFold(u.Scheme, "https") {
 		s.baseHost = strings.TrimSuffix(u.Host, ":443")

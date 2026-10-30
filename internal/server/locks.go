@@ -210,7 +210,8 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	if _, ok := v.folders[id]; !ok || v.hidden(id) {
+	f, ok := v.folders[id]
+	if !ok || v.hidden(id) {
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
@@ -227,6 +228,11 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
+	event := "lock.set"
+	if f.LockHash != nil {
+		event = "lock.change"
+	}
+	s.security(r, event, "folder", id)
 	s.clearUnlockCookie(w, r, id)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -254,18 +260,16 @@ func (s *Server) apiRemoveLock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ok, wait := s.checkPassword(r, in.AppPassword)
-	if wait > 0 {
-		tooMany(w, wait)
-		return
-	}
 	if !ok {
-		writeError(w, http.StatusForbidden, "Wrong password")
+		s.failed(r, "reauth", wait, "for", "lock.remove", "folder", id)
+		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
 		return
 	}
 	if err := s.st.RemoveLock(id); err != nil {
 		writeStoreError(w, err)
 		return
 	}
+	s.security(r, "lock.remove", "folder", id)
 	s.clearUnlockCookie(w, r, id)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -301,6 +305,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 		return bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.Password)) == nil
 	})
 	if !ok {
+		s.failed(r, "lock", wait, "folder", id)
 		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
 		return
 	}

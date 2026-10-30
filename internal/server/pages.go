@@ -78,6 +78,7 @@ func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 	}
 	ok, wait := s.checkPassword(r, r.PostForm.Get("password"))
 	if !ok {
+		s.failed(r, "login", wait)
 		reason := "1"
 		if wait > 0 {
 			reason = "wait"
@@ -89,6 +90,7 @@ func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not start a session", http.StatusInternalServerError)
 		return
 	}
+	s.loginOK(r, "form")
 	http.Redirect(w, r, next, http.StatusSeeOther)
 }
 

@@ -82,23 +82,28 @@ func (s *Server) apiLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ok, wait := s.checkPassword(r, in.Password)
-	if wait > 0 {
-		tooMany(w, wait)
-		return
-	}
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "Wrong password")
+		s.failed(r, "login", wait)
+		refuseAttempt(w, wait, http.StatusUnauthorized, "Wrong password")
 		return
 	}
 	if err := s.startSession(w, r); err != nil {
 		writeStoreError(w, err)
 		return
 	}
+	s.loginOK(r, "api")
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// loginOK logs a login, and whether the browser had logged in before.
+func (s *Server) loginOK(r *http.Request, via string) {
+	_, known := s.deviceID(r)
+	s.security(r, "login.ok", "via", via, "known_browser", known)
 }
 
 func (s *Server) apiLogout(w http.ResponseWriter, r *http.Request) {
 	s.endSession(w, r)
+	s.security(r, "logout")
 	w.WriteHeader(http.StatusNoContent)
 }
 

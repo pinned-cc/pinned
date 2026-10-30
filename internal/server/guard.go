@@ -121,10 +121,12 @@ func (s *Server) attempt(r *http.Request, l *auth.Limiter, key string, known boo
 	return false, fail(key)
 }
 
-// refuse answers a failed check: 429 when the client is over the limit,
-// otherwise status with msg.
-func (s *Server) refuse(w http.ResponseWriter, l *auth.Limiter, key string, status int, msg string) {
-	if wait := s.fail(l, key); wait > 0 {
+// refuse answers a failed check and logs it in area: 429 when the client
+// is over the limit, otherwise status with msg.
+func (s *Server) refuse(w http.ResponseWriter, r *http.Request, l *auth.Limiter, key, area string, status int, msg string) {
+	wait := s.fail(l, key)
+	s.failed(r, area, wait)
+	if wait > 0 {
 		tooMany(w, wait)
 		return
 	}
