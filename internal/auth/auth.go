@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // SecretSize is the length of DATA_DIR/secret.key in bytes.
@@ -45,10 +47,32 @@ func HashToken(secret []byte, token string) string {
 	return hex.EncodeToString(m.Sum(nil))
 }
 
-// PasswordFingerprint is an HMAC of the app password. It is stored so a
-// restart can tell that APP_PASSWORD changed, without storing the password.
+// PasswordFingerprint is an HMAC of the app password, kept in memory to sign
+// device cookies. Versions before 0.1.11 stored it as password_hmac; it is
+// still read once to move that record to a bcrypt hash.
 func PasswordFingerprint(secret []byte, password string) string {
 	return HashToken(secret, "app-password\x00"+password)
+}
+
+// BcryptCost is the cost of new bcrypt hashes. A stored hash with a lower
+// cost is replaced at its next successful check.
+var BcryptCost = bcrypt.DefaultCost
+
+// HashPassword returns a bcrypt hash of password at BcryptCost. It fails
+// for a password longer than 72 bytes.
+func HashPassword(password string) (string, error) {
+	h, err := bcrypt.GenerateFromPassword([]byte(password), BcryptCost)
+	return string(h), err
+}
+
+// CheckPasswordHash reports whether password matches the bcrypt hash, and
+// whether the hash should be replaced because its cost is below BcryptCost.
+func CheckPasswordHash(hash, password string) (ok, rehash bool) {
+	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
+		return false, false
+	}
+	cost, err := bcrypt.Cost([]byte(hash))
+	return true, err == nil && cost < BcryptCost
 }
 
 // LoadSecret reads DATA_DIR/secret.key, creating it with 32 random bytes the

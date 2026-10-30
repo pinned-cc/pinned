@@ -39,29 +39,55 @@ func (s *Store) PurgeSessions() error {
 	return err
 }
 
-const passwordSetting = "password_hmac"
+// The app password is kept as a bcrypt hash under passwordSetting. Versions
+// before 0.1.11 kept an HMAC under legacyPasswordSetting, which the first
+// start of a newer version reads once and replaces.
+const (
+	passwordSetting       = "password_hash"
+	legacyPasswordSetting = "password_hmac"
+)
 
-// SyncPasswordFingerprint compares the fingerprint of the app password with
-// the one stored at the last start. When it differs, every session is
-// deleted (API tokens stay) and the new fingerprint is stored. The first
-// start with this check only stores it. changed reports a real change.
-func (s *Store) SyncPasswordFingerprint(fingerprint string) (changed bool, err error) {
+// SyncPassword compares the app password with the record stored at the last
+// start. check tells whether a stored value belongs to the current password
+// (legacy is true for the old HMAC record) and whether it should be
+// replaced; hash makes a new record. When the password differs, every
+// session is deleted and changed is true. The first start only stores the
+// record. A legacy record is always replaced by a hash.
+func (s *Store) SyncPassword(check func(stored string, legacy bool) (same, rehash bool), hash func() (string, error)) (changed bool, err error) {
 	err = s.withTx(func(tx *sql.Tx) error {
-		var old string
-		err := tx.QueryRow(`SELECT value FROM settings WHERE key = ?`, passwordSetting).Scan(&old)
-		switch {
-		case err == nil && old == fingerprint:
+		found, same, rehash := false, false, false
+		for _, key := range []string{passwordSetting, legacyPasswordSetting} {
+			var v string
+			err := tx.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&v)
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			found = true
+			same, rehash = check(v, key == legacyPasswordSetting)
+			rehash = rehash || key == legacyPasswordSetting
+			break
+		}
+		if found && same && !rehash {
 			return nil
-		case err == nil:
+		}
+		if found && !same {
 			changed = true
 			if _, err := tx.Exec(`DELETE FROM sessions`); err != nil {
 				return err
 			}
-		case !errors.Is(err, sql.ErrNoRows):
+		}
+		h, err := hash()
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`DELETE FROM settings WHERE key = ?`, legacyPasswordSetting); err != nil {
 			return err
 		}
 		_, err = tx.Exec(`INSERT INTO settings (key, value) VALUES (?, ?)
-			ON CONFLICT(key) DO UPDATE SET value = excluded.value`, passwordSetting, fingerprint)
+			ON CONFLICT(key) DO UPDATE SET value = excluded.value`, passwordSetting, h)
 		return err
 	})
 	return changed, err

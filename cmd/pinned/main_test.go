@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"log"
 	"net"
 	"net/http"
@@ -11,6 +12,11 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 func TestRefusesToStartWithoutPassword(t *testing.T) {
@@ -164,5 +170,53 @@ func TestPasswordFromFile(t *testing.T) {
 	t.Setenv("APP_PASSWORD_FILE", file)
 	if err := run(); err == nil || !strings.Contains(err.Error(), "empty") {
 		t.Errorf("empty file: %v", err)
+	}
+}
+
+func TestPasswordStoredAsBcrypt(t *testing.T) {
+	path := t.TempDir() + "/bookmarks.db"
+	st, err := store.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	secret := []byte("0123456789abcdef0123456789abcdef")
+	setting := func(key string) string {
+		var v string
+		db.QueryRow(`SELECT value FROM settings WHERE key = ?`, key).Scan(&v)
+		return v
+	}
+	cost := func() int {
+		c, _ := bcrypt.Cost([]byte(setting("password_hash")))
+		return c
+	}
+
+	// An install from before keeps an HMAC: the first start checks it and
+	// replaces it with a bcrypt hash, without signing anyone out.
+	db.Exec(`INSERT INTO settings (key, value) VALUES ('password_hmac', ?)`, auth.PasswordFingerprint(secret, "first password"))
+	if changed, err := syncPassword(st, secret, "first password"); err != nil || changed {
+		t.Fatalf("move: changed=%v err=%v", changed, err)
+	}
+	if setting("password_hmac") != "" || bcrypt.CompareHashAndPassword([]byte(setting("password_hash")), []byte("first password")) != nil {
+		t.Fatal("the HMAC was not replaced by a bcrypt hash of the password")
+	}
+	before := setting("password_hash")
+	if changed, _ := syncPassword(st, secret, "first password"); changed || setting("password_hash") != before {
+		t.Error("an unchanged password rewrote its hash")
+	}
+	if changed, _ := syncPassword(st, secret, "second password"); !changed {
+		t.Error("a new password was not noticed")
+	}
+
+	// A hash below the current cost is replaced at the next start.
+	weak, _ := bcrypt.GenerateFromPassword([]byte("second password"), bcrypt.MinCost)
+	db.Exec(`UPDATE settings SET value = ? WHERE key = 'password_hash'`, string(weak))
+	if changed, _ := syncPassword(st, secret, "second password"); changed || cost() != auth.BcryptCost {
+		t.Errorf("weak hash: changed=%v cost=%d", changed, cost())
 	}
 }

@@ -60,7 +60,7 @@ A bookmark with `deleted_at` NULL is live. Live bookmarks are unique by `url_key
 | `key` | TEXT PRIMARY KEY | |
 | `value` | TEXT | JSON. |
 
-Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to three folder ids, newest first), and `password_hmac`, an HMAC of `APP_PASSWORD` keyed with `secret.key`. When the password in the environment no longer matches it at start, every session is deleted. `icon_failures_version` is the app version that recorded the rows of `icon_failures`; a start with another version empties that table.
+Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to three folder ids, newest first), and `password_hash`, a bcrypt hash of `APP_PASSWORD`. When the password in the environment no longer matches it at start, every session is deleted. A hash made with a lower bcrypt cost than the current one is replaced at start. Versions before 0.1.11 kept `password_hmac`, an HMAC of the password keyed with `secret.key`, instead; the first start of a newer version checks it once and replaces it with `password_hash`. `icon_failures_version` is the app version that recorded the rows of `icon_failures`; a start with another version empties that table.
 
 ### sessions
 

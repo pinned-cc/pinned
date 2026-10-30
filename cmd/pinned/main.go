@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
 	"errors"
 	"flag"
 	"fmt"
@@ -128,6 +129,18 @@ func secretSetting(name string) (string, error) {
 	return s, nil
 }
 
+// syncPassword checks APP_PASSWORD against the bcrypt hash stored at the
+// last start, moving the HMAC record of older versions to a hash, and
+// reports whether the password changed.
+func syncPassword(st *store.Store, secret []byte, password string) (changed bool, err error) {
+	return st.SyncPassword(func(stored string, legacy bool) (same, rehash bool) {
+		if legacy {
+			return hmac.Equal([]byte(stored), []byte(auth.PasswordFingerprint(secret, password))), true
+		}
+		return auth.CheckPasswordHash(stored, password)
+	}, func() (string, error) { return auth.HashPassword(password) })
+}
+
 func run() error {
 	password, err := secretSetting("APP_PASSWORD")
 	if err != nil {
@@ -178,12 +191,12 @@ func run() error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	defer st.Close()
-	changed, err := st.SyncPasswordFingerprint(auth.PasswordFingerprint(secret, password))
+	changed, err := syncPassword(st, secret, password)
 	if err != nil {
 		return fmt.Errorf("check the password: %w", err)
 	}
 	if changed {
-		log.Print("APP_PASSWORD changed since the last start: every session was signed out (API tokens stay)")
+		log.Print("security event=password.changed: APP_PASSWORD changed since the last start, every session was signed out (API tokens stay)")
 	}
 
 	web, err := fs.Sub(pinned.Web, "web")

@@ -334,30 +334,68 @@ func TestSessions(t *testing.T) {
 	}
 }
 
-func TestPasswordFingerprintSignsOutSessions(t *testing.T) {
+func TestSyncPasswordSignsOutSessions(t *testing.T) {
 	s := open(t)
+	// The check stands in for bcrypt: a record matches when it equals
+	// "hash:" plus the password, and a legacy record "hmac:" plus it.
+	sync := func(pw string) (bool, error) {
+		return s.SyncPassword(func(stored string, legacy bool) (bool, bool) {
+			if legacy {
+				return stored == "hmac:"+pw, true
+			}
+			return stored == "hash:"+pw, false
+		}, func() (string, error) { return "hash:" + pw, nil })
+	}
+	stored := func() map[string]string {
+		out := map[string]string{}
+		rows, _ := s.db.Query(`SELECT key, value FROM settings WHERE key LIKE 'password%'`)
+		defer rows.Close()
+		for rows.Next() {
+			var k, v string
+			rows.Scan(&k, &v)
+			out[k] = v
+		}
+		return out
+	}
 	s.CreateSession("old", time.Now().Add(time.Hour))
-	if changed, err := s.SyncPasswordFingerprint("fp1"); err != nil || changed {
+	if changed, err := sync("pw1"); err != nil || changed {
 		t.Fatalf("first start: changed=%v err=%v", changed, err)
 	}
-	if !valid(s, "old") {
-		t.Error("first start must keep sessions")
+	if !valid(s, "old") || stored()["password_hash"] != "hash:pw1" {
+		t.Errorf("first start must keep sessions and store the hash: %v", stored())
 	}
-	tok, _ := s.CreateToken("phone", "tokenhash")
-	if changed, _ := s.SyncPasswordFingerprint("fp1"); changed || !valid(s, "old") {
+	if changed, _ := sync("pw1"); changed || !valid(s, "old") {
 		t.Error("same password signed out")
 	}
-	if changed, _ := s.SyncPasswordFingerprint("fp2"); !changed {
-		t.Error("new password not noticed")
+	if changed, _ := sync("pw2"); !changed || valid(s, "old") {
+		t.Error("a new password must sign out every session")
 	}
-	if valid(s, "old") {
-		t.Error("session survived a password change")
+	if stored()["password_hash"] != "hash:pw2" {
+		t.Errorf("new hash not stored: %v", stored())
 	}
-	if got, err := s.TokenByHash("tokenhash"); err != nil || got.ID != tok.ID {
-		t.Error("tokens must stay")
-	}
-	if st, _ := s.Settings(); st.LastFolder != nil {
-		t.Error("fingerprint leaked into settings")
+}
+
+func TestSyncPasswordMovesTheOldHMAC(t *testing.T) {
+	for _, tc := range []struct {
+		pw      string
+		changed bool
+	}{{"pw1", false}, {"pw2", true}} {
+		s := open(t)
+		s.db.Exec(`INSERT INTO settings (key, value) VALUES ('password_hmac', 'hmac:pw1')`)
+		s.CreateSession("old", time.Now().Add(time.Hour))
+		changed, err := s.SyncPassword(func(stored string, legacy bool) (bool, bool) {
+			return legacy && stored == "hmac:"+tc.pw, true
+		}, func() (string, error) { return "hash:" + tc.pw, nil })
+		if err != nil || changed != tc.changed || valid(s, "old") == tc.changed {
+			t.Errorf("%s: changed=%v err=%v", tc.pw, changed, err)
+		}
+		var n int
+		s.db.QueryRow(`SELECT COUNT(*) FROM settings WHERE key = 'password_hmac'`).Scan(&n)
+		var h string
+		s.db.QueryRow(`SELECT value FROM settings WHERE key = 'password_hash'`).Scan(&h)
+		if n != 0 || h != "hash:"+tc.pw {
+			t.Errorf("%s: the HMAC record stays (%d) or no hash (%q)", tc.pw, n, h)
+		}
 	}
 }
 
