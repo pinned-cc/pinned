@@ -224,10 +224,10 @@ func TestBackupKeptWhenClockIsBehind(t *testing.T) {
 	}
 }
 
-// When an upgrade fails and Pinned starts again, the database is still as
-// in the copy of the first start: that copy is used, no new one is written,
-// and older copies are not pushed out by a crash loop.
-func TestFailedUpgradeReusesItsCopy(t *testing.T) {
+// When an upgrade fails and Pinned starts again, the new copy holds the
+// same bytes as the one before; the older duplicate goes, so a crash loop
+// keeps one copy and does not push out the copies of other schemas.
+func TestFailedUpgradeKeepsOneCopy(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bookmarks.db")
 	old := len(migrations)
@@ -256,5 +256,30 @@ func TestFailedUpgradeReusesItsCopy(t *testing.T) {
 	}
 	if v, _, _ := schemaOf(t, path); v != old {
 		t.Errorf("database at schema %d, want %d", v, old)
+	}
+}
+
+// Only a copy with the very same bytes is replaced: a leftover empty file
+// or a copy of the same schema with other data stays until rotation.
+func TestBackupDedupeNeedsSameBytes(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "bookmarks.db")
+	oldDB(t, path, len(migrations)-1)
+	empty := filepath.Join(dir, "bookmarks-schema6-2026-10-29-120000.db")
+	other := filepath.Join(dir, "bookmarks-schema6-2026-10-28-120000.db")
+	os.WriteFile(empty, nil, 0o600)
+	os.WriteFile(other, []byte("SQLite format 3 but other data"), 0o600)
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	for _, p := range []string{empty, other} {
+		if _, err := os.Stat(p); err != nil {
+			t.Errorf("%s removed: %v", filepath.Base(p), err)
+		}
+	}
+	if n := len(backups(t, dir)); n != 3 {
+		t.Errorf("%d backups, want 3", n)
 	}
 }

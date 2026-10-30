@@ -15,7 +15,7 @@ export/bookmarks.html the nightly export
 
 ## The database
 
-SQLite in WAL mode, with foreign keys on. Times are Unix seconds. The schema is created and upgraded by numbered migrations when the app starts; the table `schema_version` holds the number of the last one that ran. Migrations only go forward. Before migrating an existing database, the app writes a copy of it with `VACUUM INTO` next to it as `bookmarks-schema<N>-<YYYY-MM-DD-HHMMSS>.db`, where N is the schema number before the upgrade, and keeps the newest three by modification time, always including the one for this start. A copy of the same schema newer than the database's last change is used instead of writing another. The copy is created with mode 0600. If the copy fails, it does not migrate.
+SQLite in WAL mode, with foreign keys on. Times are Unix seconds. The schema is created and upgraded by numbered migrations when the app starts; the table `schema_version` holds the number of the last one that ran. Migrations only go forward. Before migrating an existing database, the app writes a copy of it with `VACUUM INTO` next to it as `bookmarks-schema<N>-<YYYY-MM-DD-HHMMSS>.db`, where N is the schema number before the upgrade, and keeps the newest three by modification time, always including the one for this start. An older copy of the same schema with the same bytes is removed. The copy is created with mode 0600. If the copy fails, it does not migrate.
 
 ### folders
 

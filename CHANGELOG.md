@@ -8,7 +8,7 @@ Not released yet.
 
 ### New
 
-- Before Pinned upgrades the database to a new version, it saves a copy of the database as it was in the data folder, for example `bookmarks-schema6-2026-10-30-154210.db`, and names it in the log. The last three copies are kept, and a failed upgrade that starts again uses the copy it already has. If the copy cannot be written, Pinned does not upgrade and stops with a message, and the database stays as it was. The README says how to go back to an older version with one of these copies.
+- Before Pinned upgrades the database to a new version, it saves a copy of the database as it was in the data folder, for example `bookmarks-schema6-2026-10-30-154210.db`, and names it in the log. The last three copies are kept, and a failed upgrade that starts again replaces its own identical copy instead of adding one. If the copy cannot be written, Pinned does not upgrade and stops with a message, and the database stays as it was. The README says how to go back to an older version with one of these copies.
 
 ### Fixes
 
