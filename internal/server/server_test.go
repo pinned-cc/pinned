@@ -553,7 +553,7 @@ func TestPublicPages(t *testing.T) {
 		"/icon-192.png":         "image/png",
 		"/icon-512.png":         "image/png",
 		"/apple-touch-icon.png": "image/png",
-		"/favicon.svg":          "image/svg+xml",
+		"/favicon.svg":          "image/svg+xml; charset=utf-8",
 		"/static/app.css":       "text/css; charset=utf-8",
 		"/static/app.js":        "text/javascript; charset=utf-8",
 	} {

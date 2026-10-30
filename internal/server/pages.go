@@ -16,6 +16,17 @@ import (
 	"strings"
 )
 
+// svgType is the type of every SVG answer: the app's icon, fetched icons
+// and static files. SVG is XML, so it names its charset like the text types.
+const svgType = "image/svg+xml; charset=utf-8"
+
+func init() {
+	// http.ServeFile and the static files look the type up here.
+	if err := mime.AddExtensionType(".svg", svgType); err != nil {
+		panic(err)
+	}
+}
+
 // page serves an HTML file from web/. The text {{BASE_URL}} in the file is
 // replaced with the base URL, so the bookmarklet code points back here.
 func (s *Server) page(name string, needLogin bool) http.HandlerFunc {

@@ -31,3 +31,21 @@ func TestIconPolicy(t *testing.T) {
 		t.Errorf("icon: %d %q", resp.StatusCode, csp)
 	}
 }
+
+// SVG answers name their charset, the app's icon and fetched icons alike.
+func TestSVGCharset(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.com"}, 201))
+	if err := os.WriteFile(filepath.Join(e.dir, "icons", "e.svg"), []byte(`<svg xmlns="http://www.w3.org/2000/svg"/>`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	e.st.SetIcon(b.ID, "https://example.com/", "e.svg", nil)
+	for _, path := range []string{"/favicon.svg", "/icons/e.svg", "/static/icons/favicon.svg"} {
+		resp := e.get(path)
+		resp.Body.Close()
+		if resp.StatusCode != 200 || resp.Header.Get("Content-Type") != svgType {
+			t.Errorf("%s: %d %q", path, resp.StatusCode, resp.Header.Get("Content-Type"))
+		}
+	}
+}
