@@ -42,6 +42,17 @@ This is a project run in spare time by one person. You should hear back within a
 - A vulnerability in a module that Pinned does not call, or one only in a part of a module Pinned does not use, is updated within 30 days of a fixed version coming out, or with the next release when that comes sooner.
 - Everything else is kept current through Dependabot's weekly pull requests for the Go modules, the Go builder image and the GitHub Actions. A new version is proposed once it is 7 days old.
 
+## What is in the image
+
+Every image CI pushes to `ghcr.io/pinned-cc/pinned` carries a software bill of materials (SPDX) and the build provenance (SLSA), attached to the image index. Read them with Docker's buildx:
+
+```sh
+docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:latest --format '{{ json .SBOM }}'
+docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:latest --format '{{ json .Provenance }}'
+```
+
+Images built before this was added have neither.
+
 ## Supported versions
 
 Only the latest release gets security fixes. Upgrade with `docker compose pull` and `docker compose up -d`.

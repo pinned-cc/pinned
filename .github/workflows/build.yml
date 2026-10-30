@@ -72,3 +72,7 @@ jobs:
           build-args: VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # A software bill of materials and the build provenance, attached
+          # to the image index (docker buildx imagetools inspect).
+          sbom: true
+          provenance: mode=max
