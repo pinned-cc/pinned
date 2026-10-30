@@ -173,7 +173,7 @@ func TestUnlockRateLimitAndRemoveLock(t *testing.T) {
 	// is refused; once the wait is over it opens.
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 429)
 	later := time.Now().Add(auth.Wait + time.Second)
-	e.server.folderLimiter.Now = func() time.Time { return later }
+	e.server.folderLimiters.get(f.work.ID).Now = func() time.Time { return later }
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
 
 	// Per folder: another locked folder still accepts tries.
@@ -279,7 +279,7 @@ func TestChangingALockNeedsItsPassword(t *testing.T) {
 	e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 429)
 	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 429)
 	later := time.Now().Add(auth.Wait + time.Second)
-	e.server.folderLimiter.Now = func() time.Time { return later }
+	e.server.folderLimiters.get(f.work.ID).Now = func() time.Time { return later }
 	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 204)
 	e.wantEvent("lock.change", 1)
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "n3w pass"}, 204)

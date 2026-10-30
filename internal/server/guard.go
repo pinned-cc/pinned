@@ -7,6 +7,7 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pinned-cc/pinned/internal/auth"
@@ -90,6 +91,37 @@ func (s *Server) clientKey(r *http.Request) string {
 		return netip.PrefixFrom(a, 64).Masked().String()
 	}
 	return a.String()
+}
+
+// limiterSet keeps one limiter per share or per folder, so wrong passwords
+// for one, which fill its global cap, never hold the others.
+type limiterSet struct {
+	mu sync.Mutex
+	m  map[int64]*auth.Limiter
+}
+
+func (l *limiterSet) get(id int64) *auth.Limiter {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.m == nil {
+		l.m = map[int64]*auth.Limiter{}
+	}
+	lim := l.m[id]
+	if lim == nil {
+		lim = auth.NewLimiter()
+		l.m[id] = lim
+	}
+	return lim
+}
+
+// limitKey is what a share or folder password try counts against: a
+// browser with a valid device cookie on its own, and known, so the global
+// cap does not hold it; anyone else by address.
+func (s *Server) limitKey(r *http.Request) (key string, known bool) {
+	if id, ok := s.deviceID(r); ok {
+		return "device:" + id, true
+	}
+	return s.clientKey(r), false
 }
 
 // fail records a failed check for key in l after the constant delay, and

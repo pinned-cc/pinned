@@ -94,10 +94,10 @@ type Server struct {
 	baseHost string
 	// Failure counters, kept apart so wrong tokens from a broken extension
 	// never lock the owner out of the login.
-	loginLimiter  *auth.Limiter // app password: login, removing a lock
-	tokenLimiter  *auth.Limiter // API tokens
-	shareLimiter  *auth.Limiter // share passwords
-	folderLimiter *auth.Limiter // folder lock passwords, per client and folder
+	loginLimiter   *auth.Limiter // app password: login, removing a lock
+	tokenLimiter   *auth.Limiter // API tokens
+	shareLimiters  limiterSet    // share passwords, one limiter per share
+	folderLimiters limiterSet    // folder lock passwords, one limiter per folder
 	// sleep waits after a failed check; tests replace it.
 	sleep func(time.Duration)
 	mux   *http.ServeMux
@@ -122,7 +122,6 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 	s := &Server{
 		cfg: cfg, st: st, web: web, icons: icons, secret: secret,
 		loginLimiter: auth.NewLimiter(), tokenLimiter: auth.NewLimiter(),
-		shareLimiter: auth.NewLimiter(), folderLimiter: auth.NewLimiter(),
 		sleep: time.Sleep, mux: http.NewServeMux(),
 		log: log.Default(), waitLogged: map[string]time.Time{},
 	}

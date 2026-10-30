@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/pinned-cc/pinned/internal/auth"
 )
 
 // iconFor gives bookmark id the icon file name in DATA_DIR/icons.
@@ -385,5 +387,76 @@ func TestDeviceCookieUpgradesOverHTTPS(t *testing.T) {
 	r.Body.Close()
 	if up := cookieNamed(r, "__Host-"+deviceCookie); up == nil || up.Value != plain.Value {
 		t.Errorf("login did not upgrade the device cookie: %v", r.Cookies())
+	}
+}
+
+// fillCap records wrong tries from as many addresses as the global
+// cap allows, so every browser that is not known has to wait.
+func fillCap(l *auth.Limiter) {
+	for i := 0; i < auth.GlobalMaxFails; i++ {
+		l.Fail("192.0.2." + itoa(int64(i)))
+	}
+}
+
+// One share link holder filling the global cap holds only that share, and
+// a browser that has logged in before is never held by it.
+func TestShareLimitIsPerShare(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	a := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "A"}, 201))
+	b := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "B"}, 201))
+	ta := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(a.ID)+"/share", map[string]any{"password": "password a"}, 201)).Token
+	tb := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(b.ID)+"/share", map[string]any{"password": "password b"}, 201)).Token
+	sa, _ := e.st.ShareByToken(ta)
+	fillCap(e.server.shareLimiters.get(sa.ID))
+	if code := e.visitor().unlock(ta, "password a"); code != 429 {
+		t.Errorf("share A over its cap: %d", code)
+	}
+	if code := e.visitor().unlock(tb, "password b"); code != 204 {
+		t.Errorf("share B held by share A's cap: %d", code)
+	}
+	// The owner's browser carries a device cookie and is counted on its own.
+	resp, err := e.client.Post(e.srv.URL+"/s/"+ta+"/unlock", "application/json", strings.NewReader(`{"password":"password a"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != 204 {
+		t.Errorf("known browser held by the cap: %d", resp.StatusCode)
+	}
+}
+
+// The folder password limit is per folder, and spares known browsers too.
+func TestFolderLimitIsPerFolderAndSparesKnownBrowsers(t *testing.T) {
+	f := newLockFixture(t)
+	e := f.e
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/lock", map[string]any{"password": "read"}, 204)
+	fillCap(e.server.folderLimiters.get(f.work.ID))
+	// This browser logged in with the password: not held.
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	// A session without a device cookie is held, for that folder only.
+	var session string
+	for _, c := range e.client.Jar.Cookies(mustURL(e.srv.URL + "/")) {
+		if c.Name == CookieName {
+			session = c.Value
+		}
+	}
+	try := func(id int64, pw string) int {
+		req, _ := http.NewRequest("POST", e.srv.URL+"/api/folders/"+itoa(id)+"/unlock", strings.NewReader(`{"password":"`+pw+`"}`))
+		req.Header.Set("X-Requested-With", "fetch")
+		req.Header.Set("Cookie", CookieName+"="+session)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	if code := try(f.work.ID, "s3cret"); code != 429 {
+		t.Errorf("unknown browser over the folder's cap: %d", code)
+	}
+	if code := try(f.reading.ID, "read"); code != 204 {
+		t.Errorf("other folder held by the cap: %d", code)
 	}
 }

@@ -57,19 +57,19 @@ func TestSignedCookiesCarryAVersion(t *testing.T) {
 	if v.unlock(sh.Token, "share pass") != 204 {
 		t.Fatal("share unlock")
 	}
+	share, _ := e.st.ActiveShare(sh.Token)
 	var shareC string
-	for _, c := range v.client.Jar.Cookies(mustURL(e.srv.URL + "/s/" + sh.Token)) {
-		if c.Name == shareCookie {
+	for _, c := range v.client.Jar.Cookies(mustURL(e.srv.URL + sharePath)) {
+		if c.Name == shareCookieName(share, false, false) {
 			shareC = c.Value
 		}
 	}
 	if !strings.HasPrefix(shareC, "v1.") {
 		t.Fatalf("share cookie %q", shareC)
 	}
-	share, _ := e.st.ActiveShare(sh.Token)
 	for _, val := range []string{shareC, strings.TrimPrefix(shareC, "v1.")} {
 		r := httptest.NewRequest("GET", "/", nil)
-		r.AddCookie(&http.Cookie{Name: shareCookie, Value: val})
+		r.AddCookie(&http.Cookie{Name: shareCookieName(share, false, false), Value: val})
 		if !e.server.shareUnlocked(r, share) {
 			t.Errorf("share cookie %q does not open", val)
 		}

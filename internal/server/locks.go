@@ -12,8 +12,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
@@ -240,9 +238,9 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if f.LockHash != nil {
-		key := s.clientKey(r) + "|" + strconv.FormatInt(id, 10)
-		ok, wait := s.attempt(r, s.folderLimiter, key, false, func() bool {
-			return bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.CurrentPassword)) == nil
+		key, known := s.limitKey(r)
+		ok, wait := s.attempt(r, s.folderLimiters.get(id), key, known, func() bool {
+			return checkStored(*f.LockHash, in.CurrentPassword, func(h string) { s.rehashLock(&f, h) })
 		})
 		if !ok {
 			s.failed(r, "lock", wait, "folder", id)
@@ -331,8 +329,8 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "folder is not locked")
 		return
 	}
-	key := s.clientKey(r) + "|" + strconv.FormatInt(id, 10)
-	ok, wait := s.attempt(r, s.folderLimiter, key, false, func() bool {
+	key, known := s.limitKey(r)
+	ok, wait := s.attempt(r, s.folderLimiters.get(id), key, known, func() bool {
 		return checkStored(*f.LockHash, in.Password, func(h string) { s.rehashLock(&f, h) })
 	})
 	if !ok {
