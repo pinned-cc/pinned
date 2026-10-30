@@ -37,7 +37,7 @@ func (s *Store) CreateToken(name, hash string) (Token, error) {
 		name = string([]rune(name)[:maxTokenName])
 	}
 	now := s.now()
-	res, err := s.db.Exec(`INSERT INTO tokens (name, hash, created_at) VALUES (?, ?, ?)`, name, hash, now)
+	res, err := s.exec(`INSERT INTO tokens (name, hash, created_at) VALUES (?, ?, ?)`, name, hash, now)
 	if err != nil {
 		return Token{}, err
 	}
@@ -77,13 +77,13 @@ func (s *Store) TokenByHash(hash string) (Token, error) {
 
 // TouchToken records a use of the token.
 func (s *Store) TouchToken(id int64) error {
-	_, err := s.db.Exec(`UPDATE tokens SET last_used_at = ? WHERE id = ?`, s.now(), id)
+	_, err := s.exec(`UPDATE tokens SET last_used_at = ? WHERE id = ?`, s.now(), id)
 	return err
 }
 
 // DeleteToken revokes a token.
 func (s *Store) DeleteToken(id int64) error {
-	res, err := s.db.Exec(`DELETE FROM tokens WHERE id = ?`, id)
+	res, err := s.exec(`DELETE FROM tokens WHERE id = ?`, id)
 	if err != nil {
 		return err
 	}

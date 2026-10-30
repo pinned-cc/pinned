@@ -8,7 +8,7 @@ import (
 
 // CreateSession stores a hashed session token.
 func (s *Store) CreateSession(tokenHash string, expires time.Time) error {
-	_, err := s.db.Exec(`INSERT INTO sessions (token_hash, expires_at) VALUES (?, ?)`, tokenHash, expires.Unix())
+	_, err := s.exec(`INSERT INTO sessions (token_hash, expires_at) VALUES (?, ?)`, tokenHash, expires.Unix())
 	return err
 }
 
@@ -35,13 +35,13 @@ func (s *Store) ExtendSession(tokenHash string, expires time.Time) error {
 
 // DeleteSession removes a session.
 func (s *Store) DeleteSession(tokenHash string) error {
-	_, err := s.db.Exec(`DELETE FROM sessions WHERE token_hash = ?`, tokenHash)
+	_, err := s.exec(`DELETE FROM sessions WHERE token_hash = ?`, tokenHash)
 	return err
 }
 
 // PurgeSessions removes expired sessions.
 func (s *Store) PurgeSessions() error {
-	_, err := s.db.Exec(`DELETE FROM sessions WHERE expires_at <= ?`, s.now())
+	_, err := s.exec(`DELETE FROM sessions WHERE expires_at <= ?`, s.now())
 	return err
 }
 

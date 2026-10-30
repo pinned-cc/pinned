@@ -680,18 +680,21 @@ func (s *Server) apiImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res, err := s.st.Import(root)
-	if errors.Is(err, netscape.ErrTooDeep) {
-		writeError(w, http.StatusBadRequest, tooDeepImport)
-		return
-	}
-	if err != nil {
-		writeStoreError(w, err)
-		return
-	}
+	// An import that stops midway keeps the batches it saved; their links
+	// get icons too.
 	for _, id := range res.AddedIDs {
 		s.icons.Enqueue(id)
 	}
-	writeJSON(w, http.StatusOK, res)
+	switch {
+	case errors.Is(err, netscape.ErrTooDeep):
+		writeError(w, http.StatusBadRequest, tooDeepImport)
+	case errors.Is(err, store.ErrImportChanged):
+		writeError(w, http.StatusConflict, fmt.Sprintf("A folder was deleted or locked during the import. %d links came in. Import the file again to add the rest.", res.Added))
+	case err != nil:
+		writeStoreError(w, err)
+	default:
+		writeJSON(w, http.StatusOK, res)
+	}
 }
 
 func (s *Server) apiExport(w http.ResponseWriter, r *http.Request) {

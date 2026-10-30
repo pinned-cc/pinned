@@ -482,7 +482,7 @@ func TestHideRecentMigration(t *testing.T) {
 	if _, err := db.Exec(`CREATE TABLE schema_version (version INTEGER NOT NULL)`); err != nil {
 		t.Fatal(err)
 	}
-	old := len(migrations) - 1
+	old := 5 // the schema before hide_recent
 	for _, m := range migrations[:old] {
 		if _, err := db.Exec(m); err != nil {
 			t.Fatal(err)
@@ -622,5 +622,126 @@ func TestImportRefusesTreeTooDeep(t *testing.T) {
 	}
 	if fs, _ := s.Folders(); len(fs) != 0 {
 		t.Errorf("%d folders written", len(fs))
+	}
+}
+
+// manyLinks is a file of n links at its root, so they all land in Inbox.
+func manyLinks(n int) *netscape.Folder {
+	root := &netscape.Folder{}
+	for i := 0; i < n; i++ {
+		root.Links = append(root.Links, netscape.Link{Title: fmt.Sprint(i), URL: fmt.Sprintf("https://example.com/%d", i)})
+	}
+	return root
+}
+
+// Each link used to read the end of its folder with a scan, so an import
+// took time with the square of the folder size: 20000 links took over 40 s.
+// Importing into a full Inbox must cost about the same as into an empty one.
+func TestImportTimeIsLinear(t *testing.T) {
+	timeImport := func(s *Store) time.Duration {
+		root := manyLinks(500)
+		start := time.Now()
+		res, err := s.Import(root)
+		if err != nil || res.Added != 500 {
+			t.Fatalf("import: %+v %v", res, err)
+		}
+		return time.Since(start)
+	}
+	empty := timeImport(open(t))
+	s := open(t)
+	if _, err := s.db.Exec(`WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 20000)
+		INSERT INTO bookmarks (folder_id, title, url, url_key, position, created_at, updated_at)
+		SELECT NULL, 'x', 'https://full.example/' || i, 'https://full.example/' || i, i, 1, 1 FROM n`); err != nil {
+		t.Fatal(err)
+	}
+	full := timeImport(s)
+	if full > 3*empty+200*time.Millisecond {
+		t.Errorf("500 links into a full Inbox took %v, into an empty one %v", full, empty)
+	}
+}
+
+// Positions count on from the end of the folder, the same however the work
+// is cut into batches.
+func TestImportPositionsAcrossBatches(t *testing.T) {
+	for _, batch := range []time.Duration{time.Hour, 0} {
+		old := importBatch
+		importBatch = batch
+		s := open(t)
+		f, _ := s.CreateFolder("Work", nil)
+		mustCreate(t, s, "a", "https://example.com/a", &f.ID)
+		mustCreate(t, s, "b", "https://example.com/b", &f.ID)
+		mustCreate(t, s, "i", "https://example.com/i", nil)
+		root := manyLinks(5)
+		root.Folders = []*netscape.Folder{{Name: "Work", Links: manyLinks(3).Links}, {Name: "New", Links: manyLinks(2).Links}}
+		root.Folders[0].Links = append(root.Folders[0].Links, netscape.Link{URL: "https://example.com/x"})
+		res, err := s.Import(root)
+		importBatch = old
+		if err != nil || res.Added != 6 || res.Skipped != 5 || res.Folders != 1 || len(res.AddedIDs) != 6 {
+			t.Fatalf("batch %v: %+v %v", batch, res, err)
+		}
+		all, _ := s.Bookmarks()
+		got := map[string]int64{}
+		for _, b := range all {
+			got[b.URL] = b.Position
+		}
+		want := map[string]int64{"https://example.com/a": 0, "https://example.com/b": 1, "https://example.com/i": 0,
+			"https://example.com/0": 1, "https://example.com/4": 5, "https://example.com/x": 2}
+		for u, p := range want {
+			if got[u] != p {
+				t.Errorf("batch %v: %s at %d, want %d", batch, u, got[u], p)
+			}
+		}
+		folders, _ := s.Folders()
+		if len(folders) != 2 || folders[1].Name != "New" || folders[1].Position != 1 {
+			t.Errorf("batch %v: folders %+v", batch, folders)
+		}
+	}
+}
+
+// A save and a sign in made during a long import go in between two batches,
+// before the import ends, and do not fail with "database is locked".
+func TestWritesDuringImport(t *testing.T) {
+	s := open(t)
+	done := make(chan error, 1)
+	go func() {
+		_, err := s.Import(manyLinks(10000))
+		done <- err
+	}()
+	time.Sleep(20 * time.Millisecond)
+	if _, _, err := s.Create(NewBookmark{Title: "x", URL: "https://side.example/"}); err != nil {
+		t.Errorf("save during import: %v", err)
+	}
+	if err := s.CreateSession("hash", time.Now().Add(time.Hour)); err != nil {
+		t.Errorf("sign in during import: %v", err)
+	}
+	select {
+	case <-done:
+		t.Error("the writes waited for the whole import")
+	default:
+	}
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	if n, _ := s.CountLive(); n != 10001 {
+		t.Errorf("want 10001 bookmarks, got %d", n)
+	}
+}
+
+// A folder locked between two batches is not written into: the import stops
+// and keeps what came in before.
+func TestImportStopsWhenFolderLockedMidway(t *testing.T) {
+	s := open(t)
+	f, _ := s.CreateFolder("Work", nil)
+	old := importBatch
+	importBatch = 0
+	betweenBatches = func() { s.SetLock(f.ID, "hash") }
+	defer func() { importBatch, betweenBatches = old, nil }()
+	root := &netscape.Folder{Folders: []*netscape.Folder{{Name: "Work", Links: manyLinks(3).Links}}}
+	res, err := s.Import(root)
+	if !errors.Is(err, ErrImportChanged) || res.Added != 1 || len(res.AddedIDs) != 1 {
+		t.Fatalf("import: %+v %v", res, err)
+	}
+	if n, _ := s.CountLive(); n != 1 {
+		t.Errorf("want 1 bookmark, got %d", n)
 	}
 }

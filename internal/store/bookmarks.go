@@ -608,7 +608,7 @@ func (s *Store) OrderPinned(ids []int64) error {
 
 // execOne runs a single row update and returns ErrNotFound when no row matched.
 func (s *Store) execOne(query string, args ...any) error {
-	res, err := s.db.Exec(query, args...)
+	res, err := s.exec(query, args...)
 	if err != nil {
 		return err
 	}

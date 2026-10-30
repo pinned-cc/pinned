@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -53,6 +54,14 @@ func (e *DuplicateError) Error() string { return "already saved" }
 // Store wraps the database.
 type Store struct {
 	db *sql.DB
+	// wmu is held by every write. Waiting writers queue on it in turn
+	// (Go hands a mutex to a waiter that has waited over a millisecond),
+	// so a long import that commits in batches lets them in between
+	// batches, where SQLite's busy wait could miss the short gap.
+	wmu sync.Mutex
+	// writes counts the writes made under wmu other than an import's own,
+	// so an import knows whether what it read in the last batch still holds.
+	writes uint64
 	// Now returns the current time. Tests replace it.
 	Now func() time.Time
 }
@@ -163,6 +172,11 @@ var migrations = []string{
 		url_key TEXT NOT NULL,
 		count INTEGER NOT NULL
 	);`,
+
+	// The next position in a folder (MAX(position) of its live bookmarks)
+	// is read from this index instead of scanning the folder, so saving,
+	// moving and importing into a full folder stay quick.
+	`CREATE INDEX bookmarks_folder_position ON bookmarks(folder_id, position) WHERE deleted_at IS NULL;`,
 }
 
 // NewerSchemaError means the database was written by a later version. That
@@ -240,6 +254,9 @@ type querier interface {
 
 // withTx runs fn in a transaction and commits when it returns nil.
 func (s *Store) withTx(fn func(tx *sql.Tx) error) error {
+	s.wmu.Lock()
+	defer s.wmu.Unlock()
+	s.writes++
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -249,4 +266,12 @@ func (s *Store) withTx(fn func(tx *sql.Tx) error) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+// exec runs one write statement outside a transaction.
+func (s *Store) exec(query string, args ...any) (sql.Result, error) {
+	s.wmu.Lock()
+	defer s.wmu.Unlock()
+	s.writes++
+	return s.db.Exec(query, args...)
 }

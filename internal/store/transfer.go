@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/pinned-cc/pinned/internal/netscape"
@@ -31,21 +32,31 @@ const MaxImportName = 200
 // a locked folder becomes a new folder beside it, named "<name> (imported)".
 // Folders deeper than MaxDepth are flattened into the folder at MaxDepth.
 //
+// The work is committed in batches of about importBatch each, so saves and
+// sign ins made during a long import wait for one batch, not for the whole
+// file. If a folder the import writes into is deleted or locked between two
+// batches, the import stops with ErrImportChanged; what came in before stays,
+// and importing the same file again adds the rest.
+//
 // A tree deeper than netscape.MaxNesting is refused with netscape.ErrTooDeep
 // before anything is written; Parse never returns one.
 func (s *Store) Import(root *netscape.Folder) (ImportResult, error) {
 	if treeDepth(root) > netscape.MaxNesting {
 		return ImportResult{}, netscape.ErrTooDeep
 	}
-	var res ImportResult
-	now := s.now()
-	err := s.withTx(func(tx *sql.Tx) error {
-		return importFolder(tx, root, nil, 0, now, &res)
-	})
-	if err != nil {
+	imp := &importer{s: s, now: s.now()}
+	if err := imp.begin(); err != nil {
 		return ImportResult{}, err
 	}
-	return res, nil
+	if err := imp.folder(root, nil, 0); err != nil {
+		if imp.tx != nil {
+			imp.tx.Rollback()
+			imp.tx = nil
+			s.wmu.Unlock()
+		}
+		return imp.res, err
+	}
+	return imp.res, imp.commit()
 }
 
 // treeDepth returns how deep folders nest below root, walking with a list
@@ -68,68 +79,202 @@ func treeDepth(root *netscape.Folder) int {
 	return deepest
 }
 
-// importFolder adds f's links and subfolders into parentID, which sits at
-// depth (0 for the root and Inbox).
-func importFolder(tx *sql.Tx, f *netscape.Folder, parentID *int64, depth int, now int64, res *ImportResult) error {
+// ErrImportChanged means a folder the import was writing into was deleted or
+// locked while the import ran.
+var ErrImportChanged = errors.New("a folder changed during the import; import the file again to add the rest")
+
+// importBatch is how long one import transaction may run before it commits
+// and lets other writes in. Tests shorten it.
+var importBatch = 100 * time.Millisecond
+
+// betweenBatches, when set, runs after each batch commits. Tests use it to
+// write between two batches.
+var betweenBatches func()
+
+// importer carries the state of one import. The next positions and the
+// folder names of each level are read once and then counted up in memory, so
+// an import costs the same per link however full a folder is. They are read
+// again in a batch that follows other writes.
+type importer struct {
+	s     *Store
+	tx    *sql.Tx
+	now   int64
+	start time.Time
+	res   ImportResult
+	// pending counts what the open batch added; it moves into res when the
+	// batch commits, so res only ever reports what is saved.
+	pending        int
+	pendingIDs     []int64
+	pendingFolders int
+
+	next       map[int64]int64 // next bookmark position per folder, 0 for Inbox
+	nextFolder map[int64]int64 // next folder position per parent, 0 for the top
+	names      map[int64]map[string]folderMatch
+	checked    map[int64]bool // folders checked as still there and unlocked
+	writes     uint64         // Store.writes when the caches were filled
+}
+
+// folderMatch is the folder an import uses for a name at one level.
+type folderMatch struct {
+	id     int64
+	locked bool
+}
+
+func key0(id *int64) int64 {
+	if id == nil {
+		return 0
+	}
+	return *id
+}
+
+// begin takes the write lock and opens a batch. The caches are emptied when
+// anything else wrote since they were filled.
+func (imp *importer) begin() error {
+	imp.s.wmu.Lock()
+	tx, err := imp.s.db.Begin()
+	if err != nil {
+		imp.tx = nil
+		imp.s.wmu.Unlock()
+		return err
+	}
+	imp.tx, imp.start = tx, time.Now()
+	if imp.next != nil && imp.writes == imp.s.writes {
+		return nil
+	}
+	imp.writes = imp.s.writes
+	imp.next = map[int64]int64{}
+	imp.nextFolder = map[int64]int64{}
+	imp.names = map[int64]map[string]folderMatch{}
+	imp.checked = map[int64]bool{}
+	return nil
+}
+
+// tick commits the batch when it has run long enough and opens the next.
+func (imp *importer) tick() error {
+	if time.Since(imp.start) < importBatch {
+		return nil
+	}
+	if err := imp.commit(); err != nil {
+		return err
+	}
+	if betweenBatches != nil {
+		betweenBatches()
+	}
+	return imp.begin()
+}
+
+// commit ends the batch, releases the write lock and counts what it added.
+func (imp *importer) commit() error {
+	err := imp.tx.Commit()
+	imp.tx = nil
+	imp.s.wmu.Unlock()
+	if err != nil {
+		return err
+	}
+	imp.res.Added += imp.pending
+	imp.res.AddedIDs = append(imp.res.AddedIDs, imp.pendingIDs...)
+	imp.res.Folders += imp.pendingFolders
+	imp.pending, imp.pendingIDs, imp.pendingFolders = 0, nil, 0
+	return nil
+}
+
+// usable makes sure that folder id still exists and that neither it nor a
+// folder above it is locked, once and again after other writes.
+func (imp *importer) usable(id *int64) error {
+	if id == nil || imp.checked[*id] {
+		return nil
+	}
+	var n, locked int
+	err := imp.tx.QueryRow(`WITH RECURSIVE up(id, parent_id, lock_hash) AS (
+			SELECT id, parent_id, lock_hash FROM folders WHERE id = ?
+			UNION ALL SELECT f.id, f.parent_id, f.lock_hash FROM folders f JOIN up ON f.id = up.parent_id)
+		SELECT COUNT(*), COUNT(lock_hash) FROM up`, *id).Scan(&n, &locked)
+	if err != nil {
+		return err
+	}
+	if n == 0 || locked > 0 {
+		return ErrImportChanged
+	}
+	imp.checked[*id] = true
+	return nil
+}
+
+// folder adds f's links and subfolders into parentID, which sits at depth
+// (0 for the root and Inbox).
+func (imp *importer) folder(f *netscape.Folder, parentID *int64, depth int) error {
 	for _, l := range f.Links {
-		key, err := urlkey.Key(l.URL)
-		if err != nil {
-			res.Skipped++
-			continue
-		}
-		if _, err := liveByKey(tx, key); err == nil {
-			res.Skipped++
-			continue
-		} else if !errors.Is(err, ErrNotFound) {
+		if err := imp.link(l, parentID); err != nil {
 			return err
 		}
-		created := l.AddDate
-		if created <= 0 {
-			created = now
-		}
-		title := clip(l.Title, MaxTitle)
-		if title == "" {
-			title = urlkey.Host(l.URL)
-		}
-		pos, err := nextPosition(tx, parentID)
-		if err != nil {
-			return err
-		}
-		r, err := tx.Exec(`INSERT INTO bookmarks (folder_id, title, url, url_key, position, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`, nullable(parentID), title, strings.TrimSpace(l.URL), key, pos, created, now)
-		if err != nil {
-			return err
-		}
-		id, err := r.LastInsertId()
-		if err != nil {
-			return err
-		}
-		res.Added++
-		res.AddedIDs = append(res.AddedIDs, id)
 	}
 	for _, sub := range f.Folders {
 		if depth >= MaxDepth {
 			// Too deep: the folder's contents land in this folder.
-			if err := importFolder(tx, sub, parentID, depth, now, res); err != nil {
+			if err := imp.folder(sub, parentID, depth); err != nil {
 				return err
 			}
 			continue
 		}
-		id, err := importTarget(tx, sub, parentID, now, res)
+		id, err := imp.target(sub, parentID)
 		if err != nil {
 			return err
 		}
-		if err := importFolder(tx, sub, &id, depth+1, now, res); err != nil {
+		if err := imp.folder(sub, &id, depth+1); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// importTarget finds or creates the folder that a file folder imports into.
-// An unlocked folder of the same name under parentID is reused; when the
-// only match is locked, the name gets " (imported)" and the search repeats.
-func importTarget(tx *sql.Tx, sub *netscape.Folder, parentID *int64, now int64, res *ImportResult) (int64, error) {
+func (imp *importer) link(l netscape.Link, parentID *int64) error {
+	key, err := urlkey.Key(l.URL)
+	if err != nil {
+		imp.res.Skipped++
+		return nil
+	}
+	if _, err := liveByKey(imp.tx, key); err == nil {
+		imp.res.Skipped++
+		return nil
+	} else if !errors.Is(err, ErrNotFound) {
+		return err
+	}
+	if err := imp.usable(parentID); err != nil {
+		return err
+	}
+	created := l.AddDate
+	if created <= 0 {
+		created = imp.now
+	}
+	title := clip(l.Title, MaxTitle)
+	if title == "" {
+		title = urlkey.Host(l.URL)
+	}
+	k := key0(parentID)
+	pos, ok := imp.next[k]
+	if !ok {
+		if pos, err = nextPosition(imp.tx, parentID); err != nil {
+			return err
+		}
+	}
+	r, err := imp.tx.Exec(`INSERT INTO bookmarks (folder_id, title, url, url_key, position, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`, nullable(parentID), title, strings.TrimSpace(l.URL), key, pos, created, imp.now)
+	if err != nil {
+		return err
+	}
+	imp.next[k] = pos + 1
+	id, err := r.LastInsertId()
+	if err != nil {
+		return err
+	}
+	imp.pending++
+	imp.pendingIDs = append(imp.pendingIDs, id)
+	return imp.tick()
+}
+
+// target finds or creates the folder that a file folder imports into. An
+// unlocked folder of the same name under parentID is reused; when the only
+// match is locked, the name gets " (imported)" and the search repeats.
+func (imp *importer) target(sub *netscape.Folder, parentID *int64) (int64, error) {
 	name := strings.TrimSpace(sub.Name)
 	if name == "" {
 		name = "Imported"
@@ -137,31 +282,81 @@ func importTarget(tx *sql.Tx, sub *netscape.Folder, parentID *int64, now int64, 
 	if utf8.RuneCountInString(name) > MaxImportName {
 		name = strings.TrimSpace(string([]rune(name)[:MaxImportName]))
 	}
+	if err := imp.usable(parentID); err != nil {
+		return 0, err
+	}
+	names, err := imp.level(parentID)
+	if err != nil {
+		return 0, err
+	}
 	for {
-		var id int64
-		var lock sql.NullString
-		err := tx.QueryRow(`SELECT id, lock_hash FROM folders WHERE parent_id IS ? AND name = ?
-			ORDER BY lock_hash IS NOT NULL, position, id LIMIT 1`, nullable(parentID), name).Scan(&id, &lock)
+		m, ok := names[name]
 		switch {
-		case err == nil && !lock.Valid:
-			return id, nil
-		case err == nil:
+		case ok && !m.locked:
+			return m.id, nil
+		case ok:
 			name += " (imported)"
 			continue
-		case !errors.Is(err, sql.ErrNoRows):
-			return 0, err
 		}
 		created := sub.AddDate
 		if created <= 0 {
-			created = now
+			created = imp.now
 		}
-		id, err = insertFolder(tx, name, parentID, created)
+		k := key0(parentID)
+		pos, ok := imp.nextFolder[k]
+		if !ok {
+			if pos, err = nextFolderPosition(imp.tx, parentID); err != nil {
+				return 0, err
+			}
+		}
+		r, err := imp.tx.Exec(`INSERT INTO folders (parent_id, name, position, created_at) VALUES (?, ?, ?, ?)`,
+			nullable(parentID), name, pos, created)
 		if err != nil {
 			return 0, err
 		}
-		res.Folders++
-		return id, nil
+		id, err := r.LastInsertId()
+		if err != nil {
+			return 0, err
+		}
+		imp.nextFolder[k] = pos + 1
+		names[name] = folderMatch{id: id}
+		imp.checked[id] = true
+		imp.pendingFolders++
+		return id, imp.tick()
 	}
+}
+
+// level returns the folders under parentID by name, read once per batch. For
+// a name used twice the unlocked one comes first, then the first by position,
+// as the app shows them.
+func (imp *importer) level(parentID *int64) (map[string]folderMatch, error) {
+	k := key0(parentID)
+	if m, ok := imp.names[k]; ok {
+		return m, nil
+	}
+	rows, err := imp.tx.Query(`SELECT id, name, lock_hash IS NOT NULL FROM folders WHERE parent_id IS ?
+		ORDER BY lock_hash IS NOT NULL, position, id`, nullable(parentID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := map[string]folderMatch{}
+	for rows.Next() {
+		var id int64
+		var name string
+		var locked bool
+		if err := rows.Scan(&id, &name, &locked); err != nil {
+			return nil, err
+		}
+		if _, ok := m[name]; !ok {
+			m[name] = folderMatch{id: id, locked: locked}
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	imp.names[k] = m
+	return m, nil
 }
 
 // ExportTree returns the live bookmarks as a tree for the Netscape writer.

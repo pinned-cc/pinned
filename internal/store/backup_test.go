@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+// beforeIconFailures is the schema before the icon_failures table, which
+// schemaOf looks for to tell a copy from the upgraded database.
+const beforeIconFailures = 6
+
 // oldDB writes a database at schema version with one folder in it.
 func oldDB(t *testing.T, path string, version int) {
 	t.Helper()
@@ -66,7 +70,7 @@ func backups(t *testing.T, dir string) []string {
 func TestBackupBeforeMigrate(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bookmarks.db")
-	old := len(migrations) - 1
+	old := beforeIconFailures
 	oldDB(t, path, old)
 	backupTime = func() time.Time { return time.Date(2026, 10, 30, 15, 42, 10, 0, time.UTC) }
 	t.Cleanup(func() { backupTime = time.Now })
@@ -79,9 +83,6 @@ func TestBackupBeforeMigrate(t *testing.T) {
 
 	got := backups(t, dir)
 	want := filepath.Join(dir, "bookmarks-schema6-2026-10-30-154210.db")
-	if old != 6 {
-		t.Fatalf("test assumes schema 6 before the last migration, got %d", old)
-	}
 	if len(got) != 1 || got[0] != want {
 		t.Fatalf("backups %v, want %s", got, want)
 	}
@@ -123,7 +124,7 @@ func TestNoBackupForNewDatabase(t *testing.T) {
 func TestBackupRotationKeepsThree(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bookmarks.db")
-	oldDB(t, path, len(migrations)-1)
+	oldDB(t, path, beforeIconFailures)
 	backupTime = func() time.Time { return time.Date(2026, 10, 30, 15, 42, 10, 0, time.UTC) }
 	t.Cleanup(func() { backupTime = time.Now })
 	keep := map[string]bool{
@@ -165,7 +166,7 @@ func TestBackupRotationKeepsThree(t *testing.T) {
 func TestBackupFailureBlocksMigration(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bookmarks.db")
-	old := len(migrations) - 1
+	old := beforeIconFailures
 	oldDB(t, path, old)
 	backupPath = func(string, int, time.Time) string { return filepath.Join(dir, "missing", "copy.db") }
 	t.Cleanup(func() { backupPath = defaultBackupPath })
@@ -192,7 +193,7 @@ func TestBackupFailureBlocksMigration(t *testing.T) {
 func TestBackupKeptWhenClockIsBehind(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bookmarks.db")
-	oldDB(t, path, len(migrations)-1)
+	oldDB(t, path, beforeIconFailures)
 	for _, name := range []string{
 		"bookmarks-schema6-2026-10-01-120000.db",
 		"bookmarks-schema6-2026-10-02-120000.db",
@@ -216,7 +217,7 @@ func TestBackupKeptWhenClockIsBehind(t *testing.T) {
 	fresh := filepath.Join(dir, "bookmarks-schema6-1970-01-01-000000.db")
 	os.Chtimes(fresh, time.Unix(0, 0), time.Unix(0, 0))
 	pruneBackups(path, filepath.Base(fresh))
-	if v, _, folders := schemaOf(t, fresh); v != len(migrations)-1 || folders != 1 {
+	if v, _, folders := schemaOf(t, fresh); v != beforeIconFailures || folders != 1 {
 		t.Errorf("fresh copy: schema %d, %d folders", v, folders)
 	}
 	if n := len(backups(t, dir)); n != KeepBackups {
@@ -264,7 +265,7 @@ func TestFailedUpgradeKeepsOneCopy(t *testing.T) {
 func TestBackupDedupeNeedsSameBytes(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bookmarks.db")
-	oldDB(t, path, len(migrations)-1)
+	oldDB(t, path, beforeIconFailures)
 	empty := filepath.Join(dir, "bookmarks-schema6-2026-10-29-120000.db")
 	other := filepath.Join(dir, "bookmarks-schema6-2026-10-28-120000.db")
 	os.WriteFile(empty, nil, 0o600)
