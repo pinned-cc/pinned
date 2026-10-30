@@ -315,15 +315,21 @@ func TestBulkAndOrder(t *testing.T) {
 	}
 }
 
+// valid reports whether the hashed token names a session that has not expired.
+func valid(s *Store, hash string) bool {
+	exp, ok := s.SessionExpiry(hash)
+	return ok && exp.After(s.Now())
+}
+
 func TestSessions(t *testing.T) {
 	s := open(t)
 	s.CreateSession("h1", time.Now().Add(time.Hour))
 	s.CreateSession("h2", time.Now().Add(-time.Hour))
-	if !s.SessionValid("h1") || s.SessionValid("h2") || s.SessionValid("nope") {
+	if !valid(s, "h1") || valid(s, "h2") || valid(s, "nope") {
 		t.Error("session validity wrong")
 	}
 	s.DeleteSession("h1")
-	if s.SessionValid("h1") {
+	if valid(s, "h1") {
 		t.Error("deleted session still valid")
 	}
 }
@@ -334,17 +340,17 @@ func TestPasswordFingerprintSignsOutSessions(t *testing.T) {
 	if changed, err := s.SyncPasswordFingerprint("fp1"); err != nil || changed {
 		t.Fatalf("first start: changed=%v err=%v", changed, err)
 	}
-	if !s.SessionValid("old") {
+	if !valid(s, "old") {
 		t.Error("first start must keep sessions")
 	}
 	tok, _ := s.CreateToken("phone", "tokenhash")
-	if changed, _ := s.SyncPasswordFingerprint("fp1"); changed || !s.SessionValid("old") {
+	if changed, _ := s.SyncPasswordFingerprint("fp1"); changed || !valid(s, "old") {
 		t.Error("same password signed out")
 	}
 	if changed, _ := s.SyncPasswordFingerprint("fp2"); !changed {
 		t.Error("new password not noticed")
 	}
-	if s.SessionValid("old") {
+	if valid(s, "old") {
 		t.Error("session survived a password change")
 	}
 	if got, err := s.TokenByHash("tokenhash"); err != nil || got.ID != tok.ID {

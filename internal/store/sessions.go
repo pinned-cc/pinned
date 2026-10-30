@@ -22,12 +22,6 @@ func (s *Store) SessionExpiry(tokenHash string) (expires time.Time, ok bool) {
 	return time.Unix(exp, 0), true
 }
 
-// SessionValid reports whether the hashed token exists and has not expired.
-func (s *Store) SessionValid(tokenHash string) bool {
-	exp, ok := s.SessionExpiry(tokenHash)
-	return ok && exp.Unix() > s.now()
-}
-
 // ExtendSession moves the session's expiry.
 func (s *Store) ExtendSession(tokenHash string, expires time.Time) error {
 	return s.execOne(`UPDATE sessions SET expires_at = ? WHERE token_hash = ?`, expires.Unix(), tokenHash)

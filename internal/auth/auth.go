@@ -170,10 +170,6 @@ func (l *Limiter) begin(ctx context.Context, client string, known bool) (done fu
 	return release, 0
 }
 
-// Waiting returns how long client has to wait before its next check, zero
-// when it may check now.
-func (l *Limiter) Waiting(client string) time.Duration { return l.waiting(client, false) }
-
 func (l *Limiter) waiting(client string, known bool) time.Duration {
 	l.mu.Lock()
 	defer l.mu.Unlock()

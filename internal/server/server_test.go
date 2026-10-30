@@ -221,7 +221,7 @@ func TestLoginAPIAndRateLimit(t *testing.T) {
 		t.Errorf("cookie %+v", c)
 	}
 	// The database stores a hash, never the token.
-	if e2.st.SessionValid(c.Value) {
+	if _, ok := e2.st.SessionExpiry(c.Value); ok {
 		t.Error("raw token found in the sessions table")
 	}
 	e2.expect("POST", "/api/logout", nil, 204)
