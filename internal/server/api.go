@@ -77,14 +77,14 @@ func pathID(r *http.Request) (int64, bool) {
 func (s *Server) apiLogin(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Password string `json:"password"`
+		Code     string `json:"code"` // when TOTP_SECRET is set
 	}
 	if !readJSON(w, r, &in) {
 		return
 	}
-	ok, wait := s.checkPassword(r, in.Password)
+	ok, wait := s.checkLogin(r, in.Password, in.Code)
 	if !ok {
-		s.failed(r, "login", wait)
-		refuseAttempt(w, wait, http.StatusUnauthorized, "Wrong password")
+		refuseAttempt(w, wait, http.StatusUnauthorized, s.wrongLogin())
 		return
 	}
 	if err := s.startSession(w, r); err != nil {

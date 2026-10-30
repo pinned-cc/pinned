@@ -51,6 +51,9 @@ type Config struct {
 	// HSTSMaxAge is the Strict-Transport-Security max-age in seconds sent
 	// on HTTPS responses (HSTS). 0, the default, sends no header.
 	HSTSMaxAge int
+	// TOTPKey turns on the second factor for the app login (TOTP_SECRET):
+	// the login then needs the code of an authenticator app too.
+	TOTPKey []byte
 }
 
 // ParseHSTS reads HSTS: empty, "false" or "0" is off, "true" is
@@ -98,6 +101,8 @@ type Server struct {
 	// sleep waits after a failed check; tests replace it.
 	sleep func(time.Duration)
 	mux   *http.ServeMux
+	// totp checks the second factor; nil when TOTP_SECRET is not set.
+	totp *auth.TOTP
 	// log takes the security events; tests replace it.
 	log *log.Logger
 	// waitLogged holds, per area and client, the end of a wait already
@@ -120,6 +125,9 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 		shareLimiter: auth.NewLimiter(), folderLimiter: auth.NewLimiter(),
 		sleep: time.Sleep, mux: http.NewServeMux(),
 		log: log.Default(), waitLogged: map[string]time.Time{},
+	}
+	if len(cfg.TOTPKey) > 0 {
+		s.totp = auth.NewTOTP(cfg.TOTPKey)
 	}
 	if u, err := url.Parse(cfg.BaseURL); err == nil && strings.EqualFold(u.Scheme, "https") {
 		s.baseHost = strings.TrimSuffix(u.Host, ":443")
@@ -424,19 +432,60 @@ func (s *Server) protoTrusted(r *http.Request) bool {
 
 // checkPassword compares the app password under the login limiter. It
 // returns the wait instead when the client is over the limit; then the
-// password is not compared at all.
+// password is not compared at all. It is the check before an action that
+// asks for the app password again; the login uses checkLogin.
 //
 // A browser with a valid device cookie is counted on its own and never
 // held by the global cap, so guessers on other addresses cannot lock the
 // owner out of a browser that has logged in before.
 func (s *Server) checkPassword(r *http.Request, password string) (ok bool, wait time.Duration) {
+	return s.checkApp(r, func() bool { return auth.PasswordOK(s.cfg.Password, password) })
+}
+
+func (s *Server) checkApp(r *http.Request, check func() bool) (ok bool, wait time.Duration) {
 	key, known := s.clientKey(r), false
 	if id, ok := s.deviceID(r); ok {
 		key, known = "device:"+id, true
 	}
-	return s.attempt(r, s.loginLimiter, key, known, func() bool {
-		return auth.PasswordOK(s.cfg.Password, password)
+	return s.attempt(r, s.loginLimiter, key, known, check)
+}
+
+// checkLogin is the login check: the app password and, when TOTP_SECRET is
+// set, the code, both under the login limiter. A device cookie does not
+// skip the code. A code is used up only when the password is right too.
+// The failure is logged as login, or as totp when only the code was wrong.
+func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wait time.Duration) {
+	codeWrong := false
+	ok, wait = s.checkApp(r, func() bool {
+		if !auth.PasswordOK(s.cfg.Password, password) {
+			return false
+		}
+		if s.totp == nil {
+			return true
+		}
+		step, match := s.totp.Match(code)
+		if !match || !s.totp.Use(step) {
+			codeWrong = true
+			return false
+		}
+		return true
 	})
+	if !ok {
+		area := "login"
+		if codeWrong {
+			area = "totp"
+		}
+		s.failed(r, area, wait)
+	}
+	return ok, wait
+}
+
+// wrongLogin is the message for a refused login.
+func (s *Server) wrongLogin() string {
+	if s.totp != nil {
+		return "Wrong password or code"
+	}
+	return "Wrong password"
 }
 
 // baseURL is BASE_URL when set. Only without it are the request's Host and

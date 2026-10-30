@@ -26,6 +26,12 @@ func (s *Server) page(name string, needLogin bool) http.HandlerFunc {
 			return
 		}
 		body := strings.ReplaceAll(string(data), "{{BASE_URL}}", html.EscapeString(s.baseURL(r)))
+		// The login page shows its code field only with a second factor.
+		codeField := " hidden"
+		if s.totp != nil {
+			codeField = ""
+		}
+		body = strings.ReplaceAll(body, "{{CODE_HIDDEN}}", codeField)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Write([]byte(body))
@@ -76,9 +82,8 @@ func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 	if next == "/" {
 		next = safeNext(r.URL.Query().Get("next"))
 	}
-	ok, wait := s.checkPassword(r, r.PostForm.Get("password"))
+	ok, wait := s.checkLogin(r, r.PostForm.Get("password"), r.PostForm.Get("code"))
 	if !ok {
-		s.failed(r, "login", wait)
 		reason := "1"
 		if wait > 0 {
 			reason = "wait"

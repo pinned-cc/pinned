@@ -138,6 +138,21 @@ async function desktop(browser, engine) {
   let folderId = null;
 
   await check('login', async () => { await login(page); await visible(page.locator('#side .si')); });
+
+  await check('login with a second factor: the code field shows, Enter in the password moves to it, nothing is sent', async () => {
+    const c = await browser.newContext({ viewport: { width: 1440, height: 900 } }), p = await c.newPage();
+    try {
+      /* this instance may run without TOTP_SECRET: the page is served as the server serves it with one */
+      await p.route('**/login', async r => { const res = await r.fetch(); r.fulfill({ response: res, body: (await res.text()).replace('id="login-code" hidden', 'id="login-code"') }); });
+      let posts = 0; p.on('request', q => { if (q.method() === 'POST') posts++; });
+      await p.goto(BASE + '/login');
+      await visible(p.locator('#login-code input[name=code]'));
+      assert(await p.locator('#login-code input[name=code]').getAttribute('autocomplete') === 'one-time-code', 'the code field is not a one-time-code field');
+      await p.fill('input[name=password]', 'any password'); await p.press('input[name=password]', 'Enter');
+      await until(p, () => document.activeElement && document.activeElement.name === 'code', null, 'focus in the code');
+      assert(posts === 0, 'the form was sent without the code');
+    } finally { await c.close(); }
+  });
   await cleanup(page); await seed(page); await page.reload();
   /* a failed check leaves no sheet, menu or palette open for the next one */
   beforeEach = async () => { for (let i = 0; i < 3; i++) { if (!(await page.locator('#layer.open, .menu, #pal').count())) break; await page.keyboard.press('Escape'); await page.waitForTimeout(350); } };

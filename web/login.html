@@ -79,6 +79,9 @@
     <label class="vh">Username <input type="text" name="username" value="pinned" autocomplete="username" readonly tabindex="-1"></label>
     <label class="fld first"><span class="sh-lbl">Password</span>
       <input class="fld-in" type="password" name="password" autocomplete="current-password" required autofocus enterkeyhint="go"></label>
+    <!-- Shown by the server when the second factor is on (TOTP_SECRET). -->
+    <label class="fld" id="login-code"{{CODE_HIDDEN}}><span class="sh-lbl">Code</span>
+      <input class="fld-in" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" spellcheck="false" enterkeyhint="go"></label>
     <p class="fld-err" id="login-err" role="alert"></p>
     <button type="submit" class="save">Log in</button>
   </form>

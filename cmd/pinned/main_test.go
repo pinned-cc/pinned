@@ -59,6 +59,17 @@ func TestRefusesBadSettings(t *testing.T) {
 	if err := run(); err == nil || !strings.Contains(err.Error(), "HSTS") {
 		t.Fatalf("bad hsts: %v", err)
 	}
+	t.Setenv("HSTS", "")
+	t.Setenv("TOTP_SECRET", "JBSWY3DPEHPK3PXP")
+	if err := run(); err == nil || !strings.Contains(err.Error(), "TOTP_SECRET") || !strings.Contains(err.Error(), "base32") {
+		t.Fatalf("short totp secret: %v", err)
+	}
+	t.Setenv("TOTP_SECRET_FILE", "/nonexistent")
+	if err := run(); err == nil || !strings.Contains(err.Error(), "both set") {
+		t.Fatalf("totp secret twice: %v", err)
+	}
+	t.Setenv("TOTP_SECRET", "")
+	t.Setenv("TOTP_SECRET_FILE", "")
 }
 
 func TestCheckHealth(t *testing.T) {

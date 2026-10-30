@@ -178,6 +178,16 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	totpSecret, err := secretSetting("TOTP_SECRET")
+	if err != nil {
+		return err
+	}
+	var totpKey []byte
+	if totpSecret != "" {
+		if totpKey, err = auth.ParseTOTPSecret(totpSecret); err != nil {
+			return fmt.Errorf("TOTP_SECRET: %v. It takes 20 random bytes in base32, for example from: head -c 20 /dev/urandom | base32", err)
+		}
+	}
 
 	privateUmask()
 	for _, dir := range []string{dataDir, filepath.Join(dataDir, "icons"), filepath.Join(dataDir, "export")} {
@@ -256,6 +266,7 @@ func run() error {
 		Changelog:      pinned.Changelog,
 		TrustedProxies: proxies,
 		HSTSMaxAge:     hstsMaxAge,
+		TOTPKey:        totpKey,
 	}, st, web, icons, secret)
 
 	httpServer := &http.Server{
@@ -269,6 +280,9 @@ func run() error {
 	errc := make(chan error, 1)
 	go func() { errc <- httpServer.ListenAndServe() }()
 	log.Printf("pinned %s listening on :%s, data in %s", version, port, dataDir)
+	if totpKey != nil {
+		log.Print("the login asks for a code from an authenticator app (TOTP_SECRET is set)")
+	}
 
 	select {
 	case err := <-errc:

@@ -75,9 +75,11 @@ function bootLogin() {
   const f = byId('login'), err = byId('login-err'), p = new URLSearchParams(location.search);
   let next = p.get('next') || '/'; if (!next.startsWith('/') || next.startsWith('//')) next = '/';
   f.elements.next.value = next;
-  if (p.get('error')) err.textContent = p.get('error') === 'wait' ? 'Wait 30 seconds and try again.' : 'Wrong password.';
+  const code = byId('login-code'), twoStep = code && !code.hidden;
+  if (p.get('error')) err.textContent = p.get('error') === 'wait' ? 'Wait 30 seconds and try again.' : twoStep ? 'Wrong password or code.' : 'Wrong password.';
   /* the form posts to /login; the server redirects back with error=1 or error=wait */
-  f.addEventListener('submit', () => { f.querySelector('button').disabled = true; });
+  /* with a second factor, Enter in the password moves on to the code instead of sending the form without it */
+  f.addEventListener('submit', e => { if (twoStep && !f.elements.code.value.trim()) { e.preventDefault(); f.elements.code.focus(); return; } f.querySelector('button').disabled = true; });
 }
 function bootBookmarklet() {
   /* the server's view of the scheme can be wrong behind a proxy that ends https (tailscale serve): on the same host, trust the page */
