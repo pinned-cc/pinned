@@ -460,3 +460,51 @@ func TestFolderLimitIsPerFolderAndSparesKnownBrowsers(t *testing.T) {
 		t.Errorf("other folder held by the cap: %d", code)
 	}
 }
+
+// A token is bound to the first extension origin that uses it: answers to
+// any other extension origin are refused, and requests without an Origin,
+// from scripts, keep working.
+func TestTokenBoundToFirstExtensionOrigin(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	tok := e.newToken("ext")
+	call := func(origin string) *http.Response {
+		req, _ := http.NewRequest("GET", e.srv.URL+"/api/folders", nil)
+		req.Header.Set("Authorization", "Bearer "+tok)
+		if origin != "" {
+			req.Header.Set("Origin", origin)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		readAll(resp)
+		return resp
+	}
+	if resp := call(""); resp.StatusCode != 200 {
+		t.Fatalf("script without Origin: %d", resp.StatusCode)
+	}
+	first := "moz-extension://1111-2222"
+	if resp := call(first); resp.StatusCode != 200 || resp.Header.Get("Access-Control-Allow-Origin") != first {
+		t.Errorf("first extension: %d %v", resp.StatusCode, resp.Header)
+	}
+	if resp := call(first); resp.StatusCode != 200 {
+		t.Errorf("same extension again: %d", resp.StatusCode)
+	}
+	for _, other := range []string{"chrome-extension://other", "moz-extension://3333-4444"} {
+		if resp := call(other); resp.StatusCode != 403 {
+			t.Errorf("other extension %s: %d", other, resp.StatusCode)
+		}
+	}
+	if resp := call("https://evil.example"); resp.StatusCode != 200 || resp.Header.Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("web origin: %d %v", resp.StatusCode, resp.Header)
+	}
+	if resp := call(""); resp.StatusCode != 200 {
+		t.Errorf("script after binding: %d", resp.StatusCode)
+	}
+	// A new token is free again.
+	tok = e.newToken("ext 2")
+	if resp := call("chrome-extension://other"); resp.StatusCode != 200 {
+		t.Errorf("new token from another extension: %d", resp.StatusCode)
+	}
+}

@@ -13,18 +13,44 @@ type Token struct {
 	Name       string
 	CreatedAt  int64
 	LastUsedAt *int64
+	// Origin is the browser extension origin the token is bound to, set at
+	// its first use from an extension; nil until then.
+	Origin *string
 }
 
 const maxTokenName = 80
 
+const tokenCols = `id, name, created_at, last_used_at, origin`
+
 func scanToken(sc scanner) (Token, error) {
 	var t Token
 	var last sql.NullInt64
-	err := sc.Scan(&t.ID, &t.Name, &t.CreatedAt, &last)
+	var origin sql.NullString
+	err := sc.Scan(&t.ID, &t.Name, &t.CreatedAt, &last, &origin)
 	if last.Valid {
 		t.LastUsedAt = &last.Int64
 	}
+	if origin.Valid {
+		t.Origin = &origin.String
+	}
 	return t, err
+}
+
+// BindTokenOrigin binds the token to origin unless it is bound already,
+// and returns the origin it is bound to now.
+func (s *Store) BindTokenOrigin(id int64, origin string) (string, error) {
+	var bound string
+	err := s.withTx(func(tx *sql.Tx) error {
+		if _, err := tx.Exec(`UPDATE tokens SET origin = ? WHERE id = ? AND origin IS NULL`, origin, id); err != nil {
+			return err
+		}
+		err := tx.QueryRow(`SELECT origin FROM tokens WHERE id = ?`, id).Scan(&bound)
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	})
+	return bound, err
 }
 
 // CreateToken stores a new token under its hash.
@@ -50,7 +76,7 @@ func (s *Store) CreateToken(name, hash string) (Token, error) {
 
 // Tokens lists every token, newest first.
 func (s *Store) Tokens() ([]Token, error) {
-	rows, err := s.db.Query(`SELECT id, name, created_at, last_used_at FROM tokens ORDER BY created_at DESC, id DESC`)
+	rows, err := s.db.Query(`SELECT ` + tokenCols + ` FROM tokens ORDER BY created_at DESC, id DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +94,7 @@ func (s *Store) Tokens() ([]Token, error) {
 
 // TokenByHash finds the token with this hash.
 func (s *Store) TokenByHash(hash string) (Token, error) {
-	t, err := scanToken(s.db.QueryRow(`SELECT id, name, created_at, last_used_at FROM tokens WHERE hash = ?`, hash))
+	t, err := scanToken(s.db.QueryRow(`SELECT `+tokenCols+` FROM tokens WHERE hash = ?`, hash))
 	if errors.Is(err, sql.ErrNoRows) {
 		return Token{}, ErrNotFound
 	}

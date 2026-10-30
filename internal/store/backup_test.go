@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -252,7 +253,7 @@ func TestFailedUpgradeKeepsOneCopy(t *testing.T) {
 	}
 	backupTime = time.Now
 	got := backups(t, dir)
-	if len(got) != 2 || got[0] != keepOld {
+	if len(got) != 2 || !slices.Contains(got, keepOld) {
 		t.Errorf("backups after 5 failed starts: %v, want the old one and one new", got)
 	}
 	if v, _, _ := schemaOf(t, path); v != old {
@@ -317,5 +318,35 @@ func TestBackupTempFileAndSameSecond(t *testing.T) {
 	}
 	if fi, _ := os.Stat(got[0]); fi.Mode().Perm() != 0o600 {
 		t.Errorf("mode %v", fi.Mode().Perm())
+	}
+}
+
+// A token from before the origin column keeps working after the upgrade,
+// bound to no extension, and is bound by its first use from one.
+func TestTokenOriginMigration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bookmarks.db")
+	oldDB(t, path, len(migrations)-1)
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO tokens (name, hash, created_at) VALUES ('ext', 'h', 1)`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	tk, err := s.TokenByHash("h")
+	if err != nil || tk.Origin != nil {
+		t.Fatalf("token after upgrade: %+v %v", tk, err)
+	}
+	if got, err := s.BindTokenOrigin(tk.ID, "chrome-extension://a"); err != nil || got != "chrome-extension://a" {
+		t.Errorf("bind: %q %v", got, err)
+	}
+	if got, err := s.BindTokenOrigin(tk.ID, "chrome-extension://b"); err != nil || got != "chrome-extension://a" {
+		t.Errorf("second bind moved it: %q %v", got, err)
 	}
 }

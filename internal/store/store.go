@@ -184,6 +184,9 @@ var migrations = []string{
 	ALTER TABLE sessions ADD COLUMN used_at INTEGER NOT NULL DEFAULT 0;
 	ALTER TABLE sessions ADD COLUMN agent TEXT NOT NULL DEFAULT '';
 	UPDATE sessions SET created_at = CAST(strftime('%s', 'now') AS INTEGER), used_at = CAST(strftime('%s', 'now') AS INTEGER);`,
+	// The browser extension origin a token is bound to at its first use
+	// from an extension, so another extension cannot use it with CORS.
+	`ALTER TABLE tokens ADD COLUMN origin TEXT NULL;`,
 }
 
 // NewerSchemaError means the database was written by a later version. That

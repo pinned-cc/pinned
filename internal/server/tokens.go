@@ -53,6 +53,12 @@ func extensionOrigin(origin string) bool {
 // origin with a bearer token. A web page on another site never gets an
 // Allow-Origin header, and credentials are never allowed, so the session
 // cookie cannot be used cross site.
+//
+// The allow list is per token: a token is bound to the extension origin
+// that first uses it (see serveBearer), and requests with it from any
+// other origin are refused, so another extension cannot read anything
+// with it. A preflight carries no token, so it is answered for any
+// extension origin; it returns nothing.
 func allowExtension(w http.ResponseWriter, r *http.Request) bool {
 	h := w.Header()
 	h.Add("Vary", "Origin")
@@ -112,6 +118,19 @@ func (s *Server) serveBearer(w http.ResponseWriter, r *http.Request, token strin
 		s.security(r, "token.refused", "token", t.ID, "route", r.Pattern)
 		writeError(w, http.StatusForbidden, "not allowed with a token")
 		return
+	}
+	if origin := r.Header.Get("Origin"); extensionOrigin(origin) {
+		bound := origin
+		if t.Origin != nil {
+			bound = *t.Origin
+		} else if bound, err = s.st.BindTokenOrigin(t.ID, origin); err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		if bound != origin {
+			writeError(w, http.StatusForbidden, "This token is used by another copy of the extension. Create a new token for this one.")
+			return
+		}
 	}
 	// Record the use at most once a minute, to keep writes down.
 	if now := s.st.Now().Unix(); t.LastUsedAt == nil || now-*t.LastUsedAt >= 60 {

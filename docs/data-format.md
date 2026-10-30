@@ -93,6 +93,7 @@ The list of signed in browsers names a session by its SQLite `rowid`.
 | `hash` | TEXT NOT NULL UNIQUE | HMAC-SHA256 of the token, keyed with `secret.key`. The token itself is not stored. |
 | `created_at` | INTEGER NOT NULL | |
 | `last_used_at` | INTEGER NULL | Updated at most once a minute. |
+| `origin` | TEXT NULL | The browser extension origin, such as `chrome-extension://<id>`, that first used the token. Requests with the token from any other extension origin are refused. NULL until an extension uses it. |
 
 ### shares
 
