@@ -14,6 +14,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
 
@@ -193,6 +194,12 @@ func handleDuplicate(w http.ResponseWriter, v *lockView, err error) bool {
 
 // ---- routes ----
 
+// apiLockFolder sets a folder's own password. Changing the password of a
+// folder that already has one needs the current one in current_password,
+// checked under the same limiter as unlocking: an unlock cookie alone (a
+// browser left open for ten minutes) cannot replace it. The app password
+// is not asked here; it stays the way to remove a lock whose password is
+// lost.
 func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
@@ -200,7 +207,8 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Password string `json:"password"`
+		Password        string `json:"password"`
+		CurrentPassword string `json:"current_password"`
 	}
 	if !readJSON(w, r, &in) {
 		return
@@ -219,12 +227,27 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, fmt.Sprintf("password must have at least %d characters", minLockPassword))
 		return
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
+	if len(in.Password) > 72 {
+		writeError(w, http.StatusBadRequest, "password is too long")
+		return
+	}
+	if f.LockHash != nil {
+		key := s.clientKey(r) + "|" + strconv.FormatInt(id, 10)
+		ok, wait := s.attempt(r, s.folderLimiter, key, false, func() bool {
+			return bcrypt.CompareHashAndPassword([]byte(*f.LockHash), []byte(in.CurrentPassword)) == nil
+		})
+		if !ok {
+			s.failed(r, "lock", wait, "folder", id)
+			refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
+			return
+		}
+	}
+	hash, err := auth.HashPassword(in.Password)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "password is too long")
 		return
 	}
-	if err := s.st.SetLock(id, string(hash)); err != nil {
+	if err := s.st.SetLock(id, hash); err != nil {
 		writeStoreError(w, err)
 		return
 	}

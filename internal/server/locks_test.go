@@ -157,7 +157,7 @@ func TestUnlockRelockAndExpiry(t *testing.T) {
 
 	// A new password makes the old cookie worthless.
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "n3w pass"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 204)
 	if e.state().find(f.inWork.ID) != nil {
 		t.Error("old cookie still opens after a password change")
 	}
@@ -264,4 +264,28 @@ func TestLockRoutesNeedSessionAndHeader(t *testing.T) {
 	f.e.expect("POST", "/api/folders/999/lock", map[string]any{"password": "s3cret"}, 404)
 	f.e.expect("POST", "/api/folders/999/unlock", map[string]any{"password": "s3cret"}, 404)
 	f.e.expect("POST", "/api/folders/999/relock", nil, 404)
+}
+
+func TestChangingALockNeedsItsPassword(t *testing.T) {
+	f := newLockFixture(t)
+	e := f.e
+	lock := "/api/folders/" + itoa(f.work.ID) + "/lock"
+	e.expect("POST", lock, map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	// Unlocked, but without the current password the lock stays.
+	e.expect("POST", lock, map[string]any{"password": "taken over"}, 403)
+	e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 403)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.wantEvent("lock.fail", 2)
+	// Wrong current passwords count with the unlock tries of that folder.
+	for i := 0; i < 4; i++ {
+		e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 403)
+	}
+	e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 429)
+	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 429)
+	later := time.Now().Add(auth.Wait + time.Second)
+	e.server.folderLimiter.Now = func() time.Time { return later }
+	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 204)
+	e.wantEvent("lock.change", 1)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "n3w pass"}, 204)
 }
