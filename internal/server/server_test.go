@@ -679,3 +679,43 @@ func TestFolderHideRecent(t *testing.T) {
 	e.expect("PATCH", "/api/folders/"+itoa(nas.ID), map[string]any{"hide_recent": nil}, 400)
 	e.expect("PATCH", "/api/folders/999", map[string]any{"hide_recent": true}, 404)
 }
+
+// Static files carry an ETag from their content, so a browser that already
+// has one gets a 304 with no body instead of the whole file again.
+func TestStaticETag(t *testing.T) {
+	e := newEnv(t, Config{})
+	first := e.get("/static/app.css")
+	body := readAll(first)
+	tag := first.Header.Get("ETag")
+	if first.StatusCode != 200 || string(body) != "body{}" || tag == "" || !strings.HasPrefix(tag, `"`) {
+		t.Fatalf("first load: %d %q etag %q", first.StatusCode, body, tag)
+	}
+	if cc := first.Header.Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("cache-control %q", cc)
+	}
+	other := e.get("/static/app.js")
+	other.Body.Close()
+	if other.Header.Get("ETag") == tag {
+		t.Errorf("two files share the etag %s", tag)
+	}
+
+	req, _ := http.NewRequest("GET", e.srv.URL+"/static/app.css", nil)
+	req.Header.Set("If-None-Match", tag)
+	resp, err := e.client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := readAll(resp); resp.StatusCode != 304 || len(body) != 0 {
+		t.Errorf("revalidation: %d with %d bytes", resp.StatusCode, len(body))
+	}
+
+	req, _ = http.NewRequest("GET", e.srv.URL+"/static/app.css", nil)
+	req.Header.Set("If-None-Match", `"stale"`)
+	resp, err = e.client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := readAll(resp); resp.StatusCode != 200 || string(body) != "body{}" {
+		t.Errorf("stale etag: %d %q", resp.StatusCode, body)
+	}
+}

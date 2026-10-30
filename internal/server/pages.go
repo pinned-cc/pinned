@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -207,15 +209,43 @@ func (s *Server) siteIcon(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.cfg.DataDir, "icons", name))
 }
 
-// static serves web/ under /static/, without directory listings.
+// static serves web/ under /static/, without directory listings. Asset
+// names carry no version and the scripts import each other by plain name,
+// so browsers must still ask on every load (no-cache); each file carries an
+// ETag from a hash of its content, so an unchanged file comes back as a 304
+// with no body. The embedded files never change while the server runs, so
+// the hashes are taken once.
 func (s *Server) static() http.Handler {
 	files := http.FileServerFS(s.web)
+	etags := staticETags(s.web)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "" || strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
 			return
 		}
 		w.Header().Set("Cache-Control", "no-cache")
+		if tag, ok := etags[strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")]; ok {
+			// ServeContent answers If-None-Match with 304 from this header.
+			w.Header().Set("ETag", tag)
+		}
 		files.ServeHTTP(w, r)
 	})
+}
+
+// staticETags returns a strong ETag for every file in web, keyed by its path.
+func staticETags(web fs.FS) map[string]string {
+	tags := map[string]string{}
+	fs.WalkDir(web, ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		data, err := fs.ReadFile(web, p)
+		if err != nil {
+			return nil
+		}
+		sum := sha256.Sum256(data)
+		tags[p] = `"` + hex.EncodeToString(sum[:12]) + `"`
+		return nil
+	})
+	return tags
 }
