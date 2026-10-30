@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"image"
 	"image/color"
 	"image/png"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -432,4 +434,98 @@ func TestPoolWorkerSurvivesBrokenICO(t *testing.T) {
 	}
 	cancel()
 	p.Wait()
+}
+
+// failingTransport fails every request the way a network does, before any
+// response: no DNS, no route, refused.
+type failingTransport struct{ err error }
+
+func (f failingTransport) RoundTrip(*http.Request) (*http.Response, error) { return nil, f.err }
+
+// A site that cannot be reached is not an icon failure: an outage at start
+// must not make the start fetch give up on links.
+func TestPoolRunDoesNotCountNetworkErrors(t *testing.T) {
+	// A port nobody listens on: connection refused.
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	closed := "http://" + l.Addr().String() + "/"
+	l.Close()
+
+	// A server that answers too late: a timeout.
+	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-time.After(2 * time.Second):
+		}
+	}))
+	defer slow.Close()
+
+	cases := []struct {
+		name   string
+		url    string
+		client *http.Client
+	}{
+		{"refused", closed, nil},
+		{"dns", "http://nohost.example/", &http.Client{Transport: failingTransport{&net.DNSError{Err: "no such host", Name: "nohost.example", IsNotFound: true}}}},
+		{"offline", "http://offline.example/", &http.Client{Transport: failingTransport{&net.OpError{Op: "dial", Net: "tcp", Err: errors.New("network is unreachable")}}}},
+		{"timeout", slow.URL + "/", &http.Client{Timeout: 50 * time.Millisecond}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			st := newTestStore(t)
+			b, _, err := st.Create(store.NewBookmark{Title: c.name, URL: c.url})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := &Pool{dir: t.TempDir(), store: st, client: c.client}
+			if _, err := Find(context.Background(), clientOr(c.client), c.url); !errors.Is(err, ErrUnreachable) {
+				t.Errorf("Find: %v, want ErrUnreachable", err)
+			}
+			for range store.IconGiveUp + 1 {
+				p.Run(b.ID)
+			}
+			given, err := st.IconsGivenUp()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, ok := given[b.ID]; ok {
+				t.Errorf("given up after %d network errors", store.IconGiveUp+1)
+			}
+		})
+	}
+}
+
+func clientOr(c *http.Client) *http.Client {
+	if c == nil {
+		return http.DefaultClient
+	}
+	return c
+}
+
+// A site that answers with an error for every address still counts, so the
+// start fetch gives up on it after IconGiveUp tries.
+func TestPoolRunCountsHTTPErrors(t *testing.T) {
+	for _, code := range []int{404, 500} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "no", code)
+		}))
+		st := newTestStore(t)
+		b, _, err := st.Create(store.NewBookmark{Title: "Down", URL: srv.URL})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Find(context.Background(), srv.Client(), srv.URL); err == nil || errors.Is(err, ErrUnreachable) {
+			t.Errorf("%d: Find: %v, want an icon failure", code, err)
+		}
+		p := &Pool{dir: t.TempDir(), store: st}
+		for range store.IconGiveUp {
+			p.Run(b.ID)
+		}
+		if given, _ := st.IconsGivenUp(); given[b.ID] != b.URLKey {
+			t.Errorf("%d: not given up after %d HTTP errors: %v", code, store.IconGiveUp, given)
+		}
+		srv.Close()
+	}
 }

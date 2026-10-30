@@ -29,13 +29,27 @@ const (
 	queueLength = 4096
 )
 
+// ErrUnreachable means the site never answered: DNS, the connection or the
+// time budget failed before any HTTP response came back, or the budget ran
+// out on the way. It says nothing about the site's icon, so it is not
+// counted as an icon failure.
+var ErrUnreachable = errors.New("site did not answer")
+
 // Find fetches pageURL and returns the first icon that downloads and decodes,
 // trying apple touch icons, then the manifest, then link icons, then the
 // home page's icons when the page has none, then /favicon.ico and /favicon.svg.
+// When no icon is found, the error wraps ErrUnreachable if the site never
+// answered or the time ran out.
 func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error) {
 	page, err := url.Parse(pageURL)
 	if err != nil {
 		return Icon{}, err
+	}
+	answered := false
+	get := func(ctx context.Context, client *http.Client, u string, limit int64) ([]byte, *url.URL, error) {
+		data, final, got, err := fetch(ctx, client, u, limit)
+		answered = answered || got
+		return data, final, err
 	}
 	var c Candidates
 	if body, final, err := get(ctx, client, pageURL, maxPage); err == nil {
@@ -79,25 +93,30 @@ func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error
 			return icon, nil
 		}
 	}
+	if !answered || ctx.Err() != nil {
+		return Icon{}, fmt.Errorf("no icon found: %w", ErrUnreachable)
+	}
 	return Icon{}, errors.New("no icon found")
 }
 
-func get(ctx context.Context, client *http.Client, u string, limit int64) ([]byte, *url.URL, error) {
+// fetch gets u. answered reports whether the site sent an HTTP response,
+// whatever its status.
+func fetch(ctx context.Context, client *http.Client, u string, limit int64) (data []byte, final *url.URL, answered bool, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, fmt.Errorf("status %d", resp.StatusCode)
+		return nil, nil, true, fmt.Errorf("status %d", resp.StatusCode)
 	}
-	data, err := io.ReadAll(io.LimitReader(resp.Body, limit))
-	return data, resp.Request.URL, err
+	data, err = io.ReadAll(io.LimitReader(resp.Body, limit))
+	return data, resp.Request.URL, true, err
 }
 
 // Store is the part of the store the worker pool needs.
@@ -161,7 +180,10 @@ func (p *Pool) work() {
 }
 
 // Run fetches and stores the icon for one bookmark. Failures are silent,
-// and counted so the fetch at start gives up on a link after a few. A panic
+// and counted so the fetch at start gives up on a link after a few. Only a
+// site that answered counts: a bad or missing icon, or an HTTP error. A
+// site that could not be reached (DNS, no route, refused, timeout) is not
+// counted, so a network outage at start does not give up on links. A panic
 // anywhere in the fetch is caught: the bookmark is given up at once and the
 // server keeps running.
 func (p *Pool) Run(id int64) {
@@ -190,7 +212,9 @@ func (p *Pool) Run(id int64) {
 	}
 	icon, err := Find(ctx, client, b.URL)
 	if err != nil {
-		p.failed(b, false)
+		if !errors.Is(err, ErrUnreachable) {
+			p.failed(b, false)
+		}
 		return
 	}
 	sum := sha256.Sum256(icon.Data)
