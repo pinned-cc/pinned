@@ -160,7 +160,7 @@ curl -H 'Authorization: Bearer tk_...' -H 'Content-Type: application/json' \
   https://bookmarks.example.com/api/bookmarks
 ```
 
-A saved link answers 201. A link that is already saved answers 409 with the bookmark that has it.
+A saved link answers 201. A link that is already saved answers 409 with the bookmark that has it, or without it when that bookmark sits in a locked folder.
 
 ## API tokens
 
@@ -237,12 +237,14 @@ Turn Tailscale off and on again on the iPhone. How to save in the app has the sa
 Everything is in the data folder:
 
 - `bookmarks.db`, the SQLite database, with `bookmarks.db-wal` and `bookmarks.db-shm` next to it while the app runs.
-- `secret.key`, the key for sessions and tokens. Without it every session ends and every token stops working.
+- `secret.key`, the key for sessions and tokens. Without it every session ends and every token stops working. How to replace it is in [docs/security.md](docs/security.md#rotating-secretkey).
 - `icons/`, the site icons.
-- `export/bookmarks.html`, written every night at 03:00 (in `TZ`) and on start when it is older than a day. It is a normal browser bookmarks file with your folders and links. It leaves out Trash, pins, locks and shares.
+- `export/bookmarks.html`, written every night at 03:00 (in `TZ`) and on start when it is older than a day. It is a normal browser bookmarks file with your folders and links, locked folders included. It leaves out Trash, pins, locks and shares.
 - `bookmarks-schema6-2026-10-30-154210.db` and the like, copies of the database taken before an upgrade (see Upgrading).
 
 The tables and the export format are described in `docs/data-format.md`. You can read the database with any SQLite tool.
+
+Only the user the app runs as can read the data folder: folders are 0700 and files 0600. At start the app makes files that an older version left readable by everyone private too. A backup job that reads the data folder or the nightly export has to run as that same user (1000 in the image), or as root.
 
 **Backing up.** The database runs in WAL mode, so copying `bookmarks.db` alone while the app runs can give you a broken copy. Either take a copy with SQLite itself:
 
@@ -270,21 +272,23 @@ Keep `secret.key` and `icons/` with the database.
 
 ## Locked folders and share links
 
-**Locked folders.** A folder can have its own password, so its links stay out of sight when you share your screen or show the app to someone. While a folder is locked, its subfolders and bookmarks do not show anywhere in the app: not in the folder lists, search, Recent, the pinned row, Inbox or Trash. Only the folder's name is shown. Unlocking opens it in that browser for 10 minutes, or until you lock it again.
+**Locked folders.** A folder can have its own password, so its links stay out of sight when you share your screen or show the app to someone. While a folder is locked, its subfolders and bookmarks do not show anywhere in the app: not in the folder lists, search, Recent, the pinned row, Inbox or Trash. Only the folder's name is shown. Unlocking opens it in that browser for 10 minutes, or until you lock it again. A folder password needs at least 4 characters. Changing it asks for the current one.
 
 What a lock does not do:
 
-- It does not encrypt anything. The database, the export in the app and the nightly `export/bookmarks.html` hold every link in plain form.
+- It does not encrypt anything. The database and the nightly `export/bookmarks.html` hold every link in plain form, locked folders included. Export in the app leaves out the folders that are locked in that browser.
 - It does not protect against someone who has the app password.
+- It does not hide whether an address is saved. Saving an exact address that sits in a locked folder answers Already saved, without saying where.
 - A folder password cannot be recovered. If you forget it, remove the lock with the app password.
 
-A locked folder cannot be shared, and locking a folder removes any share link on it or its subfolders. An import never writes into a locked folder: a folder in the file with the same name comes in beside it as `<name> (imported)`.
+A locked folder cannot be shared. Locking a folder removes any share link on it or its subfolders, and so does moving a shared folder into a locked one. An import never writes into a locked folder: a folder in the file with the same name comes in beside it as `<name> (imported)`.
 
 **Share links.** You can share one folder, with its subfolders, as a read only link. People with the link see the titles and links in it and can open them, nothing more.
 
-- The link holds 24 random bytes, so it cannot be guessed. It works for anyone who has it, so send it like a password.
-- You can add a password of at least 8 characters. After the right password, the browser stays unlocked for 7 days.
-- You can set it to expire after a number of days, or never.
+- The link looks like `https://bookmarks.example.com/s/#<token>`. The part after `#` never reaches the server or a proxy's log. Links of the older form `/s/<token>` keep working.
+- The token holds 24 random bytes, so it cannot be guessed. It works for anyone who has it, so send it like a password. It is kept as it is, so the share sheet shows the link again whenever you open it.
+- You can add a password of at least 8 characters. After the right password, the browser stays unlocked for 7 days. Wrong passwords are counted for each link on its own (see Wrong passwords and tokens).
+- You can set it to expire after 1 to 3650 days, or never.
 - Revoke stops it at once. Changing the share password locks out browsers that were already unlocked.
 - The app counts how often the link was opened (once per browser per hour) and when.
 
@@ -292,7 +296,9 @@ Shares are not part of the export.
 
 ## What the server sends out
 
-One thing: the icon of each site you save. When you save a link or change its address, the server loads that page once to find the icon, then downloads the icon. The request comes from your server, with the user agent `Mozilla/5.0 (compatible; Pinned bookmarks; favicon fetch)`. It goes only to public addresses, with one exception: a bookmark whose own host is on your network (a private, loopback or link local address) may load its icon from that same host.
+One thing: the icon of each site you save. When you save a link or change its address, the server loads that page once to find the icon, then downloads the icon. The request comes from your server, with the user agent `Mozilla/5.0 (compatible; Pinned bookmarks; favicon fetch)`. It goes only to public addresses, with one exception: a bookmark whose own host is on your network (a private, loopback or link local address) may load its icon from that same host. It connects only on ports 80 and 443 and on the port of the bookmark's own address, and never steps from `https` down to plain `http` on a redirect. Certificates are checked, so a service with a self-signed certificate gets no icon.
+
+To stop it, set `ICONS=off`. To keep it to some sites, set `ICON_HOSTS`. Or block connections out of the container in your firewall; bookmarks then keep their letter.
 
 No telemetry, no update checks, no fonts or scripts from other servers. The pages, the extension and the fonts are all served from your own server.
 
