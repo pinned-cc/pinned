@@ -358,6 +358,7 @@ func TestSyncPasswordSignsOutSessions(t *testing.T) {
 		return out
 	}
 	s.CreateSession("old", time.Now().Add(time.Hour))
+	s.CreateToken("phone", "tokenhash")
 	if changed, err := sync("pw1"); err != nil || changed {
 		t.Fatalf("first start: changed=%v err=%v", changed, err)
 	}
@@ -367,8 +368,14 @@ func TestSyncPasswordSignsOutSessions(t *testing.T) {
 	if changed, _ := sync("pw1"); changed || !valid(s, "old") {
 		t.Error("same password signed out")
 	}
+	if _, err := s.TokenByHash("tokenhash"); err != nil {
+		t.Error("the same password must keep API tokens")
+	}
 	if changed, _ := sync("pw2"); !changed || valid(s, "old") {
 		t.Error("a new password must sign out every session")
+	}
+	if _, err := s.TokenByHash("tokenhash"); !errors.Is(err, ErrNotFound) {
+		t.Error("a new password must revoke every API token")
 	}
 	if stored()["password_hash"] != "hash:pw2" {
 		t.Errorf("new hash not stored: %v", stored())

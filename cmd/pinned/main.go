@@ -196,7 +196,7 @@ func run() error {
 		return fmt.Errorf("check the password: %w", err)
 	}
 	if changed {
-		log.Print("security event=password.changed: APP_PASSWORD changed since the last start, every session was signed out (API tokens stay)")
+		log.Print("security event=password.changed: APP_PASSWORD changed since the last start, every session was signed out and every API token revoked")
 	}
 
 	web, err := fs.Sub(pinned.Web, "web")

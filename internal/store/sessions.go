@@ -51,7 +51,7 @@ const (
 // start. check tells whether a stored value belongs to the current password
 // (legacy is true for the old HMAC record) and whether it should be
 // replaced; hash makes a new record. When the password differs, every
-// session is deleted and changed is true. The first start only stores the
+// session and every API token is deleted and changed is true. The first start only stores the
 // record. A legacy record is always replaced by a hash.
 func (s *Store) SyncPassword(check func(stored string, legacy bool) (same, rehash bool), hash func() (string, error)) (changed bool, err error) {
 	err = s.withTx(func(tx *sql.Tx) error {
@@ -75,7 +75,7 @@ func (s *Store) SyncPassword(check func(stored string, legacy bool) (same, rehas
 		}
 		if found && !same {
 			changed = true
-			if _, err := tx.Exec(`DELETE FROM sessions`); err != nil {
+			if _, err := tx.Exec(`DELETE FROM sessions; DELETE FROM tokens`); err != nil {
 				return err
 			}
 		}
