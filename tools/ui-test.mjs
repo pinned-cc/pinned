@@ -857,6 +857,11 @@ async function phone(browser, engine) {
     assert(await page.locator('.ptbar.tabs [data-tab="folders"] .ptab-n').count() === 1, 'Folders tab has no count');
     await shot(page, `${engine}-phone-dashboard`);
   });
+  await check('the phone layout has one main landmark, the content', async () => {
+    const m = await page.evaluate(() => [...document.querySelectorAll('main, [role=main]')].map(e => e.id));
+    assert(m.length === 1 && m[0] === 'pmain', 'main landmarks: ' + JSON.stringify(m));
+  });
+
   await check('the phone Dashboard groups by day, with no draft switch', async () => {
     assert(await page.locator('.hsw, [data-home]').count() === 0, 'a draft switch is still there');
     assert((await page.locator('#pmain .gal .gs-h').first().textContent()).startsWith('Today'), 'no Today head first');

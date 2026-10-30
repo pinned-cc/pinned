@@ -240,7 +240,7 @@ export function miniPicker(o = {}) {
 /* ================= phone ================= */
 /* the phone opens on the grid: Recent and the title scroll away, search and Add float over the grid at the bottom */
 export function mountPhone() {
-  byId('app').innerHTML = `<div class="papp" id="papp"><div id="pmain"></div>
+  byId('app').innerHTML = `<div class="papp" id="papp"><main id="pmain"></main>
     <div class="pbottom" id="pbottom">
       <div class="psrow" id="psrow">${searchField(true)}
         <button type="button" class="padd" data-a="add" aria-label="Add">${ic('plus')}</button></div>
