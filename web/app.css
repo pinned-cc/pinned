@@ -1039,7 +1039,7 @@ body.share-page>#share{flex:1}
 .share-chipwrap{padding:0 var(--gut) var(--s-2)}
 .share-phone .pgrid{margin-top:var(--s-6)}
 .share-bottom .ps{height:var(--h-cta);border-radius:var(--r-pill-xl);background:rgba(21,21,24,.72);-webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);border:1px solid rgba(255,255,255,.10);box-shadow:var(--shadow-float)}
-.share-foot{margin:0;padding:var(--s-10) var(--s-8) calc(var(--s-12) + env(safe-area-inset-bottom));text-align:center;font:400 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-faint)}
+.share-foot{margin:0;padding:var(--s-10) var(--s-8) calc(var(--s-12) + env(safe-area-inset-bottom));text-align:center;font:400 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-weak)}
 body.share-page .share-foot{order:2}
 @media (max-width:719px){body.share-page .share-foot{padding-bottom:calc(92px + env(safe-area-inset-bottom))}}
 .share-lock .lone-box{text-align:left}

@@ -653,6 +653,35 @@ async function desktop(browser, engine) {
     await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
   });
 
+  await check('share page: the token stays in the fragment, a password share opens with no console error, light and dark follow the system, the old link form still opens', async () => {
+    const f = (await apiIn(page, 'POST', '/api/folders', { name: `ui-test pwshare ${stamp}`, parent_id: null })).data;
+    await apiIn(page, 'POST', '/api/bookmarks', { title: 'ui-test pwshare link', url: `https://ui-test.example/${stamp}/pw`, folder_id: f.id });
+    const sh = (await apiIn(page, 'POST', `/api/folders/${f.id}/share`, { password: 'ui-test-share-pw' })).data;
+    assert(sh.url.includes('/s/#' + sh.token), 'the link does not keep the token in the fragment: ' + sh.url);
+    for (const scheme of ['light', 'dark']) {
+      const c = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US', colorScheme: scheme }), sp = await c.newPage();
+      const errs = [], paths = [];
+      sp.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); sp.on('pageerror', e => errs.push(e.message));
+      sp.on('request', r => { const u = new URL(r.url()); paths.push(u.pathname + u.search); });
+      await sp.goto(sh.url); await visible(sp.locator('#unlock input[name=password]'));
+      assert(await sp.evaluate(() => document.documentElement.dataset.theme) === scheme, `the share page is not ${scheme}`);
+      /* the footer reads at 4.5:1 or more on the page ground */
+      const ratio = await sp.evaluate(() => { const rgb = s => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const lum = c => { const v = c.map(x => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+        let el = document.body, bg = 'rgba(0, 0, 0, 0)'; while (el && /rgba\(0, 0, 0, 0\)|transparent/.test(bg)) { bg = getComputedStyle(el).backgroundColor; el = el.parentElement; }
+        const a = lum(rgb(getComputedStyle(document.querySelector('.share-foot')).color)), b = lum(rgb(bg)); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); });
+      assert(ratio >= 4.5, `share footer contrast ${ratio.toFixed(2)}:1 in ${scheme}`);
+      await sp.fill('#unlock input[name=password]', 'ui-test-share-pw'); await sp.press('#unlock input[name=password]', 'Enter');
+      await visible(sp.locator('#sbody article', { hasText: 'ui-test pwshare link' }));
+      assert(await sp.locator('#sbody a[target=_blank]:not([rel~=noreferrer])').count() === 0, 'a bookmark link on the share page sends a referrer');
+      assert(!paths.some(p => p.includes(sh.token)), 'the token went into a request path: ' + paths.find(p => p.includes(sh.token)));
+      await sp.goto(`${BASE}/s/${sh.token}`); await visible(sp.locator('#sbody article', { hasText: 'ui-test pwshare link' }));
+      assert(errs.length === 0, 'console errors: ' + errs.join(' | '));
+      await c.close();
+    }
+    await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
+  });
+
   await check('save page in a popup sized window: the panel is the window, Save draws the tick, a short fade, then Saved in place', async () => {
     /* dark: the graphite gradient is the dark panel's; in light the panel is plain paper */
     const c = await browser.newContext({ viewport: { width: 392, height: 544 }, locale: 'en-US', colorScheme: 'dark' }); await c.addCookies(await ctx.cookies());
