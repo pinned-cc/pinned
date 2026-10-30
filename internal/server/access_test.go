@@ -287,3 +287,103 @@ func TestOldShareCookieStillWorks(t *testing.T) {
 		t.Errorf("old cookie: %d %s", resp.StatusCode, body)
 	}
 }
+
+// overHTTPS sends a request as if through an HTTPS proxy, with the given
+// Cookie header, and returns the response with its body read.
+func overHTTPS(t *testing.T, e *env, method, path, cookie, body string) *http.Response {
+	t.Helper()
+	req, _ := http.NewRequest(method, e.srv.URL+path, strings.NewReader(body))
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("X-Requested-With", "fetch")
+	req.Header.Set("Content-Type", "application/json")
+	if cookie != "" {
+		req.Header.Set("Cookie", cookie)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+	return resp
+}
+
+// Over HTTPS the folder unlock cookie is __Host- and the share cookies are
+// __Secure-; the plain names still work during the move.
+func TestUnlockAndShareCookiePrefixes(t *testing.T) {
+	f := newLockFixture(t)
+	e := f.e
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	login := loginOver(t, e, true)
+	session := "__Host-" + CookieName + "=" + cookieNamed(login, "__Host-"+CookieName).Value
+
+	resp := overHTTPS(t, e, "POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", session, `{"password":"s3cret"}`)
+	name := "__Host-pinned_unlock_" + itoa(f.work.ID)
+	c := cookieNamed(resp, name)
+	if resp.StatusCode != 204 || c == nil || !c.Secure || c.Path != "/" || c.Domain != "" || cookieNamed(resp, "pinned_unlock_"+itoa(f.work.ID)) != nil {
+		t.Fatalf("unlock over https: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	for _, ck := range []string{name + "=" + c.Value, "pinned_unlock_" + itoa(f.work.ID) + "=" + c.Value} {
+		req, _ := http.NewRequest("GET", e.srv.URL+"/api/state", nil)
+		req.Header.Set("X-Forwarded-Proto", "https")
+		req.Header.Set("Cookie", session+"; "+ck)
+		r, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		st := decode[stateJSON](t, readAll(r))
+		if st.find(f.inClient.ID) == nil {
+			t.Errorf("cookie %s does not open the folder", ck[:strings.Index(ck, "=")])
+		}
+	}
+	// Locking again clears both names.
+	resp = overHTTPS(t, e, "POST", "/api/folders/"+itoa(f.work.ID)+"/relock", session, "")
+	if a, b := cookieNamed(resp, name), cookieNamed(resp, "pinned_unlock_"+itoa(f.work.ID)); a == nil || b == nil || a.MaxAge >= 0 || b.MaxAge >= 0 {
+		t.Errorf("relock: %v", resp.Cookies())
+	}
+
+	tok := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/share", map[string]any{"password": "open sesame"}, 201)).Token
+	sh, _ := e.st.ShareByToken(tok)
+	resp = overHTTPS(t, e, "POST", "/s/"+tok+"/unlock", "", `{"password":"open sesame"}`)
+	u := cookieNamed(resp, "__Secure-pinned_share_"+itoa(sh.ID))
+	if resp.StatusCode != 204 || u == nil || !u.Secure || u.Path != "/s/" {
+		t.Fatalf("share unlock over https: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	resp = overHTTPS(t, e, "GET", "/s/"+tok+"/data", "__Secure-pinned_share_"+itoa(sh.ID)+"="+u.Value, "")
+	if seen := cookieNamed(resp, "__Secure-pinned_share_seen_"+itoa(sh.ID)); resp.StatusCode != 200 || seen == nil || !seen.Secure {
+		t.Errorf("share data over https: %d %v", resp.StatusCode, resp.Cookies())
+	}
+}
+
+// A device cookie set over plain HTTP, or by an older version, moves to the
+// __Host- name when it comes over HTTPS, with the same id.
+func TestDeviceCookieUpgradesOverHTTPS(t *testing.T) {
+	e := newEnv(t, Config{})
+	plain := cookieNamed(loginOver(t, e, false), deviceCookie)
+	if plain == nil || plain.Secure {
+		t.Fatal("no plain device cookie")
+	}
+	login := loginOver(t, e, true)
+	session := cookieNamed(login, "__Host-"+CookieName)
+	if session == nil {
+		t.Fatal("no session over https")
+	}
+	resp := overHTTPS(t, e, "GET", "/api/state", "__Host-"+CookieName+"="+session.Value+"; "+deviceCookie+"="+plain.Value, "")
+	up, old := cookieNamed(resp, "__Host-"+deviceCookie), cookieNamed(resp, deviceCookie)
+	if resp.StatusCode != 200 || up == nil || up.Value != plain.Value || !up.Secure || old == nil || old.MaxAge >= 0 {
+		t.Errorf("device cookie not upgraded: %d %v", resp.StatusCode, resp.Cookies())
+	}
+	// A login over HTTPS with the plain cookie upgrades it too, and mints no new id.
+	req, _ := http.NewRequest("POST", e.srv.URL+"/api/login", strings.NewReader(`{"password":"pw"}`))
+	req.Header.Set("X-Requested-With", "fetch")
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("Cookie", deviceCookie+"="+plain.Value)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Body.Close()
+	if up := cookieNamed(r, "__Host-"+deviceCookie); up == nil || up.Value != plain.Value {
+		t.Errorf("login did not upgrade the device cookie: %v", r.Cookies())
+	}
+}

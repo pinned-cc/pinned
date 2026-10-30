@@ -48,9 +48,13 @@ func (s *Server) cookieOpens(r *http.Request, f store.Folder) bool {
 	if r == nil {
 		return false
 	}
-	c, err := r.Cookie(unlockCookieName(f.ID))
+	// Over HTTPS the cookie is __Host- prefixed; the plain name is from
+	// plain HTTP or from before 0.1.11.
+	c, err := r.Cookie(hostPrefix + unlockCookieName(f.ID))
 	if err != nil {
-		return false
+		if c, err = r.Cookie(unlockCookieName(f.ID)); err != nil {
+			return false
+		}
 	}
 	v := signedPayload(c.Value)
 	expStr, _, ok := strings.Cut(v, ".")
@@ -337,9 +341,14 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	exp := s.st.Now().Add(folderUnlockTTL).Unix()
+	secure := s.isHTTPS(r)
+	name := unlockCookieName(id)
+	if secure {
+		name = hostPrefix + name
+	}
 	http.SetCookie(w, &http.Cookie{
-		Name: unlockCookieName(id), Value: signedVersion + s.folderUnlockValue(f, exp), Path: "/",
-		MaxAge: int(folderUnlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
+		Name: name, Value: signedVersion + s.folderUnlockValue(f, exp), Path: "/",
+		MaxAge: int(folderUnlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: secure,
 	})
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -358,9 +367,18 @@ func (s *Server) apiRelockFolder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// clearUnlockCookie clears the folder's unlock cookie under both names; a
+// __Host- cookie can only be cleared over HTTPS.
 func (s *Server) clearUnlockCookie(w http.ResponseWriter, r *http.Request, id int64) {
-	http.SetCookie(w, &http.Cookie{
-		Name: unlockCookieName(id), Value: "", Path: "/", MaxAge: -1,
-		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
-	})
+	secure := s.isHTTPS(r)
+	names := []string{unlockCookieName(id)}
+	if secure {
+		names = append(names, hostPrefix+unlockCookieName(id))
+	}
+	for _, name := range names {
+		http.SetCookie(w, &http.Cookie{
+			Name: name, Value: "", Path: "/", MaxAge: -1,
+			HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: secure,
+		})
+	}
 }

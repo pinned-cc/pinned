@@ -260,6 +260,7 @@ func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
 	if w == nil {
 		return true
 	}
+	s.upgradeDevice(w, r)
 	exp := time.Unix(sess.ExpiresAt, 0)
 	renewed := now.Add(s.sessionTTL())
 	if end := s.sessionEnd(sess); renewed.After(end) {

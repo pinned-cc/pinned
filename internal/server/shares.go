@@ -55,23 +55,32 @@ func shareBase(r *http.Request, sh store.Share) string {
 	return "/s/-"
 }
 
+// securePrefix marks share cookies over HTTPS. They are scoped to /s/, so
+// they cannot take __Host-, which needs Path=/.
+const securePrefix = "__Secure-"
+
 // shareCookieName is the unlock cookie of one share, seen the open counter.
-func shareCookieName(sh store.Share, seen bool) string {
+// Over HTTPS it carries the __Secure- prefix.
+func shareCookieName(sh store.Share, seen, secure bool) string {
 	name := shareCookie
 	if seen {
 		name = shareSeenCookie
 	}
-	return name + "_" + strconv.FormatInt(sh.ID, 10)
+	name += "_" + strconv.FormatInt(sh.ID, 10)
+	if secure {
+		name = securePrefix + name
+	}
+	return name
 }
 
 // shareCookieValue returns the value of the share's cookie, under its
-// current name or the name before 0.1.11.
+// current name with or without the prefix, or the name before 0.1.11.
 func shareCookieValue(r *http.Request, sh store.Share, seen bool) (string, bool) {
 	old := shareCookie
 	if seen {
 		old = shareSeenCookie
 	}
-	for _, name := range []string{shareCookieName(sh, seen), old} {
+	for _, name := range []string{shareCookieName(sh, seen, true), shareCookieName(sh, seen, false), old} {
 		if c, err := r.Cookie(name); err == nil {
 			return c.Value, true
 		}
@@ -340,7 +349,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	}
 	exp := s.st.Now().Add(unlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
-		Name: shareCookieName(sh, false), Value: signedVersion + s.unlockValue(sh, exp), Path: sharePath,
+		Name: shareCookieName(sh, false, s.isHTTPS(r)), Value: signedVersion + s.unlockValue(sh, exp), Path: sharePath,
 		MaxAge: int(unlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusNoContent)
@@ -393,7 +402,7 @@ func (s *Server) shareData(w http.ResponseWriter, r *http.Request) {
 			log.Printf("share open count: %v", err)
 		}
 		http.SetCookie(w, &http.Cookie{
-			Name: shareCookieName(sh, true), Value: "1", Path: sharePath,
+			Name: shareCookieName(sh, true, s.isHTTPS(r)), Value: "1", Path: sharePath,
 			MaxAge: 3600, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: s.isHTTPS(r),
 		})
 	}
