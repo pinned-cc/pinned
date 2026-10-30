@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/pinned-cc/pinned/internal/store"
@@ -29,17 +31,19 @@ const (
 	queueLength = 4096
 )
 
-// ErrUnreachable means the site never answered: DNS, the connection or the
-// time budget failed before any HTTP response came back, or the budget ran
-// out on the way. It says nothing about the site's icon, so it is not
-// counted as an icon failure.
+// ErrUnreachable means the site could not be reached: every request failed
+// on DNS, a refused or unroutable connection or a timeout, or the time
+// budget ran out on the way. That is often a passing outage and says
+// nothing about the site's icon, so it is not counted as an icon failure.
+// Lasting answers do count: an HTTP error, a bad icon, a certificate the
+// check refuses, a redirect loop, an address the guard refuses.
 var ErrUnreachable = errors.New("site did not answer")
 
 // Find fetches pageURL and returns the first icon that downloads and decodes,
 // trying apple touch icons, then the manifest, then link icons, then the
 // home page's icons when the page has none, then /favicon.ico and /favicon.svg.
-// When no icon is found, the error wraps ErrUnreachable if the site never
-// answered or the time ran out.
+// When no icon is found, the error wraps ErrUnreachable if the site could
+// not be reached or the time ran out.
 func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error) {
 	page, err := url.Parse(pageURL)
 	if err != nil {
@@ -99,8 +103,8 @@ func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error
 	return Icon{}, errors.New("no icon found")
 }
 
-// fetch gets u. answered reports whether the site sent an HTTP response,
-// whatever its status.
+// fetch gets u. answered reports whether the failure, if any, is a lasting
+// answer from the site rather than an outage (see outage).
 func fetch(ctx context.Context, client *http.Client, u string, limit int64) (data []byte, final *url.URL, answered bool, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
@@ -109,7 +113,7 @@ func fetch(ctx context.Context, client *http.Client, u string, limit int64) (dat
 	req.Header.Set("User-Agent", userAgent)
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, !outage(err), err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -117,6 +121,37 @@ func fetch(ctx context.Context, client *http.Client, u string, limit int64) (dat
 	}
 	data, err = io.ReadAll(io.LimitReader(resp.Body, limit))
 	return data, resp.Request.URL, true, err
+}
+
+// outage reports whether err is a network failure that may pass: a DNS
+// failure, a timeout, a refused, reset or unroutable connection. A refusal
+// by the guard, a certificate error, a redirect error and anything else
+// count as lasting.
+func outage(err error) bool {
+	if errors.Is(err, errBlocked) {
+		return false
+	}
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return true
+	}
+	var dns *net.DNSError
+	if errors.As(err, &dns) {
+		return true
+	}
+	var ne net.Error
+	if errors.As(err, &ne) && ne.Timeout() {
+		return true
+	}
+	var op *net.OpError
+	if errors.As(err, &op) && op.Op == "dial" {
+		return true
+	}
+	for _, e := range []error{syscall.ECONNREFUSED, syscall.ECONNRESET, syscall.ENETUNREACH, syscall.EHOSTUNREACH, syscall.ENETDOWN, syscall.EHOSTDOWN} {
+		if errors.Is(err, e) {
+			return true
+		}
+	}
+	return false
 }
 
 // Store is the part of the store the worker pool needs.
@@ -181,9 +216,10 @@ func (p *Pool) work() {
 
 // Run fetches and stores the icon for one bookmark. Failures are silent,
 // and counted so the fetch at start gives up on a link after a few. Only a
-// site that answered counts: a bad or missing icon, or an HTTP error. A
-// site that could not be reached (DNS, no route, refused, timeout) is not
-// counted, so a network outage at start does not give up on links. A panic
+// lasting answer counts: a bad or missing icon, an HTTP error, a refused
+// certificate or redirect. A site that could not be reached (DNS, no route,
+// refused, timeout) is not counted, so a network outage at start does not
+// give up on links. A panic
 // anywhere in the fetch is caught: the bookmark is given up at once and the
 // server keeps running.
 func (p *Pool) Run(id int64) {

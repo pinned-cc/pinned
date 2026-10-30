@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -16,6 +17,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -527,5 +529,64 @@ func TestPoolRunCountsHTTPErrors(t *testing.T) {
 			t.Errorf("%d: not given up after %d HTTP errors: %v", code, store.IconGiveUp, given)
 		}
 		srv.Close()
+	}
+}
+
+// Lasting failures count even without an HTTP answer: a certificate the
+// check refuses, a redirect loop. Otherwise those links would be fetched at
+// every start for ever.
+func TestPoolRunCountsLastingFailures(t *testing.T) {
+	selfSigned := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer selfSigned.Close()
+	loop := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.Path, http.StatusFound)
+	}))
+	defer loop.Close()
+
+	cases := []struct {
+		name   string
+		url    string
+		client *http.Client
+	}{
+		// A plain client that does not trust the test certificate.
+		{"self signed", selfSigned.URL + "/", &http.Client{Transport: &http.Transport{}}},
+		// The real guarded client, whose CheckRedirect stops the loop.
+		{"redirect loop", loop.URL + "/", nil},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			st := newTestStore(t)
+			b, _, err := st.Create(store.NewBookmark{Title: c.name, URL: c.url})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := &Pool{dir: t.TempDir(), store: st, client: c.client}
+			for range store.IconGiveUp {
+				p.Run(b.ID)
+			}
+			if given, _ := st.IconsGivenUp(); given[b.ID] != b.URLKey {
+				t.Errorf("not given up after %d lasting failures: %v", store.IconGiveUp, given)
+			}
+		})
+	}
+}
+
+func TestOutage(t *testing.T) {
+	blocked := &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: fmt.Errorf("x (10.0.0.1): %w", errBlocked)}}
+	for _, c := range []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"guard refusal", blocked, false},
+		{"dns", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", IsNotFound: true}}}, true},
+		{"refused", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "dial", Net: "tcp", Err: syscall.ECONNREFUSED}}, true},
+		{"reset", &url.Error{Op: "Get", URL: "http://x/", Err: &net.OpError{Op: "read", Net: "tcp", Err: syscall.ECONNRESET}}, true},
+		{"deadline", &url.Error{Op: "Get", URL: "http://x/", Err: context.DeadlineExceeded}, true},
+		{"too many redirects", &url.Error{Op: "Get", URL: "http://x/", Err: errors.New("too many redirects")}, false},
+	} {
+		if got := outage(c.err); got != c.want {
+			t.Errorf("%s: outage %v, want %v", c.name, got, c.want)
+		}
 	}
 }
