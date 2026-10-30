@@ -618,7 +618,8 @@ async function desktop(browser, engine) {
   });
 
   await check('save page in a popup sized window: the panel is the window, Save draws the tick, a short fade, then Saved in place', async () => {
-    const c = await browser.newContext({ viewport: { width: 392, height: 544 }, locale: 'en-US' }); await c.addCookies(await ctx.cookies());
+    /* dark: the graphite gradient is the dark panel's; in light the panel is plain paper */
+    const c = await browser.newContext({ viewport: { width: 392, height: 544 }, locale: 'en-US', colorScheme: 'dark' }); await c.addCookies(await ctx.cookies());
     const sp = await c.newPage(); const u = `https://ui-test.example/${stamp}/popup`;
     await sp.goto(`${BASE}/save?url=${encodeURIComponent(u)}&title=${encodeURIComponent('ui-test popup ' + stamp)}`);
     await visible(sp.locator('#layer.open #sheet [data-f=title]')); await sp.waitForTimeout(1300);
@@ -831,6 +832,23 @@ async function desktop(browser, engine) {
       else { const order = ['bulk-share', 'sel-all', 'bulk-copy', 'bulk-move', 'sel-more', 'bulk-trash']; assert(g.ic.length && g.ic.every(a => order.indexOf(a) < g.ic.length) && !g.ic.includes('bulk-trash'), '720: folded ' + g.ic); }
       await page.keyboard.press('Escape'); await gone(page.locator('#dbulk .bulk')); }
     await page.setViewportSize({ width: 1440, height: 900 }); await visible(page.locator('#side .si'));
+  });
+
+  await check('login, How to save and save pages follow the system scheme and the bulb\'s pick, as the app does', async () => {
+    const WANT = { light: ['rgb(244, 241, 234)', 'rgb(27, 26, 23)'], dark: ['rgb(15, 15, 17)', 'rgb(240, 240, 240)'] };
+    const look = async (p, want, where) => { const g = await p.evaluate(() => ({ t: document.documentElement.dataset.theme, bg: getComputedStyle(document.documentElement).backgroundColor, ink: getComputedStyle(document.body).color }));
+      assert(g.t === want && g.bg === WANT[want][0] && g.ink === WANT[want][1], `${where}: wanted ${want}, got ${JSON.stringify(g)}`); };
+    for (const scheme of ['light', 'dark']) {
+      const c = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: scheme }), p = await c.newPage();
+      try {
+        await p.goto(BASE + '/login'); await look(p, scheme, `${scheme} login`);
+        await login(p);
+        for (const path of ['/bookmarklet', '/save']) { await p.goto(BASE + path); await look(p, scheme, `${scheme} ${path}`); }
+        const other = scheme === 'light' ? 'dark' : 'light';
+        await p.evaluate(t => localStorage.setItem('pinned-theme', t), other);
+        for (const path of ['/bookmarklet', '/save']) { await p.goto(BASE + path); await look(p, other, `${scheme} system, ${other} picked, ${path}`); }
+      } finally { await c.close(); }
+    }
   });
 
   await check('dates read the same in every locale: 4 Oct this year, 4 Oct 2025 before (de-DE too)', async () => {

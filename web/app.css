@@ -1455,9 +1455,10 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 .hs-tabs button[aria-selected="true"]{background:none;box-shadow:none;color:var(--ground);opacity:1;font-weight:600}
 @media (prefers-reduced-motion:reduce){.hs-tabs::before{transition:none}}
 /* brighter copy on this page; grey stays only for small notes */
-.bm-page{--ink-weak:#c9c9ce}
-.bm-page .lead{color:#b4b4b9}
+:root:not([data-theme="light"]) .bm-page{--ink-weak:#c9c9ce}
+:root:not([data-theme="light"]) .bm-page .lead{color:#b4b4b9}
 .hs-fix-tt span,.hs-keys span{color:#a4a4a9;opacity:1}
+:root[data-theme="light"] :is(.hs-fix-tt,.hs-keys) span{color:var(--ink-weak)}
 /* the iPhone steps drawn as Safari lays them out, in Pinned's colours */
 .ios{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:22px;background:#151517;box-shadow:inset 0 0 0 1px var(--line);font:400 13px/1.2 var(--sans);color:var(--ink)}
 .ios svg{width:16px;height:16px;flex:none}
@@ -1498,7 +1499,7 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 /* ---------- Light: the paper, ink and green of pinned.cc. The bulb or the system picks it (js/theme.js) ---------- */
 :root[data-theme="light"]{
   color-scheme:light;
-  --ground-base:#f4f1ea;
+  --ground-base:#f4f1ea; --ground:#f4f1ea;
   --screen:#f4f1ea; --surface:#faf8f3; --surface-up:#fdfcf8; --sheet:#faf8f3; --recess:#ebe7dd; --fold:#f7f4ee;
   --line:rgba(27,26,23,.10); --line-2:rgba(27,26,23,.16);
   --ink:#1b1a17; --ink-weak:#6b675e; --ink-faint:#948f84; --ink-h:#1b1a17; --ink-hp:#1b1a17;
@@ -1528,15 +1529,19 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
   --glass-menu:rgba(250,248,243,.94); --glass-panel:rgba(250,248,243,.9);
   --glass-sheet:rgba(250,248,243,.95); --glass-sheet-phone:rgba(250,248,243,.98); --glass-rows:rgba(250,248,243,.95);
   --save-ground:none; --save-sheet:#faf8f3;
+  --save-edge:var(--edge-top),0 0 0 1px var(--line),var(--shadow-glass); --save-field:rgba(255,255,255,.7);
 }
 :root[data-theme="light"] .pal-scrim,:root[data-theme="light"] .scrim{background:rgba(244,241,234,.55)}
 :root[data-theme="light"] .si[aria-current="true"]{background:rgba(27,26,23,.06)}
 :root[data-theme="light"] .pbottom .padd,:root[data-theme="light"] .pbulk,:root[data-theme="light"] .share-bottom .ps{background:rgba(250,248,243,.82);border-color:var(--line)}
 :root[data-theme="light"] .pbottom .padd{color:var(--ink);box-shadow:var(--shadow-float)}
 :root[data-theme="light"] .ptab-ind{box-shadow:0 0 0 1px var(--line-2),var(--card-shadow)}
-:root[data-theme="light"] .sheet .fld-in,:root[data-theme="light"] .sheet .ps,:root[data-theme="light"] .sheet .seg{background:rgba(255,255,255,.7)}
+:root[data-theme="light"] .sheet .fld-in,:root[data-theme="light"] .sheet .ps,:root[data-theme="light"] .sheet .seg,:root[data-theme="light"] .sheet .fpick .fmini:not(.fill) .v{background:rgba(255,255,255,.7)}
 :root[data-theme="light"] .fgrid>.ftile .ft-faces .fav{box-shadow:0 0 0 2px rgba(250,248,243,.9)}
 :root[data-theme="light"] .chk{border-color:rgba(27,26,23,.3);background:rgba(250,248,243,.7)}
+/* How to save in light: the iPhone drawings keep their dark screen, the drawn dots and icons a visible grey */
+:root[data-theme="light"] .ios{--ink:#f0f0f0;--accent:#5fd39a;--line:rgba(255,255,255,.055)}
+:root[data-theme="light"] .pv :is(.pv-dots i,.pv-fav i:not(.pin),.pv-app i:not(.pin)){background:var(--line-2)}
 
 /* ---------- One ground: the sidebar is a column of the page, no rules between it, the pins and the content ---------- */
 .side,.side-foot,.dock{border-color:transparent}
