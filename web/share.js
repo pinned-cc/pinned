@@ -72,9 +72,9 @@ function render() {
   document.title = shared.folder.name; byId('share-h1').textContent = shared.folder.name;
   const field = `<label class="${phone ? 'ps' : 'search'}" for="sq">${ic('search')}<span class="vh">Search</span><input id="sq" type="search" placeholder="Search ${esc(shared.folder.name)}" autocomplete="off" spellcheck="false" enterkeyhint="search" value="${esc(query)}"></label>`;
   byId('share').innerHTML = phone
-    ? `<div class="share-phone"><header class="ptbar home"><h2 class="ptb-t">${esc(shared.folder.name)}</h2><span class="ptb-c">${n}</span></header>${chips() ? `<div class="share-chipwrap">${chips()}</div>` : ''}<div class="bd" id="sbody">${body()}</div></div>
+    ? `<main class="share-phone"><header class="ptbar home"><h2 class="ptb-t">${esc(shared.folder.name)}</h2><span class="ptb-c">${n}</span></header>${chips() ? `<div class="share-chipwrap">${chips()}</div>` : ''}<div class="bd" id="sbody">${body()}</div></main>
        <div class="pbottom share-bottom"><div class="psrow">${field}</div></div>`
-    : `<div class="share-col"><header class="share-head"><h2>${esc(shared.folder.name)}</h2><span class="cnt">${n}</span><span class="sp"></span>${field}</header>${chips()}<div class="body" id="sbody">${body()}</div></div>`;
+    : `<main class="share-col"><header class="share-head"><h2>${esc(shared.folder.name)}</h2><span class="cnt">${n}</span><span class="sp"></span>${field}</header>${chips()}<div class="body" id="sbody">${body()}</div></main>`;
   loadIcons();
 }
 function locked(name) {

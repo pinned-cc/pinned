@@ -674,6 +674,7 @@ async function desktop(browser, engine) {
       await sp.fill('#unlock input[name=password]', 'ui-test-share-pw'); await sp.press('#unlock input[name=password]', 'Enter');
       await visible(sp.locator('#sbody article', { hasText: 'ui-test pwshare link' }));
       assert(await sp.locator('#sbody a[target=_blank]:not([rel~=noreferrer])').count() === 0, 'a bookmark link on the share page sends a referrer');
+      assert(await sp.locator('main').count() === 1, 'the open share page has no single main landmark');
       assert(!paths.some(p => p.includes(sh.token)), 'the token went into a request path: ' + paths.find(p => p.includes(sh.token)));
       await sp.goto(`${BASE}/s/${sh.token}`); await visible(sp.locator('#sbody article', { hasText: 'ui-test pwshare link' }));
       assert(errs.length === 0, 'console errors: ' + errs.join(' | '));
