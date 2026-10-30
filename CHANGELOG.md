@@ -9,6 +9,13 @@ Not released yet.
 ### New
 
 - Before Pinned upgrades the database to a new version, it saves a copy of the database as it was in the data folder, for example `bookmarks-schema6-2026-10-30-154210.db`, and names it in the log. The last three copies are kept, and a failed upgrade that starts again replaces its own identical copy instead of adding one. If the copy cannot be written, Pinned does not upgrade and stops with a message, and the database stays as it was. The README says how to go back to an older version with one of these copies.
+- An optional second factor for the login. Set `TOTP_SECRET` (or `TOTP_SECRET_FILE`) to a base32 secret and add it to your authenticator app by hand; the login then asks for a six digit code as well as the password. API tokens keep working without a code. The README says how to make a secret.
+- Signed in, under More on the desktop and in Settings on the phone, lists the browsers that are logged in, with when they signed in and were last used, and signs out one of them or all others.
+- `APP_PASSWORD_FILE` reads the app password from a file, for Docker or compose secrets.
+- New settings `ICONS` and `ICON_HOSTS`. `ICONS=off` stops every icon fetch, so nothing leaves the server and bookmarks keep their letter mark. `ICON_HOSTS` keeps icon fetches to the host names you list.
+- The save page and How to save have a Log out.
+- Logs record logins, failed logins, lockouts, logouts, API tokens, folder locks and share links as `security event=...` lines with the client address, never a password, token or cookie.
+- docs/security.md lists the limits Pinned enforces, the cryptography and keys it uses, what it stores and how it protects it, and what it logs.
 
 ### Fixes
 
@@ -17,6 +24,17 @@ Not released yet.
 - In the browser extension's options, an address typed with another scheme, such as `ftp://example.com`, was turned into `https://ftp//example.com`. It is now refused with the message to enter an address starting with http or https.
 - An import file whose folders nest more than 256 deep could stop the server. It is now refused with a message.
 - Someone guessing passwords from many addresses could make every login wait, yours included. A browser that logs in with the password now keeps a signed device cookie, is counted on its own and is no longer held by that limit. Changing the app password ends these cookies. Other browsers keep the limit as before.
+- A large import no longer makes saves and logins fail while it runs, and it is much faster: a 20 MB file with about 470000 links now takes about 15 seconds instead of more than 12 minutes.
+- On the keyboard, Tab moves through every sheet again (it stayed on the first button), and on the desktop Tab goes on past the search field to the rest of the page. Escape in the search leaves the focus in the search field. Enter in the search field opens the search.
+- Deleting a bookmark from Trash for good now asks first, like Empty trash.
+- Login, How to save, the save page and shared folders follow light and dark like the app. They were always dark.
+- Folder colours in light mode, search hits and the light switch are easier to read, the share page footer too. Touch targets on How to save, the folder share button and the card buttons are at least 44 px.
+- What's new can be reached again at window widths between 720 and 999 px.
+- Opening a shared folder with a password no longer shows an error in the browser console.
+- A shared folder moved into a locked folder keeps no share link. Before, its link stayed alive and could not be seen or revoked while the parent was locked.
+- Logging in ends the login the browser held before.
+- An SVG icon that holds script or loads anything from outside is refused; the letter mark is shown.
+- The icon fetch refuses more special network ranges (such as NAT64 and 6to4), ports other than 80, 443 and the bookmark's own, and redirects from https to plain http.
 
 ### Changes
 
@@ -26,6 +44,25 @@ Not released yet.
 - The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, use the copy saved before the upgrade.
 - Pages load faster on the second visit: the scripts, styles and fonts carry a validator, so the browser checks them and downloads nothing when they have not changed.
 - Images are built with Go 1.27.3, which fixes a certificate check flaw in Go 1.27.2 (GO-2026-6809), and golang.org/x/net 0.62.0.
+- New share links keep the token after `#`, for example `https://host/s/#token`, so it never reaches the server's or a proxy's log. Links made before keep working.
+- Wrong share and folder passwords are counted per link and per folder, and a browser that has logged in with the app password is counted on its own, so someone with one link cannot block the others.
+- Sessions end at the latest `SESSION_MAX_DAYS` (365 by default) after the login, however often they are used. `SESSION_DAYS` stays the time a login lasts without use. Logins from before count from the upgrade.
+- A new `APP_PASSWORD` now also revokes every API token, as it already ended sessions and device cookies.
+- Creating an API token asks for the app password again.
+- An API token works only with the browser extension that used it first. After reinstalling the extension in Firefox or Safari, create a new token.
+- Changing the password of a locked folder through the API needs its current password.
+- The export in the app leaves out folders that are locked in that browser. The nightly export in the data folder still holds everything, it is the backup.
+- Checking an address that sits in a locked folder says Already saved, the same answer as saving it. The `/health` answer no longer carries a bookmark count.
+- Site icons are served only for bookmarks you can see, so icons of locked folders stay hidden.
+- Bookmark addresses can be at most 8192 bytes. An import skips longer ones and counts them as skipped.
+- Data files are readable only by the user Pinned runs as: folders 0700, files 0600. At start Pinned makes files from older versions private too. A backup job that reads `export/bookmarks.html` as another user needs the same user or a group change.
+- The app password is kept as a bcrypt hash in the database instead of a fast keyed hash. Older lock and share password hashes are strengthened at the next right password.
+- Log lines carry the time in UTC with the zone.
+- Bookmarked sites no longer see which Pinned address a link was opened from (`Referrer-Policy: no-referrer`). The content policy also forbids plugins and base elements, and icons can never be framed. SVG answers name their charset.
+- Over HTTPS, the folder unlock and share cookies get the `__Host-` or `__Secure-` prefix, and a device cookie from plain http moves to the prefixed name.
+- The developer note under `/extras/README.txt` is no longer served.
+- The database gets an index for positions in folders, three columns for sessions and one for API tokens. 0.1.10 does not start on it; to go back, use the copy saved before the upgrade.
+- Images are built with a software bill of materials and provenance, and CI checks the Go modules with govulncheck. Dependabot waits a week before proposing a new version.
 
 ## 0.1.10, 2026-10-28
 
