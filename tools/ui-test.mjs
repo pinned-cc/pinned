@@ -174,6 +174,27 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await gone(page.locator('#screen.selecting'));
     await shot(page, `${engine}-desktop-dashboard`);
   });
+  await check('folder chips, the current sidebar folder and search hits reach 4.5:1, the bulb 3:1, light and dark', async () => {
+    const low = await page.evaluate(() => {
+      const parse = c => { let m = c.match(/rgba?\(([^)]+)\)/); if (m) { const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p[3] == null ? 1 : p[3]]; }
+        m = c.match(/color\(srgb ([^)]+)\)/); const p = m[1].split(/[ /]+/).filter(Boolean).map(Number); return [p[0] * 255, p[1] * 255, p[2] * 255, p[3] == null ? 1 : p[3]]; };
+      const over = (a, b) => [0, 1, 2].map(i => a[i] * a[3] + b[i] * (1 - a[3])).concat(1);
+      const bgOf = el => { const L = []; for (let e = el; e; e = e.parentElement) { const c = parse(getComputedStyle(e).backgroundColor); if (c[3] > 0) { L.push(c); if (c[3] >= 1) break; } }
+        let b = parse(getComputedStyle(document.documentElement).backgroundColor); for (let i = L.length - 1; i >= 0; i--) b = over(L[i], b); return b; };
+      const lum = c => c.slice(0, 3).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [.2126, .7152, .0722][i], 0);
+      const ratio = (el, color) => { const bg = bgOf(el), f = parse(color || getComputedStyle(el).color), fg = over([f[0], f[1], f[2], f[3] * +getComputedStyle(el).opacity], bg), x = lum(fg), y = lum(bg); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+      const out = [], root = document.documentElement, was = root.dataset.theme, host = document.getElementById('body');
+      for (const t of ['light', 'dark']) { root.dataset.theme = t;
+        for (const h of ['cyan', 'coral', 'lilac', 'lime', 'mint', 'rose', 'tray', 'plain']) {
+          const w = document.createElement('div'); w.innerHTML = `<span class="gc-chip hue-${h}"><span class="dot"></span><span class="gc-cn">Folder</span></span><button type="button" class="si hue-${h}" aria-current="true" style="--hp:var(--${h}-p);--h:var(--${h})"><span class="si-n">Folder</span></button><p class="t-host"><mark class="hit">hit</mark></p>`;
+          host.prepend(w); const r = [ratio(w.querySelector('.gc-cn')), ratio(w.querySelector('.si-n')), ratio(w.querySelector('mark'))]; w.remove();
+          r.forEach((v, i) => { if (v < 4.5) out.push(`${t} ${h} ${['chip', 'sidebar', 'hit'][i]} ${v.toFixed(2)}`); }); }
+        const b = document.querySelector('.bulb'); if (b) { const cs = getComputedStyle(b); for (const c of [cs.getPropertyValue('--bulb-rim').trim() || cs.color, cs.color]) {
+          const d = document.createElement('i'); d.style.color = c; document.body.appendChild(d); const v = ratio(b, getComputedStyle(d).color); d.remove(); if (v < 3) out.push(`${t} bulb ${v.toFixed(2)}`); } } }
+      root.dataset.theme = was; return out; });
+    assert(!low.length, 'under the contrast needed: ' + low.join(', '));
+  });
+
   await check('1440: selecting keeps the toolbar and every card in place; Select turns into the pressed Done, the bar takes the search\'s place', async () => {
     const boxes = () => page.evaluate(() => [...document.querySelectorAll('#body article[data-id], #tbwrap .tb, #tbwrap .tb > *, #head')]
       .map(e => { const r = e.getBoundingClientRect(); return [e.dataset.id || e.dataset.a || e.tagName, r.x, r.y, r.width, r.height]; }));

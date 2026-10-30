@@ -214,7 +214,7 @@ body.desk{overflow:hidden}
 .search{flex:1;min-width:0;max-width:520px;height:var(--h-field);border-radius:var(--r-pill-l);background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;gap:var(--s-6);padding:0 var(--s-5) 0 var(--s-9);color:var(--ink-weak)}
 @media (hover:hover){.search:hover{border-color:var(--line-2)}}
 .search:focus-within{background:var(--surface-up);border-color:transparent;box-shadow:var(--focus-glow)}
-mark.hit{background:rgba(95,211,154,.18);color:inherit;border-radius:3px}
+mark.hit{background:rgba(95,211,154,.18);color:color-mix(in srgb,currentColor 60%,var(--ink));border-radius:3px}
 /* one field for the desktop's input and the phone's button: 16 px text, so iOS never zooms on it */
 .search input,.search .sf-t{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:400 var(--t-input) var(--sans)}
 .search input{height:100%}
@@ -1506,13 +1506,13 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
   --line:rgba(27,26,23,.10); --line-2:rgba(27,26,23,.16);
   --ink:#1b1a17; --ink-weak:#6b675e; --ink-faint:#948f84; --ink-h:#1b1a17; --ink-hp:#1b1a17;
   --accent:#1b1a17; --accent-ink:#f4f1ea; --accent-soft:#167a4a; --danger:#b42318;
-  --cyan:#2f7d93;  --cyan-p:#2f7d93;
-  --coral:#c0573c; --coral-p:#c0573c;
-  --lilac:#6a58b0; --lilac-p:#6a58b0;
-  --lime:#6a8a24;  --lime-p:#6a8a24;
-  --mint:#167a4a;  --mint-p:#167a4a;
-  --rose:#b14d7a;  --rose-p:#b14d7a;
-  --tray:#167a4a;  --tray-p:#167a4a;
+  --cyan:#2f7d93;  --cyan-p:#28697c;
+  --coral:#c0573c; --coral-p:#9d4731;
+  --lilac:#6a58b0; --lilac-p:#6452ac;
+  --lime:#6a8a24;  --lime-p:#516a1c;
+  --mint:#167a4a;  --mint-p:#146d42;
+  --rose:#b14d7a;  --rose-p:#9a436a;
+  --tray:#167a4a;  --tray-p:#146d42;
   --bin:#b42318;   --bin-p:#b42318;
   --plain:#6b675e; --plain-p:#1b1a17;
   --tile-blank:#ebe7dd;
@@ -1558,10 +1558,10 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 #dockwrap{padding-top:20px}
 
 /* ---------- The bulb: light or dark. Lit in light, off in dark; bottom right on the desktop, beside the gear on the phone ---------- */
-.bulb{width:32px;height:32px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--ink-faint);opacity:.8;transition:opacity 160ms var(--ease-out),color 160ms var(--ease-out)}
-.bulb:hover{opacity:1;color:var(--ink-weak)}
+.bulb{width:32px;height:32px;display:grid;place-items:center;border-radius:var(--r-pill);color:var(--ink-weak);opacity:.8;transition:opacity 160ms var(--ease-out),color 160ms var(--ease-out)}
+.bulb:hover{opacity:1;color:var(--ink)}
 .bulb svg.i{width:16px;height:22px;overflow:visible;stroke-width:1.3}
-:root[data-theme="light"] .bulb{--bulb-glass:#fbe7b0;--bulb-rim:#bf9d4c;--bulb-fil:#b07a12}
+:root[data-theme="light"] .bulb{--bulb-glass:#fbe7b0;--bulb-rim:#a3843a;--bulb-fil:#b07a12;opacity:1}
 :root[data-theme="light"] .bulb svg{filter:drop-shadow(0 0 4px rgba(255,200,80,.35))}
 .bulb:focus-visible{outline:none;box-shadow:var(--focus-glow)}
 .bulb.desk{position:fixed;right:16px;bottom:14px;z-index:40}
