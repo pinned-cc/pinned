@@ -8,12 +8,12 @@ Not released yet.
 
 ### New
 
-- Before Pinned upgrades the database to a new version, it saves a copy of the database as it was in the data folder, for example `bookmarks-schema6-2026-10-30-154210.db`, and names it in the log. The last three copies are kept. If the copy cannot be written, Pinned does not upgrade and stops with a message, and the database stays as it was. The README says how to go back to an older version with one of these copies.
+- Before Pinned upgrades the database to a new version, it saves a copy of the database as it was in the data folder, for example `bookmarks-schema6-2026-10-30-154210.db`, and names it in the log. The last three copies are kept, and a failed upgrade that starts again uses the copy it already has. If the copy cannot be written, Pinned does not upgrade and stops with a message, and the database stays as it was. The README says how to go back to an older version with one of these copies.
 
 ### Fixes
 
 - A site with a broken favicon.ico could stop the server, and it stopped again at every start until the bookmark was removed by hand. A broken icon now leaves the letter mark and the server keeps running.
-- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again. Only failures where the site answered count; a network outage at start, a DNS failure or a timeout does not.
+- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again. Only lasting failures count: an error page, a broken icon, a certificate that is not trusted, a redirect loop. A network outage at start, a DNS failure, a refused connection or a timeout does not.
 - An import file whose folders nest more than 256 deep could stop the server. It is now refused with a message.
 - Someone guessing passwords from many addresses could make every login wait, yours included. A browser that logs in with the password now keeps a signed device cookie, is counted on its own and is no longer held by that limit. Changing the app password ends these cookies. Other browsers keep the limit as before.
 

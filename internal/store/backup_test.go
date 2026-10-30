@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 )
@@ -137,6 +138,13 @@ func TestBackupRotationKeepsThree(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte("x"), 0o600); err != nil {
 			t.Fatal(err)
 		}
+		// Rotation goes by modification time; give each the time in its name.
+		if len(name) < 20 {
+			continue
+		}
+		if when, err := time.Parse("2006-01-02-150405", strings.TrimSuffix(name[len(name)-20:], ".db")); err == nil {
+			os.Chtimes(filepath.Join(dir, name), when, when)
+		}
 	}
 	s, err := Open(path)
 	if err != nil {
@@ -176,5 +184,77 @@ func TestBackupFailureBlocksMigration(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "missing")); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("backup folder created: %v", err)
+	}
+}
+
+// A wrong clock never removes the copy just written: with the clock at
+// 1970 it is the oldest by name and by time, and it is still kept.
+func TestBackupKeptWhenClockIsBehind(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "bookmarks.db")
+	oldDB(t, path, len(migrations)-1)
+	for _, name := range []string{
+		"bookmarks-schema6-2026-10-01-120000.db",
+		"bookmarks-schema6-2026-10-02-120000.db",
+		"bookmarks-schema6-2026-10-03-120000.db",
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		// Older than the database, so none of them stands for it.
+		long := time.Now().Add(-24 * time.Hour)
+		os.Chtimes(filepath.Join(dir, name), long, long)
+	}
+	backupTime = func() time.Time { return time.Unix(0, 0).UTC() }
+	t.Cleanup(func() { backupTime = time.Now })
+	// The file system clock is behind too.
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	fresh := filepath.Join(dir, "bookmarks-schema6-1970-01-01-000000.db")
+	os.Chtimes(fresh, time.Unix(0, 0), time.Unix(0, 0))
+	pruneBackups(path, filepath.Base(fresh))
+	if v, _, folders := schemaOf(t, fresh); v != len(migrations)-1 || folders != 1 {
+		t.Errorf("fresh copy: schema %d, %d folders", v, folders)
+	}
+	if n := len(backups(t, dir)); n != KeepBackups {
+		t.Errorf("%d backups, want %d", n, KeepBackups)
+	}
+}
+
+// When an upgrade fails and Pinned starts again, the database is still as
+// in the copy of the first start: that copy is used, no new one is written,
+// and older copies are not pushed out by a crash loop.
+func TestFailedUpgradeReusesItsCopy(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "bookmarks.db")
+	old := len(migrations)
+	oldDB(t, path, old)
+	keepOld := filepath.Join(dir, "bookmarks-schema5-2026-01-01-120000.db")
+	if err := os.WriteFile(keepOld, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	when := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	os.Chtimes(keepOld, when, when)
+	orig := migrations
+	migrations = append(append([]string{}, orig...), `THIS IS NOT SQL`)
+	t.Cleanup(func() { migrations = orig })
+
+	for i := 0; i < 5; i++ {
+		backupTime = func() time.Time { return time.Date(2026, 10, 30, 15, 0, i, 0, time.UTC) }
+		if s, err := Open(path); err == nil {
+			s.Close()
+			t.Fatal("a broken migration opened")
+		}
+	}
+	backupTime = time.Now
+	got := backups(t, dir)
+	if len(got) != 2 || got[0] != keepOld {
+		t.Errorf("backups after 5 failed starts: %v, want the old one and one new", got)
+	}
+	if v, _, _ := schemaOf(t, path); v != old {
+		t.Errorf("database at schema %d, want %d", v, old)
 	}
 }

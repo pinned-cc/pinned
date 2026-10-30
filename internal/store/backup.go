@@ -34,59 +34,104 @@ func stem(dbPath string) string {
 	return strings.TrimSuffix(base, filepath.Ext(base))
 }
 
-// backupBeforeMigrate writes a consistent copy of the database with VACUUM
-// INTO, which reads one snapshot inside a transaction, so the copy is whole
-// even while WAL holds recent writes. It then keeps the newest KeepBackups
-// copies. It returns the path of the copy.
-func backupBeforeMigrate(db *sql.DB, dbPath string, version int) (string, error) {
-	dst := backupPath(dbPath, version, backupTime())
-	if _, err := os.Stat(dst); err == nil {
-		return "", fmt.Errorf("%s already exists", dst)
+// lastChange returns when the database at dbPath or its WAL file last
+// changed, or the zero time when neither exists. Open takes it before it
+// opens the database.
+func lastChange(dbPath string) time.Time {
+	var t time.Time
+	for _, p := range []string{dbPath, dbPath + "-wal"} {
+		if fi, err := os.Stat(p); err == nil && fi.ModTime().After(t) {
+			t = fi.ModTime()
+		}
 	}
-	if _, err := db.Exec(`VACUUM INTO ?`, dst); err != nil {
-		os.Remove(dst) // a partial file is no backup
-		return "", err
-	}
-	if err := os.Chmod(dst, 0o600); err != nil {
-		log.Printf("database backup: %v", err)
-	}
-	pruneBackups(dbPath)
-	return dst, nil
+	return t
 }
 
-// pruneBackups removes all but the newest KeepBackups upgrade copies of the
-// database at dbPath. It only touches files named by backupPath's pattern.
-// A file it cannot remove is logged and kept.
-func pruneBackups(dbPath string) {
-	dir := filepath.Dir(dbPath)
-	re := regexp.MustCompile(`^` + regexp.QuoteMeta(stem(dbPath)) + `-schema(\d+)-(\d{4}-\d{2}-\d{2}-\d{6})\.db$`)
-	entries, err := os.ReadDir(dir)
+type backupFile struct {
+	name   string
+	schema int
+	mod    time.Time
+}
+
+// listBackups returns the upgrade copies of the database at dbPath: regular
+// files named by backupPath's pattern, nothing else.
+func listBackups(dbPath string) ([]backupFile, error) {
+	re := regexp.MustCompile(`^` + regexp.QuoteMeta(stem(dbPath)) + `-schema(\d+)-\d{4}-\d{2}-\d{2}-\d{6}\.db$`)
+	entries, err := os.ReadDir(filepath.Dir(dbPath))
 	if err != nil {
-		log.Printf("database backup: %v", err)
-		return
+		return nil, err
 	}
-	type backupFile struct {
-		name, when string
-		schema     int
-	}
-	var copies []backupFile
+	var out []backupFile
 	for _, e := range entries {
 		m := re.FindStringSubmatch(e.Name())
 		if m == nil || !e.Type().IsRegular() {
 			continue
 		}
-		n, _ := strconv.Atoi(m[1])
-		copies = append(copies, backupFile{e.Name(), m[2], n})
-	}
-	// Newest first: by time in the name, then by schema.
-	sort.Slice(copies, func(i, j int) bool {
-		if copies[i].when != copies[j].when {
-			return copies[i].when > copies[j].when
+		fi, err := e.Info()
+		if err != nil {
+			continue
 		}
-		return copies[i].schema > copies[j].schema
+		n, _ := strconv.Atoi(m[1])
+		out = append(out, backupFile{e.Name(), n, fi.ModTime()})
+	}
+	return out, nil
+}
+
+// backupBeforeMigrate makes sure a copy of the database at schema version
+// exists and returns its path. When a copy of this schema was written after
+// the database last changed (changed, from lastChange), the database is
+// still as in that copy, for example after an upgrade that failed and a
+// restart, and that copy is used. Otherwise it writes a new one with VACUUM
+// INTO, which reads one snapshot inside a transaction, so the copy is whole
+// even while WAL holds recent writes. The file is created 0600 before SQLite
+// fills it. Then the newest KeepBackups copies are kept, always including
+// this one.
+func backupBeforeMigrate(db *sql.DB, dbPath string, version int, changed time.Time) (dst string, reused bool, err error) {
+	have, err := listBackups(dbPath)
+	if err != nil {
+		return "", false, err
+	}
+	for _, b := range have {
+		if b.schema == version && !changed.IsZero() && b.mod.After(changed) {
+			dst, reused = filepath.Join(filepath.Dir(dbPath), b.name), true
+		}
+	}
+	if !reused {
+		dst = backupPath(dbPath, version, backupTime())
+		// VACUUM INTO fills an empty file and keeps its mode. O_EXCL refuses
+		// a name that is already taken.
+		f, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+		if err != nil {
+			return "", false, err
+		}
+		f.Close()
+		if _, err := db.Exec(`VACUUM INTO ?`, dst); err != nil {
+			os.Remove(dst) // a partial file is no backup
+			return "", false, err
+		}
+	}
+	pruneBackups(dbPath, filepath.Base(dst))
+	return dst, reused, nil
+}
+
+// pruneBackups removes all but the newest KeepBackups upgrade copies of the
+// database at dbPath, newest by modification time. It never removes keep,
+// the copy of this start, even when the clock is wrong. A file it cannot
+// remove is logged and kept.
+func pruneBackups(dbPath, keep string) {
+	copies, err := listBackups(dbPath)
+	if err != nil {
+		log.Printf("database backup: %v", err)
+		return
+	}
+	sort.Slice(copies, func(i, j int) bool {
+		if copies[i].name == keep || copies[j].name == keep {
+			return copies[i].name == keep
+		}
+		return copies[i].mod.After(copies[j].mod)
 	})
 	for _, c := range copies[min(len(copies), KeepBackups):] {
-		if err := os.Remove(filepath.Join(dir, c.name)); err != nil {
+		if err := os.Remove(filepath.Join(filepath.Dir(dbPath), c.name)); err != nil {
 			log.Printf("database backup: %v", err)
 		}
 	}

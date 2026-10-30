@@ -65,6 +65,7 @@ func Open(path string) (*Store, error) {
 	// WAL lets reads run while one write is open. Every transaction takes
 	// the write lock when it begins (_txlock=immediate), so two writers wait
 	// for each other through busy_timeout instead of failing halfway.
+	changed := lastChange(path)
 	dsn := "file:" + path + "?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)&_txlock=immediate"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
@@ -75,7 +76,7 @@ func Open(path string) (*Store, error) {
 	db.SetMaxOpenConns(4)
 	db.SetMaxIdleConns(4)
 	s := &Store{db: db, Now: time.Now}
-	if err := s.migrate(path); err != nil {
+	if err := s.migrate(path, changed); err != nil {
 		db.Close()
 		var newer *NewerSchemaError
 		var backup *BackupError
@@ -187,7 +188,7 @@ func (e *BackupError) Error() string {
 
 func (e *BackupError) Unwrap() error { return e.Err }
 
-func (s *Store) migrate(path string) error {
+func (s *Store) migrate(path string, changed time.Time) error {
 	if _, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)`); err != nil {
 		return err
 	}
@@ -205,11 +206,15 @@ func (s *Store) migrate(path string) error {
 	}
 	// A new database (version 0) has nothing to keep.
 	if version > 0 && version < len(migrations) {
-		dst, err := backupBeforeMigrate(s.db, path, version)
+		dst, reused, err := backupBeforeMigrate(s.db, path, version, changed)
 		if err != nil {
 			return &BackupError{Version: version, Err: err}
 		}
-		log.Printf("database: upgrading from schema %d to %d; the database as it was is saved at %s", version, len(migrations), dst)
+		how := "saved"
+		if reused {
+			how = "unchanged since it was saved"
+		}
+		log.Printf("database: upgrading from schema %d to %d; the database as it was is %s at %s", version, len(migrations), how, dst)
 	}
 	for i := version; i < len(migrations); i++ {
 		tx, err := s.db.Begin()
