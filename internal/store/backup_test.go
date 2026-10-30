@@ -283,3 +283,38 @@ func TestBackupDedupeNeedsSameBytes(t *testing.T) {
 		t.Errorf("%d backups, want 3", n)
 	}
 }
+
+// A copy is written under a temporary name and renamed when whole; a
+// temporary file left by a crash is removed, and two starts in the same
+// second do not fail.
+func TestBackupTempFileAndSameSecond(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "bookmarks.db")
+	orig := migrations
+	t.Cleanup(func() { migrations = orig; backupTime = time.Now })
+	oldDB(t, path, len(migrations))
+	migrations = append(append([]string{}, orig...), `THIS IS NOT SQL`)
+	leftover := filepath.Join(dir, ".backup-123.tmp")
+	os.WriteFile(leftover, []byte("half"), 0o600)
+	backupTime = func() time.Time { return time.Date(2026, 10, 30, 15, 0, 0, 0, time.UTC) }
+	for i := 0; i < 2; i++ {
+		_, err := Open(path)
+		var be *BackupError
+		if err == nil || errors.As(err, &be) {
+			t.Fatalf("start %d: %v, want the broken migration to fail, not the backup", i+1, err)
+		}
+	}
+	if _, err := os.Stat(leftover); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("leftover temporary file kept: %v", err)
+	}
+	if tmp, _ := filepath.Glob(filepath.Join(dir, ".backup-*.tmp")); len(tmp) != 0 {
+		t.Errorf("temporary files left: %v", tmp)
+	}
+	got := backups(t, dir)
+	if len(got) != 1 {
+		t.Fatalf("backups %v, want one", got)
+	}
+	if fi, _ := os.Stat(got[0]); fi.Mode().Perm() != 0o600 {
+		t.Errorf("mode %v", fi.Mode().Perm())
+	}
+}

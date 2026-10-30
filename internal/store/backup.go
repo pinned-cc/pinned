@@ -69,24 +69,39 @@ func listBackups(dbPath string) ([]backupFile, error) {
 // backupBeforeMigrate writes a copy of the database at schema version with
 // VACUUM INTO, which reads one snapshot inside a transaction, so the copy is
 // whole even while WAL holds recent writes, and returns its path. The file
-// is created 0600 before SQLite fills it. An older copy of the same schema
+// is created 0600 under a temporary name and renamed when whole. An older copy of the same schema
 // with the same bytes, as after an upgrade that failed and a restart, is
 // removed, so failed starts do not push out other copies. Then the newest
 // KeepBackups copies are kept, always including this one.
 func backupBeforeMigrate(db *sql.DB, dbPath string, version int) (string, error) {
 	dst := backupPath(dbPath, version, backupTime())
-	// VACUUM INTO fills an empty file and keeps its mode. O_EXCL refuses a
-	// name that is already taken.
-	f, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	dir := filepath.Dir(dst)
+	// The copy is written under a temporary name and renamed when whole, so
+	// a crash midway never leaves a file that looks like a backup. Temporary
+	// files left by such a crash are removed first. CreateTemp makes the file
+	// 0600, and VACUUM INTO fills an empty file and keeps its mode.
+	if old, err := filepath.Glob(filepath.Join(dir, ".backup-*.tmp")); err == nil {
+		for _, p := range old {
+			os.Remove(p)
+		}
+	}
+	f, err := os.CreateTemp(dir, ".backup-*.tmp")
 	if err != nil {
 		return "", err
 	}
+	tmp := f.Name()
 	f.Close()
-	if _, err := db.Exec(`VACUUM INTO ?`, dst); err != nil {
-		os.Remove(dst) // a partial file is no backup
+	if _, err := db.Exec(`VACUUM INTO ?`, tmp); err != nil {
+		os.Remove(tmp) // a partial file is no backup
 		return "", err
 	}
-	dir := filepath.Dir(dbPath)
+	// A copy of the same name is one taken in the same second of the same
+	// schema; the new one replaces it.
+	if err := os.Rename(tmp, dst); err != nil {
+		os.Remove(tmp)
+		return "", err
+	}
+	dir = filepath.Dir(dbPath)
 	if have, err := listBackups(dbPath); err == nil {
 		for _, b := range have {
 			if b.schema != version || b.name == filepath.Base(dst) {
