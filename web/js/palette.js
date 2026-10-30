@@ -49,7 +49,7 @@ export function openPalette(o = {}) {
 export function palRecentFill() {
   const q = ui.q.trim(), R = palRecent();
   byId('pal-rec').innerHTML = R.length ? `<div class="pal-lbl">Recent</div><nav class="precent pal-recent" aria-label="Recent">` + R.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
-    return `<a class="prc pal-rc" href="${esc(b.url)}" target="_blank" rel="noopener" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}">
+    return `<a class="prc pal-rc" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}">
       <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>
       <span class="prc-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>` : (q ? '' : `<p class="pal-none">Nothing opened yet.</p>`);
 }
@@ -71,7 +71,7 @@ export function palFill() {
         <span class="fav pal-vi">${ic(a.icon)}</span><span class="pal-t">${hl(a.label, q)}</span><span class="pal-p">${a.key}</span></button>`; }).join('') + `</div>`;
     for (const g of groups) { if (n >= PAL_CAP) break; const take = g.items.slice(0, PAL_CAP - n);
       h += `<div class="pal-grp"><div class="pal-lbl pal-g"><span>${esc(g.label)}</span><span class="num">${g.items.length}</span></div>` + take.map(b => { const i = n++; layers.palette.items.push(b);
-        return `<a class="pal-it" role="option" id="pal-${i}" aria-selected="${i === layers.palette.idx}" href="${esc(b.url)}" target="_blank" rel="noopener" tabindex="-1" data-pi="${i}" data-open="${b.id}">
+        return `<a class="pal-it" role="option" id="pal-${i}" aria-selected="${i === layers.palette.idx}" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" tabindex="-1" data-pi="${i}" data-open="${b.id}">
           ${favHTML(b, 28)}<span class="pal-t">${hl(b.title, q)}</span>${hostLine(hostOf(b), 'pal-h', true, q)}<span class="pal-p">${esc(pathOf(fid(b)))}</span></a>`; }).join('') + `</div>`; }
     if (!total && !layers.palette.items.length) h = `<p class="pal-none">No matches.</p>`;
     else if (total > PAL_CAP) h += `<p class="pal-none pal-more">${total - PAL_CAP} more, keep typing</p>`;

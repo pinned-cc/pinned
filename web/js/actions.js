@@ -14,7 +14,7 @@ import { byId, copy, errorText, plural, reduce, store, wait } from './util.js';
 export const tileEls = ids => ids.map(id => document.querySelector(`#app article[data-id="${id}"]`)).filter(Boolean);
 export const leave = async ids => { const els = tileEls(ids); if (!els.length || reduce()) return; els.forEach(e => { e.classList.remove('lift', 'press'); e.classList.add('leaving'); }); await wait(240); };
 export const actions = {
-  open(b) { window.open(b.url, '_blank', 'noopener'); actions.opened(b.id); },
+  open(b) { window.open(b.url, '_blank', 'noopener,noreferrer'); actions.opened(b.id); },
   opened(id) { fetch(`/api/bookmarks/${id}/open`, { method: 'POST', credentials: 'same-origin', keepalive: true, headers: { 'X-Requested-With': 'fetch' } }).catch(() => {}); },
   async share(b) {
     /* the system share sheet wherever the browser has one; a new email with the address where it does not */

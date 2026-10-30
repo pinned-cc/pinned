@@ -19,7 +19,7 @@ export const ago = ts => { const s = Math.max(0, Date.now() / 1000 - ts), n = da
   if (n < 7) return WEEKDAYS[d.getDay()];
   return fmtDay(ts); };
 const when = ts => `<time datetime="${new Date(ts * 1000).toISOString()}">${esc(ago(ts))}</time>`;
-const linkAttrs = b => `href="${esc(b.url)}" target="_blank" rel="noopener" data-open="${b.id}" draggable="false"`;
+const linkAttrs = b => `href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-open="${b.id}" draggable="false"`;
 const folderName = b => b.folder_id == null ? 'Inbox' : (folderById.get(b.folder_id) || { name: '' }).name;
 /* the gallery's time: when a link was opened, or when it was saved while nothing has been opened yet */
 let at = 'opened_at';

@@ -70,7 +70,7 @@ export function deskTree() {
 export function deskDock() {
   const P = pinned(); if (!P.length) return '';
   return `<nav class="dock" aria-label="Pinned" data-dock>` + P.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
-    return `<a class="dk" href="${esc(b.url)}" target="_blank" rel="noopener" title="${esc(b.title)}" data-id="${b.id}" data-open="${b.id}" draggable="false">
+    return `<a class="dk" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" title="${esc(b.title)}" data-id="${b.id}" data-open="${b.id}" draggable="false">
       <span class="dk-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="56" height="56" draggable="false">` : l}</span>
       <span class="dk-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
 }
@@ -137,7 +137,7 @@ export function deskTile(b, ts) {
     <div class="t-main">${favHTML(b)}
       ${editing ? `<input class="t-edit" data-rename="${b.id}" value="${esc(b.title)}" aria-label="Title" spellcheck="false" autocomplete="off" enterkeyhint="done">`
                 : b.deleted_at ? `<button type="button" class="t-title" data-a="tile-menu" aria-haspopup="menu">${hl(b.title)}</button>`
-                : `<a class="t-title" href="${esc(b.url)}" target="_blank" rel="noopener" draggable="false" data-open="${b.id}">${hl(b.title)}</a>`}
+                : `<a class="t-title" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" draggable="false" data-open="${b.id}">${hl(b.title)}</a>`}
       <p class="t-host">${hostLine(hostOf(b), '', true)}</p></div>
     <div class="t-strip hue-${hue(fid(b))}"><span class="dot"></span><span class="path">${esc(pathOf(fid(b)))}</span>${ts ? `<time datetime="${isoDate(ts)}">${fmtDate(ts)}</time>` : ''}</div>
     ${actionBar(b)}
@@ -258,7 +258,7 @@ export const nfForm = () => `<div class="nf" data-nf><input class="fld-in" name=
 export const ptShell = (b, inner) => { const label = `${esc(b.title)}, ${esc(hostOf(b))}`; return ui.selecting
     ? `<button type="button" class="pt-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}" aria-label="Select ${esc(b.title)}">${inner}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
     : b.deleted_at ? `<button type="button" class="pt-in" data-a="tile-acts" aria-label="${label}">${inner}</button>`
-    : `<a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener" draggable="false" data-open="${b.id}" aria-label="${label}">${inner}</a>`; };
+    : `<a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" draggable="false" data-open="${b.id}" aria-label="${label}">${inner}</a>`; };
 export function phoneTile(b, ts) {
   const inner = `<span class="pt-main">${favHTML(b, 36)}<span class="pt-title">${hl(b.title)}</span>${hostLine(hostOf(b), 'host', true)}</span>
     <span class="pt-strip hue-${hue(fid(b))}"><span class="dot"></span>${ts ? `<time datetime="${isoDate(ts)}">${fmtDate(ts)}</time>` : ''}</span>`;
@@ -335,7 +335,7 @@ export function phoneRecents() {
   const all = pinned();
   if (!all.length) return head;
   return head + `<div class="pglbl prc-lbl"><span>Pinned</span></div><nav class="precent" aria-label="Recent" data-dock>` + all.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
-    return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener" data-id="${b.id}" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}${b.pinned ? ', pinned' : ''}">
+    return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-id="${b.id}" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}${b.pinned ? ', pinned' : ''}">
       <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
       <span class="prc-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
 }

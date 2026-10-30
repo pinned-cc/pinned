@@ -153,6 +153,9 @@ async function desktop(browser, engine) {
     assert(await page.locator('#tbwrap [data-a="select"]').count() === 1, 'no Select on the Dashboard');
     const links = await page.evaluate(() => [...document.querySelectorAll('#body .gal a[data-open]')].every(a => a.target === '_blank' && /noopener/.test(a.rel)));
     assert(links, 'a recents link is not a new tab with noopener');
+    /* a bookmarked site is never told where the click came from */
+    const leaks = await page.evaluate(() => [...document.querySelectorAll('#app a[data-open]')].filter(a => !/\bnoreferrer\b/.test(a.rel)).length);
+    assert(!leaks, `${leaks} bookmark links without noreferrer`);
     const heads = await page.evaluate(() => [...document.querySelectorAll('#body .gal .gs-h')].map(h => h.firstChild.textContent.trim()));
     const ORDER = ['Today', 'Yesterday', 'Last 7 days', 'Last 30 days', 'Earlier'];
     assert(heads[0] === 'Today', 'the link opened now is not under Today: ' + heads.join(', '));
@@ -409,6 +412,7 @@ async function desktop(browser, engine) {
     await until(page, () => document.querySelectorAll('#pal .pal-it').length === 1, null, 'one result in the palette');
     assert(!(await page.locator('[aria-live]:not(#announce)').count()), 'a live region other than #announce');
     await visible(page.locator('#pal .pal-it', { hasText: T.title }));
+    assert(/\bnoreferrer\b/.test(await page.locator('#pal .pal-it', { hasText: T.title }).getAttribute('rel')), 'a search result link without noreferrer');
     await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
     await until(page, () => !document.querySelector('#pal'), null, 'palette closed');
