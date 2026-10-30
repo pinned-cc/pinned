@@ -218,7 +218,7 @@ func TestPasswordStoredAsBcrypt(t *testing.T) {
 	if changed, err := syncPassword(st, secret, "first password"); err != nil || changed {
 		t.Fatalf("move: changed=%v err=%v", changed, err)
 	}
-	if setting("password_hmac") != "" || bcrypt.CompareHashAndPassword([]byte(setting("password_hash")), []byte("first password")) != nil {
+	if setting("password_hmac") != "" || bcrypt.CompareHashAndPassword([]byte(setting("password_hash")), []byte(auth.AppPasswordKey("first password"))) != nil {
 		t.Fatal("the HMAC was not replaced by a bcrypt hash of the password")
 	}
 	before := setting("password_hash")
@@ -230,9 +230,19 @@ func TestPasswordStoredAsBcrypt(t *testing.T) {
 	}
 
 	// A hash below the current cost is replaced at the next start.
-	weak, _ := bcrypt.GenerateFromPassword([]byte("second password"), bcrypt.MinCost)
+	weak, _ := bcrypt.GenerateFromPassword([]byte(auth.AppPasswordKey("second password")), bcrypt.MinCost)
 	db.Exec(`UPDATE settings SET value = ? WHERE key = 'password_hash'`, string(weak))
 	if changed, _ := syncPassword(st, secret, "second password"); changed || cost() != auth.BcryptCost {
 		t.Errorf("weak hash: changed=%v cost=%d", changed, cost())
+	}
+
+	// An app password longer than bcrypt's 72 bytes still starts, and a
+	// change after its 72nd byte is noticed.
+	long := strings.Repeat("long password ", 8)
+	if _, err := syncPassword(st, secret, long); err != nil {
+		t.Fatalf("long password: %v", err)
+	}
+	if changed, err := syncPassword(st, secret, long+"x"); err != nil || !changed {
+		t.Errorf("a change after byte 72: changed=%v err=%v", changed, err)
 	}
 }

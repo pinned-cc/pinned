@@ -137,8 +137,8 @@ func syncPassword(st *store.Store, secret []byte, password string) (changed bool
 		if legacy {
 			return hmac.Equal([]byte(stored), []byte(auth.PasswordFingerprint(secret, password))), true
 		}
-		return auth.CheckPasswordHash(stored, password)
-	}, func() (string, error) { return auth.HashPassword(password) })
+		return auth.CheckAppPassword(stored, password)
+	}, func() (string, error) { return auth.HashAppPassword(password) })
 }
 
 func run() error {

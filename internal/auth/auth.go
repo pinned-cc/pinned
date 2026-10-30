@@ -65,6 +65,22 @@ func HashPassword(password string) (string, error) {
 	return string(h), err
 }
 
+// AppPasswordKey is what the stored hash of the app password is made from:
+// the SHA-256 of the password in hex. It is 64 bytes for a password of any
+// length, so an app password longer than bcrypt's 72 bytes still works.
+func AppPasswordKey(password string) string {
+	sum := sha256.Sum256([]byte(password))
+	return hex.EncodeToString(sum[:])
+}
+
+// HashAppPassword returns the bcrypt hash kept for the app password.
+func HashAppPassword(password string) (string, error) { return HashPassword(AppPasswordKey(password)) }
+
+// CheckAppPassword is CheckPasswordHash for the app password's stored hash.
+func CheckAppPassword(hash, password string) (ok, rehash bool) {
+	return CheckPasswordHash(hash, AppPasswordKey(password))
+}
+
 // CheckPasswordHash reports whether password matches the bcrypt hash, and
 // whether the hash should be replaced because its cost is below BcryptCost.
 func CheckPasswordHash(hash, password string) (ok, rehash bool) {
