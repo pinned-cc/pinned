@@ -6,10 +6,14 @@ Everything that changes for people who run the app goes here. Versions follow se
 
 Not released yet.
 
+### New
+
+- Before Pinned upgrades the database to a new version, it saves a copy of the database as it was in the data folder, for example `bookmarks-schema6-2026-10-30-154210.db`, and names it in the log. The last three copies are kept. If the copy cannot be written, Pinned does not upgrade and stops with a message, and the database stays as it was. The README says how to go back to an older version with one of these copies.
+
 ### Fixes
 
 - A site with a broken favicon.ico could stop the server, and it stopped again at every start until the bookmark was removed by hand. A broken icon now leaves the letter mark and the server keeps running.
-- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again.
+- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again. Only failures where the site answered count; a network outage at start, a DNS failure or a timeout does not.
 - An import file whose folders nest more than 256 deep could stop the server. It is now refused with a message.
 - Someone guessing passwords from many addresses could make every login wait, yours included. A browser that logs in with the password now keeps a signed device cookie, is counted on its own and is no longer held by that limit. Changing the app password ends these cookies. Other browsers keep the limit as before.
 
@@ -18,7 +22,9 @@ Not released yet.
 - Over HTTPS the login cookie is named `__Host-pinned_session`. You stay logged in: the old cookie moves to the new name on your next visit. Plain http on your network works as before.
 - New setting `HSTS`, off by default. `HSTS=true` sends `Strict-Transport-Security` on HTTPS answers. Switch it on only when Pinned has its own host name on the public internet and the proxy does not already send it, since it applies to every port of that host name.
 - `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback, private and `100.64.0.0/10` addresses. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie behind `tailscale serve` is Secure too.
-- The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, restore a backup.
+- The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, use the copy saved before the upgrade.
+- Pages load faster on the second visit: the scripts, styles and fonts carry a validator, so the browser checks them and downloads nothing when they have not changed.
+- Images are built with Go 1.27.3, which fixes a certificate check flaw in Go 1.27.2 (GO-2026-6809), and golang.org/x/net 0.62.0.
 
 ## 0.1.10, 2026-10-28
 
