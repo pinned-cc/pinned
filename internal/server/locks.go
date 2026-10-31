@@ -30,11 +30,12 @@ func unlockCookieName(folderID int64) string {
 	return unlockCookiePrefix + strconv.FormatInt(folderID, 10)
 }
 
-// folderUnlockValue signs the folder id, its lock hash and the expiry, so a
-// new password makes every earlier cookie worthless.
+// folderUnlockValue signs the folder id, its lock stamp (see
+// store.Folder.PasswordKey) and the expiry, so a new password makes every
+// earlier cookie worthless, and a stronger hash of the same one does not.
 func (s *Server) folderUnlockValue(f store.Folder, expires int64) string {
 	m := hmac.New(sha256.New, s.secret)
-	fmt.Fprintf(m, "unlock\x00%d\x00%s\x00%d", f.ID, deref(f.LockHash), expires)
+	fmt.Fprintf(m, "unlock\x00%d\x00%s\x00%d", f.ID, f.PasswordKey(), expires)
 	return strconv.FormatInt(expires, 10) + "." + hex.EncodeToString(m.Sum(nil))
 }
 

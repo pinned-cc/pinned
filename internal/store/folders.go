@@ -1,7 +1,9 @@
 package store
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"log"
@@ -17,16 +19,49 @@ type Folder struct {
 	// LockHash is the bcrypt hash of the folder's own password, nil when
 	// the folder has no lock of its own.
 	LockHash *string
+	// LockStamp changes only when the password is set or changed, not when
+	// its hash is replaced by a stronger one (see PasswordKey).
+	LockStamp *string
 	// HideRecent keeps the folder's bookmarks, and those of its subfolders,
 	// out of the recently opened lists.
 	HideRecent bool
+}
+
+// PasswordKey is what an unlock cookie of the folder signs: the stamp, or
+// for a lock set before schema 11 the hash, as before.
+func (f Folder) PasswordKey() string { return passwordKey(f.LockStamp, f.LockHash) }
+
+func passwordKey(stamp, hash *string) string {
+	if stamp != nil {
+		return "stamp:" + *stamp
+	}
+	if hash != nil {
+		return *hash
+	}
+	return ""
+}
+
+func nullStr(v sql.NullString) *string {
+	if !v.Valid {
+		return nil
+	}
+	return &v.String
+}
+
+// newStamp is a random stamp for a password just set.
+func newStamp() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 // Folders returns every folder ordered by position.
 func (s *Store) Folders() ([]Folder, error) { return queryFolders(s.db) }
 
 func queryFolders(q querier) ([]Folder, error) {
-	rows, err := q.Query(`SELECT id, parent_id, name, position, created_at, lock_hash, hide_recent FROM folders ORDER BY position, id`)
+	rows, err := q.Query(`SELECT id, parent_id, name, position, created_at, lock_hash, lock_stamp, hide_recent FROM folders ORDER BY position, id`)
 	if err != nil {
 		return nil, err
 	}
@@ -35,16 +70,14 @@ func queryFolders(q querier) ([]Folder, error) {
 	for rows.Next() {
 		var f Folder
 		var parent sql.NullInt64
-		var lock sql.NullString
-		if err := rows.Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock, &f.HideRecent); err != nil {
+		var lock, stamp sql.NullString
+		if err := rows.Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock, &stamp, &f.HideRecent); err != nil {
 			return nil, err
 		}
 		if parent.Valid {
 			f.ParentID = &parent.Int64
 		}
-		if lock.Valid {
-			f.LockHash = &lock.String
-		}
+		f.LockHash, f.LockStamp = nullStr(lock), nullStr(stamp)
 		out = append(out, f)
 	}
 	return out, rows.Err()
@@ -56,18 +89,16 @@ func (s *Store) Folder(id int64) (Folder, error) { return getFolder(s.db, id) }
 func getFolder(q querier, id int64) (Folder, error) {
 	var f Folder
 	var parent sql.NullInt64
-	var lock sql.NullString
-	err := q.QueryRow(`SELECT id, parent_id, name, position, created_at, lock_hash, hide_recent FROM folders WHERE id = ?`, id).
-		Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock, &f.HideRecent)
+	var lock, stamp sql.NullString
+	err := q.QueryRow(`SELECT id, parent_id, name, position, created_at, lock_hash, lock_stamp, hide_recent FROM folders WHERE id = ?`, id).
+		Scan(&f.ID, &parent, &f.Name, &f.Position, &f.CreatedAt, &lock, &stamp, &f.HideRecent)
 	if errors.Is(err, sql.ErrNoRows) {
 		return f, ErrNotFound
 	}
 	if parent.Valid {
 		f.ParentID = &parent.Int64
 	}
-	if lock.Valid {
-		f.LockHash = &lock.String
-	}
+	f.LockHash, f.LockStamp = nullStr(lock), nullStr(stamp)
 	return f, err
 }
 

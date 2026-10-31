@@ -31,20 +31,26 @@ func checkStored(hash, password string, save func(newHash string)) bool {
 	return ok
 }
 
-// rehashLock stores a stronger hash of a folder's lock password.
+// rehashLock stores a stronger hash of a folder's lock password. Unlock
+// cookies sign the lock's stamp, which stays, so they keep working.
 func (s *Server) rehashLock(f *store.Folder, hash string) {
 	if err := s.st.ReplaceLockHash(f.ID, hash); err != nil {
 		log.Printf("rehash lock: %v", err)
 		return
 	}
-	f.LockHash = &hash
+	if nf, err := s.st.Folder(f.ID); err == nil {
+		*f = nf
+	}
 }
 
-// rehashShare stores a stronger hash of a share password.
+// rehashShare stores a stronger hash of a share password, keeping its
+// stamp and so the unlock cookies of other browsers.
 func (s *Server) rehashShare(sh *store.Share, hash string) {
-	if _, err := s.st.UpdateShare(sh.Token, true, &hash, false, nil); err != nil {
+	if err := s.st.ReplaceShareHash(sh.Token, hash); err != nil {
 		log.Printf("rehash share: %v", err)
 		return
 	}
-	sh.PasswordHash = &hash
+	if nsh, err := s.st.ShareByToken(sh.Token); err == nil {
+		*sh = nsh
+	}
 }

@@ -31,6 +31,7 @@ SQLite in WAL mode, with foreign keys on. Times are Unix seconds. The schema is 
 | `position` | INTEGER NOT NULL | Order among its siblings. |
 | `created_at` | INTEGER NOT NULL | |
 | `lock_hash` | TEXT NULL | bcrypt hash of the folder's own password. NULL when the folder has no lock. |
+| `lock_stamp` | TEXT NULL | 16 random bytes in hex, made whenever the lock password is set or changed and kept when only its hash is replaced by a stronger one. Unlock cookies sign it, so a rehash does not end them. NULL when there is no lock, and for locks set before schema 11 until their first rehash; their cookies sign `lock_hash`. |
 
 Folders nest at most 32 deep.
 
@@ -93,7 +94,7 @@ The list of signed in browsers names a session by its SQLite `rowid`.
 | `hash` | TEXT NOT NULL UNIQUE | HMAC-SHA256 of the token, keyed with `secret.key`. The token itself is not stored. |
 | `created_at` | INTEGER NOT NULL | |
 | `last_used_at` | INTEGER NULL | Updated at most once a minute. |
-| `origin` | TEXT NULL | The browser extension origin, such as `chrome-extension://<id>`, that first used the token. Requests with the token from any other extension origin are refused. NULL until an extension uses it. |
+| `origin` | TEXT NULL | The browser extension origin, such as `chrome-extension://<id>`, that first used the token. After that, requests with the token that carry any other `Origin`, an extension's or a web page's, are refused; requests without an `Origin` are not. NULL until an extension uses it. |
 
 ### shares
 
@@ -103,6 +104,7 @@ The list of signed in browsers names a session by its SQLite `rowid`.
 | `folder_id` | INTEGER NOT NULL UNIQUE | The shared folder. One share per folder. Deleted with the folder. |
 | `token` | TEXT NOT NULL UNIQUE | The random part of the link, `/s/#<token>` (links made before 0.1.11: `/s/<token>`). Stored as is, because it is the link. |
 | `password_hash` | TEXT NULL | bcrypt hash of the share password. NULL when there is none. |
+| `password_stamp` | TEXT NULL | Like `lock_stamp` in folders, for the share password. |
 | `expires_at` | INTEGER NULL | NULL when it never expires. |
 | `created_at` | INTEGER NOT NULL | |
 | `opens` | INTEGER NOT NULL | How often the link was opened, once per browser per hour. |

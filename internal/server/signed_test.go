@@ -125,3 +125,60 @@ func TestWeakHashesAreReplacedAtTheNextCheck(t *testing.T) {
 		t.Errorf("share data after the rehash: %d", code)
 	}
 }
+
+// New share hashes use auth.BcryptCost, and a stronger hash of the same
+// password leaves the unlock cookies of other browsers working: they sign
+// the password's stamp, not its hash.
+func TestRehashKeepsOtherUnlockCookies(t *testing.T) {
+	old := auth.BcryptCost
+	t.Cleanup(func() { auth.BcryptCost = old })
+	auth.BcryptCost = bcrypt.MinCost
+	e := newEnv(t, Config{})
+	e.login()
+	cost := func(h *string) int { c, _ := bcrypt.Cost([]byte(*h)); return c }
+
+	g := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Shared"}, 201))
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(g.ID)+"/share", map[string]any{"password": "share pass"}, 201))
+	if got, _ := e.st.ActiveShare(sh.Token); cost(got.PasswordHash) != bcrypt.MinCost {
+		t.Errorf("new share hash cost %d, want auth.BcryptCost %d", cost(got.PasswordHash), bcrypt.MinCost)
+	}
+	first := e.visitor()
+	if first.unlock(sh.Token, "share pass") != 204 {
+		t.Fatal("first unlock")
+	}
+	auth.BcryptCost = bcrypt.MinCost + 1
+	if e.visitor().unlock(sh.Token, "share pass") != 204 {
+		t.Fatal("second unlock")
+	}
+	if got, _ := e.st.ActiveShare(sh.Token); cost(got.PasswordHash) != bcrypt.MinCost+1 {
+		t.Fatalf("share hash not replaced: cost %d", cost(got.PasswordHash))
+	}
+	if code, body := first.get("/s/" + sh.Token + "/data"); code != 200 || strings.Contains(body, `"locked":true`) {
+		t.Errorf("the first browser lost the share after a rehash: %d %s", code, body)
+	}
+	// A new password still ends the cookie.
+	e.expect("PATCH", "/api/shares/"+sh.Token, map[string]any{"password": "another pass"}, 200)
+	if _, body := first.get("/s/" + sh.Token + "/data"); !strings.Contains(body, `"locked":true`) {
+		t.Errorf("a new password left the old cookie working: %s", body)
+	}
+
+	auth.BcryptCost = bcrypt.MinCost
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"title": "Board", "url": "https://example.com/b", "folder_id": f.ID}, 201))
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	other := e.browser(uaSafariIOS)
+	if other.do("POST", "/api/login", `{"password":"pw"}`) != 204 {
+		t.Fatal("second browser login")
+	}
+	auth.BcryptCost = bcrypt.MinCost + 1
+	if code := other.do("POST", "/api/folders/"+itoa(f.ID)+"/unlock", `{"password":"s3cret"}`); code != 204 {
+		t.Fatalf("second browser unlock: %d", code)
+	}
+	if got, _ := e.st.Folder(f.ID); cost(got.LockHash) != bcrypt.MinCost+1 {
+		t.Fatalf("lock hash not replaced: cost %d", cost(got.LockHash))
+	}
+	if e.state().find(b.ID) == nil {
+		t.Error("the first browser lost the unlocked folder after a rehash")
+	}
+}

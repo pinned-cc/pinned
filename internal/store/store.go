@@ -187,6 +187,12 @@ var migrations = []string{
 	// The browser extension origin a token is bound to at its first use
 	// from an extension, so another extension cannot use it with CORS.
 	`ALTER TABLE tokens ADD COLUMN origin TEXT NULL;`,
+	// A random stamp made whenever a folder or share password is set, kept
+	// when its hash is only replaced by a stronger hash of the same
+	// password. Unlock cookies sign the stamp, so a rehash leaves them
+	// working. Rows from before have none and sign the hash as before.
+	`ALTER TABLE folders ADD COLUMN lock_stamp TEXT NULL;
+	ALTER TABLE shares ADD COLUMN password_stamp TEXT NULL;`,
 }
 
 // NewerSchemaError means the database was written by a later version. That

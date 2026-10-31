@@ -2,11 +2,16 @@ package store
 
 import "database/sql"
 
-// SetLock gives a folder its own password hash. Shares on the folder and
-// on every folder below it are deleted, so nothing locked stays public.
+// SetLock gives a folder its own password hash and a new stamp. Shares on
+// the folder and on every folder below it are deleted, so nothing locked
+// stays public.
 func (s *Store) SetLock(folderID int64, hash string) error {
+	stamp, err := newStamp()
+	if err != nil {
+		return err
+	}
 	return s.withTx(func(tx *sql.Tx) error {
-		res, err := tx.Exec(`UPDATE folders SET lock_hash = ? WHERE id = ?`, hash, folderID)
+		res, err := tx.Exec(`UPDATE folders SET lock_hash = ?, lock_stamp = ? WHERE id = ?`, hash, stamp, folderID)
 		if err != nil {
 			return err
 		}
@@ -19,9 +24,15 @@ func (s *Store) SetLock(folderID int64, hash string) error {
 }
 
 // ReplaceLockHash replaces the hash of a folder's lock password with
-// another hash of the same password, made at a higher cost.
+// another hash of the same password, made at a higher cost. The stamp
+// stays, so unlock cookies keep working; a lock from before schema 11 gets
+// its first stamp here.
 func (s *Store) ReplaceLockHash(folderID int64, hash string) error {
-	return s.execOne(`UPDATE folders SET lock_hash = ? WHERE id = ? AND lock_hash IS NOT NULL`, hash, folderID)
+	stamp, err := newStamp()
+	if err != nil {
+		return err
+	}
+	return s.execOne(`UPDATE folders SET lock_hash = ?, lock_stamp = COALESCE(lock_stamp, ?) WHERE id = ? AND lock_hash IS NOT NULL`, hash, stamp, folderID)
 }
 
 // RemoveLock takes the folder's own password away. A share left in the
@@ -30,7 +41,7 @@ func (s *Store) ReplaceLockHash(folderID int64, hash string) error {
 // come back to life with the lock gone.
 func (s *Store) RemoveLock(folderID int64) error {
 	return s.withTx(func(tx *sql.Tx) error {
-		res, err := tx.Exec(`UPDATE folders SET lock_hash = NULL WHERE id = ?`, folderID)
+		res, err := tx.Exec(`UPDATE folders SET lock_hash = NULL, lock_stamp = NULL WHERE id = ?`, folderID)
 		if err != nil {
 			return err
 		}

@@ -18,8 +18,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/crypto/bcrypt"
-
+	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
 
@@ -139,13 +138,12 @@ func (s *Server) readShareInput(w http.ResponseWriter, r *http.Request) (shareIn
 				writeError(w, http.StatusBadRequest, fmt.Sprintf("A share password needs at least %d characters.", minSharePassword))
 				return in, false
 			}
-			h, err := bcrypt.GenerateFromPassword([]byte(*pw), 10)
+			h, err := auth.HashPassword(*pw)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "password is too long")
 				return in, false
 			}
-			hs := string(h)
-			in.hash = &hs
+			in.hash = &h
 		}
 	}
 	if v, ok := raw["expires_days"]; ok {
@@ -290,20 +288,14 @@ func (s *Server) sharePage(w http.ResponseWriter, r *http.Request) {
 	s.page("share.html", false)(w, r)
 }
 
-// unlockValue signs the token, the share's creation time, its password hash
-// and the cookie's expiry. Revoking and sharing again, or changing the
-// password, changes the input, so old cookies stop working.
+// unlockValue signs the token, the share's creation time, its password
+// stamp (see store.Share.PasswordKey) and the cookie's expiry. Revoking and
+// sharing again, or changing the password, changes the input, so old
+// cookies stop working; a stronger hash of the same password does not.
 func (s *Server) unlockValue(sh store.Share, expires int64) string {
 	m := hmac.New(sha256.New, s.secret)
-	fmt.Fprintf(m, "share\x00%s\x00%d\x00%s\x00%d", sh.Token, sh.CreatedAt, deref(sh.PasswordHash), expires)
+	fmt.Fprintf(m, "share\x00%s\x00%d\x00%s\x00%d", sh.Token, sh.CreatedAt, sh.PasswordKey(), expires)
 	return strconv.FormatInt(expires, 10) + "." + hex.EncodeToString(m.Sum(nil))
-}
-
-func deref(p *string) string {
-	if p == nil {
-		return ""
-	}
-	return *p
 }
 
 func (s *Server) shareUnlocked(r *http.Request, sh store.Share) bool {

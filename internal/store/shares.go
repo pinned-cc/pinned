@@ -11,22 +11,23 @@ type Share struct {
 	FolderID     int64
 	Token        string
 	PasswordHash *string
-	ExpiresAt    *int64
-	CreatedAt    int64
-	Opens        int64
-	LastOpenedAt *int64
+	// PasswordStamp changes only when the password is set or changed (see
+	// Folder.LockStamp).
+	PasswordStamp *string
+	ExpiresAt     *int64
+	CreatedAt     int64
+	Opens         int64
+	LastOpenedAt  *int64
 }
 
-const shareCols = `id, folder_id, token, password_hash, expires_at, created_at, opens, last_opened_at`
+const shareCols = `id, folder_id, token, password_hash, password_stamp, expires_at, created_at, opens, last_opened_at`
 
 func scanShare(sc scanner) (Share, error) {
 	var sh Share
-	var pw sql.NullString
+	var pw, stamp sql.NullString
 	var exp, last sql.NullInt64
-	err := sc.Scan(&sh.ID, &sh.FolderID, &sh.Token, &pw, &exp, &sh.CreatedAt, &sh.Opens, &last)
-	if pw.Valid {
-		sh.PasswordHash = &pw.String
-	}
+	err := sc.Scan(&sh.ID, &sh.FolderID, &sh.Token, &pw, &stamp, &exp, &sh.CreatedAt, &sh.Opens, &last)
+	sh.PasswordHash, sh.PasswordStamp = nullStr(pw), nullStr(stamp)
 	if exp.Valid {
 		sh.ExpiresAt = &exp.Int64
 	}
@@ -43,10 +44,26 @@ func nullString(p *string) any {
 	return *p
 }
 
+// PasswordKey is what an unlock cookie of the share signs: the stamp, or
+// for a password set before schema 11 the hash, as before.
+func (sh Share) PasswordKey() string { return passwordKey(sh.PasswordStamp, sh.PasswordHash) }
+
+// stampFor is a new stamp when hash is set, else NULL.
+func stampFor(hash *string) (any, error) {
+	if hash == nil {
+		return nil, nil
+	}
+	return newStamp()
+}
+
 // CreateShare shares a folder. A folder has at most one share.
 func (s *Store) CreateShare(folderID int64, token string, passwordHash *string, expiresAt *int64) (Share, error) {
 	var sh Share
-	err := s.withTx(func(tx *sql.Tx) error {
+	stamp, err := stampFor(passwordHash)
+	if err != nil {
+		return sh, err
+	}
+	err = s.withTx(func(tx *sql.Tx) error {
 		ok, err := folderExists(tx, folderID)
 		if err != nil {
 			return err
@@ -61,8 +78,8 @@ func (s *Store) CreateShare(folderID int64, token string, passwordHash *string, 
 		if n > 0 {
 			return ErrShareExists
 		}
-		if _, err := tx.Exec(`INSERT INTO shares (folder_id, token, password_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)`,
-			folderID, token, nullString(passwordHash), nullable(expiresAt), s.now()); err != nil {
+		if _, err := tx.Exec(`INSERT INTO shares (folder_id, token, password_hash, password_stamp, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+			folderID, token, nullString(passwordHash), stamp, nullable(expiresAt), s.now()); err != nil {
 			return err
 		}
 		sh, err = scanShare(tx.QueryRow(`SELECT `+shareCols+` FROM shares WHERE token = ?`, token))
@@ -122,7 +139,11 @@ func (s *Store) ActiveShare(token string) (Share, error) {
 // hash removes the password; expirySet with a nil time means never.
 func (s *Store) UpdateShare(token string, passwordSet bool, passwordHash *string, expirySet bool, expiresAt *int64) (Share, error) {
 	if passwordSet {
-		if err := s.execOne(`UPDATE shares SET password_hash = ? WHERE token = ?`, nullString(passwordHash), token); err != nil {
+		stamp, err := stampFor(passwordHash)
+		if err != nil {
+			return Share{}, err
+		}
+		if err := s.execOne(`UPDATE shares SET password_hash = ?, password_stamp = ? WHERE token = ?`, nullString(passwordHash), stamp, token); err != nil {
 			return Share{}, err
 		}
 	}
@@ -132,6 +153,18 @@ func (s *Store) UpdateShare(token string, passwordSet bool, passwordHash *string
 		}
 	}
 	return s.ShareByToken(token)
+}
+
+// ReplaceShareHash replaces the hash of a share password with another hash
+// of the same password, made at a higher cost. The stamp stays, so unlock
+// cookies keep working; a password from before schema 11 gets its first
+// stamp here.
+func (s *Store) ReplaceShareHash(token, hash string) error {
+	stamp, err := newStamp()
+	if err != nil {
+		return err
+	}
+	return s.execOne(`UPDATE shares SET password_hash = ?, password_stamp = COALESCE(password_stamp, ?) WHERE token = ? AND password_hash IS NOT NULL`, hash, stamp, token)
 }
 
 // DeleteShare revokes a share.
