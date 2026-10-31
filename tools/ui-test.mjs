@@ -835,12 +835,13 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
     await until(page, () => !document.querySelector('#pal'), null, 'palette closed');
     await page.click('#side [data-view="inbox"]');
-    /* saving a link that sits in the locked folder: the check says Already saved, as the save would, and nothing about where */
+    /* saving a link that sits only in the locked folder: the save page tells nothing, as for a link not saved anywhere */
     const sp = await ctx.newPage();
     await sp.goto(`${BASE}/save?url=${encodeURIComponent(T.url)}&title=x`);
-    await visible(sp.locator('#sheet .dupe:not(.off)', { hasText: 'Already saved' }));
-    assert((await sp.locator('#sheet .dupe').innerText()).trim() === 'Already saved', 'the check told more than Already saved');
-    assert(await sp.locator('#sheet [data-a="save-go"][disabled]').count() === 1, 'Save still enabled');
+    await visible(sp.locator('#sheet [data-a="save-go"]'));
+    await sp.waitForTimeout(600); /* the check has answered */
+    assert(await sp.locator('#sheet .dupe:not(.off)').count() === 0, 'the save page told the link is saved');
+    assert(await sp.locator('#sheet [data-a="save-go"][disabled]').count() === 0, 'Save is disabled');
     await sp.close();
     await page.click(`#side .sf[data-fid="${folderId}"]`);
     await visible(page.locator('#layer.dialog.open #sheet'));
