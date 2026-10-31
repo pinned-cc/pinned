@@ -2,12 +2,16 @@
 
 /* errors carry status and the parsed body (e.data.error, e.data.duplicate, e.data.locked);
    e.auth is set when the session is gone and the page is already on its way to /login */
+export const UNREACHABLE = 'Cannot reach your Pinned server. Check your connection, then try again.';
 export async function api(method, path, body) {
   const opt = { method, credentials: 'same-origin', headers: {} };
   if (method !== 'GET') opt.headers['X-Requested-With'] = 'fetch';
   if (body instanceof FormData) opt.body = body;
   else if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
-  const r = await fetch(path, opt);
+  let r;
+  try { r = await fetch(path, opt); }
+  catch (err) { /* no answer at all: the server is down, or the network is */
+    const e = new Error('network'); e.network = true; e.data = { error: UNREACHABLE }; throw e; }
   if (r.status === 401 && !path.startsWith('/api/login')) {
     location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search + location.hash);
     const e = new Error('auth'); e.auth = true; throw e;

@@ -14,7 +14,7 @@ import { installSelect } from './select.js';
 import { bmHead, checkUrl, doneHTML, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, openTokens, rowsHTML, saveActs, saveHTML, shareHTML, textHead, tokensHTML } from './sheets.js';
 import { data, layers, load, setData, ui } from './state.js';
 import { toast } from './toast.js';
-import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE } from './util.js';
+import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE, tooMany } from './util.js';
 
 /* document and window listeners, in the order they always ran: pointer handlers on the same event
    depend on it (a drag start resets the click suppression the others set) */
@@ -76,8 +76,8 @@ function bootLogin() {
   let next = p.get('next') || '/'; if (!next.startsWith('/') || next.startsWith('//')) next = '/';
   f.elements.next.value = next;
   const code = byId('login-code'), twoStep = code && !code.hidden;
-  if (p.get('error')) err.textContent = p.get('error') === 'wait' ? 'Wait 30 seconds and try again.' : twoStep ? 'Wrong password or code.' : 'Wrong password.';
-  /* the form posts to /login; the server redirects back with error=1 or error=wait */
+  if (p.get('error')) err.textContent = p.get('error') === 'wait' ? tooMany(p.get('wait') || 30) : twoStep ? 'Wrong password or code. A code works once: wait for the next one.' : 'Wrong password.';
+  /* the form posts to /login; the server redirects back with error=1, or error=wait with the seconds left in wait */
   /* with a second factor, Enter in the password moves on to the code instead of sending the form without it */
   f.addEventListener('submit', e => { if (twoStep && !f.elements.code.value.trim()) { e.preventDefault(); f.elements.code.focus(); return; } f.querySelector('button').disabled = true; });
 }

@@ -207,6 +207,13 @@ body.desk{overflow:hidden}
 .foot-chev svg.i{width:var(--icon-s);height:var(--icon-s)}
 .side-foot.open .foot-chev{transform:rotate(90deg)}
 @media (prefers-reduced-motion:reduce){.foot-acts,.foot-chev{transition:none}}
+/* More open on a short window: the folder list keeps room for about four folders, and the actions scroll in their own
+   space instead of pushing the folders out of sight */
+.side-tree{min-height:min(176px,22vh)}
+.side-foot.open{flex:0 1 auto;min-height:0}
+.side-foot > .si,.foot-in > *{flex:none}
+.side-foot.open .foot-acts{min-height:0}
+.side-foot.open .foot-in{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .content{overflow-y:auto;overflow-x:hidden;min-width:0;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .col{display:flex;flex-direction:column;min-height:100%;width:min(928px,calc(100% - 64px));margin:0 auto;padding-bottom:var(--s-24)}
 
@@ -273,6 +280,7 @@ mark.hit{background:rgba(95,211,154,.18);color:color-mix(in srgb,currentColor 60
 .btn:active,.add:active,.si:active{transform:scale(.97)}
 .btn[aria-pressed="true"],.btn[aria-expanded="true"]{background:rgba(255,255,255,.08);border-color:transparent}
 .btn[disabled]{opacity:.45;cursor:default}
+.si[disabled],.sr[disabled],.em-a[disabled]{opacity:.45;cursor:progress}
 .btn.warn{color:var(--danger)}
 .btn.warn svg.i{color:var(--danger)}
 .btn.icon{width:var(--h-control);padding:0;justify-content:center}
@@ -549,6 +557,7 @@ button.t-title{width:100%;text-align:left}
 .seg button{flex:1;height:var(--tap);border-radius:calc(var(--r-xl) - 3px);font:500 var(--t-body)/var(--lh-none) var(--sans);color:var(--ink-weak);white-space:nowrap}
 .seg button[aria-checked="true"]{background:var(--surface-up);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .share-meta{margin:var(--s-4) var(--s-1) 0;font:400 var(--t-meta)/var(--lh-18) var(--sans);color:var(--ink-weak)}
+.tk-addr{font-weight:500;color:var(--ink);overflow-wrap:anywhere}
 .share-opens{margin-top:var(--s-9)}
 .share-pwf,.share-locked{margin-top:var(--s-5)}
 /* API tokens: the same sections as the share sheet */
@@ -647,6 +656,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .sh-head .t{display:block;font:600 var(--t-input)/var(--lh-20) var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sh-head .host{display:block;margin-top:var(--s-1)}
 .sh-head .fh-ic{width:var(--icon-m);height:var(--icon-m);color:var(--h);flex:none;margin:0 1px}
+.sh-head .sh-x{margin:calc(var(--s-5) * -1) calc(var(--s-5) * -1) calc(var(--s-5) * -1) 0;color:var(--ink-weak)}
 .sh-text{margin:calc(var(--s-3) * -1) var(--s-1) var(--s-9);font:400 var(--t-body)/var(--lh-20) var(--sans);color:var(--ink-weak)}
 .sh-rows{border-radius:var(--r-2xl);background:rgba(255,255,255,.035);border:1px solid var(--line);overflow:hidden}
 .sh-rows+.sh-rows{margin-top:var(--s-5)}
@@ -905,6 +915,7 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .bm-page .hs-t{color:var(--ink);font-size:var(--t-control);line-height:1.4;padding-top:2px}
 .hs-t b{font-weight:600}
 .bm-page .hs-keys{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-2) var(--s-3);color:var(--ink-weak);font-size:var(--t-meta)}
+.hs-ff{display:block}
 .hs-keys span{color:var(--ink-faint, var(--ink-weak));min-width:0;margin-right:var(--s-3);opacity:.75}
 .hs-keys kbd{font:500 var(--t-label)/1 var(--sans);padding:4px 7px;border-radius:6px;background:var(--surface-up);box-shadow:inset 0 -1px 0 rgba(0,0,0,.35);color:var(--ink)}
 .hs-copy{display:inline-flex;align-items:center;gap:var(--s-4);height:var(--tap);padding:0 var(--s-9);border-radius:var(--r-pill);background:var(--accent);color:var(--accent-ink);font:600 var(--t-body)/1 var(--sans);text-decoration:none;position:relative;overflow:hidden}

@@ -1,5 +1,5 @@
 /* The public, read only page for a shared folder. No session, no links into the app. */
-import { byId, esc, fmtDate, highlight, ic, installIconFallback, PHONE_MQ, SPRITE, truncStart } from './js/util.js';
+import { byId, esc, fmtDate, highlight, ic, installIconFallback, PHONE_MQ, SPRITE, tooMany, truncStart } from './js/util.js';
 
 const HUES = ['cyan', 'coral', 'lilac', 'lime', 'mint', 'rose'];
 /* a link is /s/#<token>: the token stays in the fragment, which no request carries, and goes to the server in a header.
@@ -85,7 +85,7 @@ function locked(name) {
   f.addEventListener('submit', async e => { e.preventDefault(); const btn = f.querySelector('button'); btn.disabled = true;
     const r = await fetch(base + '/unlock', { method: 'POST', credentials: 'same-origin', headers: withToken({ 'Content-Type': 'application/json', 'X-Requested-With': 'fetch' }), body: JSON.stringify({ password: f.elements.password.value }) }).catch(() => null);
     if (r && r.status === 204) { load(); return; }
-    btn.disabled = false; byId('uerr').textContent = r && r.status === 429 ? 'Wait 30 seconds and try again.' : 'Wrong password.'; f.elements.password.select(); });
+    btn.disabled = false; byId('uerr').textContent = r && r.status === 429 ? tooMany(r.headers.get('Retry-After') || 30) : r ? 'Wrong password.' : 'Cannot reach the server. Check your connection and try again.'; f.elements.password.select(); });
 }
 async function load() {
   const r = token ? await fetch(base + '/data', { credentials: 'same-origin', headers: withToken() }).catch(() => null) : null;

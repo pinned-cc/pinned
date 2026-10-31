@@ -63,6 +63,10 @@ export const store = {
 export const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 export const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 /* the message of a failed API call, as a sentence */
+/* a wait in seconds, said like the server says it: 30 seconds, 2 minutes, 3 hours, rounded up */
+export function waitText(secs) { const n = Math.max(1, Math.ceil(+secs || 0)); const u = (k, one) => `${k} ${one}${k === 1 ? '' : 's'}`;
+  return n < 120 ? u(n, 'second') : n < 7200 ? u(Math.ceil(n / 60), 'minute') : u(Math.ceil(n / 3600), 'hour'); }
+export const tooMany = secs => `Too many tries. Wait ${waitText(secs)}, then try again.`;
 export const errorText = (e, fallback) => e && e.data && e.data.error ? cap(e.data.error) + (/[.!?]$/.test(e.data.error) ? '' : '.') : fallback;
 export function hostFromUrl(u) { try { return new URL(u).host; } catch (e) { return u; } }
 export const validUrl = u => { try { const x = new URL(u); return (x.protocol === 'http:' || x.protocol === 'https:') && !!x.hostname; } catch (e) { return false; } };

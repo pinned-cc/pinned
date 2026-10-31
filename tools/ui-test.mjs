@@ -836,7 +836,7 @@ async function desktop(browser, engine) {
     assert(!labels.some(l => /Inbox|All bookmarks|Trash$|^New folder$|Sort/.test(l)), 'places or view controls in the folder menu: ' + labels.join(', '));
     const focused = () => page.evaluate(() => document.activeElement.textContent.trim());
     await page.keyboard.press('End'); assert(await focused() === 'Delete', 'End: ' + await focused());
-    await page.keyboard.press('Home'); assert(await focused() === 'Add bookmarks', 'Home: ' + await focused());
+    await page.keyboard.press('Home'); assert(/^Shar(e|ing)$/.test(await focused()), 'Home: ' + await focused());
     await page.keyboard.press('r'); assert(await focused() === 'Rename', 'type-ahead r: ' + await focused());
     await page.keyboard.press('l'); assert(await focused() === 'Lock with a password', 'type-ahead l: ' + await focused());
     await page.keyboard.press('Enter');
@@ -1471,7 +1471,7 @@ async function phone(browser, engine) {
     await page.tap('.ptbar [data-a="folder-menu"]'); await sheetOpen(page); await page.waitForTimeout(350);
     assert(!(await page.locator('#sheet .sh-tile, #sheet .sh-tiles').count()), 'squares in the sheet');
     const rows = (await page.locator('#sheet .sh-row').allTextContents()).map(r => r.trim());
-    for (const want of ['Add bookmarks', 'New folder inside', 'Rename', 'Move to', 'Hide from Recent', 'Lock with a password', 'Delete']) assert(rows.includes(want), want + ' missing: ' + rows.join(', '));
+    for (const want of ['Share', 'Add bookmarks', 'New folder inside', 'Rename', 'Move to', 'Hide from Recent', 'Lock with a password', 'Delete']) assert(rows.includes(want), want + ' missing: ' + rows.join(', '));
     assert(!rows.some(r => /Inbox|All bookmarks|^Trash|^New folder$|Sort/.test(r)), 'places or view controls in the folder sheet: ' + rows.join(', '));
     await shot(page, `${engine}-phone-folder-sheet`);
     await page.evaluate(() => document.querySelector('#layer .scrim').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))); await sheetClosed(page);
@@ -1984,6 +1984,150 @@ async function barParity(browser, engine) {
   await check('no script errors', async () => assert(!errors.length, errors.join('; ')));
 }
 
+/* the 0.1.11 flow test fixes: waits with the real time, the stale save error, Share in the folder menu, Move with Undo,
+   Close on lock dialogs, More at 800 px high, the token's next step, Export without locked folders, a busy Import,
+   an unreachable server, the Firefox note and the share page wait */
+async function flowFixes(browser, engine) {
+  console.log(`\n${engine}, flow test fixes 1280x800`);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'en-US' });
+  const page = await ctx.newPage();
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await login(page); await cleanup(page);
+  const mk = async name => (await apiIn(page, 'POST', '/api/folders', { name: `ui-test ${name} ${stamp}`, parent_id: null })).data;
+  const A = await mk('fa'), B = await mk('fb');
+  for (const n of ['f1', 'f2', 'f3', 'f4', 'f5']) await mk(n);
+  const card = (await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test mover ${stamp}`, url: `https://ui-test.example/${stamp}/mover`, folder_id: A.id })).data;
+  await page.reload(); await visible(page.locator('#side .si'));
+  const openFolder = async f => { await page.click(`#side .sf[data-fid="${f.id}"]`); await until(page, n => (document.querySelector('#tbwrap h2') || {}).textContent === n, f.name, 'folder view'); };
+
+  await check('login page: a wait says the time the server sent, a wrong code says a code works once', async () => {
+    const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }), lp = await c.newPage();
+    for (const [q, want] of [['error=wait&wait=75', 'Too many tries. Wait 75 seconds, then try again.'], ['error=wait&wait=600', 'Too many tries. Wait 10 minutes, then try again.'], ['error=wait', 'Too many tries. Wait 30 seconds, then try again.']]) {
+      await lp.goto(`${BASE}/login?${q}`); const got = (await lp.textContent('#login-err')).trim(); assert(got === want, q + ': ' + got); }
+    await c.close();
+  });
+
+  await check('Add sheet: the error about the address goes as soon as the address is typed again', async () => {
+    await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
+    await page.fill('#sheet [data-f=url]', 'example.com'); await page.click('#sheet [data-a="save-go"]');
+    await visible(page.locator('#sheet .fld-err', { hasText: 'Enter a full address' }));
+    await page.locator('#sheet [data-f=url]').press('End'); await page.keyboard.type('/x');
+    await gone(page.locator('#sheet .fld-err'));
+    assert(await page.evaluate(() => document.activeElement && document.activeElement.dataset.f === 'url'), 'the caret left the address');
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+  });
+
+  await check('folder three dots: Share is the first item and opens the share sheet', async () => {
+    await openFolder(B); await page.click('#tbwrap [data-a="folder-menu"]'); await visible(page.locator('.menu'));
+    const first = (await page.locator('.menu [role="menuitem"]').first().textContent()).trim();
+    assert(first === 'Share', 'first item: ' + first);
+    await menuItem(page, 'Share').first().click(); await sheetOpen(page);
+    await visible(page.locator('#sheet [data-a="share-toggle"]'));
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+  });
+
+  await check('Move from a card\'s More: the toast says where with Undo, and Undo puts it back', async () => {
+    await openFolder(A); const t = page.locator(`#body article[data-id="${card.id}"]`); await visible(t);
+    await t.hover(); await t.locator('[data-a="more"]').click(); await menuItem(page, 'Move').first().click(); await sheetOpen(page);
+    await page.locator(`#sheet [data-dest="${B.id}"]`).click(); await sheetClosed(page);
+    const tt = page.locator('#toasts .toast', { hasText: `Moved to ${B.name}` }); await visible(tt);
+    assert(await tt.locator('button', { hasText: 'Undo' }).count() === 1, 'no Undo');
+    await tt.locator('button', { hasText: 'Undo' }).click();
+    let back = false; for (let i = 0; i < 40 && !back; i++) { const b = (await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.id === card.id); back = b && b.folder_id === A.id; if (!back) await page.waitForTimeout(100); }
+    assert(back, 'Undo did not put it back');
+  });
+
+  await check('lock dialogs: a Close button in the head closes them', async () => {
+    await openFolder(B); await page.click('#tbwrap [data-a="folder-menu"]'); await menuItem(page, 'Lock with a password').click();
+    await visible(page.locator('#layer.dialog.open #sheet'));
+    const x = page.locator('#sheet .sh-head [data-a="close"][aria-label="Close"]'); await visible(x);
+    const box = await x.boundingBox(); assert(box.width >= 44 && box.height >= 44, 'Close is smaller than 44 px');
+    await shot(page, `${engine}-fix-lock-close`);
+    await x.click(); await sheetClosed(page);
+  });
+
+  await check('1280x800: with More open the folder list keeps four folders in view, and the actions scroll in their own space', async () => {
+    await openFoot(page); await page.waitForTimeout(400);
+    const g = await page.evaluate(() => { const side = document.getElementById('side'), tree = side.querySelector('.side-tree'), fi = side.querySelector('.foot-in'), row = tree.querySelector('.sf');
+      return { tree: tree.clientHeight, row: row ? row.getBoundingClientRect().height : 40, over: side.scrollHeight - side.clientHeight, fiScroll: fi.scrollHeight - fi.clientHeight, fiOverflow: getComputedStyle(fi).overflowY }; });
+    assert(g.tree >= 4 * g.row, `the folder list shows less than four folders: ${g.tree} px for ${g.row} px rows`);
+    assert(g.over <= 1, 'the sidebar overflows by ' + g.over);
+    assert(g.fiScroll <= 0 || g.fiOverflow === 'auto', 'the actions are cut off without a scroll');
+    await shot(page, `${engine}-fix-more-800`);
+    await page.locator('#side [data-a="logout"]').scrollIntoViewIfNeeded(); await visible(page.locator('#side [data-a="logout"]'));
+  });
+
+  await check('API tokens: the new token says the next step with this address', async () => {
+    await page.route('**/api/tokens', r => r.request().method() === 'POST' ? r.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ id: 99999, name: 'ui-test next', token: 'tk_uitestnext' }) }) : r.fallback());
+    await openFoot(page); await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
+    await page.fill('#sheet form[data-token] input[name=name]', 'ui-test next'); await page.fill('#sheet form[data-token] input[name=password]', PASSWORD);
+    await page.press('#sheet form[data-token] input[name=password]', 'Enter');
+    await visible(page.locator('#sheet .tk-next'));
+    const txt = (await page.textContent('#sheet .tk-next')).trim(), origin = new URL(BASE).origin;
+    assert(txt === `Next, paste it into the extension's options with the address ${origin}, or into your script.`, 'next step: ' + txt);
+    await shot(page, `${engine}-fix-token-next`);
+    await page.unroute('**/api/tokens'); await page.keyboard.press('Escape'); await sheetClosed(page);
+  });
+
+  await check('Export with a folder locked in this browser says it is left out and how to include it', async () => {
+    await apiIn(page, 'POST', `/api/folders/${B.id}/lock`, { password: T.lockPw });
+    await page.reload(); await visible(page.locator(`#side .sf.locked[data-fid="${B.id}"]`)); await openFoot(page);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.click('#side a[href="/api/export"]')]);
+    assert(dl.suggestedFilename() === 'bookmarks.html', 'download: ' + dl.suggestedFilename());
+    await toastWith(page, `Exported without ${B.name}: it is locked. Unlock it first to include it.`);
+    await shot(page, `${engine}-fix-export-note`);
+    await apiIn(page, 'DELETE', `/api/folders/${B.id}/lock`, { app_password: PASSWORD }); await page.reload(); await visible(page.locator('#side .si'));
+  });
+
+  await check('Import: while it runs, a toast says so and every Import is disabled and busy, also after a redraw', async () => {
+    let release; const held = new Promise(r => { release = r; });
+    await page.route('**/api/import', async r => { await held; await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ added: 3, skipped: 1 }) }); });
+    await openFoot(page);
+    await page.setInputFiles('#import-file', { name: 'b.html', mimeType: 'text/html', buffer: Buffer.from('<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><p></DL>') });
+    await toastWith(page, 'Importing');
+    await visible(page.locator('#side [data-a="import"][disabled][aria-busy="true"]'));
+    await page.click('#side [data-view="inbox"]'); await page.waitForTimeout(200);
+    assert(await page.locator('#side [data-a="import"][disabled]').count() === 1, 'Import came back enabled after a redraw');
+    await shot(page, `${engine}-fix-import-busy`);
+    release(); await toastWith(page, 'Imported 3, skipped 1');
+    await until(page, () => !document.querySelector('[data-a="import"][disabled]'), null, 'Import enabled again');
+    await gone(page.locator('#toasts .toast', { hasText: 'Importing' }));
+    await page.unroute('**/api/import');
+  });
+
+  await check('no server: a save and a load say Cannot reach your Pinned server', async () => {
+    await page.route('**/api/bookmarks', r => r.request().method() === 'POST' ? r.abort('connectionrefused') : r.fallback());
+    await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
+    await page.fill('#sheet [data-f=url]', `https://ui-test.example/${stamp}/offline`); await page.click('#sheet [data-a="save-go"]');
+    await visible(page.locator('#sheet .fld-err', { hasText: 'Cannot reach your Pinned server. Check your connection, then try again.' }));
+    await page.keyboard.press('Escape'); await sheetClosed(page); await page.unroute('**/api/bookmarks');
+    await page.route('**/api/state', r => r.abort('connectionrefused'));
+    await page.reload(); await visible(page.locator('.notice', { hasText: 'Cannot reach your Pinned server.' }));
+    await shot(page, `${engine}-fix-unreachable`);
+    await page.unroute('**/api/state'); await page.click('.notice [data-a="retry"]'); await gone(page.locator('.notice'));
+  });
+
+  await check('How to save, Extension: Firefox needs the add-on loaded again and a new token after a restart', async () => {
+    await page.goto(BASE + '/bookmarklet'); await page.click('#t-ext');
+    const n = (await page.textContent('[data-ff-note]')).trim();
+    assert(n === 'Firefox removes it when it quits. After a restart, load it again and give it a new token.', 'note: ' + n);
+    await shot(page, `${engine}-fix-howto-firefox`);
+    await page.goto(BASE + '/'); await visible(page.locator('#side .si'));
+  });
+
+  await check('share page: a wait names the seconds the server sends', async () => {
+    const sh = (await apiIn(page, 'POST', `/api/folders/${A.id}/share`, { password: 'ui-test-share-pw' })).data;
+    const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }), sp = await c.newPage();
+    await sp.route('**/unlock', r => r.fulfill({ status: 429, headers: { 'Retry-After': '90', 'Content-Type': 'application/json' }, body: '{"error":"Too many tries."}' }));
+    await sp.goto(sh.url); await sp.fill('#unlock input[name=password]', 'whatever-it-is'); await sp.press('#unlock input[name=password]', 'Enter');
+    await until(sp, () => (document.getElementById('uerr') || {}).textContent === 'Too many tries. Wait 90 seconds, then try again.', null, 'the wait from Retry-After');
+    await c.close(); await apiIn(page, 'DELETE', `/api/shares/${encodeURIComponent(sh.token)}`);
+  });
+
+  await check('no script errors', async () => assert(!errors.length, errors.join('; ')));
+  await cleanup(page); await ctx.close();
+}
+
 const pw = await loadPlaywright();
 for (const engine of ['chromium', 'webkit', 'firefox']) {
   if (only && only !== engine) continue;
@@ -1992,7 +2136,7 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
   /* a browser that does not start is a failure of the run, and the other engines still run */
   try { browser = await pw[engine].launch({ timeout: 60000 }); }
   catch (e) { failures++; console.log(`  FAIL  ${engine} did not start\n        ${String(e.message || e).split('\n')[0]}`); continue; }
-  try { await desktop(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); } finally { await browser.close(); }
+  try { await desktop(browser, engine); await flowFixes(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); } finally { await browser.close(); }
 }
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

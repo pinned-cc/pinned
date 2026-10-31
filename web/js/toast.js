@@ -21,7 +21,8 @@ export function toast(msg, o = {}) {
   box.appendChild(t); while (box.children.length > 3) box.firstElementChild.remove();
   const kill = () => { if (!t.isConnected) return; t.classList.add('out'); setTimeout(() => t.remove(), reduce() ? 0 : 200); if (layers.undo && layers.undo.el === t) layers.undo = null; };
   if (o.undo) { layers.undo = { run: o.undo, el: t }; t.querySelector('button').addEventListener('click', () => runUndo()); }
-  setTimeout(kill, o.undo ? 6000 : 2400);
+  /* hold: stays until the caller kills it (a running import), at most two minutes; long: a sentence to read */
+  setTimeout(kill, o.hold ? 120000 : o.undo || o.long ? 6000 : 2400);
   t.kill = kill; return t;
 }
 export function runUndo() { if (!layers.undo) return; const u = layers.undo; layers.undo = null; u.el.kill(); u.run(); }

@@ -3,7 +3,7 @@
 import { api } from './api.js';
 import { closeMenu, menuOrSheet, openMenu, selItems, tileMenu } from './menu.js';
 import { openPalette } from './palette.js';
-import { deskBody, render, showAll, switchLayout } from './render.js';
+import { deskBody, markImportBusy, render, showAll, switchLayout } from './render.js';
 import { FPICK, emptySpace, exitSelect, pickRange, selSync, toggle } from './select.js';
 import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openReleases, openSessions, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sessionsAsk, sessionsSubmit, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
 import { FSORTS, SORTS, bm, chain, count, data, descSet, fid, folderById, foldersSel, hidesRecent, isLocked, layers, live, load, loadQuiet, lockedAt, ownLock, run, selectables, setFsort, setSort, ui } from './state.js';
@@ -94,10 +94,11 @@ export function purgeAsk(ids, then) { const L = ids.map(bm).filter(Boolean); if 
 export function emptyTrash() { const n = count('trash'); if (!n) return;
   openSheet({ type: 'confirm', title: 'Empty trash?', text: `${plural(n, 'bookmark', 'bookmarks')} will be deleted for good.`, button: 'Empty trash',
     run: async () => { await api('DELETE', '/api/trash'); await load(); } }); }
-/* moving into a folder from a drop: one toast with Undo back to where each came from */
+/* moving into a folder, from a drop or the Move sheet: one toast with Undo back to where each came from */
 export async function moveWithUndo(ids, to) {
   const from = new Map(ids.map(id => [id, fid(bm(id))])); const r = await actions.move(ids, to); if (!r || !r.ok) return;
-  toast(`Moved to ${to == null ? 'Inbox' : (folderById.get(to) || { name: 'folder' }).name}`, { undo: async () => {
+  const where = to == null ? 'Inbox' : (folderById.get(to) || { name: 'folder' }).name;
+  toast(ids.length === 1 ? `Moved to ${where}` : `Moved ${ids.length} to ${where}`, { undo: async () => {
     for (const [id, f] of from) await api('PATCH', `/api/bookmarks/${id}`, { folder_id: f }).catch(() => {}); load(); } });
 }
 export const folderSheetItems = id => folderById.get(id) && folderById.get(id).locked ? folderItems(id) : [{ icon: 'link', label: folderById.get(id) && folderById.get(id).share ? 'Sharing' : 'Share', run: () => openSheet({ type: 'share', fid: id }) }, ...folderItems(id)];
@@ -130,10 +131,19 @@ export function sortMenu(a, items) {
   const r = a.getBoundingClientRect(); openMenu(a, items, ui.mode === 'phone' ? { x: r.left, y: r.bottom + 4 } : undefined);
 }
 export async function logout() { try { await api('POST', '/api/logout'); } catch (e) { /* go anyway */ } location.href = '/login'; }
+/* an import can take seconds: Import is disabled and busy meanwhile, and a toast says it is running */
+const importBusy = on => { ui.importing = on; markImportBusy(on); };
 export async function doImport(file) {
-  if (!file) return; const fd = new FormData(); fd.append('file', file);
+  if (!file || ui.importing) return; const fd = new FormData(); fd.append('file', file);
+  importBusy(true); const note = toast('Importing. This can take a moment for a big file.', { hold: true });
   const r = await run(api('POST', '/api/import', fd));
+  importBusy(false); if (note) note.kill();
   if (r.ok && r.data) toast(`Imported ${r.data.added}, skipped ${r.data.skipped}`);
+}
+/* Export leaves out folders locked in this browser; say so at the download, with the way to include them */
+export function exportNote() {
+  const out = data.folders.filter(f => isLocked(f) && ownLock(f)).map(f => f.name); if (!out.length) return;
+  toast(out.length === 1 ? `Exported without ${out[0]}: it is locked. Unlock it first to include it.` : `Exported without ${out.length} locked folders. Unlock them first to include them.`, { long: true });
 }
 
 /* ================= navigation ================= */
@@ -148,6 +158,7 @@ export function goView(v) {
 export function onClick(e) {
   const t = e.target;
   if (t.closest('.menu')) return;
+  if (t.closest('a[href="/api/export"]')) { exportNote(); return; } /* the download goes on; the note says what it leaves out */
   /* select mode: a click or tap on empty space clears it, like clicking the desktop, at every width */
   if (ui.selecting && emptySpace(t)) { exitSelect(); return; }
   const row = t.closest('[data-row]');
@@ -155,7 +166,7 @@ export function onClick(e) {
   const dest = t.closest('[data-dest]');
   if (dest && layers.sheet) { const raw = dest.dataset.dest;
     if (layers.sheet.type === 'save') { const id = +raw; layers.save.folder = id; layers.save.recent = [id, ...layers.save.recent.filter(x => x !== id)].slice(0, 3); layers.save.picker = false; layers.save.nf = false; fillSheet(); return; }
-    if (layers.sheet.type === 'move') { const ids = layers.sheet.ids, folder = raw === 'inbox' ? null : +raw; closeSheet(); if (ui.selecting) { ui.selecting = false; ui.picked.clear(); } actions.move(ids, folder); return; }
+    if (layers.sheet.type === 'move') { const ids = layers.sheet.ids, folder = raw === 'inbox' ? null : +raw; closeSheet(); if (ui.selecting) { ui.selecting = false; ui.picked.clear(); } moveWithUndo(ids, folder); return; }
     if (layers.sheet.type === 'fmove') { const id = layers.sheet.id, parent = raw === 'top' ? null : +raw; closeSheet(); run(api('PATCH', `/api/folders/${id}`, { parent_id: parent })); return; }
   }
   const pk = t.closest('[data-pick]'); if (pk && layers.sheet && layers.save) { layers.save.folder = +pk.dataset.pick; fillSheet(); return; }
@@ -212,11 +223,11 @@ export function onClick(e) {
     case 'bulk-trash': { const ids = [...ui.picked]; ui.selecting = false; actions.trash(ids).then(() => { ui.picked.clear(); render(); }); break; }
     case 'bulk-restore': { const ids = [...ui.picked]; ui.selecting = false; ui.picked.clear(); actions.restore(ids); break; }
     case 'bulk-purge': purgeAsk([...ui.picked], ids => { ui.selecting = false; ui.picked.clear(); return actions.purge(ids); }); break;
-    case 'folder-menu': menuOrSheet(a, folderItems(ui.view), folderById.get(ui.view)); break;
+    case 'folder-menu': menuOrSheet(a, folderSheetItems(ui.view), folderById.get(ui.view)); break;
     case 'empty-trash': emptyTrash(); break;
     case 'new-folder': newFolder(null); break;
     case 'tab': { const to = a.dataset.tab; if (ui.view !== to) goView(to); break; } /* the tab's shape glides; the content is there at once */
-    case 'import': byId('import-file').click(); break;
+    case 'import': if (!ui.importing) byId('import-file').click(); break;
     case 'tokens': openTokens(); break;
     case 'sessions': openSessions(); break;
     case 'ss-end': sessionsAsk(+a.dataset.id); break;
@@ -273,11 +284,14 @@ export function nfCreate() {
     api('POST', '/api/folders', { name: v, parent_id: null }).then(async nf => { await loadQuiet();
       if (layers.sheet !== s) return;
       if (s.type === 'save') { layers.save.folder = nf.id; layers.save.recent = [nf.id, ...layers.save.recent.filter(x => x !== nf.id)].slice(0, 3); layers.save.picker = false; layers.save.nf = false; fillSheet(); }
-      else if (s.type === 'move') { const ids = s.ids; closeSheet(); if (ui.selecting) { ui.selecting = false; ui.picked.clear(); } actions.move(ids, nf.id); } },
+      else if (s.type === 'move') { const ids = s.ids; closeSheet(); if (ui.selecting) { ui.selecting = false; ui.picked.clear(); } moveWithUndo(ids, nf.id); } },
     err => { if (!err.auth) toast(errorText(err, 'That did not work. Try again.')); });
   }
 }
 export function onInput(e) {
   const t = e.target;
-  if (t.dataset.f && layers.save) { layers.save[t.dataset.f] = t.value; if (t.tagName === 'TEXTAREA') { fitTa(t); checkUrl(); } patchSave(); }
+  if (t.dataset.f && layers.save) { layers.save[t.dataset.f] = t.value; if (t.tagName === 'TEXTAREA') { fitTa(t); checkUrl(); }
+    /* an error is about the address as it was: typing clears it, without a redraw that would lose the caret */
+    if (layers.save.err) { layers.save.err = ''; const er = sheetEl() && sheetEl().querySelector('[data-save] .fld-err'); if (er) er.remove(); }
+    patchSave(); }
 }

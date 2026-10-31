@@ -145,7 +145,7 @@ export function deskTile(b, ts) {
     <button type="button" class="chk" data-a="pick" role="checkbox" aria-checked="${picked}" aria-label="Select ${esc(b.title)}"${ui.selecting ? '' : ' tabindex="-1"'}>${ic('check')}</button></article>`;
 }
 export const skel = () => `<div class="tile sk" aria-hidden="true"><div class="t-main"><div class="b"></div><div class="b l1"></div><div class="b l2"></div></div><div class="t-strip"><span class="b"></span></div></div>`;
-export const noticeHTML = phone => `<div class="${phone ? 'pnotice' : 'notice'}" role="alert">${ic('warn')}<span>Bookmarks could not load.</span><span class="sp"></span>
+export const noticeHTML = phone => `<div class="${phone ? 'pnotice' : 'notice'}" role="alert">${ic('warn')}<span>${data.error && data.error.network ? 'Cannot reach your Pinned server.' : 'Bookmarks could not load.'}</span><span class="sp"></span>
   <button type="button" class="${phone ? 'tbtn' : 'btn'}" data-a="retry">${phone ? '' : ic('restore')}Retry</button></div>`;
 export function deskBody() {
   const body = byId('body'), gridCls = 'grid' + (ui.layout === 'list' ? ' is-list' : '');
@@ -541,7 +541,10 @@ export function render() {
     const t = document.querySelector(`${scope}[data-id="${keep.id}"]`);
     const el = t && (keep.title ? (t.matches('a') ? t : t.querySelector('.t-title,.pt-in,.g-in')) : keep.a ? t.querySelector(`[data-a="${keep.a}"]`) : null);
     if (el) el.focus({ preventScroll: true }); }
+  if (ui.importing) markImportBusy(true);
 }
+/* while an import runs, every Import control is disabled and busy, across redraws */
+export const markImportBusy = on => document.querySelectorAll('[data-a="import"]').forEach(b => { b.toggleAttribute('disabled', on); b.setAttribute('aria-busy', String(on)); });
 export function renderList() { if (ui.mode === 'phone') renderPhoneMain(); else { deskBody(); const c = document.querySelector('.tb .cnt'); if (c && data.has) c.textContent = count(ui.view); } }
 
 export const canAddTo = () => typeof ui.view === 'number' || ui.view === 'inbox';

@@ -71,7 +71,7 @@ export const SORTS = { saved: 'Newest', name: 'A to Z', opened: 'Last opened', m
 export const FSORTS = { manual: 'Your order', name: 'A to Z', saved: 'Newest' };
 export const ui = {
   view: 'dashboard', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', fsort: FSORTS[store.get('fsort', 'manual')] ? store.get('fsort', 'manual') : 'manual', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid', footOpen: store.get('foot', '') === 'open',
-  selecting: false, picked: new Set(), renaming: null,
+  selecting: false, picked: new Set(), renaming: null, importing: false,
   full: null, /* the view whose long list shows every card (Show all); a new view starts capped again */
   version: null, /* from /health, which tells it only to a logged in session */
   mode: null, /* 'desk' or 'phone', set by render() */

@@ -6,7 +6,7 @@ import { closeMenu, tileMenu } from './menu.js';
 import { favHTML, fmini, hl, hostLine, miniPicker, nfForm, nfMini } from './render.js';
 import { bm, chain, data, descSet, fid, folderById, hostOf, hueClass, kids, layers, live, load, nowS, pathOf, pickable, run, ui } from './state.js';
 import { announce, toast } from './toast.js';
-import { byId, copy, dayDiff, errorText, esc, fmtDate, fmtDay, hostFromUrl, ic, isPhone, plural, reduce, validUrl, wait } from './util.js';
+import { byId, copy, dayDiff, errorText, esc, fmtDate, fmtDay, hostFromUrl, ic, isPhone, plural, reduce, tooMany, validUrl, wait } from './util.js';
 
 /* ================= sheets ================= */
 let lastFocus = null;
@@ -29,7 +29,7 @@ export function closeSheet() {
 }
 export const grab = () => `<div class="grab" aria-hidden="true"></div>`;
 export const bmHead = b => `<div class="sh-head">${favHTML(b)}<span class="tt"><span class="t">${esc(b.title)}</span>${hostLine(hostOf(b), 'host')}</span></div>`;
-export const fHead = f => `<div class="sh-head ${hueClass(f.id)}">${ic('folder', 'fh-ic')}<span class="tt"><span class="t">${esc(f.name)}</span></span></div>`;
+export const fHead = (f, close) => `<div class="sh-head ${hueClass(f.id)}">${ic('folder', 'fh-ic')}<span class="tt"><span class="t">${esc(f.name)}</span></span>${close ? `<button type="button" class="ib sh-x" data-a="close" aria-label="Close">${ic('close')}</button>` : ''}</div>`;
 export const textHead = t => `<div class="sh-head"><span class="tt"><span class="t">${esc(t)}</span></span></div>`;
 /* rows in groups split by '-' (an empty group never shows) */
 const rowHTML = (r, i) => r.href ? `<a class="sh-row" href="${esc(r.href)}" target="_blank" rel="noopener" data-row="${i}">${r.icon ? ic(r.icon) : ''}${esc(r.label)}</a>`
@@ -83,14 +83,14 @@ export const lockTitle = (s, f) => s.type === 'lock' ? 'Lock ' + f.name : s.type
 export function lockHTML(s, f) {
   const err = s.err ? `<p class="fld-err" role="alert">${esc(s.err)}</p>` : '', shake = s.shake ? ' shake' : '';
   const pw = (name, label, ac, focus) => `<label class="fld"><span class="sh-lbl">${label}</span><input class="fld-in${shake}" type="password" name="${name}" autocomplete="${ac}" enterkeyhint="go"${focus ? ' data-autofocus' : ''}></label>`;
-  if (s.type === 'lock') return fHead(f) + `<form data-lock>${pw('pw', 'Password', 'new-password', true)}${pw('pw2', 'Repeat password', 'new-password')}
+  if (s.type === 'lock') return fHead(f, true) + `<form data-lock>${pw('pw', 'Password', 'new-password', true)}${pw('pw2', 'Repeat password', 'new-password')}
     <p class="sh-text">Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</p>${f.share ? `<p class="sh-text">Locking ends the share link.</p>` : ''}
     ${err}<div class="sv-acts"><button type="submit" class="save">Lock</button></div></form>`;
-  if (s.type === 'unlock') return fHead(f) + `<form data-lock>${pw('pw', 'Password', 'current-password', true)}${err}<div class="sv-acts"><button type="submit" class="save">Unlock</button></div></form>`;
-  return fHead(f) + `<form data-lock><p class="sh-text">Enter the app password to take the lock off ${esc(f.name)}.</p>${pw('pw', 'App password', 'current-password', true)}${err}
+  if (s.type === 'unlock') return fHead(f, true) + `<form data-lock>${pw('pw', 'Password', 'current-password', true)}${err}<div class="sv-acts"><button type="submit" class="save">Unlock</button></div></form>`;
+  return fHead(f, true) + `<form data-lock><p class="sh-text">Enter the app password to take the lock off ${esc(f.name)}.</p>${pw('pw', 'App password', 'current-password', true)}${err}
     <div class="sv-acts"><button type="submit" class="save">Remove lock</button></div></form>`;
 }
-export const lockErr = e => e.status === 429 ? errorText(e, 'Try again in 30 seconds') : e.status === 403 ? 'Wrong password' : errorText(e, 'That did not work. Try again.');
+export const lockErr = e => e.status === 429 ? errorText(e, tooMany(30)) : e.status === 403 ? 'Wrong password' : errorText(e, 'That did not work. Try again.');
 export async function submitLock(f) {
   const s = layers.sheet, pw = f.elements.pw.value, btn = f.querySelector('button[type=submit]');
   const fail = (msg, shake) => { s.err = msg; s.shake = shake; fillSheet(); const i = sheetEl().querySelector('input[name=pw]'); if (i) i.focus(); s.shake = false; };
@@ -113,7 +113,7 @@ export function shareHTML(s, f) {
     <div class="sh-rows"><button type="button" class="sh-row sh-switch" role="switch" aria-checked="${!!sh}" data-a="share-toggle">${ic('link')}<span class="sw-l">Share with a link</span><span class="sw" aria-hidden="true"><span class="knob"></span></span></button></div>`;
   if (!sh) return h;
   const lockOn = sh.has_password || !!s.pwOn;
-  const pwForm = `<form class="share-row" data-sharepw><input class="fld-in" type="password" name="pw" placeholder="${sh.has_password ? 'New password' : 'Password'}" autocomplete="new-password" aria-label="Password"><button type="submit" class="tbtn">Set</button>${s.pwEdit ? `<button type="button" class="tbtn" data-a="share-pw-cancel">Cancel</button>` : ''}</form>${s.pwErr ? `<p class="fld-err" role="alert">${esc(s.pwErr)}</p>` : ''}`;
+  const pwForm = `<form class="share-row" data-sharepw><input class="fld-in" type="password" name="pw" placeholder="${sh.has_password ? 'New password' : 'Password'}, 8 or more characters" autocomplete="new-password" aria-label="Password"><button type="submit" class="tbtn">Set</button>${s.pwEdit ? `<button type="button" class="tbtn" data-a="share-pw-cancel">Cancel</button>` : ''}</form>${s.pwErr ? `<p class="fld-err" role="alert">${esc(s.pwErr)}</p>` : ''}`;
   const pw = `<div class="sh-rows"><button type="button" class="sh-row sh-switch" role="switch" aria-checked="${lockOn}" data-a="share-lock">${ic('lock')}<span class="sw-l">Lock with a password</span><span class="sw" aria-hidden="true"><span class="knob"></span></span></button></div>`
     + (!lockOn ? '' : sh.has_password && !s.pwEdit
       ? `<div class="share-row share-locked"><span class="share-state">${ic('lock')}Locked</span><button type="button" class="tbtn" data-a="share-pw-change">Change</button><button type="button" class="tbtn warn" data-a="share-pw-remove">Remove</button></div>`
@@ -197,7 +197,7 @@ export async function tokensLoad() { const s = layers.sheet; try { const list = 
 export function tokensHTML(s) {
   let h = `<div class="at-head"><h2 class="at-title">API tokens</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
   if (s.created) h += `<div class="tk-new"><span class="sh-lbl">${esc(s.created.name)}</span><div class="share-link"><div class="fld-in tk-val" tabindex="0" aria-label="Token">${esc(s.created.token)}</div><button type="button" class="tbtn" data-a="tk-copy">Copy</button></div>
-    <p class="share-meta">Copy it now. It is not shown again.</p></div>`;
+    <p class="share-meta">Copy it now. It is not shown again.</p><p class="share-meta tk-next">Next, paste it into the extension's options with the address <b class="tk-addr">${esc(location.origin)}</b>, or into your script.</p></div>`;
   else h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Extension on my laptop" autocomplete="off" spellcheck="false" enterkeyhint="next" aria-label="Token name"${isPhone() ? '' : ' data-autofocus'}></div>
     <div class="share-pwf"><div class="share-row"><input class="fld-in" type="password" name="password" placeholder="App password" autocomplete="current-password" enterkeyhint="done" aria-label="App password"><button type="submit" class="tbtn">Create</button></div></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
   if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
