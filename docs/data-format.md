@@ -13,9 +13,9 @@ export/bookmarks.html the nightly export
 
 Only the user the app runs as can read them: folders are 0700 and files 0600 (the process runs with umask 077). At start the app makes folders and files written by an older version, which were readable by everyone, private too; where the volume does not allow it, it logs that once and carries on.
 
-`secret.key` is the key for the hashes of sessions, API tokens, unlock cookies and device cookies. Keep it with the database. Without it every session ends and every API token stops working.
+`secret.key` is the key for the hashes of sessions, API tokens, unlock cookies and device cookies, and for the hashes of folder lock and share passwords (see `lock_hash`). Keep it with the database, and back the two up together. Without it every session ends, every API token stops working, a locked folder no longer opens with its password (remove the lock with the app password, then lock it again) and a share password no longer matches (set it again).
 
-Device and unlock cookies carry a version marker, `v1.`, before the signed value; values without it, from before 0.1.11, are read the same way. bcrypt hashes (lock, share and app passwords) made with a lower cost than the current one are replaced by a hash at the current cost at the next successful check, except lock and share hashes without a stamp (see `lock_stamp`).
+Device and unlock cookies carry a version marker, `v1.`, before the signed value; values without it, from before 0.1.11, are read the same way. A lock or share password hash from before 0.1.11 (plain bcrypt of the password, without `k1:`) or made at a lower bcrypt cost than the current one is replaced by a hash in the current form at the next right password, only when the stored hash is still the one that was checked, so a password changed meanwhile is never overwritten. The stamp stays, so other browsers stay unlocked; a lock or share without a stamp gets one then (see `lock_stamp`). The app password hash is replaced at start when its cost is lower than the current one.
 
 ## The database
 
@@ -30,8 +30,8 @@ SQLite in WAL mode, with foreign keys on. Times are Unix seconds. The schema is 
 | `name` | TEXT NOT NULL | Imported names are cut at 200 characters. |
 | `position` | INTEGER NOT NULL | Order among its siblings. |
 | `created_at` | INTEGER NOT NULL | |
-| `lock_hash` | TEXT NULL | bcrypt hash of the folder's own password. NULL when the folder has no lock. |
-| `lock_stamp` | TEXT NULL | 16 random bytes in hex, made whenever the lock password is set or changed and kept when only its hash is replaced by a stronger one. Unlock cookies sign it, so a rehash does not end them. NULL when there is no lock, and for locks set before schema 11 until the password is set again; their cookies sign `lock_hash`, so their hash is never replaced by a stronger one (every version before 0.1.11 hashed at cost 10, the current cost). |
+| `lock_hash` | TEXT NULL | The hash of the folder's own password: `k1:` followed by a bcrypt hash of the HMAC-SHA256 of `password\x00` and the password under `secret.key`, base64 encoded (44 bytes whatever the password's length, so bcrypt's 72 byte limit does not apply). Locks set before 0.1.11 hold a plain bcrypt hash of the password until the next right password replaces it. NULL when the folder has no lock. |
+| `lock_stamp` | TEXT NULL | 16 random bytes in hex, made whenever the lock password is set or changed and kept when only its hash is replaced. Unlock cookies sign it, so a rehash does not end them. NULL when there is no lock, and for locks set before schema 11 until their hash is replaced at the next right password or the password is set again; until then their cookies sign `lock_hash`, so when the stamp is added, other browsers unlock that folder once more. |
 
 Folders nest at most 32 deep.
 
@@ -103,7 +103,7 @@ The list of signed in browsers names a session by its SQLite `rowid`.
 | `id` | INTEGER PRIMARY KEY | |
 | `folder_id` | INTEGER NOT NULL UNIQUE | The shared folder. One share per folder. Deleted with the folder. |
 | `token` | TEXT NOT NULL UNIQUE | The random part of the link, `/s/#<token>` (links made before 0.1.11: `/s/<token>`). Stored as is, because it is the link. |
-| `password_hash` | TEXT NULL | bcrypt hash of the share password. NULL when there is none. |
+| `password_hash` | TEXT NULL | The hash of the share password, in the same form as `lock_hash` in folders (`k1:` and bcrypt over an HMAC under `secret.key`; a plain bcrypt hash for passwords set before 0.1.11 until the next right password). NULL when there is none. |
 | `password_stamp` | TEXT NULL | Like `lock_stamp` in folders, for the share password. |
 | `expires_at` | INTEGER NULL | NULL when it never expires. |
 | `created_at` | INTEGER NOT NULL | |

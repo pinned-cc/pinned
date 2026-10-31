@@ -257,3 +257,18 @@ func TestPasswordStoredAsBcrypt(t *testing.T) {
 		t.Errorf("a change after byte 72: changed=%v err=%v", changed, err)
 	}
 }
+
+func TestThirdPartyNotices(t *testing.T) {
+	n := thirdPartyNotices()
+	for _, want := range []string{
+		"Copyright (c) 2018 Daniel Miessler",
+		"The above copyright notice and this permission notice shall be included in all",
+		"xato-net-10-million-passwords-100000.txt",
+		"SIL Open Font License",
+		"Copyright (c) 2023 Vercel",
+	} {
+		if !strings.Contains(n, want) {
+			t.Errorf("notices lack %q", want)
+		}
+	}
+}

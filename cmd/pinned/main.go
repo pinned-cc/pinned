@@ -40,10 +40,14 @@ const minPassword = 8
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	healthcheck := flag.Bool("healthcheck", false, "check http://127.0.0.1:$PORT/health and exit 0 when it answers 200, 1 otherwise")
+	licenses := flag.Bool("licenses", false, "print the licences of the third party parts in the binary and exit")
 	flag.Parse()
 	switch {
 	case *showVersion:
 		fmt.Println(version)
+		return
+	case *licenses:
+		fmt.Print(thirdPartyNotices())
 		return
 	case *healthcheck:
 		if err := checkHealth(env("PORT", "8080")); err != nil {
@@ -58,6 +62,19 @@ func main() {
 		fmt.Fprintln(os.Stderr, "pinned:", err)
 		os.Exit(1)
 	}
+}
+
+// thirdPartyNotices is every licence notice a third party part of the binary
+// asks to travel with it: the list of common passwords (SecLists, MIT) and the
+// Geist fonts (SIL Open Font License, also served as /static/fonts/OFL.txt).
+func thirdPartyNotices() string {
+	fonts, err := fs.ReadFile(pinned.Web, "web/fonts/OFL.txt")
+	if err != nil {
+		fonts = []byte("web/fonts/OFL.txt is missing from this build\n")
+	}
+	return "Pinned is under the GNU Affero General Public License, version 3 only (LICENSE). It holds these third party parts:\n\n" +
+		"== Common passwords (internal/auth/common-passwords.txt) ==\n\n" + auth.CommonListNotice +
+		"\n== Geist and Geist Mono fonts (web/fonts) ==\n\n" + string(fonts)
 }
 
 // stampWriter starts every log line with the time in UTC as RFC 3339, so

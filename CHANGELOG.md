@@ -12,6 +12,7 @@ Not released yet.
 - An optional second factor for the login. Set `TOTP_SECRET` (or `TOTP_SECRET_FILE`) to a base32 secret and add it to your authenticator app by hand; the login then asks for a six digit code as well as the password. API tokens keep working without a code. The README says how to make a secret.
 - Signed in, under More on the desktop and in Settings on the phone, lists the browsers that are logged in, with when they signed in and were last used, and signs out one of them or all others.
 - `APP_PASSWORD_FILE` reads the app password from a file, for Docker or compose secrets.
+- `pinned -licenses` prints the licences of the third party parts built into the binary: the list of common passwords from SecLists (MIT) and the Geist fonts (SIL Open Font License).
 - New settings `ICONS` and `ICON_HOSTS`. `ICONS=off` stops every icon fetch, so nothing leaves the server and bookmarks keep their letter mark. `ICON_HOSTS` keeps icon fetches to the host names you list.
 - The save page and How to save have a Log out.
 - Logs record logins, failed logins, lockouts, logouts, API tokens, folder locks and unlocks, share links and unlocks, refused cross site requests and failed icon fetches as `security event=...` lines with the client address, never a password, token or cookie.

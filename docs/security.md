@@ -39,7 +39,7 @@ An import file is parsed as a browser bookmarks file. Folders that nest more tha
 
 A common password is refused: one of 10000 common passwords embedded in the app, compared without regard to case, or a password made only of the words pinned, bookmark, bookmarks, password, passwort or passwd, or of parts of the host name (of `BASE_URL`, the address the request came to, and for `APP_PASSWORD` the machine's name), with digits and symbols around them or in leet spelling such as `p@ssw0rd`. The check runs inside the app; no password is ever sent anywhere. Pinned does not suggest or make passwords: use your own password manager.
 
-The list is the first 10000 entries of 8 characters or more, in lower case and without repeats, of `Passwords/Common-Credentials/xato-net-10-million-passwords-100000.txt` from SecLists (https://github.com/danielmiessler/SecLists), copyright (c) 2018 Daniel Miessler, under the MIT licence. It is in `internal/auth/common-passwords.txt`.
+The list is the first 10000 entries of 8 characters or more, in lower case and without repeats, of `Passwords/Common-Credentials/xato-net-10-million-passwords-100000.txt` from SecLists (https://github.com/danielmiessler/SecLists), copyright (c) 2018 Daniel Miessler, under the MIT licence. It is in `internal/auth/common-passwords.txt`, with the SecLists copyright and permission notice beside it in `internal/auth/common-passwords.LICENSE`. That notice is built into the binary, so every image carries it, and `pinned -licenses` prints it with the other third party licences.
 
 There is no cap on the number of bookmarks, folders, API tokens or signed in browsers. A folder has at most one share link.
 

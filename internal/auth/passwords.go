@@ -20,6 +20,12 @@ import (
 //go:embed common-passwords.txt
 var commonList string
 
+// CommonListNotice is the SecLists copyright and MIT permission notice the list
+// ships under, carried in the binary and printed by pinned -licenses.
+//
+//go:embed common-passwords.LICENSE
+var CommonListNotice string
+
 var commonSet = sync.OnceValue(func() map[string]struct{} {
 	m := make(map[string]struct{}, 10000)
 	for _, line := range strings.Split(commonList, "\n") {
