@@ -222,24 +222,30 @@ export async function tokenRevoke(id) { const s = layers.sheet;
   catch (e) { if (!e.auth) toast('That did not work. Try again.'); } }
 
 /* ---------- signed in browsers: when each signed in and was last used, sign out one or all others ---------- */
-export function openSessions() { openSheet({ type: 'sessions', list: null, err: null }); sessionsLoad(); }
+/* signing out another browser asks for the app password, the same way making a token does: s.confirm is a session id or 'all' */
+export function openSessions() { openSheet({ type: 'sessions', list: null, err: null, confirm: null, formErr: null }); sessionsLoad(); }
 async function sessionsLoad() { const s = layers.sheet; try { const list = await api('GET', '/api/sessions'); if (layers.sheet !== s) return; s.list = list; s.err = null; }
   catch (e) { if (e.auth || layers.sheet !== s) return; s.err = 'Could not load the browsers.'; }
+  if (s.confirm !== 'all' && s.confirm != null && !(s.list || []).some(x => x.id === s.confirm)) s.confirm = null;
   fillSheet(); }
+const ssName = x => x.browser || 'Browser';
 export function sessionsHTML(s) {
   const h = `<div class="at-head"><h2 class="at-title">Signed in</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
   if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
   if (!s.list) return h + `<div class="tk-sec" aria-busy="true"></div>`;
-  const name = x => x.browser || 'Browser';
-  return h + `<div class="tk-sec"><span class="sh-lbl">Browsers</span><div class="sh-rows tk-list">` + s.list.map(x => `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(name(x))}</span><span class="tk-m">${x.current ? 'This browser, signed in on' : 'Signed in on'} ${fmtDay(x.created_at)}${x.current ? '' : ', last used ' + ago(x.used_at)}</span></span>${x.current ? '' : `<button type="button" class="tbtn warn" data-a="ss-end" data-id="${x.id}" aria-label="Sign out ${esc(name(x))}">Sign out</button>`}</div>`).join('') + `</div></div>`
-    + (s.list.some(x => !x.current) ? `<div class="sv-acts"><button type="button" class="tbtn warn" data-a="ss-others">Sign out all others</button></div>` : '');
+  const others = s.list.some(x => !x.current), one = s.list.find(x => x.id === s.confirm);
+  const form = `<form class="tk-sec" data-session><span class="sh-lbl">${one ? 'Sign out ' + esc(ssName(one)) : 'Sign out all others'}</span><div class="share-row"><input class="fld-in" type="password" name="password" placeholder="App password" autocomplete="current-password" enterkeyhint="done" aria-label="App password"><button type="button" class="tbtn" data-a="ss-cancel">Cancel</button><button type="submit" class="tbtn warn">Sign out</button></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
+  return h + `<div class="tk-sec"><span class="sh-lbl">Browsers</span><div class="sh-rows tk-list">` + s.list.map(x => `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(ssName(x))}</span><span class="tk-m">${x.current ? 'This browser, signed in on' : 'Signed in on'} ${fmtDay(x.created_at)}${x.current ? '' : ', last used ' + ago(x.used_at)}</span></span>${x.current ? '' : `<button type="button" class="tbtn warn" data-a="ss-end" data-id="${x.id}" aria-label="Sign out ${esc(ssName(x))}">Sign out</button>`}</div>`).join('') + `</div></div>`
+    + (s.confirm != null && (one || (s.confirm === 'all' && others)) ? form : others ? `<div class="sv-acts"><button type="button" class="tbtn warn" data-a="ss-others">Sign out all others</button></div>` : '');
 }
-export async function sessionEnd(id) { const s = layers.sheet;
-  try { await api('DELETE', `/api/sessions/${id}`); if (layers.sheet !== s) return; await sessionsLoad(); toast('Signed out'); }
-  catch (e) { if (!e.auth) toast('That did not work. Try again.'); } }
-export async function sessionsEndOthers() { const s = layers.sheet;
-  try { await api('DELETE', '/api/sessions'); if (layers.sheet !== s) return; await sessionsLoad(); toast('Other browsers signed out'); }
-  catch (e) { if (!e.auth) toast('That did not work. Try again.'); } }
+export function sessionsAsk(which) { const s = layers.sheet; if (!s || s.type !== 'sessions') return; s.confirm = which; s.formErr = null; fillSheet();
+  const p = sheetEl().querySelector('form[data-session] [name=password]'); if (p) p.focus({ preventScroll: true }); }
+/* a wrong password keeps the form open and puts the caret back in the field */
+export async function sessionsSubmit(f) { const s = layers.sheet, pw = f.elements.password; if (!pw.value) { pw.focus(); return; }
+  const btn = f.querySelector('button[type=submit]'); btn.disabled = true; const all = s.confirm === 'all';
+  try { await api('DELETE', all ? '/api/sessions' : `/api/sessions/${s.confirm}`, { password: pw.value }); if (layers.sheet !== s) return; s.confirm = null; s.formErr = null; await sessionsLoad(); toast(all ? 'Other browsers signed out' : 'Signed out'); }
+  catch (e) { if (e.auth || layers.sheet !== s) return; s.formErr = e.status === 403 ? 'Wrong password' : errorText(e, 'That did not work. Try again.'); fillSheet();
+    const p = sheetEl().querySelector('form[data-session] [name=password]'); if (p) p.focus(); } }
 
 /* ---------- "Add to <folder>": pick existing bookmarks into a folder ---------- */
 export const atName = f => f == null ? 'Inbox' : (folderById.get(f) || { name: 'Folder' }).name;

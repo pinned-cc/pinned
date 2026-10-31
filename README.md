@@ -181,7 +181,7 @@ A token never sees inside a locked folder, even one you unlocked in your browser
 
 ## Signed in browsers
 
-Signed in, in the app's menu, lists the browsers that are logged in, with when each logged in and when it was last used. Sign out ends one of them; Sign out all others ends every one but the browser you are using.
+Signed in, in the app's menu, lists the browsers that are logged in, with when each logged in and when it was last used. Sign out ends one of them; Sign out all others ends every one but the browser you are using. Both ask for the app password first, so someone who got hold of one session cannot keep signing you out.
 
 ## Wrong passwords and tokens
 

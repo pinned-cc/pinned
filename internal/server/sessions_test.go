@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/pinned-cc/pinned/internal/auth"
 )
 
 // browser is a second browser on e's server, with its own cookies and
@@ -70,20 +72,31 @@ func TestSessionsListAndSignOut(t *testing.T) {
 		t.Errorf("list shows a hash: %s", body)
 	}
 
-	// Sign out one browser.
-	e.expect("DELETE", "/api/sessions/"+itoa(names["Safari on iPhone"]), nil, 204)
+	// Signing out another browser asks for the app password again.
+	phoneID := itoa(names["Safari on iPhone"])
+	e.expect("DELETE", "/api/sessions/"+phoneID, nil, 400)
+	e.expect("DELETE", "/api/sessions/"+phoneID, map[string]string{"password": "wrong"}, 403)
+	e.expect("DELETE", "/api/sessions", map[string]string{"password": "wrong"}, 403)
+	e.wantEvent("reauth.fail", 2)
+	if l := e.events("reauth.fail"); !strings.Contains(l[0], "for=session.end") || !strings.Contains(l[1], "for=session.end_others") {
+		t.Errorf("reauth lines: %v", l)
+	}
+	if code := phone.do("GET", "/api/state", ""); code != 200 {
+		t.Errorf("phone signed out by a wrong password: %d", code)
+	}
+	e.expect("DELETE", "/api/sessions/"+phoneID, map[string]string{"password": "pw"}, 204)
 	if code := phone.do("GET", "/api/state", ""); code != 401 {
 		t.Errorf("signed out phone: %d", code)
 	}
 	if code := laptop.do("GET", "/api/state", ""); code != 200 {
 		t.Errorf("laptop: %d", code)
 	}
-	e.expect("DELETE", "/api/sessions/"+itoa(names["Safari on iPhone"]), nil, 404)
+	e.expect("DELETE", "/api/sessions/"+phoneID, map[string]string{"password": "pw"}, 404)
 	e.wantEvent("session.end", 1)
 
 	// Sign out every other browser.
 	phone.do("POST", "/api/login", `{"password":"pw"}`)
-	out := decode[map[string]int](t, e.expect("DELETE", "/api/sessions", nil, 200))
+	out := decode[map[string]int](t, e.expect("DELETE", "/api/sessions", map[string]string{"password": "pw"}, 200))
 	if out["ended"] != 2 || laptop.do("GET", "/api/state", "") != 401 || phone.do("GET", "/api/state", "") != 401 {
 		t.Errorf("sign out others: %v", out)
 	}
@@ -100,7 +113,16 @@ func TestSessionsListAndSignOut(t *testing.T) {
 		}
 	}
 
-	// Ending this browser's own session is a logout.
+	// Wrong passwords here count in the login limiter: after 5 the client
+	// waits, as for creating a token.
+	for i := 0; i < 4; i++ {
+		e.expect("DELETE", "/api/sessions", map[string]string{"password": "wrong"}, 403)
+	}
+	e.expect("DELETE", "/api/sessions", map[string]string{"password": "wrong"}, 429)
+	e.expect("DELETE", "/api/sessions", map[string]string{"password": "pw"}, 429)
+	e.server.loginLimiter = auth.NewLimiter()
+
+	// Ending this browser's own session is a logout, no password needed.
 	list = decode[[]sessionJSON](t, e.expect("GET", "/api/sessions", nil, 200))
 	e.expect("DELETE", "/api/sessions/"+itoa(list[0].ID), nil, 204)
 	if code, _ := e.do("GET", "/api/state", nil); code != 401 {

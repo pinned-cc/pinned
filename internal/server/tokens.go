@@ -180,9 +180,7 @@ func (s *Server) apiCreateToken(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, store.ErrEmptyName)
 		return
 	}
-	if ok, wait := s.checkPassword(r, in.Password); !ok {
-		s.failed(r, "reauth", wait, "for", "token.create")
-		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
+	if !s.reauthWith(w, r, in.Password, "token.create") {
 		return
 	}
 	raw, err := auth.NewToken()

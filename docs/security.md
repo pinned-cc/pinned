@@ -43,7 +43,7 @@ There is no cap on the number of bookmarks, folders, API tokens or signed in bro
 
 | Check | Counted per | Wait | Cap for everyone |
 |---|---|---|---|
-| App password: login, the second factor code, creating an API token, removing a folder lock | client | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes |
+| App password: login, the second factor code, creating an API token, removing a folder lock, signing out other browsers | client | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes |
 | API token | client | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes, counted apart from the login |
 | Share password | client, for each share link on its own | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes for that link |
 | Folder password: unlocking, changing it | client, for each folder on its own | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes for that folder |
@@ -181,7 +181,7 @@ The client address is read the same way as for the wrong password limits: from `
 | `token.fail`, `token.wait` | A wrong API token | `seconds` on a wait |
 | `token.refused` | A valid token called something tokens may not | `token`, `route` |
 | `token.create`, `token.delete` | A token was created or revoked | `token`, and `name` on create |
-| `reauth.fail`, `reauth.wait` | A wrong app password when it is asked again | `for` (`token.create` or `lock.remove`), `folder` |
+| `reauth.fail`, `reauth.wait` | A wrong app password when it is asked again | `for` (`token.create`, `lock.remove`, `session.end` or `session.end_others`), `folder` |
 | `lock.fail`, `lock.wait` | A wrong folder password | `folder` |
 | `lock.set`, `lock.change`, `lock.remove` | A folder lock was set, changed or removed | `folder` |
 | `share.fail`, `share.wait` | A wrong share password | `folder` |

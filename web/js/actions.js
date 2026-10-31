@@ -5,7 +5,7 @@ import { closeMenu, menuOrSheet, openMenu, selItems, tileMenu } from './menu.js'
 import { openPalette } from './palette.js';
 import { deskBody, render, switchLayout } from './render.js';
 import { FPICK, emptySpace, exitSelect, pickRange, selSync, toggle } from './select.js';
-import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openReleases, openSessions, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sessionEnd, sessionsEndOthers, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
+import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openReleases, openSessions, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sessionsAsk, sessionsSubmit, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
 import { FSORTS, SORTS, bm, chain, count, data, descSet, fid, folderById, foldersSel, hidesRecent, isLocked, layers, live, load, loadQuiet, lockedAt, ownLock, run, selectables, setFsort, setSort, ui } from './state.js';
 import { announce, toast } from './toast.js';
 import { byId, copy, errorText, plural, reduce, store, wait } from './util.js';
@@ -219,8 +219,9 @@ export function onClick(e) {
     case 'import': byId('import-file').click(); break;
     case 'tokens': openTokens(); break;
     case 'sessions': openSessions(); break;
-    case 'ss-end': a.disabled = true; sessionEnd(+a.dataset.id); break;
-    case 'ss-others': a.disabled = true; sessionsEndOthers(); break;
+    case 'ss-end': sessionsAsk(+a.dataset.id); break;
+    case 'ss-others': sessionsAsk('all'); break;
+    case 'ss-cancel': sessionsAsk(null); break;
     case 'releases': openReleases(); break;
     case 'tk-copy': tokenCopy(); break;
     case 'tk-revoke': layers.sheet.confirm = +a.dataset.id; fillSheet(); { const y = sheetEl().querySelector('[data-a="tk-revoke-yes"]'); if (y) y.focus({ preventScroll: true }); } break;
@@ -254,10 +255,11 @@ export function onClick(e) {
   }
 }
 export function onSubmit(e) {
-  const f = e.target; if (!f.matches('[data-save], [data-name], [data-sharepw], [data-lock], [data-token]')) return; /* the login form posts natively */
+  const f = e.target; if (!f.matches('[data-save], [data-name], [data-sharepw], [data-lock], [data-token], [data-session]')) return; /* the login form posts natively */
   e.preventDefault();
   if (f.matches('[data-lock]')) { submitLock(f); return; }
   if (f.matches('[data-token]')) { tokenCreate(f); return; }
+  if (f.matches('[data-session]')) { sessionsSubmit(f); return; }
   if (f.matches('[data-sharepw]')) { const v = f.elements.pw.value; if (!v) { f.elements.pw.focus(); return; } sharePassword(f, v); return; }
   if (f.matches('[data-save]')) { doSave(false); return; }
   if (f.matches('[data-name]')) { const v = f.elements.v.value.trim(); if (!v) { f.elements.v.focus(); return; }

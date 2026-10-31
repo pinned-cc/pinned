@@ -50,7 +50,8 @@ func (s *Server) apiSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // apiEndSession signs out one browser. Ending this browser's own session
-// is a logout.
+// is a logout; ending another one asks for the app password again, so a
+// stolen session cannot keep signing the owner out.
 func (s *Server) apiEndSession(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(r)
 	if !ok {
@@ -63,14 +64,21 @@ func (s *Server) apiEndSession(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
+	if !s.reauth(w, r, "session.end") {
+		return
+	}
 	s.done(w, s.logged(r, "session.end", s.st.DeleteSessionByID(id), "session", id))
 }
 
-// apiEndOtherSessions signs out every browser but this one.
+// apiEndOtherSessions signs out every browser but this one, after the app
+// password.
 func (s *Server) apiEndOtherSessions(w http.ResponseWriter, r *http.Request) {
 	_, hash, ok := s.currentSession(r)
 	if !ok {
 		writeError(w, http.StatusUnauthorized, "not logged in")
+		return
+	}
+	if !s.reauth(w, r, "session.end_others") {
 		return
 	}
 	n, err := s.st.DeleteOtherSessions(hash)
@@ -80,6 +88,30 @@ func (s *Server) apiEndOtherSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	s.security(r, "session.end_others", "ended", n)
 	writeJSON(w, http.StatusOK, map[string]int64{"ended": n})
+}
+
+// reauth reads {"password": ...} from the body and checks the app password
+// again under the login limiter, for the action named in what. On a wrong
+// password it answers 403 or 429, logs reauth.fail or reauth.wait and
+// returns false.
+func (s *Server) reauth(w http.ResponseWriter, r *http.Request, what string) bool {
+	var in struct {
+		Password string `json:"password"`
+	}
+	if !readJSON(w, r, &in) {
+		return false
+	}
+	return s.reauthWith(w, r, in.Password, what)
+}
+
+// reauthWith is reauth for a password the caller has read already.
+func (s *Server) reauthWith(w http.ResponseWriter, r *http.Request, password, what string, kv ...any) bool {
+	if ok, wait := s.checkPassword(r, password); !ok {
+		s.failed(r, "reauth", wait, append([]any{"for", what}, kv...)...)
+		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
+		return false
+	}
+	return true
 }
 
 // browserName makes a short label such as "Firefox on macOS" from a

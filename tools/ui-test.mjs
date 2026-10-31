@@ -774,7 +774,7 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await sheetClosed(page);
   });
 
-  await check('Signed in: this browser is marked, another one shows up and goes with Sign out all others', async () => {
+  await check('Signed in: this browser is marked, another one shows up and goes with Sign out all others after the app password', async () => {
     const other = await browser.newContext({ viewport: { width: 1440, height: 900 } }), op = await other.newPage();
     try {
       await login(op);
@@ -782,7 +782,18 @@ async function desktop(browser, engine) {
       await visible(page.locator('#sheet .at-title', { hasText: 'Signed in' }));
       await visible(page.locator('#sheet .tk-row', { hasText: 'This browser' }));
       assert(!(await page.locator('#sheet .tk-row', { hasText: 'This browser' }).locator('[data-a="ss-end"]').count()), 'this browser has a Sign out button');
+      /* Sign out asks for the app password, like making a token; a wrong one says so and the other browser stays in */
       await page.click('#sheet [data-a="ss-others"]');
+      await until(page, () => document.activeElement && document.activeElement.name === 'password', null, 'focus in the password');
+      await page.fill('#sheet form[data-session] input[name=password]', 'not the password');
+      await page.press('#sheet form[data-session] input[name=password]', 'Enter');
+      await visible(page.locator('#sheet form[data-session] .fld-err', { hasText: 'Wrong password' }));
+      assert((await apiIn(op, 'GET', '/api/state')).status === 200, 'a wrong password signed the other browser out');
+      await page.click('#sheet [data-a="ss-cancel"]');
+      await gone(page.locator('#sheet form[data-session]'));
+      await page.click('#sheet [data-a="ss-others"]');
+      await page.fill('#sheet form[data-session] input[name=password]', PASSWORD);
+      await page.press('#sheet form[data-session] input[name=password]', 'Enter');
       await toastWith(page, 'Other browsers signed out');
       await gone(page.locator('#sheet [data-a="ss-others"]'));
       assert((await apiIn(op, 'GET', '/api/state')).status === 401, 'the other browser is still signed in');

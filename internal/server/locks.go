@@ -288,10 +288,7 @@ func (s *Server) apiRemoveLock(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
-	ok, wait := s.checkPassword(r, in.AppPassword)
-	if !ok {
-		s.failed(r, "reauth", wait, "for", "lock.remove", "folder", id)
-		refuseAttempt(w, wait, http.StatusForbidden, "Wrong password")
+	if !s.reauthWith(w, r, in.AppPassword, "lock.remove", "folder", id) {
 		return
 	}
 	if err := s.st.RemoveLock(id); err != nil {
