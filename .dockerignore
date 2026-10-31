@@ -4,3 +4,4 @@ dist
 reference
 SPEC.md
 *.db
+/pinned
