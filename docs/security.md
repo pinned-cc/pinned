@@ -69,6 +69,17 @@ There is no cap on the number of bookmarks, folders, API tokens or signed in bro
 
 Expired logins are removed from the database every night at 03:00 and at start.
 
+#### Why 90 and 365 days
+
+NIST SP 800-63B (Revision 3, June 2017) asks a login to be repeated at least every 30 days whatever the use at AAL1 (section 4.1.3, a SHOULD), and at AAL2 at least every 12 hours and after 30 minutes without use (section 4.2.3, a SHALL). The defaults are longer than both, on purpose:
+
+- Pinned has one user and runs on your own server, on a home network or a tailnet. A login is a browser you use every day for your own bookmarks, and logging in again every day or every month on each phone and laptop is the cost those limits would add.
+- What a session can do is bounded: it cannot make an API token, remove a folder lock or sign out other browsers without the app password again, and it never sees a locked folder before that folder is unlocked with its own password.
+- The idle limit, `SESSION_DAYS` (90), ends a browser you stopped using, such as an old phone. The absolute limit, `SESSION_MAX_DAYS` (365), ends every login once a year even when it is used every day, so a cookie copied once does not work for ever.
+- Signed in lists every login and ends any of them, and changing `APP_PASSWORD` ends them all.
+
+To follow the stricter guidance, set `SESSION_MAX_DAYS=30` for the AAL1 limit, or `SESSION_DAYS=1` and `SESSION_MAX_DAYS=1` to log in again every day, and set `TOTP_SECRET` for a second factor, which AAL2 requires. The idle limit counts in days, so the 30 minute limit of AAL2 is out of reach; put Pinned behind a proxy that signs you in with shorter sessions if you need it.
+
 ### Icon fetches
 
 | What | Limit |
