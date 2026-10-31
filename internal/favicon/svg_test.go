@@ -12,6 +12,9 @@ func TestSVGAcceptsPlainIcons(t *testing.T) {
 			`<defs><linearGradient id="g"><stop offset="0" stop-color="#f00"/></linearGradient></defs>` +
 			`<style>.a{fill:url(#g)}</style><path class="a" d="M0 0h16v16H0z" style="fill: url('#g')"/>` +
 			`<use xlink:href="#g"/><image href="data:image/png;base64,iVBORw0KGgo="/><text>&copy;</text></svg>`,
+		// What sits inside a string is only text, and a comment inside an
+		// unquoted url() is part of the address.
+		`<svg xmlns="http://www.w3.org/2000/svg"><style>text{font-family:"a (b) @x /* c"}svg{background:"x" url(#a)}</style><rect style="fill:url(#a/*x*/)"/></svg>`,
 	}
 	good = append(good, realIcons...)
 	for _, s := range good {
@@ -99,6 +102,23 @@ func TestSVGRefusesScriptAndReferences(t *testing.T) {
 		open + `<style>rect{fill:("https://evil.example/x.png")}</style></svg>`,
 		open + `<rect style="fill:url/**/(https://evil.example/x.svg#a)"/></svg>`,
 		open + `<rect style="fill:x (https://evil.example/)"/></svg>`,
+		// Found by the release verification of 2026-10-31: a comment
+		// opener inside a string or an unquoted url() hid a real url()
+		// from the check.
+		open + `<style>rect{fill:"/*"}svg{background-image:url(https://evil.example/x.png)}a{b:"*/"}</style></svg>`,
+		open + `<style>rect{fill:'/*'}svg{background-image:url(https://evil.example/x.png)}x{y:'*/'}</style></svg>`,
+		open + `<rect style='fill:"/*";background-image:url(https://evil.example/x.png);stroke:"*/"'/></svg>`,
+		open + `<rect style="fill:url(#a/*);mask:url(https://evil.example/m.svg#m);stroke:url(#b*/)"/></svg>`,
+		open + `<style>rect{fill:url(#a/*)}svg{background-image:url(https://evil.example/x.png)}x{y:url(#b*/)}</style></svg>`,
+		open + `<style>a{b:"/*"}@font-face{font-family:q;src:url(https://evil.example/x.png)}c{d:"*/"}</style></svg>`,
+		open + `<style>@media x{a{b:"/*"}}@import url(https://evil.example/x.css);c{d:"*/"}</style></svg>`,
+		open + `<style>a{b:"/*"}svg{background:url(javascript:alert(1))}c{d:"*/"}</style></svg>`,
+		open + `<rect style="fill:red/* "/></svg>`,
+		open + `<rect style="fill:'red"/></svg>`,
+		open + `<style>a{b:"x` + "\n" + `"}</style></svg>`,
+		open + `<rect style="fill:url(#a"/></svg>`,
+		open + `<rect style="fill:url(#a'b)"/></svg>`,
+		open + `<rect style="fill:url(#a(b)"/></svg>`,
 	}
 	for _, s := range bad {
 		if icon, err := Process([]byte(s)); err == nil {

@@ -267,22 +267,21 @@ var cssBlockWords = set(`and or not only`)
 // it, or is a plain bracket after a media query word, an opening bracket or
 // a comma; every url() points to an #id or an embedded raster image, every
 // at rule is on the list (no @import, no @font-face) and there is no
-// javascript: address. CSS comments are taken out first, so "url/**/(" is
-// read as url(. A backslash is refused: CSS escapes could spell any of
+// javascript: address. The text is read once the way a browser reads it
+// (see cssScan): comments are taken out, so "url/**/(" is read as url(, and
+// what sits inside a string is only text. An unclosed string, comment or
+// url() is refused. A backslash is refused: CSS escapes could spell any of
 // these in other letters.
 func safeCSS(s string) bool {
 	if strings.ContainsRune(s, '\\') {
 		return false
 	}
-	s = dropCSSComments(s)
-	if v := squash(s); strings.Contains(v, "javascript:") || strings.Contains(v, "vbscript:") {
+	t, v, ok := cssScan(s)
+	if !ok {
 		return false
 	}
-	v := []byte(strings.ToLower(s))
-	for i, c := range v {
-		if c < ' ' || c == 0x7f {
-			v[i] = ' '
-		}
+	if sq := squash(string(t)); strings.Contains(sq, "javascript:") || strings.Contains(sq, "vbscript:") {
+		return false
 	}
 	for i := 0; i < len(v); i++ {
 		switch v[i] {
@@ -306,7 +305,8 @@ func safeCSS(s string) bool {
 				}
 				switch fn := string(v[j:i]); {
 				case fn == "url":
-					ref := strings.TrimLeft(squash(string(v[i+1:])), `"'`)
+					// The address is read from the text with its strings.
+					ref := strings.TrimLeft(squash(string(t[i+1:])), `"'`)
 					if !strings.HasPrefix(ref, "#") && !rasterData(ref) {
 						return false
 					}
@@ -338,26 +338,90 @@ func safeCSS(s string) bool {
 	return true
 }
 
-// dropCSSComments removes /* ... */ comments, an unclosed one to the end.
-func dropCSSComments(s string) string {
-	var b strings.Builder
-	for {
-		i := strings.Index(s, "/*")
-		if i < 0 {
-			b.WriteString(s)
-			return b.String()
+// cssScan reads s once, in lower case, the way a browser splits it: a
+// comment opener inside a string is only text, and inside an unquoted url()
+// nothing is a comment either. It returns the text without its comments,
+// and the same text with what sits inside strings and unquoted url() turned
+// into spaces, so the brackets and at rules are checked only where they
+// count. Both have the same length and control characters as spaces. ok is
+// false for an unclosed comment, string or url(), a line break inside a
+// string, or a quote or bracket inside an unquoted url().
+func cssScan(s string) (text, blank []byte, ok bool) {
+	s = strings.ToLower(s)
+	text = make([]byte, 0, len(s))
+	blank = make([]byte, 0, len(s))
+	put := func(c byte, hide bool) {
+		if c < ' ' || c == 0x7f {
+			c = ' '
 		}
-		b.WriteString(s[:i])
-		end := strings.Index(s[i+2:], "*/")
-		if end < 0 {
-			return b.String()
+		text = append(text, c)
+		if hide {
+			c = ' '
 		}
-		s = s[i+2+end+2:]
+		blank = append(blank, c)
 	}
+	for i := 0; i < len(s); {
+		c := s[i]
+		switch {
+		case c == '/' && i+1 < len(s) && s[i+1] == '*':
+			end := strings.Index(s[i+2:], "*/")
+			if end < 0 {
+				return nil, nil, false
+			}
+			i += 2 + end + 2
+		case c == '"' || c == '\'':
+			put(c, false)
+			for i++; ; i++ {
+				if i >= len(s) || s[i] == '\n' || s[i] == '\r' || s[i] == '\f' {
+					return nil, nil, false
+				}
+				if s[i] == c {
+					put(c, false)
+					i++
+					break
+				}
+				put(s[i], true)
+			}
+		case c == '(' && urlBefore(text):
+			put(c, false)
+			i++
+			j := i
+			for j < len(s) && (s[j] == ' ' || s[j] == '\t' || s[j] == '\n' || s[j] == '\r' || s[j] == '\f') {
+				j++
+			}
+			if j < len(s) && (s[j] == '"' || s[j] == '\'') {
+				continue // url("..."): the string is read as any other
+			}
+			// An unquoted url runs to its closing bracket.
+			for ; ; i++ {
+				if i >= len(s) || s[i] == '"' || s[i] == '\'' || s[i] == '(' {
+					return nil, nil, false
+				}
+				if s[i] == ')' {
+					break
+				}
+				put(s[i], true)
+			}
+		default:
+			put(c, false)
+			i++
+		}
+	}
+	return text, blank, true
 }
 
+// urlBefore reports whether text ends with the name url, with no other name
+// letter before it.
+func urlBefore(text []byte) bool {
+	n := len(text)
+	return n >= 3 && string(text[n-3:]) == "url" && (n == 3 || !cssName(text[n-4]))
+}
+
+// cssName reports whether c can be part of a CSS name. Bytes of letters
+// outside ASCII count too, so a longer name that only ends in url is not
+// taken for url(.
 func cssName(c byte) bool {
-	return c == '-' || c == '_' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9'
+	return c == '-' || c == '_' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c >= 0x80
 }
 
 // squash lowercases s and drops white space and control characters, so
