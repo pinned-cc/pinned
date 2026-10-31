@@ -3,6 +3,7 @@ package auth
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -82,5 +83,25 @@ func TestKeyedPasswordHashes(t *testing.T) {
 	raw, _ = bcrypt.GenerateFromPassword([]byte(full), bcrypt.MinCost)
 	if ok, _ := CheckKeyedPassword(secret, string(raw), full+"xyz"); ok {
 		t.Error("old hash matched a guess past 72 bytes")
+	}
+}
+
+// A long password of nested words is checked in time that grows with its
+// length, not with its square: 1 MB used to keep a core busy for minutes.
+func TestCommonPasswordCostIsLinear(t *testing.T) {
+	var b strings.Builder
+	for b.Len() < 1<<20 {
+		b.WriteString("pin")
+	}
+	for b.Len() < 2<<20 {
+		b.WriteString("ned")
+	}
+	start := time.Now()
+	CommonPassword(b.String(), "example")
+	if d := time.Since(start); d > 5*time.Second {
+		t.Errorf("a 2 MB password took %v", d)
+	}
+	if !CommonPassword("pinnedpassword2026", "example") || !CommonPassword("ExampleBookmarks!", "example") {
+		t.Error("joined context words no longer refused")
 	}
 }

@@ -92,19 +92,23 @@ func CommonPassword(pw string, extra ...string) bool {
 }
 
 // onlyWords reports whether s is nothing but the words, repeated or joined.
+// It is one pass over s (a word break check), so its cost grows with the
+// length of s times the number of words, never with its square.
 func onlyWords(s string, words []string) bool {
-	for {
-		before := s
+	// ends[i] is true when s[:i] is made of the words.
+	ends := make([]bool, len(s)+1)
+	ends[0] = true
+	for i := 0; i < len(s); i++ {
+		if !ends[i] {
+			continue
+		}
 		for _, w := range words {
-			s = strings.ReplaceAll(s, w, "")
-		}
-		if s == "" {
-			return true
-		}
-		if s == before {
-			return false
+			if w != "" && strings.HasPrefix(s[i:], w) {
+				ends[i+len(w)] = true
+			}
 		}
 	}
+	return ends[len(s)]
 }
 
 func lettersOnly(s string) string {
