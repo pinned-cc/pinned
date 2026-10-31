@@ -166,7 +166,10 @@ export function deskBody() {
     body.innerHTML = h; return;
   }
   const L = longList(S, false);
-  body.innerHTML = h + L.html; L.start(body);
+  /* a list shown in full keeps its blocks: only what sits above them is drawn anew */
+  if (L.inPlace) { for (const c of [...body.children]) if (!c.hasAttribute('data-ll')) c.remove(); body.insertAdjacentHTML('afterbegin', h); }
+  else body.innerHTML = h + L.html;
+  L.start(body);
 }
 /* the toolbar keeps its nodes while only Select's state differs: Select flips in place */
 const selFree = h => h.replace(/ aria-pressed="(true|false)" aria-label="(Select|Done)"/g, '');
@@ -360,7 +363,15 @@ export function renderPhoneMain() {
   const sig = e => { const c = e.cloneNode(true); c.querySelectorAll('[data-a="select"]').forEach(b => { b.removeAttribute('aria-pressed'); b.removeAttribute('aria-label'); }); return c.outerHTML; }, old = [...m.querySelectorAll(KEEP)];
   fresh.querySelectorAll(KEEP).forEach((e, i) => { const o = old[i], s = sig(e);
     if (o && o._sig === s) { const nb = e.querySelector('[data-a="select"]'), ob = o.querySelector('[data-a="select"]'); if (nb && ob) for (const a of ['aria-pressed', 'aria-label']) ob.setAttribute(a, nb.getAttribute(a)); e.replaceWith(o); } else e._sig = s; });
-  m.replaceChildren(fresh);
+  const oldBd = m.querySelector('.bd');
+  if (phoneLot && phoneLot.inPlace && !st && oldBd) {
+    /* a list shown in full keeps its blocks and the .bd around them: the rest is put in anew around them */
+    const fb = fresh.querySelector('.bd');
+    for (const c of [...m.childNodes]) if (c !== oldBd) c.remove();
+    oldBd.before(...[...fresh.childNodes].filter(c => c !== fb));
+    for (const c of [...oldBd.childNodes]) if (!(c.nodeType === 1 && c.hasAttribute('data-ll'))) c.remove();
+    oldBd.prepend(...fb.childNodes);
+  } else m.replaceChildren(fresh);
   if (phoneLot && !st) phoneLot.start(m.querySelector('.bd')); phoneLot = null;
   const now = [...m.querySelectorAll(rows)], same = phoneMainView === ui.view; phoneMainView = ui.view;
   if (same && sx.length === now.length) now.forEach((e, i) => { if (sx[i]) e.scrollLeft = sx[i]; });
@@ -389,81 +400,116 @@ export function renderPhone() {
    so the scroll bar and scroll position are right at once, and fills each block as it nears the screen and, between
    frames, in order from the top until DRAWN cards are drawn. Past that, a block drawn near the screen empties the one
    farthest from it, so the page never holds more than about DRAWN cards (WebKit stalls for seconds with 100000).
-   A redraw of a list shown in full does the same again. CHUNK is a multiple of every column count the grid takes
-   (1 to 4 on the desktop, 1 or 2 on the phone), so the blocks join without a short row. */
+   A redraw of a list shown in full (a refetch, a delete, Undo) keeps the blocks where they are when the list has the
+   same blocks: the head and the blocks near the screen are checked and redrawn only where their cards changed, the
+   other drawn blocks are checked when they near the screen again. So the page keeps its place, nothing on screen
+   flashes empty, and a redraw costs little more than a capped one. CHUNK is a multiple of every column count the grid
+   takes (1 to 4 on the desktop, 1 or 2 on the phone), so the blocks join without a short row. */
 export const CAP = 240, CHUNK = 120, DRAWN = 6000;
-let lot = null, mustDraw = null;
+let lot = null, lastLot = null, mustDraw = null;
 /* the cards of a section, cut where the cap runs out; later sections wait for Show all */
 export function longList(S, phone, same) {
-  if (lot) lot.stop(); lot = null;
+  const before = lot || lastLot; if (lot) lot.stop(); lot = null; lastLot = null;
   const total = S.reduce((n, s) => n + s.items.length, 0), cut = total > CAP, full = cut && ui.full === ui.view;
   const gcls = (phone ? 'pgrid' : 'grid') + (ui.layout === 'list' ? ' is-list' : ''), tile = phone ? phoneTile : deskTile, add = phone ? 'pt-add' : 'addtile';
-  const label = (s, i) => phone ? (!i && s.label === same ? '' : `<div class="pglbl"><span>${esc(s.label)}</span></div>`) : `<div class="glbl">${esc(s.label)}</div>`;
+  const label = (s, i) => phone ? (!i && s.label === same ? '' : `<div class="pglbl" data-ll><span>${esc(s.label)}</span></div>`) : `<div class="glbl" data-ll>${esc(s.label)}</div>`;
   const cards = (s, items, last) => items.map(b => tile(b, s.date(b))).join('') + (last && showAddTile() ? addTileHTML(add) : '');
   if (!cut) return { html: S.map((s, i) => label(s, i) + `<div class="${gcls}"${contAttr(s.container)}>${cards(s, s.items, i === S.length - 1)}</div>`).join(''), start() {} };
-  /* the head: whole sections while they fit, then the part of the next one that fills whole blocks */
-  let left = CAP, h = '', shown = 0;
+  /* the head: whole sections while they fit, then the part of the next one that fills whole blocks; the rest in blocks */
+  let left = CAP, shown = 0;
   const blocks = [];
   S.forEach((s, i) => {
-    let k = left >= s.items.length ? s.items.length : Math.floor(left / CHUNK) * CHUNK;
-    if (k > 0) { h += label(s, i) + `<div class="${gcls}"${contAttr(s.container)}>${cards(s, s.items.slice(0, k), false)}</div>`; shown += k; left -= k; }
-    else k = 0;
+    const k = left >= s.items.length ? s.items.length : Math.floor(left / CHUNK) * CHUNK;
+    if (k > 0) { blocks.push({ s, i, from: 0, to: k, head: true }); shown += k; left -= k; }
     for (let j = k; j < s.items.length; j += CHUNK) blocks.push({ s, i, from: j, to: Math.min(j + CHUNK, s.items.length), cont: j > 0 });
   });
   if (!full) {
     const word = ui.view === 'trash' ? 'in the Trash' : 'bookmarks';
-    h += `<div class="${phone ? 'pmore' : 'more'}"><p class="more-n">Showing ${shown} of ${total} ${word}</p><button type="button" class="${phone ? 'tbtn' : 'btn'} more-b" data-a="show-all" aria-label="Show all ${total} ${word}">Show all ${total}</button></div>`;
-    return { html: h, start() {} };
+    const h = blocks.filter(b => b.head).map(b => label(b.s, b.i) + `<div class="${gcls}"${contAttr(b.s.container)}>${cards(b.s, b.s.items.slice(b.from, b.to), false)}</div>`).join('');
+    return { html: h + `<div class="${phone ? 'pmore' : 'more'}"><p class="more-n">Showing ${shown} of ${total} ${word}</p><button type="button" class="${phone ? 'tbtn' : 'btn'} more-b" data-a="show-all" aria-label="Show all ${total} ${word}">Show all ${total}</button></div>`, start() {} };
   }
-  if (blocks.length) blocks[blocks.length - 1].last = true;
-  let prev = null;
-  blocks.forEach((b, n) => { if (b.s !== prev) { if (!b.cont) h += label(b.s, b.i); prev = b.s; }
-    h += `<div class="${gcls} lazy${b.cont ? ' cont' : ''}" data-block="${n}"${contAttr(b.s.container)}></div>`; });
+  blocks[blocks.length - 1].last = true;
+  const cls = b => b.head ? gcls : `${gcls} lazy${b.cont ? ' cont' : ''}`;
+  /* what a block's element is made of, apart from its cards and how many there are */
+  blocks.forEach(b => { b.sig = `${b.from === 0 ? label(b.s, b.i) : ''}|${cls(b)}|${contAttr(b.s.container)}|${b.from}`; });
+  /* the drawing before, when it showed the same list at the same width */
+  const key = `${phone}|${ui.view}|${ui.layout}|${innerWidth}`;
+  const old = before && before.key === key && before.root && before.root.isConnected && before.els && before.els.length && before.els[0].isConnected && (phone ? before.root.matches('#pmain .bd') : before.root === byId('body')) ? before : null;
+  const geom = old && old.geom, pad = old ? old.pad : {};
+  const inPlace = !!(old && geom && old.blocks.length === blocks.length && blocks.every((b, n) => b.sig === old.blocks[n].sig));
+  const chOf = b => { if (!geom) return null; const rows = Math.ceil((b.to - b.from + (b.last && showAddTile() ? 1 : 0)) / geom.cols); return rows * geom.th + (rows - 1) * geom.gap; };
+  let h = '';
+  blocks.forEach((b, n) => { b.ch = chOf(b); if (inPlace) return; if (b.from === 0) h += label(b.s, b.i); const c = cls(b);
+    const hgt = !b.head && b.ch != null && pad[c] != null ? ` style="height:${b.ch + pad[c]}px"` : '';
+    h += `<div class="${c}" data-ll data-block="${n}"${contAttr(b.s.container)}${hgt}></div>`; });
   const at = new Map(); blocks.forEach((b, n) => { for (let j = b.from; j < b.to; j++) at.set(b.s.items[j].id, n); });
-  const L = { html: h, blocks, ids: S.flatMap(s => s.items.map(b => b.id)), at, root: null, io: null, job: 0, next: 0, stopped: false, drawn: new Set(), near: new Set(), pad: {} };
+  const L = { html: h, inPlace, key, blocks, ids: S.flatMap(s => s.items.map(b => b.id)), at, root: null, io: null, job: 0, stopped: false, drawn: new Set(), near: new Set(), pad, geom };
   const padOf = el => { const k = el.className; if (L.pad[k] == null) { const ps = getComputedStyle(el); L.pad[k] = parseFloat(ps.paddingTop) + parseFloat(ps.paddingBottom) + parseFloat(ps.borderTopWidth); } return L.pad[k]; };
-  L.fill = n => { const b = blocks[n]; if (!b || b.done || L.stopped) return; const el = L.els[n]; if (!el) return;
-    b.done = true; L.drawn.add(n); el.innerHTML = cards(b.s, b.s.items.slice(b.from, b.to), b.last); el.style.height = '';
+  const html = b => cards(b.s, b.s.items.slice(b.from, b.to), b.last);
+  L.fill = n => { const b = blocks[n]; if (!b || L.stopped) return; const el = L.els[n]; if (!el) return;
+    if (b.done) { if (b.stale) L.check(n); return; }
+    b.done = true; b.stale = false; if (!b.head) L.drawn.add(n);
+    b.html = html(b); el.innerHTML = b.html; el.style.height = '';
     /* drawn and off screen, a block keeps its height and skips layout and paint (content-visibility in app.css) */
-    if (b.ch) el.style.containIntrinsicSize = `auto ${b.ch}px`;
+    if (!b.head && b.ch != null) el.style.containIntrinsicSize = `auto ${b.ch}px`;
     if (L.drawn.size * CHUNK > DRAWN) L.trim(n); };
-  /* empties the drawn blocks farthest from block n, never one near the screen or holding the focus */
+  /* a drawn block kept from the drawing before: redrawn only when its cards changed */
+  L.check = n => { const b = blocks[n], el = L.els[n]; b.stale = false; const h2 = html(b); if (h2 !== b.html) { b.html = h2; el.innerHTML = h2; } };
+  L.checkAll = () => blocks.forEach((b, n) => { if (b.done && b.stale) L.check(n); });
+  /* empties the drawn blocks farthest from block n, never the head, one near the screen or one holding the focus */
   L.trim = n => { const far = [...L.drawn].filter(m => m !== n && !L.near.has(m) && !L.els[m].contains(document.activeElement)).sort((a, b) => Math.abs(b - n) - Math.abs(a - n));
     for (const m of far) { if (L.drawn.size * CHUNK <= DRAWN) break; const b = blocks[m], el = L.els[m];
-      if (b.ch == null) continue; el.style.height = (b.ch + padOf(el)) + 'px'; el.style.containIntrinsicSize = ''; el.textContent = ''; b.done = false; L.drawn.delete(m); } };
+      if (b.ch == null) continue; el.style.height = (b.ch + padOf(el)) + 'px'; el.style.containIntrinsicSize = ''; el.textContent = ''; b.done = false; b.html = null; L.drawn.delete(m); } };
   /* empty blocks take the height their cards will: rows of the head's card height and gap */
-  L.size = () => { const g = L.root.querySelector(`.${gcls.split(' ')[0]}:not(.lazy)`) || L.root.querySelector('.lazy'), t = L.root.querySelector('article');
+  L.size = () => { const g = L.root.querySelector(`.${gcls.split(' ')[0]}[data-block]:not(.lazy)`), t = g && g.querySelector('article');
     if (!g || !t) return; const cs = getComputedStyle(g), cols = Math.max(1, cs.gridTemplateColumns.split(' ').length), gap = parseFloat(cs.rowGap) || 0, th = t.getBoundingClientRect().height;
-    blocks.forEach((b, n) => { const el = L.els[n]; if (!el) return; const rows = Math.ceil((b.to - b.from + (b.last && showAddTile() ? 1 : 0)) / cols);
+    L.geom = { cols, gap, th }; L.key = `${phone}|${ui.view}|${ui.layout}|${innerWidth}`;
+    blocks.forEach((b, n) => { if (b.head) return; const el = L.els[n]; if (!el) return; const rows = Math.ceil((b.to - b.from + (b.last && showAddTile() ? 1 : 0)) / cols);
       b.ch = rows * th + (rows - 1) * gap;
       if (b.done) { el.style.containIntrinsicSize = `auto ${b.ch}px`; return; }
       el.style.height = (b.ch + padOf(el)) + 'px'; }); };
-  L.start = root => { L.root = root; L.els = [...root.querySelectorAll('.lazy')]; /* in block order; a lookup per block would walk every card drawn before it */
+  L.start = root => { L.root = root;
+    if (inPlace) {
+      /* the same blocks: keep the elements, carry over what each holds, check the ones that show */
+      L.els = old.els;
+      blocks.forEach((b, n) => { const o = old.blocks[n], el = L.els[n];
+        if (o.done) { b.done = true; b.html = o.html; b.stale = true; if (!b.head) L.drawn.add(n); if (!b.head && b.ch !== o.ch) el.style.containIntrinsicSize = `auto ${b.ch}px`; }
+        else if (b.ch !== o.ch) el.style.height = (b.ch + padOf(el)) + 'px'; });
+      for (const n of old.near) if (n < blocks.length) L.near.add(n);
+    } else L.els = [...root.querySelectorAll('[data-block]')]; /* in block order; a lookup per block would walk every card drawn before it */
+    blocks.forEach((b, n) => { if (b.head) L.fill(n); });
+    /* drawn at once: what was near the screen, the focused card and the one being renamed */
+    if (old) for (const n of old.near) if (n < blocks.length) { L.near.add(n); L.fill(n); }
     if (mustDraw != null && at.has(mustDraw)) L.fill(at.get(mustDraw));
     if (ui.renaming != null && at.has(ui.renaming)) L.fill(at.get(ui.renaming));
-    L.size();
+    if (!L.geom) L.size();
     if (window.IntersectionObserver) { L.io = new IntersectionObserver(es => {
         for (const e of es) { const n = +e.target.dataset.block; if (e.isIntersecting) L.near.add(n); else L.near.delete(n); }
         for (const e of es) if (e.isIntersecting) L.fill(+e.target.dataset.block); },
       { root: phone ? null : byId('content'), rootMargin: '1200px 0px' });
-      L.els.forEach(el => L.io.observe(el)); }
-    /* the rest, top down, a few blocks per frame while the frame has time, until DRAWN cards are drawn */
+      L.els.forEach((el, n) => { if (!blocks[n].head) L.io.observe(el); }); }
+    /* the rest, top down, a few blocks per frame while the frame has time: empty ones filled until DRAWN cards are
+       drawn, kept ones checked */
+    let k = 0;
     const step = () => { if (L.stopped) return; const t0 = performance.now();
-      while (L.next < blocks.length && (L.drawn.size + 1) * CHUNK <= DRAWN && performance.now() - t0 < 8) { if (!blocks[L.next].done) L.fill(L.next); L.next++; }
-      if (L.next < blocks.length && (L.drawn.size + 1) * CHUNK <= DRAWN) L.job = requestAnimationFrame(step); };
+      while (k < blocks.length && performance.now() - t0 < 8) { const b = blocks[k];
+        if (b.done ? b.stale : (L.drawn.size + 1) * CHUNK <= DRAWN) L.fill(k); k++; }
+      if (k < blocks.length) L.job = requestAnimationFrame(step); };
     L.job = requestAnimationFrame(step); };
   L.stop = () => { L.stopped = true; cancelAnimationFrame(L.job); if (L.io) L.io.disconnect(); };
   lot = L; return L;
 }
 /* the order of every card in the list, drawn or not, for Shift ranges; null when the list is drawn whole */
 export const listIds = () => lot && !lot.stopped ? lot.ids : null;
+/* brings every drawn block up to date, before the order is read from the page */
+export const freshen = () => { if (lot && !lot.stopped) lot.checkAll(); };
 /* draws the block a card waits in, for focus, rename and arrows */
 export const drawCard = id => { if (lot && !lot.stopped && lot.at.has(id)) lot.fill(lot.at.get(id)); };
 /* Show all: the rest of the list in blocks, the focus on the first card that was not shown */
 export function showAll() {
   ui.full = ui.view; render();
-  if (!lot || !lot.blocks.length) return;
-  const b = lot.blocks[0], id = b.s.items[b.from].id;
+  const b = lot && lot.blocks.find(x => !x.head); if (!b) return;
+  const id = b.s.items[b.from].id;
   drawCard(id); announce(`Showing all ${lot.ids.length} ${ui.view === 'trash' ? 'in the Trash' : 'bookmarks'}`); const el = document.querySelector(`#app article[data-id="${id}"] :is(.t-title, .pt-in)`); if (el) el.focus({ preventScroll: true });
 }
 
@@ -481,12 +527,14 @@ export function render() {
   const ae = document.activeElement, tileEl = ae && ae.closest ? ae.closest('#app [data-id]') : null;
   const keep = tileEl ? { id: tileEl.dataset.id, a: ae.dataset.a, title: ae.matches('.t-title,.pt-in,.g-in,.dk'), dock: !!ae.closest('[data-dock]') } : null;
   const cs = byId('content'), top = cs ? cs.scrollTop : 0;
-  if (lot) { lot.stop(); lot = null; }
+  if (lot) { lot.stop(); lastLot = lot; lot = null; }
+  const wy = mode === 'phone' ? scrollY : null; /* the phone list scrolls the window */
   mustDraw = keep && !keep.dock ? +keep.id : null;
   memoCounts(true);
   try { if (mode === 'phone') renderPhone(); else renderDesk(); } finally { memoCounts(false); }
-  mustDraw = null;
+  mustDraw = null; lastLot = null;
   if (cs) cs.scrollTop = top;
+  if (wy != null && lot && Math.abs(scrollY - wy) > 1) scrollTo(0, wy);
   if (carry) openPalette(carry);
   else if (layers.palette && !layers.palette.had && data.has) { palRecentFill(); palFill(); } /* a search opened before the bookmarks loaded */
   if (keep) { const scope = keep.dock ? '[data-dock] ' : '#app article';

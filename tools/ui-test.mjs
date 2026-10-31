@@ -1019,7 +1019,7 @@ async function desktop(browser, engine) {
     assert(!bad.length, 'dates not in the fixed form: ' + JSON.stringify(bad.slice(0, 3)));
   });
 
-  await check('a long list: the first 240 cards, the count and Show all; Show all from the keyboard draws the rest without a seam, focus on the next card, screen readers hear the count; search finds any card; a new visit starts capped', async () => {
+  await check('a long list: the first 240 cards, the count and Show all; Show all from the keyboard draws the rest without a seam, focus on the next card, screen readers hear the count; Delete moves focus to the next card; a redraw keeps the place; search finds any card; a new visit starts capped', async () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const id = await seedLong(page);
     try {
@@ -1051,6 +1051,18 @@ async function desktop(browser, engine) {
       const gl = await seamGap(page, '#body article', 1);
       await page.click('#tbwrap .vsw [data-layout="grid"]'); await page.waitForTimeout(300);
       assert(Math.abs(gl.seam - gl.head) < 1, `list seam ${gl.seam} px against ${gl.head} px`);
+      /* Delete on a card past the first 240 moves the focus to the next card, as in the first 240 */
+      const order = await page.evaluate(() => [...document.querySelectorAll('#body article')].map(a => +a.dataset.id)), k = LONG_CAP + 10;
+      await page.locator(`#body article[data-id="${order[k]}"] .t-title`).focus();
+      await page.keyboard.press('Delete'); await toastWith(page, 'Moved to Trash');
+      await until(page, want => { const a = document.activeElement; return !!a && a.matches('.t-title') && +a.closest('article').dataset.id === want; }, order[k + 1], 'focus on the next card after Delete');
+      /* a redraw (what a return to the window runs) keeps the place and draws the cards on screen at once */
+      const kept = await page.evaluate(async () => { const c = document.getElementById('content'); c.scrollTop = Math.round((c.scrollHeight - c.clientHeight) * 0.9);
+        await new Promise(r => setTimeout(r, 300)); const y0 = c.scrollTop;
+        const seen = () => [...document.querySelectorAll('#body article')].filter(a => { const q = a.getBoundingClientRect(); return q.bottom > 0 && q.top < innerHeight; }).length;
+        window.Pinned.render(); const now = seen(), y1 = c.scrollTop; await window.Pinned.load(); return { y0, y1, y2: c.scrollTop, now, after: seen() }; });
+      assert(Math.abs(kept.y1 - kept.y0) < 2 && Math.abs(kept.y2 - kept.y0) < 2, 'a redraw moved the list: ' + JSON.stringify(kept));
+      assert(kept.now > 0 && kept.after > 0, 'the cards on screen are empty right after a redraw: ' + JSON.stringify(kept));
       /* search finds a card whatever was drawn */
       await page.click('#q'); await page.keyboard.type('ui-test long 299');
       await visible(page.locator('#pal .pal-it', { hasText: 'ui-test long 299' }));
@@ -1619,7 +1631,7 @@ async function phone(browser, engine) {
     });
     await sheetClosed(page);
   });
-  await check('390: a long folder shows 240 cards, the count and Show all at 44 px; a tap draws the rest without a seam', async () => {
+  await check('390: a long folder shows 240 cards, the count and Show all at 44 px; a tap draws the rest without a seam; a redraw keeps the place', async () => {
     const id = await seedLong(page);
     try {
       await page.evaluate(async v => { const a = await import('/static/js/actions.js'); await window.Pinned.load(); a.goView(v); }, id);
@@ -1636,6 +1648,16 @@ async function phone(browser, engine) {
       const g = await seamGap(page, '#pmain article', 2);
       assert(Math.abs(g.seam - g.head) < 1 && g.dx < 1, `seam ${g.seam} px against ${g.head} px between rows, ${g.dx} px across`);
       await shot(page, `${engine}-phone-long-full`);
+      /* a redraw (what a return to the app runs) keeps the place far down the list and draws the cards on screen at once */
+      const kept = await page.evaluate(async () => { const lazyTop = document.querySelector('#pmain .lazy').getBoundingClientRect().top + scrollY;
+        scrollTo(0, Math.round((document.documentElement.scrollHeight - innerHeight) * 0.9));
+        await new Promise(r => setTimeout(r, 400)); const y0 = scrollY;
+        const seen = () => [...document.querySelectorAll('#pmain article')].filter(a => { const q = a.getBoundingClientRect(); return q.bottom > 0 && q.top < innerHeight; }).length;
+        window.Pinned.render(); const now = seen(), y1 = scrollY; await window.Pinned.load(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        return { y0, y1, y2: scrollY, now, after: seen(), lazyTop }; });
+      assert(kept.y0 > kept.lazyTop, 'did not scroll past the first 240 cards: ' + JSON.stringify(kept));
+      assert(Math.abs(kept.y1 - kept.y0) < 2 && Math.abs(kept.y2 - kept.y0) < 2, 'a redraw moved the page: ' + JSON.stringify(kept));
+      assert(kept.now > 0 && kept.after > 0, 'the cards on screen are empty right after a redraw: ' + JSON.stringify(kept));
     } finally { await dropLong(page, id); await page.evaluate(async () => { const a = await import('/static/js/actions.js'); a.goView('dashboard'); await window.Pinned.load(); }); }
   });
   await check('no script errors', async () => assert(!errors.length, errors.join('; ')));

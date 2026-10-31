@@ -3,7 +3,7 @@
 import { actions, deleteFolders, folderItems, folderSheetItems, goView, moveWithUndo } from './actions.js';
 import { api } from './api.js';
 import { openMenu, tileMenu } from './menu.js';
-import { render } from './render.js';
+import { freshen, render } from './render.js';
 import { closeSheet, openSheet } from './sheets.js';
 import { bm, canSelect, folderById, foldersSel, layers, run, sections, setFsort, setSort, ui } from './state.js';
 import { toast } from './toast.js';
@@ -124,6 +124,7 @@ export function dragEnd() {
   const ids = [...cont.children].filter(x => x.matches(DSEL[k])).map(dragId);
   if (ids.join(',') === before) return;
   if (k === 'tile') { const c = cont.dataset.container, folder = c === 'inbox' ? null : +c;
+    freshen();
     const drawn = [...document.querySelectorAll(`#app [data-container="${c}"] > article`)].map(x => +x.dataset.id), on = new Set(drawn);
     /* a long list draws only part of its cards: the ones not drawn keep their places around the drawn ones */
     const whole = sections().filter(s => s.container === folder).flatMap(s => s.items.map(b => b.id)), q = [...drawn];
