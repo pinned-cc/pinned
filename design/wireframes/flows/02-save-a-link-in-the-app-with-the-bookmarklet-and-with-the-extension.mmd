@@ -1,0 +1,45 @@
+flowchart TD
+  classDef works fill:#ffffff,stroke:#b8babe,color:#3a3e44;
+  classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
+  classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
+  S1["1. Add (desktop) or the plus (phone) opens the<br/>save sheet, the folder preset to the last one<br/>used.<br/><i>works</i>"]:::works
+  S2["2. An address typed without http, such as<br/>example.com, is refused on Save with 'Enter a<br/>full address starting with http or https.' The<br/>extension options add https:// on their own.<br/><i>friction</i>"]:::friction
+  S3["3. After fixing the address the old error stays<br/>under the field, next to the live check that<br/>now says the link is fine or already saved.<br/><i>friction</i>"]:::friction
+  S4["4. An address already saved shows 'Already saved<br/>in Homelab. Save anyway moves it here.' and the<br/>button turns into Save anyway.<br/><i>works</i>"]:::works
+  S5["5. The same host on another port is a new<br/>bookmark: Not saved yet.<br/><i>works</i>"]:::works
+  S6["6. Choose another folder lists every folder and<br/>New folder.<br/><i>works</i>"]:::works
+  S7["7. Save closes the sheet and the card appears in<br/>its folder. No toast; screen readers hear<br/>'Saved in Homelab'.<br/><i>works</i>"]:::works
+  S8["8. Bookmarklet: How to save, Computer, drag Save<br/>to Pinned into the bookmarks bar.<br/><i>works</i>"]:::works
+  S9["9. On any page Save to Pinned opens /save in a<br/>small window with title, address, recent<br/>folders and Log out.<br/><i>works</i>"]:::works
+  S10["10. Saving draws a tick and closes the window;<br/>where the browser keeps it open, a Saved state<br/>with Done.<br/><i>works</i>"]:::works
+  S11["11. Extension: How to save, Extension: download,<br/>unzip, load unpacked; 'a token' opens API<br/>tokens.<br/><i>works</i>"]:::works
+  S12["12. With a token made (flow 09), the extension<br/>options take the address and the token.<br/><i>works</i>"]:::works
+  S13["13. The home address typed as most people write it,<br/>10.0.0.5:9095, becomes https:// and Test says<br/>'Could not reach https://10.0.0.5:9095.'<br/>Nothing hints that the server speaks http.<br/><i>friction</i>"]:::friction
+  S14["14. With http:// Test says 'Connected, 5 folders';<br/>Save stores both and asks the browser for<br/>access to that host.<br/><i>works</i>"]:::works
+  S15["15. The toolbar button or Option Shift S opens the<br/>popup: title selected, address, three recent<br/>folders, Save to Inbox.<br/><i>works</i>"]:::works
+  S16["16. Saved: the tick draws and the popup closes.<br/><i>works</i>"]:::works
+  S17["17. The same page again: 'Already saved in Homelab<br/>/ Network.' with Save anyway.<br/><i>works</i>"]:::works
+  S18["18. On a browser page: 'This page cannot be saved'.<br/><i>works</i>"]:::works
+  S19["19. The popup and options are always dark, while<br/>the app and its pages follow light and dark<br/>since 0.1.11.<br/><i>friction</i>"]:::friction
+  S20["20. Right click a page or link, Save to Pinned: it<br/>goes to the Inbox and the button shows a tick,<br/>= when already saved, ! on failure.<br/><i>works</i>"]:::works
+  S21["21. iPhone and Android: How to save shows the<br/>Safari bookmark and the home screen share<br/>target.<br/><i>works</i>"]:::works
+  S1 --> S2
+  S2 --> S3
+  S3 --> S4
+  S4 --> S5
+  S5 --> S6
+  S6 --> S7
+  S7 --> S8
+  S8 --> S9
+  S9 --> S10
+  S10 --> S11
+  S11 --> S12
+  S12 --> S13
+  S13 --> S14
+  S14 --> S15
+  S15 --> S16
+  S16 --> S17
+  S17 --> S18
+  S18 --> S19
+  S19 --> S20
+  S20 --> S21

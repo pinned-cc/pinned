@@ -1,0 +1,17 @@
+flowchart TD
+  classDef works fill:#ffffff,stroke:#b8babe,color:#3a3e44;
+  classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
+  classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
+  S1["1. More, API tokens (or 'a token' on How to save):<br/>the empty state says what a token can and<br/>cannot do.<br/><i>works</i>"]:::works
+  S2["2. Name and app password, Create; a wrong password<br/>says 'Wrong password' and keeps the name.<br/><i>works</i>"]:::works
+  S3["3. The token shows once with Copy and 'Copy it<br/>now. It is not shown again.'<br/><i>works</i>"]:::works
+  S4["4. The form is gone after Create: a second token<br/>needs the sheet closed and opened again, and<br/>nothing says where the token goes next.<br/><i>friction</i>"]:::friction
+  S5["5. The token reads folders (200) and cannot export<br/>(403).<br/><i>works</i>"]:::works
+  S6["6. The list shows when each token was made and<br/>last used.<br/><i>works</i>"]:::works
+  S7["7. Revoke asks in the row, then 'Token revoked';<br/>the token now answers 401.<br/><i>works</i>"]:::works
+  S1 --> S2
+  S2 --> S3
+  S3 --> S4
+  S4 --> S5
+  S5 --> S6
+  S6 --> S7

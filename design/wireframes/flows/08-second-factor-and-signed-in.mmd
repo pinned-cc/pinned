@@ -1,0 +1,27 @@
+flowchart TD
+  classDef works fill:#ffffff,stroke:#b8babe,color:#3a3e44;
+  classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
+  classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
+  S1["1. The owner makes a secret, sets TOTP_SECRET,<br/>restarts and adds it to the authenticator by<br/>hand; a bad secret stops the start with a<br/>message.<br/><i>works</i>"]:::works
+  S2["2. The login shows Password and Code; Enter in the<br/>password moves to the code.<br/><i>works</i>"]:::works
+  S3["3. A wrong code says 'Wrong password or code.' and<br/>both fields are empty again.<br/><i>friction</i>"]:::friction
+  S4["4. The same code used in a second browser inside<br/>its 30 seconds is refused with the same text.<br/><i>friction</i>"]:::friction
+  S5["5. After 5 wrong codes every login is held from 1<br/>minute up to a day, but the page says 'Wait 30<br/>seconds and try again.' and the right code gets<br/>the same answer while the hold lasts.<br/><i>broken</i>"]:::broken
+  S6["6. Browsers logged in before stay logged in; API<br/>tokens need no code.<br/><i>works</i>"]:::works
+  S7["7. More, Signed in: each browser with its sign in<br/>day and last use, this one marked.<br/><i>works</i>"]:::works
+  S8["8. Two browsers of one kind read the same, 'Chrome<br/>on macOS', with no address or place to tell<br/>them apart.<br/><i>friction</i>"]:::friction
+  S9["9. Sign out, or Sign out all others, asks for the<br/>app password; a wrong one says 'Wrong<br/>password'.<br/><i>works</i>"]:::works
+  S10["10. Done: 'Other browsers signed out'.<br/><i>works</i>"]:::works
+  S11["11. The signed out browser keeps showing every<br/>bookmark until it next asks the server for<br/>something.<br/><i>friction</i>"]:::friction
+  S12["12. Lost the authenticator: remove TOTP_SECRET and<br/>restart.<br/><i>works</i>"]:::works
+  S1 --> S2
+  S2 --> S3
+  S3 --> S4
+  S4 --> S5
+  S5 --> S6
+  S6 --> S7
+  S7 --> S8
+  S8 --> S9
+  S9 --> S10
+  S10 --> S11
+  S11 --> S12

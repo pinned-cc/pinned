@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Walk a flow</title><link rel="stylesheet" href="wire.css"><style>
+body{padding:16px}.wrap{display:flex;gap:16px;align-items:flex-start}
+.stage{width:960px;height:600px;flex:none;border-radius:12px;overflow:hidden;box-shadow:var(--card);background:#fff}
+.stage iframe{width:1280px;height:800px;border:0;transform:scale(.75);transform-origin:0 0}
+.side2{flex:1;min-width:280px;max-width:440px;background:#fff;border-radius:12px;box-shadow:var(--card);padding:16px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 32px);overflow:auto}
+.side2 h1{font-size:15px;color:var(--ink);margin:0}.cur{border:1.5px solid var(--ink);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.cur b{color:var(--ink)}.steps{list-style:none;padding:0;margin:0}.steps li{padding:4px 6px;border-radius:4px;font-size:11.5px;cursor:pointer;display:flex;gap:8px}
+.steps li.on{background:var(--soft);color:var(--ink)}.steps li span:first-child{width:22px;flex:none;color:var(--marker)}
+.steps li span.st{width:56px;flex:none;color:var(--marker)}.steps li span.st.friction{color:var(--ink);font-weight:600}.steps li span.st.broken{color:var(--red);font-weight:600}
+.nav2{display:flex;gap:8px;align-items:center}.where{font-size:11px;color:var(--marker)}
+.now{font-weight:600}.now.friction{color:var(--ink)}.now.broken{color:var(--red)}
+@media (max-width:1300px){.wrap{flex-direction:column}.stage{width:100%;max-width:960px;height:auto;aspect-ratio:1280/800}}
+</style></head><body>
+<div class="wrap"><div class="stage" id="stage"><iframe id="fr" title="Wireframe"></iframe></div>
+<div class="side2"><div class="nav2"><a class="btn" href="index.html">All flows</a><span class="sp"></span><a class="btn" id="prev">Back</a><a class="btn pri" id="next">Next</a></div>
+<h1 id="ft"></h1><div class="cur" id="cur"></div><div class="where" id="where"></div><ul class="steps" id="steps"></ul></div></div>
+<script src="flows.js"></script><script>
+(function(){
+  var q=new URLSearchParams(location.search),fid=q.get('f')?q.get('f'):'01',fl=FLOWS.filter(function(f){return f.id===fid}),flow=fl.length?fl[0]:FLOWS[0];
+  var seq=[];flow.steps.forEach(function(s,si){s.screens.forEach(function(sc,k){seq.push({si:si,sc:sc,k:k,of:s.screens.length})})});
+  var si0=parseInt(q.get('s')?q.get('s'):'0',10);var i=Math.min(isNaN(si0)?0:si0,seq.length-1);
+  document.getElementById('ft').textContent=flow.id+' '+flow.name;
+  var fr=document.getElementById('fr'),stage=document.getElementById('stage');
+  function fit(){var w=stage.clientWidth;fr.style.transform='scale('+(w/1280)+')';stage.style.height=(w*800/1280)+'px'}
+  window.addEventListener('resize',fit);
+  function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML}
+  function show(){
+    var it=seq[i],s=flow.steps[it.si];
+    fr.src='screens/'+it.sc+'.html?hot=1';
+    document.getElementById('cur').innerHTML='<b>Step '+s.n+(it.of>1?', screen '+(it.k+1)+' of '+it.of:'')+'</b><span>'+esc(s.text)+'</span>'+
+      '<span class="note">Do: '+esc(s.do)+'</span><span class="note">In the real app: <span class="now '+s.now+'">'+s.now+'</span>. '+esc(s.ev)+'</span>'+
+      '<span class="note">Screen: '+esc(TITLES[it.sc]?TITLES[it.sc]:it.sc)+' ('+it.sc+')</span>';
+    var ul=document.getElementById('steps');ul.innerHTML='';
+    flow.steps.forEach(function(st,si){var li=document.createElement('li');li.className=si===it.si?'on':'';
+      li.innerHTML='<span>'+st.n+'</span><span class="st '+st.now+'">'+st.now+'</span><span>'+esc(st.text)+'</span>';
+      li.onclick=function(){for(var j=0;j<seq.length;j++){if(seq[j].si===si){i=j;show();break}}};ul.appendChild(li)});
+    history.replaceState(null,'','?f='+flow.id+'&s='+i);
+    document.getElementById('prev').style.visibility=i>0?'visible':'hidden';
+    document.getElementById('next').textContent=i<seq.length-1?'Next':'Done';
+    document.getElementById('where').textContent='';
+    fit();
+  }
+  document.getElementById('prev').onclick=function(){if(i>0){i--;show()}};
+  document.getElementById('next').onclick=function(){if(i<seq.length-1){i++;show()}else location.href='index.html'};
+  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){document.getElementById('next').click()}if(e.key==='ArrowLeft'){document.getElementById('prev').click()}});
+  window.addEventListener('message',function(e){if(e.data&&e.data.wireScreen&&e.data.wireScreen!==seq[i].sc){document.getElementById('where').textContent='You clicked through to: '+(TITLES[e.data.wireScreen]?TITLES[e.data.wireScreen]:e.data.wireScreen)+'. Next goes on with the flow.'}});
+  show();
+})();
+</script></body></html>

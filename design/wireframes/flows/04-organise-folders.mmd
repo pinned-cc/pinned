@@ -1,0 +1,33 @@
+flowchart TD
+  classDef works fill:#ffffff,stroke:#b8babe,color:#3a3e44;
+  classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
+  classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
+  S1["1. The plus next to Folders, or N, opens New<br/>folder; Create opens the new empty folder.<br/><i>works</i>"]:::works
+  S2["2. The empty folder offers Add bookmarks, a picker<br/>of links saved elsewhere.<br/><i>works</i>"]:::works
+  S3["3. Moving them shows 'Moved 2 to Media' with Undo.<br/><i>works</i>"]:::works
+  S4["4. The folder three dots hold Add bookmarks, New<br/>folder inside, Rename, Move to, Hide from<br/>Recent, Lock with a password, Delete. Share is<br/>not there: only the small link glyph by the<br/>title opens it (the right click menu has it).<br/><i>friction</i>"]:::friction
+  S5["5. Move to moves a folder under another or to the<br/>top level.<br/><i>works</i>"]:::works
+  S6["6. A card shows Share, Open, Trash and More on<br/>hover; More holds Move, Copy, Share, Trash,<br/>Open, Rename, Pin.<br/><i>works</i>"]:::works
+  S7["7. Move from the card or the selection bar moves<br/>without a word: no toast, no Undo. A drag onto<br/>a folder says 'Moved to Reading' with Undo.<br/><i>friction</i>"]:::friction
+  S8["8. Dragging a card onto a folder in the sidebar<br/>moves it with Undo.<br/><i>works</i>"]:::works
+  S9["9. Rename in place: F2 or the menu, Enter saves,<br/>Escape cancels.<br/><i>works</i>"]:::works
+  S10["10. Trash on a card: 'Moved to Trash' with Undo.<br/><i>works</i>"]:::works
+  S11["11. Trash keeps links 30 days; a card offers<br/>Restore and Delete now, which asks first; Empty<br/>trash asks first.<br/><i>works</i>"]:::works
+  S12["12. Delete folder asks first and says where its<br/>links go: 'Delete Media? 2 bookmarks go to<br/>Trash.'<br/><i>works</i>"]:::works
+  S13["13. With More open in the sidebar at 800 px height<br/>the folder list shrinks to about two rows, its<br/>scroll bar is hidden, and More stays open on<br/>the next visit.<br/><i>friction</i>"]:::friction
+  S14["14. Phone: Folders tab, a folder, the three dots as<br/>a sheet.<br/><i>works</i>"]:::works
+  S15["15. Phone: a tap opens the link; Move, Rename and<br/>Trash come only after a long press starts<br/>selecting, and nothing on screen says so.<br/><i>friction</i>"]:::friction
+  S1 --> S2
+  S2 --> S3
+  S3 --> S4
+  S4 --> S5
+  S5 --> S6
+  S6 --> S7
+  S7 --> S8
+  S8 --> S9
+  S9 --> S10
+  S10 --> S11
+  S11 --> S12
+  S12 --> S13
+  S13 --> S14
+  S14 --> S15
