@@ -102,7 +102,8 @@ func set(words string) map[string]bool {
 // elements and attributes: no script, no links, no animation, no other
 // namespace (XHTML included) apart from drawing programs' notes, href only
 // to an #id in the file or to an embedded PNG, JPEG, GIF or WebP image,
-// style only with url(#id), known CSS functions and no @import. The icon is
+// style only with url() to an #id or such an embedded image, known CSS
+// functions and no @import. The icon is
 // shown only through img and served with a sandbox, so this is a second
 // line; anything not on the list is refused and the bookmark keeps its
 // letter mark.
@@ -111,7 +112,11 @@ func checkSVG(data []byte) error {
 	d.Strict = true
 	d.Entity = xml.HTMLEntity
 	root := false
-	inStyle := 0
+	// A style element is checked as the one sheet a browser joins from all
+	// its text and CDATA, so nothing inside may split it: no comment, no
+	// processing instruction, no child element.
+	inStyle := false
+	var sheet strings.Builder
 	for {
 		tok, err := d.Token()
 		if err == io.EOF {
@@ -126,15 +131,22 @@ func checkSVG(data []byte) error {
 		switch t := tok.(type) {
 		case xml.ProcInst:
 			// Only the XML declaration: xml-stylesheet loads a style sheet.
-			if t.Target != "xml" {
+			if t.Target != "xml" || inStyle {
+				return errUnsafeSVG
+			}
+		case xml.Comment:
+			if inStyle {
 				return errUnsafeSVG
 			}
 		case xml.Directive:
 			// A DOCTYPE with an internal subset can define entities.
-			if bytes.ContainsRune(t, '[') {
+			if bytes.ContainsRune(t, '[') || inStyle {
 				return errUnsafeSVG
 			}
 		case xml.StartElement:
+			if inStyle {
+				return errUnsafeSVG
+			}
 			name := strings.ToLower(t.Name.Local)
 			if !root {
 				if name != "svg" || (t.Name.Space != "" && t.Name.Space != svgNS) {
@@ -147,7 +159,8 @@ func checkSVG(data []byte) error {
 				return errUnsafeSVG
 			}
 			if name == "style" && !editor {
-				inStyle++
+				inStyle = true
+				sheet.Reset()
 			}
 			for _, a := range t.Attr {
 				// An editor's element is drawn by nothing, so its own
@@ -160,8 +173,12 @@ func checkSVG(data []byte) error {
 				}
 			}
 		case xml.EndElement:
-			if strings.EqualFold(t.Name.Local, "style") && !editorNS[t.Name.Space] && inStyle > 0 {
-				inStyle--
+			if inStyle {
+				// Nothing can open inside style, so this closes it.
+				inStyle = false
+				if !safeCSS(sheet.String()) {
+					return errUnsafeSVG
+				}
 			}
 		case xml.CharData:
 			if !root {
@@ -170,8 +187,8 @@ func checkSVG(data []byte) error {
 				}
 				continue
 			}
-			if inStyle > 0 && !safeCSS(string(t)) {
-				return errUnsafeSVG
+			if inStyle {
+				sheet.Write(t)
 			}
 		}
 	}
@@ -241,15 +258,23 @@ var cssFunctions = set(`rgb rgba hsl hsla hwb lab lch oklab oklch color
 // cssAtRules are the at rules a style element may hold.
 var cssAtRules = set(`media supports keyframes -webkit-keyframes`)
 
-// safeCSS accepts a style sheet or attribute value only when every function
-// is on the list above, every url() points to an #id or an embedded raster
-// image, every at rule is on the list (no @import, no @font-face) and there
-// is no javascript: address. A backslash is refused: CSS escapes could
-// spell any of these in other letters.
+// cssBlockWords may stand before a plain bracket with a space between, as
+// in "@media screen and (prefers-color-scheme: dark)".
+var cssBlockWords = set(`and or not only`)
+
+// safeCSS accepts a style sheet or attribute value only when every bracket
+// opens a function on the list above, with its name written right before
+// it, or is a plain bracket after a media query word, an opening bracket or
+// a comma; every url() points to an #id or an embedded raster image, every
+// at rule is on the list (no @import, no @font-face) and there is no
+// javascript: address. CSS comments are taken out first, so "url/**/(" is
+// read as url(. A backslash is refused: CSS escapes could spell any of
+// these in other letters.
 func safeCSS(s string) bool {
 	if strings.ContainsRune(s, '\\') {
 		return false
 	}
+	s = dropCSSComments(s)
 	if v := squash(s); strings.Contains(v, "javascript:") || strings.Contains(v, "vbscript:") {
 		return false
 	}
@@ -270,31 +295,66 @@ func safeCSS(s string) bool {
 				return false
 			}
 		case '(':
+			if i > 0 && cssName(v[i-1]) {
+				// A function: its name sits right before the bracket.
+				j := i
+				for j > 0 && cssName(v[j-1]) {
+					j--
+				}
+				if j > 0 && v[j-1] == '@' {
+					continue // @media(...): checked as an at rule
+				}
+				switch fn := string(v[j:i]); {
+				case fn == "url":
+					ref := strings.TrimLeft(squash(string(v[i+1:])), `"'`)
+					if !strings.HasPrefix(ref, "#") && !rasterData(ref) {
+						return false
+					}
+				case cssFunctions[fn]:
+				default:
+					return false
+				}
+				continue
+			}
+			// A plain bracket: only after a media query word, an at
+			// rule, an opening bracket or a comma.
 			j := i
 			for j > 0 && v[j-1] == ' ' {
 				j--
+			}
+			if j == 0 || v[j-1] == '(' || v[j-1] == ',' {
+				continue
 			}
 			end := j
 			for j > 0 && cssName(v[j-1]) {
 				j--
 			}
-			fn := string(v[j:end])
-			if j > 0 && v[j-1] == '@' {
-				continue // @media (...): checked as an at rule
+			word := string(v[j:end])
+			if j > 0 && v[j-1] == '@' && cssAtRules[word] || j < end && cssBlockWords[word] {
+				continue
 			}
-			switch {
-			case fn == "url":
-				ref := strings.TrimLeft(squash(string(v[i+1:])), `"'`)
-				if !strings.HasPrefix(ref, "#") && !rasterData(ref) {
-					return false
-				}
-			case fn == "" || cssFunctions[fn]:
-			default:
-				return false
-			}
+			return false
 		}
 	}
 	return true
+}
+
+// dropCSSComments removes /* ... */ comments, an unclosed one to the end.
+func dropCSSComments(s string) string {
+	var b strings.Builder
+	for {
+		i := strings.Index(s, "/*")
+		if i < 0 {
+			b.WriteString(s)
+			return b.String()
+		}
+		b.WriteString(s[:i])
+		end := strings.Index(s[i+2:], "*/")
+		if end < 0 {
+			return b.String()
+		}
+		s = s[i+2+end+2:]
+	}
 }
 
 func cssName(c byte) bool {

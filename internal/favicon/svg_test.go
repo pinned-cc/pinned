@@ -83,6 +83,22 @@ func TestSVGRefusesScriptAndReferences(t *testing.T) {
 		open + `<rect xlink:show="new"/></svg>`,
 		open + `<x:rect xmlns:x="urn:other"/></svg>`,
 		open + `<rect fill="expression(alert(1))"/></svg>`,
+		// Found by the release delta audit of 2026-10-31: a style split by
+		// a comment, CDATA or a child element, which browsers join, and a
+		// bracket with no function name before it.
+		open + `<style>rect{fill:url<!---->(https://evil.example/x.svg#a)}</style></svg>`,
+		open + `<style>rect{fill:url<![CDATA[(https://evil.example/x.svg#a)]]>}</style></svg>`,
+		open + `<style>rect{fill:url<g/>(https://evil.example/x.svg#a)}</style></svg>`,
+		open + `<style>rect{fill:image-set<!---->("https://evil.example/x.png" 1x)}</style></svg>`,
+		open + `<style>rect{fill:url<?x y?>(https://evil.example/x.svg#a)}</style></svg>`,
+		open + `<style>rect{fill:#000}<!-- note --></style></svg>`,
+		open + `<style><![CDATA[rect{fill:url]]><![CDATA[(https://evil.example/x.svg#a)}]]></style></svg>`,
+		open + `<style>rect{fill:url/**/(https://evil.example/x.svg#a)}</style></svg>`,
+		open + `<style>rect{fill:url (https://evil.example/x.svg#a)}</style></svg>`,
+		open + `<style>rect{fill:image-set ("https://evil.example/x.png" 1x)}</style></svg>`,
+		open + `<style>rect{fill:("https://evil.example/x.png")}</style></svg>`,
+		open + `<rect style="fill:url/**/(https://evil.example/x.svg#a)"/></svg>`,
+		open + `<rect style="fill:x (https://evil.example/)"/></svg>`,
 	}
 	for _, s := range bad {
 		if icon, err := Process([]byte(s)); err == nil {
@@ -99,6 +115,7 @@ func TestSVGRefusesScriptAndReferences(t *testing.T) {
 // Illustrator export, a mask and filter, a symbol with use.
 var realIcons = []string{
 	`<svg width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><style>path{fill:#24292f}@media (prefers-color-scheme: dark){path{fill:#fff}}</style><path fill-rule="evenodd" clip-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8z"/></svg>`,
+	`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><style><![CDATA[/* brand */ .a{fill:url(#g)}]]>` + "\n" + `<![CDATA[@media (min-width: 0) and (prefers-color-scheme: dark){.a{width:calc((100% - 1px) / 2)}}]]></style><rect class="a" width="16" height="16" fill="url( 'data:image/png;base64,iVBORw0KGgo=' )"/></svg>`,
 	`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>@media screen and (prefers-color-scheme: dark) { .a { fill: rgb(255 255 255 / 80%) } }</style><circle class="a" cx="16" cy="16" r="14" transform="translate(0 0) rotate(45 16 16) scale(1)"/></svg>`,
 	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
 		`<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="16mm" height="16mm" viewBox="0 0 16 16" version="1.1" id="svg8" inkscape:version="1.0" sodipodi:docname="icon.svg">` +
