@@ -3,12 +3,16 @@ package favicon
 import (
 	"context"
 	"errors"
+	"fmt"
 	"image/color"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -219,5 +223,56 @@ func TestClientRefusesDowngrade(t *testing.T) {
 	}
 	if err := c.CheckRedirect(req("http://example.com/b"), []*http.Request{req("http://example.com/")}); err != nil {
 		t.Errorf("http to http refused: %v", err)
+	}
+}
+
+// An IPv6 address with a zone is refused wherever the guard judges one:
+// no prefix matches it, so it used to pass as public. Found by the release
+// verification of 2026-10-31.
+func TestGuardRefusesZonedAddresses(t *testing.T) {
+	public := guard{owner: "example.com"}
+	home := guard{owner: "nas.home", private: true}
+	for _, s := range []string{"::1%lo0", "fe80::1%en0", "fd00::1%en0", "64:ff9b::a9fe:a9fe%en0", "2606:4700::1111%en0"} {
+		a := netip.MustParseAddr(s)
+		if public.allow("example.com", a) == nil || home.allow("nas.home", a) == nil {
+			t.Errorf("%s allowed", s)
+		}
+		if !isPrivate(a) {
+			t.Errorf("%s counted as public", s)
+		}
+	}
+	c := guard{}.client()
+	req, _ := http.NewRequest("GET", "http://[fe80::1%25en0]/i.png", nil)
+	if err := c.CheckRedirect(req, []*http.Request{req}); !errors.Is(err, errBlocked) {
+		t.Errorf("redirect to a zoned address: %v", err)
+	}
+
+	// End to end: the URL form reaches IPv6 loopback through its interface.
+	var lo string
+	ifs, _ := net.Interfaces()
+	for _, i := range ifs {
+		if i.Flags&net.FlagLoopback != 0 {
+			lo = i.Name
+		}
+	}
+	ln, err := net.Listen("tcp", "[::1]:0")
+	if err != nil || lo == "" {
+		t.Skip("no IPv6 loopback")
+	}
+	var hit atomic.Bool
+	srv := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { hit.Store(true) })}
+	go srv.Serve(ln)
+	defer srv.Close()
+	port := ln.Addr().(*net.TCPAddr).Port
+	cl := newClient(context.Background(), fmt.Sprintf("http://93.184.215.14:%d/", port), nil)
+	for _, u := range []string{fmt.Sprintf("http://[::1]:%d/", port), fmt.Sprintf("http://[::1%%25%s]:%d/", lo, port)} {
+		resp, err := cl.Get(u)
+		if err == nil {
+			io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+		}
+		if !errors.Is(err, errBlocked) || hit.Load() {
+			t.Errorf("%s: %v", u, err)
+		}
 	}
 }

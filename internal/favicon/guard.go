@@ -77,7 +77,13 @@ func inAny(list []netip.Prefix, a netip.Addr) bool {
 	return false
 }
 
+// isPrivate reports whether a is not a public address. An IPv6 address with
+// a zone (fe80::1%en0) names a link on this machine and no prefix matches
+// it, so it counts as private here and allow refuses it.
 func isPrivate(a netip.Addr) bool {
+	if a.Zone() != "" {
+		return true
+	}
 	a, ok := effective(a)
 	return !ok || inAny(never, a) || inAny(private, a)
 }
@@ -104,7 +110,7 @@ func (g guard) allowPort(host, port string) error {
 func (g guard) allow(host string, orig netip.Addr) error {
 	a, ok := effective(orig)
 	switch {
-	case !ok, inAny(never, a):
+	case !ok, orig.Zone() != "", inAny(never, a):
 	case !inAny(private, a):
 		return nil
 	case g.private && strings.EqualFold(strings.TrimSuffix(host, "."), g.owner):
@@ -167,6 +173,9 @@ func (g guard) client() *http.Client {
 			if err := g.allowPort(host, port); err != nil {
 				return nil, err
 			}
+			if zoned(host) {
+				return nil, fmt.Errorf("%s: %w", host, errBlocked)
+			}
 			if !g.hosts.Allow(host) {
 				return nil, fmt.Errorf("%s is not in ICON_HOSTS: %w", host, errBlocked)
 			}
@@ -194,6 +203,9 @@ func (g guard) client() *http.Client {
 			if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
 				return fmt.Errorf("redirect to %s refused", req.URL.Scheme)
 			}
+			if zoned(req.URL.Hostname()) {
+				return fmt.Errorf("redirect to %s: %w", req.URL.Hostname(), errBlocked)
+			}
 			// Once on https, never step down to plain http.
 			if req.URL.Scheme == "http" {
 				for _, v := range via {
@@ -205,6 +217,12 @@ func (g guard) client() *http.Client {
 			return nil
 		},
 	}
+}
+
+// zoned reports whether host is an IPv6 address with a zone.
+func zoned(host string) bool {
+	a, err := netip.ParseAddr(host)
+	return err == nil && a.Zone() != ""
 }
 
 // Hosts is the list of ICON_HOSTS: host names icon fetches may connect to,
