@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -23,12 +24,14 @@ func signedPayload(v string) string { return strings.TrimPrefix(v, signedVersion
 // checkStored checks a lock or share password against its stored hash
 // (see auth.CheckKeyedPassword). When it matches and the hash is from
 // before 0.1.11 or its cost is below auth.BcryptCost, save gets a new hash
-// in the current form at the current cost; save may be nil.
-func (s *Server) checkStored(hash, password string, save func(oldHash, newHash string)) bool {
+// in the current form at the current cost; save may be nil. save reports
+// whether the row it ends with still takes the password; when it does not,
+// the password counts as wrong.
+func (s *Server) checkStored(hash, password string, save func(oldHash, newHash, password string) bool) bool {
 	ok, rehash := auth.CheckKeyedPassword(s.secret, hash, password)
 	if ok && rehash && save != nil {
 		if h, err := auth.HashKeyedPassword(s.secret, password); err == nil {
-			save(hash, h)
+			return save(hash, h, password)
 		}
 	}
 	return ok
@@ -55,36 +58,56 @@ func (s *Server) easyPassword(r *http.Request, password string) bool {
 const errEasyPassword = "This password is too easy to guess. Choose another one."
 
 // lockRehash stores a new hash of f's lock password through rehashLock.
-func (s *Server) lockRehash(f *store.Folder) func(string, string) {
-	return func(oldHash, h string) { s.rehashLock(f, oldHash, h) }
+func (s *Server) lockRehash(f *store.Folder) func(string, string, string) bool {
+	return func(oldHash, h, password string) bool { return s.rehashLock(f, oldHash, h, password) }
 }
 
 // shareRehash is lockRehash for a share password.
-func (s *Server) shareRehash(sh *store.Share) func(string, string) {
-	return func(oldHash, h string) { s.rehashShare(sh, oldHash, h) }
+func (s *Server) shareRehash(sh *store.Share) func(string, string, string) bool {
+	return func(oldHash, h, password string) bool { return s.rehashShare(sh, oldHash, h, password) }
 }
 
-// rehashLock stores a new hash of a folder's lock password. Unlock cookies
+// rehashLock stores a new hash of a folder's lock password and reloads f,
+// so the unlock cookie is signed over the row as it now is. Unlock cookies
 // sign the lock's stamp, which stays, so they keep working. A lock set
 // before schema 11 has no stamp and its cookies signed the hash: it gets a
 // stamp now, so other browsers unlock it once more.
-func (s *Server) rehashLock(f *store.Folder, oldHash, hash string) {
-	if err := s.st.ReplaceLockHash(f.ID, oldHash, hash); err != nil {
+//
+// When the hash changed meanwhile, most often because another browser
+// unlocked the same old lock at the same moment and rehashed it first, the
+// fresh row is read and the password checked against it. It reports
+// whether f, as reloaded, takes the password.
+func (s *Server) rehashLock(f *store.Folder, oldHash, hash, password string) bool {
+	err := s.st.ReplaceLockHash(f.ID, oldHash, hash)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		log.Printf("rehash lock: %v", err)
-		return
+		return true // the old hash matched; the cookie signs it as before
 	}
-	if nf, err := s.st.Folder(f.ID); err == nil {
-		*f = nf
+	nf, rerr := s.st.Folder(f.ID)
+	if rerr != nil {
+		return false
 	}
+	*f = nf
+	if err == nil {
+		return true
+	}
+	return nf.LockHash != nil && s.checkStored(*nf.LockHash, password, nil)
 }
 
 // rehashShare is rehashLock for a share password.
-func (s *Server) rehashShare(sh *store.Share, oldHash, hash string) {
-	if err := s.st.ReplaceShareHash(sh.Token, oldHash, hash); err != nil {
+func (s *Server) rehashShare(sh *store.Share, oldHash, hash, password string) bool {
+	err := s.st.ReplaceShareHash(sh.Token, oldHash, hash)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		log.Printf("rehash share: %v", err)
-		return
+		return true
 	}
-	if nsh, err := s.st.ShareByToken(sh.Token); err == nil {
-		*sh = nsh
+	nsh, rerr := s.st.ShareByToken(sh.Token)
+	if rerr != nil {
+		return false
 	}
+	*sh = nsh
+	if err == nil {
+		return true
+	}
+	return nsh.PasswordHash != nil && s.checkStored(*nsh.PasswordHash, password, nil)
 }

@@ -2,10 +2,12 @@ package server
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
@@ -263,4 +265,126 @@ func TestOldHashRefusesLongerGuess(t *testing.T) {
 	}
 	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": pw + "xyz"}, 403)
 	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": pw}, 204)
+}
+
+// Two browsers that unlock the same pre 0.1.11 lock or share at the same
+// moment both match the old hash; the first stores the new one. The second
+// then reads the row again, so its cookie opens too (F-82).
+func TestConcurrentUnlockOfAnOldHash(t *testing.T) {
+	old := auth.BcryptCost
+	t.Cleanup(func() { auth.BcryptCost = old })
+	auth.BcryptCost = bcrypt.MinCost
+	e := newEnv(t, Config{})
+	e.login()
+	raw := func(pw string) string {
+		h, _ := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.MinCost)
+		return string(h)
+	}
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"title": "Board", "url": "https://example.com/b", "folder_id": f.ID}, 201))
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
+	g := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Shared"}, 201))
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(g.ID)+"/share", map[string]any{"password": "share pass"}, 201))
+	db, err := sql.Open("sqlite", filepath.Join(e.dir, "bookmarks.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	makeOld := func() {
+		db.Exec(`UPDATE folders SET lock_hash = ?, lock_stamp = NULL WHERE id = ?`, raw("s3cret-lock"), f.ID)
+		db.Exec(`UPDATE shares SET password_hash = ?, password_stamp = NULL WHERE token = ?`, raw("share pass"), sh.Token)
+	}
+
+	// The race, step by step: this request read the old row, another
+	// request stored the new hash first.
+	makeOld()
+	stale, _ := e.st.Folder(f.ID)
+	first, _ := auth.HashKeyedPassword(e.server.secret, "s3cret-lock")
+	if err := e.st.ReplaceLockHash(f.ID, *stale.LockHash, first); err != nil {
+		t.Fatal(err)
+	}
+	second, _ := auth.HashKeyedPassword(e.server.secret, "s3cret-lock")
+	if !e.server.rehashLock(&stale, *stale.LockHash, second, "s3cret-lock") {
+		t.Fatal("the late rehash refused the right password")
+	}
+	if stale.LockStamp == nil || *stale.LockHash != first {
+		t.Errorf("the late request kept the old row: %+v", stale)
+	}
+	other, _ := auth.HashKeyedPassword(e.server.secret, "another one")
+	e.st.ReplaceLockHash(f.ID, first, other)
+	makeOld()
+	stale, _ = e.st.Folder(f.ID)
+	e.st.ReplaceLockHash(f.ID, *stale.LockHash, other)
+	if e.server.rehashLock(&stale, *stale.LockHash, second, "s3cret-lock") {
+		t.Error("a password changed meanwhile still counted as right")
+	}
+	makeOld()
+	staleSh, _ := e.st.ActiveShare(sh.Token)
+	firstSh, _ := auth.HashKeyedPassword(e.server.secret, "share pass")
+	e.st.ReplaceShareHash(sh.Token, *staleSh.PasswordHash, firstSh)
+	if !e.server.rehashShare(&staleSh, *staleSh.PasswordHash, second, "share pass") || staleSh.PasswordStamp == nil {
+		t.Error("the late share rehash did not take the fresh row")
+	}
+
+	// And over HTTP: every unlock that answers 204 opens.
+	for round := 0; round < 5; round++ {
+		makeOld()
+		var browsers [2]*browser
+		for i := range browsers {
+			browsers[i] = e.browser(uaSafariIOS)
+			if browsers[i].do("POST", "/api/login", `{"password":"pw"}`) != 204 {
+				t.Fatal("login")
+			}
+		}
+		visitors := [2]*visitor{e.visitor(), e.visitor()}
+		codes, shareCodes := [2]int{}, [2]int{}
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		for i := range browsers {
+			wg.Add(2)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				req, _ := http.NewRequest("POST", e.srv.URL+"/api/folders/"+itoa(f.ID)+"/unlock", strings.NewReader(`{"password":"s3cret-lock"}`))
+				req.Header.Set("X-Requested-With", "fetch")
+				req.Header.Set("User-Agent", uaSafariIOS)
+				if resp, err := browsers[i].client.Do(req); err == nil {
+					codes[i] = resp.StatusCode
+					resp.Body.Close()
+				}
+			}(i)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				resp, err := visitors[i].client.Post(e.srv.URL+"/s/"+sh.Token+"/unlock", "application/json", strings.NewReader(`{"password":"share pass"}`))
+				if err == nil {
+					shareCodes[i] = resp.StatusCode
+					resp.Body.Close()
+				}
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+		for i := range browsers {
+			if codes[i] != 204 || shareCodes[i] != 204 {
+				t.Fatalf("round %d browser %d: unlock %d, share unlock %d", round, i, codes[i], shareCodes[i])
+			}
+			req, _ := http.NewRequest("GET", e.srv.URL+"/api/state", nil)
+			req.Header.Set("X-Requested-With", "fetch")
+			req.Header.Set("User-Agent", uaSafariIOS)
+			resp, err := browsers[i].client.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var st stateJSON
+			json.NewDecoder(resp.Body).Decode(&st)
+			resp.Body.Close()
+			if st.find(b.ID) == nil {
+				t.Errorf("round %d browser %d: unlock answered 204 but the folder stays closed", round, i)
+			}
+			if code, body := visitors[i].get("/s/" + sh.Token + "/data"); code != 200 || strings.Contains(body, `"locked":true`) {
+				t.Errorf("round %d visitor %d: share unlock answered 204 but stays closed: %d", round, i, code)
+			}
+		}
+	}
 }
