@@ -103,3 +103,10 @@ func (s *Store) IconFolders(icon string) ([]*int64, error) {
 	}
 	return out, rows.Err()
 }
+
+// DropIcon clears icon from every bookmark that uses it, so they show their
+// letter and the fetch at start tries them again.
+func (s *Store) DropIcon(icon string) error {
+	_, err := s.db.Exec(`UPDATE bookmarks SET icon = NULL, tile = NULL WHERE icon = ?`, icon)
+	return err
+}

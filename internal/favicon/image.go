@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -14,11 +15,11 @@ import (
 	ico "github.com/sergeymakinen/go-ico"
 )
 
-var errUnknownFormat = errors.New("not a png, jpeg, ico or svg image")
+var errUnknownFormat = errors.New("not a png, jpeg, gif, ico or svg image")
 
 // Icon is a downloaded icon ready to store.
 type Icon struct {
-	Ext  string  // "png", "jpg" or "svg"
+	Ext  string  // "png" or "svg"; versions before 0.1.11 also stored "jpg"
 	Data []byte  // file contents
 	Tile *string // "#rrggbb" for raster icons with an opaque edge, else nil
 }
@@ -39,8 +40,10 @@ func checkSize(w, h int) error {
 	return nil
 }
 
-// Process checks what data is and turns it into an Icon. ICO files are
-// decoded and stored as a PNG of their largest frame. Raster images are
+// Process checks what data is and turns it into an Icon. PNG, JPEG and GIF
+// files are decoded and stored as a new PNG; ICO files as a PNG of their
+// largest frame. SVG is kept as it is, only when checkSVG accepts it. WebP
+// is not taken: the standard library has no decoder for it. Raster images are
 // measured with DecodeConfig first and refused above 4096 by 4096 pixels or
 // 16 million pixels in total. A decoder that panics on a broken file (the
 // ICO and BMP decoders have done so) is caught and reported as an error, so
@@ -57,23 +60,11 @@ func Process(data []byte) (icon Icon, err error) {
 func process(data []byte) (Icon, error) {
 	switch {
 	case bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")):
-		if err := checkConfig(png.DecodeConfig, data); err != nil {
-			return Icon{}, err
-		}
-		img, err := png.Decode(bytes.NewReader(data))
-		if err != nil {
-			return Icon{}, err
-		}
-		return Icon{Ext: "png", Data: data, Tile: EdgeColor(img)}, nil
+		return reencode(png.DecodeConfig, png.Decode, data)
 	case bytes.HasPrefix(data, []byte{0xff, 0xd8, 0xff}):
-		if err := checkConfig(jpeg.DecodeConfig, data); err != nil {
-			return Icon{}, err
-		}
-		img, err := jpeg.Decode(bytes.NewReader(data))
-		if err != nil {
-			return Icon{}, err
-		}
-		return Icon{Ext: "jpg", Data: data, Tile: EdgeColor(img)}, nil
+		return reencode(jpeg.DecodeConfig, jpeg.Decode, data)
+	case bytes.HasPrefix(data, []byte("GIF87a")), bytes.HasPrefix(data, []byte("GIF89a")):
+		return reencode(gif.DecodeConfig, gif.Decode, data)
 	case bytes.HasPrefix(data, []byte{0, 0, 1, 0}):
 		if err := checkICO(data); err != nil {
 			return Icon{}, err
@@ -82,12 +73,7 @@ func process(data []byte) (Icon, error) {
 		if err != nil || len(frames) == 0 {
 			return Icon{}, fmt.Errorf("ico: %v", err)
 		}
-		img := largest(frames)
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, img); err != nil {
-			return Icon{}, err
-		}
-		return Icon{Ext: "png", Data: buf.Bytes(), Tile: EdgeColor(img)}, nil
+		return asPNG(largest(frames))
 	case looksLikeSVG(data):
 		if err := checkSVG(data); err != nil {
 			return Icon{}, err
@@ -95,6 +81,29 @@ func process(data []byte) (Icon, error) {
 		return Icon{Ext: "svg", Data: data}, nil
 	}
 	return Icon{}, errUnknownFormat
+}
+
+// reencode measures and decodes a raster image and stores what it shows as
+// a fresh PNG, so nothing else the file carried (a second format hidden in
+// it, bytes after the image, metadata) is kept. An animated GIF keeps its
+// first frame.
+func reencode(config func(io.Reader) (image.Config, error), decode func(io.Reader) (image.Image, error), data []byte) (Icon, error) {
+	if err := checkConfig(config, data); err != nil {
+		return Icon{}, err
+	}
+	img, err := decode(bytes.NewReader(data))
+	if err != nil {
+		return Icon{}, err
+	}
+	return asPNG(img)
+}
+
+func asPNG(img image.Image) (Icon, error) {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return Icon{}, err
+	}
+	return Icon{Ext: "png", Data: buf.Bytes(), Tile: EdgeColor(img)}, nil
 }
 
 func checkConfig(decode func(io.Reader) (image.Config, error), data []byte) error {

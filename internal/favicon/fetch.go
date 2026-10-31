@@ -161,6 +161,7 @@ type Store interface {
 	SetIcon(id int64, forKey, icon string, tile *string) (*string, error)
 	IconInUse(icon string) bool
 	IconFailed(id int64, forKey string, final bool) error
+	DropIcon(icon string) error
 }
 
 // Pool fetches icons in the background, at most four at a time.
@@ -185,8 +186,9 @@ func (p *Pool) Configure(off bool, hosts Hosts) {
 	p.off, p.hosts = off, hosts
 }
 
-// NewPool starts the workers. Icons are written to dir. The workers stop,
-// and fetches in flight are cancelled, when ctx ends; Wait waits for them.
+// NewPool checks the stored SVG icons once (see recheckSVG), then starts
+// the workers. Icons are written to dir. The workers stop, and fetches in
+// flight are cancelled, when ctx ends; Wait waits for them.
 func NewPool(ctx context.Context, dir string, st Store) *Pool {
 	p := &Pool{
 		dir:   dir,
@@ -194,11 +196,37 @@ func NewPool(ctx context.Context, dir string, st Store) *Pool {
 		jobs:  make(chan int64, queueLength),
 		ctx:   ctx,
 	}
+	p.recheckSVG()
 	p.wg.Add(workers)
 	for i := 0; i < workers; i++ {
 		go p.work()
 	}
 	return p
+}
+
+// recheckSVG runs every stored SVG icon through the current check once at
+// start, before anything is served or fetched, because versions before
+// 0.1.11 stored SVG icons with a looser check or none. A file that fails is
+// taken off its bookmarks and deleted, so they show their letter; the fetch
+// at start then tries them again under the current rules. It reads only
+// the SVG files, which are few and small, so start stays quick.
+func (p *Pool) recheckSVG() {
+	names, err := filepath.Glob(filepath.Join(p.dir, "*.svg"))
+	if err != nil {
+		return
+	}
+	for _, path := range names {
+		if svgStoredOK(path) {
+			continue
+		}
+		name := filepath.Base(path)
+		if err := p.store.DropIcon(name); err != nil {
+			log.Printf("favicon: recheck %s: %v", name, err)
+			continue
+		}
+		log.Printf("favicon: dropped stored icon %s: it fails the SVG check", name)
+		remove(path)
+	}
 }
 
 // Wait blocks until every worker has stopped.
