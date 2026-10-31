@@ -25,14 +25,11 @@ func (s *Store) SetLock(folderID int64, hash string) error {
 
 // ReplaceLockHash replaces the hash of a folder's lock password with
 // another hash of the same password, made at a higher cost. The stamp
-// stays, so unlock cookies keep working; a lock from before schema 11 gets
-// its first stamp here.
+// stays, so unlock cookies keep working. A lock from before schema 11 has
+// no stamp and its cookies sign the hash, so it is not replaced
+// (ErrNotFound) until the password is set again.
 func (s *Store) ReplaceLockHash(folderID int64, hash string) error {
-	stamp, err := newStamp()
-	if err != nil {
-		return err
-	}
-	return s.execOne(`UPDATE folders SET lock_hash = ?, lock_stamp = COALESCE(lock_stamp, ?) WHERE id = ? AND lock_hash IS NOT NULL`, hash, stamp, folderID)
+	return s.execOne(`UPDATE folders SET lock_hash = ? WHERE id = ? AND lock_hash IS NOT NULL AND lock_stamp IS NOT NULL`, hash, folderID)
 }
 
 // RemoveLock takes the folder's own password away. A share left in the

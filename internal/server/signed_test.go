@@ -1,12 +1,15 @@
 package server
 
 import (
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
+	_ "modernc.org/sqlite"
 
 	"github.com/pinned-cc/pinned/internal/auth"
 )
@@ -180,5 +183,60 @@ func TestRehashKeepsOtherUnlockCookies(t *testing.T) {
 	}
 	if e.state().find(b.ID) == nil {
 		t.Error("the first browser lost the unlocked folder after a rehash")
+	}
+}
+
+// A lock or share password set before schema 11 has no stamp, so its
+// unlock cookies sign the hash. Its hash is not replaced at a higher cost,
+// which would end those cookies; it keeps working as it is.
+func TestPreStampHashKeepsOtherUnlockCookies(t *testing.T) {
+	old := auth.BcryptCost
+	t.Cleanup(func() { auth.BcryptCost = old })
+	auth.BcryptCost = bcrypt.MinCost
+	e := newEnv(t, Config{})
+	e.login()
+	g := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Shared"}, 201))
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(g.ID)+"/share", map[string]any{"password": "share pass"}, 201))
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"title": "Board", "url": "https://example.com/b", "folder_id": f.ID}, 201))
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	db, err := sql.Open("sqlite", filepath.Join(e.dir, "bookmarks.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE shares SET password_stamp = NULL; UPDATE folders SET lock_stamp = NULL`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+
+	first := e.visitor()
+	if first.unlock(sh.Token, "share pass") != 204 {
+		t.Fatal("first share unlock")
+	}
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	other := e.browser(uaSafariIOS)
+	if other.do("POST", "/api/login", `{"password":"pw"}`) != 204 {
+		t.Fatal("second browser login")
+	}
+
+	auth.BcryptCost = bcrypt.MinCost + 1
+	if e.visitor().unlock(sh.Token, "share pass") != 204 {
+		t.Fatal("second share unlock")
+	}
+	if code := other.do("POST", "/api/folders/"+itoa(f.ID)+"/unlock", `{"password":"s3cret"}`); code != 204 {
+		t.Fatalf("second browser unlock: %d", code)
+	}
+	cost := func(h *string) int { c, _ := bcrypt.Cost([]byte(*h)); return c }
+	if got, _ := e.st.ActiveShare(sh.Token); cost(got.PasswordHash) != bcrypt.MinCost || got.PasswordStamp != nil {
+		t.Errorf("a share hash without a stamp was replaced: cost %d", cost(got.PasswordHash))
+	}
+	if got, _ := e.st.Folder(f.ID); cost(got.LockHash) != bcrypt.MinCost || got.LockStamp != nil {
+		t.Errorf("a lock hash without a stamp was replaced: cost %d", cost(got.LockHash))
+	}
+	if code, body := first.get("/s/" + sh.Token + "/data"); code != 200 || strings.Contains(body, `"locked":true`) {
+		t.Errorf("the first browser lost the share: %d %s", code, body)
+	}
+	if e.state().find(b.ID) == nil {
+		t.Error("the first browser lost the unlocked folder")
 	}
 }

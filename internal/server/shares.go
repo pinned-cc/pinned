@@ -332,7 +332,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	if sh.PasswordHash != nil {
 		key, known := s.limitKey(r)
 		ok, wait := s.attempt(r, s.shareLimiters.get(sh.ID), key, known, func() bool {
-			return checkStored(*sh.PasswordHash, in.Password, func(h string) { s.rehashShare(&sh, h) })
+			return checkStored(*sh.PasswordHash, in.Password, s.shareRehash(&sh))
 		})
 		if !ok {
 			s.failed(r, "share", wait, "folder", sh.FolderID)

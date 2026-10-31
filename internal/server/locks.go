@@ -250,7 +250,7 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 	if f.LockHash != nil {
 		key, known := s.limitKey(r)
 		ok, wait := s.attempt(r, s.folderLimiters.get(id), key, known, func() bool {
-			return checkStored(*f.LockHash, in.CurrentPassword, func(h string) { s.rehashLock(&f, h) })
+			return checkStored(*f.LockHash, in.CurrentPassword, s.lockRehash(&f))
 		})
 		if !ok {
 			s.failed(r, "lock", wait, "folder", id)
@@ -338,7 +338,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 	}
 	key, known := s.limitKey(r)
 	ok, wait := s.attempt(r, s.folderLimiters.get(id), key, known, func() bool {
-		return checkStored(*f.LockHash, in.Password, func(h string) { s.rehashLock(&f, h) })
+		return checkStored(*f.LockHash, in.Password, s.lockRehash(&f))
 	})
 	if !ok {
 		s.failed(r, "lock", wait, "folder", id)

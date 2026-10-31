@@ -157,14 +157,11 @@ func (s *Store) UpdateShare(token string, passwordSet bool, passwordHash *string
 
 // ReplaceShareHash replaces the hash of a share password with another hash
 // of the same password, made at a higher cost. The stamp stays, so unlock
-// cookies keep working; a password from before schema 11 gets its first
-// stamp here.
+// cookies keep working. A password from before schema 11 has no stamp and
+// its cookies sign the hash, so it is not replaced (ErrNotFound) until the
+// password is set again.
 func (s *Store) ReplaceShareHash(token, hash string) error {
-	stamp, err := newStamp()
-	if err != nil {
-		return err
-	}
-	return s.execOne(`UPDATE shares SET password_hash = ?, password_stamp = COALESCE(password_stamp, ?) WHERE token = ? AND password_hash IS NOT NULL`, hash, stamp, token)
+	return s.execOne(`UPDATE shares SET password_hash = ? WHERE token = ? AND password_hash IS NOT NULL AND password_stamp IS NOT NULL`, hash, token)
 }
 
 // DeleteShare revokes a share.

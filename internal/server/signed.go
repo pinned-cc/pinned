@@ -19,16 +19,35 @@ const signedVersion = "v1."
 func signedPayload(v string) string { return strings.TrimPrefix(v, signedVersion) }
 
 // checkStored checks password against a stored bcrypt hash. When it
-// matches and the hash's cost is below auth.BcryptCost, save gets a new
-// hash at the current cost.
+// matches, the hash's cost is below auth.BcryptCost and save is not nil,
+// save gets a new hash at the current cost.
 func checkStored(hash, password string, save func(newHash string)) bool {
 	ok, rehash := auth.CheckPasswordHash(hash, password)
-	if ok && rehash {
+	if ok && rehash && save != nil {
 		if h, err := auth.HashPassword(password); err == nil {
 			save(h)
 		}
 	}
 	return ok
+}
+
+// lockRehash is what checkStored saves a stronger hash of f's lock password
+// with, or nil for a lock set before schema 11: it has no stamp, its
+// unlock cookies sign the hash, and a new hash would end them. Every
+// release before 0.1.11 hashed at cost 10, the cost used now.
+func (s *Server) lockRehash(f *store.Folder) func(string) {
+	if f.LockStamp == nil {
+		return nil
+	}
+	return func(h string) { s.rehashLock(f, h) }
+}
+
+// shareRehash is lockRehash for a share password.
+func (s *Server) shareRehash(sh *store.Share) func(string) {
+	if sh.PasswordStamp == nil {
+		return nil
+	}
+	return func(h string) { s.rehashShare(sh, h) }
 }
 
 // rehashLock stores a stronger hash of a folder's lock password. Unlock

@@ -15,7 +15,7 @@ Only the user the app runs as can read them: folders are 0700 and files 0600 (th
 
 `secret.key` is the key for the hashes of sessions, API tokens, unlock cookies and device cookies. Keep it with the database. Without it every session ends and every API token stops working.
 
-Device and unlock cookies carry a version marker, `v1.`, before the signed value; values without it, from before 0.1.11, are read the same way. bcrypt hashes (lock, share and app passwords) made with a lower cost than the current one are replaced by a hash at the current cost at the next successful check.
+Device and unlock cookies carry a version marker, `v1.`, before the signed value; values without it, from before 0.1.11, are read the same way. bcrypt hashes (lock, share and app passwords) made with a lower cost than the current one are replaced by a hash at the current cost at the next successful check, except lock and share hashes without a stamp (see `lock_stamp`).
 
 ## The database
 
@@ -31,7 +31,7 @@ SQLite in WAL mode, with foreign keys on. Times are Unix seconds. The schema is 
 | `position` | INTEGER NOT NULL | Order among its siblings. |
 | `created_at` | INTEGER NOT NULL | |
 | `lock_hash` | TEXT NULL | bcrypt hash of the folder's own password. NULL when the folder has no lock. |
-| `lock_stamp` | TEXT NULL | 16 random bytes in hex, made whenever the lock password is set or changed and kept when only its hash is replaced by a stronger one. Unlock cookies sign it, so a rehash does not end them. NULL when there is no lock, and for locks set before schema 11 until their first rehash; their cookies sign `lock_hash`. |
+| `lock_stamp` | TEXT NULL | 16 random bytes in hex, made whenever the lock password is set or changed and kept when only its hash is replaced by a stronger one. Unlock cookies sign it, so a rehash does not end them. NULL when there is no lock, and for locks set before schema 11 until the password is set again; their cookies sign `lock_hash`, so their hash is never replaced by a stronger one (every version before 0.1.11 hashed at cost 10, the current cost). |
 
 Folders nest at most 32 deep.
 

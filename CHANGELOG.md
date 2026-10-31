@@ -59,7 +59,7 @@ Not released yet.
 - Site icons are served only for bookmarks you can see, so icons of locked folders stay hidden.
 - Bookmark addresses can be at most 8192 bytes. An import skips longer ones and counts them as skipped.
 - Data files are readable only by the user Pinned runs as: folders 0700, files 0600. At start Pinned makes files from older versions private too. A backup job that reads `export/bookmarks.html` as another user needs the same user or a group change.
-- The app password is kept as a bcrypt hash in the database instead of a fast keyed hash. Older lock and share password hashes are strengthened at the next right password, without ending the unlocks of other browsers.
+- The app password is kept as a bcrypt hash in the database instead of a fast keyed hash. When the hash cost is raised, lock and share password hashes are strengthened at the next right password without ending the unlocks of other browsers; passwords set before 0.1.11 keep their hash, already at the current cost, until they are set again.
 - Log lines carry the time in UTC with the zone.
 - Bookmarked sites no longer see which Pinned address a link was opened from (`Referrer-Policy: no-referrer`). The content policy also forbids plugins and base elements, and icons can never be framed. SVG answers name their charset.
 - Over HTTPS, the folder unlock and share cookies get the `__Host-` or `__Secure-` prefix, and a device cookie from plain http moves to the prefixed name.
