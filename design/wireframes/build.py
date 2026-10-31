@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Builds the clickable wireframes of Pinned as it is built (0.1.11 candidate, ad2cb8e).
+"""Builds the clickable wireframes of Pinned as it is built (0.1.11 candidate, ad2cb8e, with the
+screens the flow test fixes changed redrawn as fixed).
 
     python3 build.py
 
@@ -146,8 +147,8 @@ def side(on='dash', more=False, folders=None, counts=None, extra=None):
          item('dash', 'Dashboard', 'dash'), item('all', 'All bookmarks', 'all', c['all']),
          item('inbox', 'Inbox', 'inbox', c['inbox']),
          f'<div class="slbl"><span>Folders</span>{A("new-folder", "+", "plus")}</div>',
-         f'<div class="tree{" clip" if more and len(fl) > 2 else ""}">']
-    shown = fl[:2] if more else fl
+         f'<div class="tree{" clip" if more and len(fl) > 4 else ""}">']
+    shown = fl[:4] if more else fl
     for name, n, depth, href in shown:
         h.append(item(name, name, href, n, sub=depth > 0, lk=n == 'lock'))
     h.append('</div><div class="sfoot2">')
@@ -255,11 +256,13 @@ reg('term-start', 'Terminal, first start with docker compose', 'Server', term('T
     ('', 'pinned 0.1.11 listening on :8080, data in /data'),
     ('dim2', 'Open http://&lt;your server&gt;:9095 and log in with that password.')]) +
     '<a class="gesture" href="login.html" style="left:150px;top:660px;width:300px;height:40px"><span>Open the address in the browser</span></a>')
-reg('term-start-error', 'Terminal, start refused without a password', 'Server', term('Terminal, ~/pinned', [
+reg('term-start-error', 'Terminal, start refused: no password, a short one, a data folder it cannot write', 'Server', term('Terminal, ~/pinned', [
     ('', '$ docker compose up -d'),
     ('bad', 'pinned: APP_PASSWORD is not set. Set it, or APP_PASSWORD_FILE, to the password you want to log in with, then start again'),
     ('', "$ APP_PASSWORD='short' docker compose up -d"),
-    ('bad', 'pinned: APP_PASSWORD is shorter than 8 characters. Choose a longer password, then start again')]) +
+    ('bad', 'pinned: APP_PASSWORD is shorter than 8 characters. Choose a longer password, then start again'),
+    ('', '$ docker compose up -d   (./data made by Docker as root)'),
+    ('bad', 'pinned: cannot write to /data/icons as user 1000, the user Pinned runs as. On the host, give the folder you mount at /data to that user, for example: sudo chown -R 1000:1000 ./data. Then start again')]) +
     '<a class="gesture" href="term-start.html" style="left:150px;top:660px;width:300px;height:40px"><span>Set a password of 8 or more</span></a>')
 
 
@@ -272,9 +275,9 @@ def login_page(err='', code=False, filled=False):
 
 reg('login', 'Login', 'Login', login_page(), {'Enter': 'dash-empty.html'})
 reg('login-error', 'Login, wrong password', 'Login', login_page('Wrong password.'))
-reg('login-wait', 'Login, wait after wrong tries', 'Login', login_page('Wait 30 seconds and try again.'))
+reg('login-wait', 'Login, wait after wrong tries, with the time the server sent', 'Login', login_page('Too many tries. Wait 30 seconds, then try again.'))
 reg('login-code', 'Login with the second factor', 'Login', login_page(code=True))
-reg('login-code-error', 'Login, wrong code, both fields emptied', 'Login', login_page('Wrong password or code.', code=True))
+reg('login-code-error', 'Login, wrong code, both fields emptied', 'Login', login_page('Wrong password or code. A code works once: wait for the next one.', code=True))
 reg('p-login', 'Phone, login', 'Phone', phone(
     '<div style="padding:200px 24px 0;display:flex;flex-direction:column;gap:14px"><span class="appmark"></span><b class="h2">Pinned</b>'
     + fld('Password', '', None, focus=True) + big('Log in', 'p-dash-empty') + '</div>'))
@@ -291,7 +294,7 @@ reg('p-dash-empty', 'Phone, Dashboard, nothing saved', 'Phone', phone(ph_home('d
 
 # ---- dashboard and views ----
 reg('dash', 'Dashboard', 'Dashboard', DASH(), keys(Slash='palette', n='new-folder'))
-reg('dash-more', 'Dashboard, sidebar More open, folders clipped', 'Dashboard', dk(side(more=True), tb_dash(), dash_body()))
+reg('dash-more', 'Dashboard, sidebar More open, four folders in view, the actions scroll', 'Dashboard', dk(side(more=True), tb_dash(), dash_body()))
 reg('all', 'All bookmarks', 'Dashboard', dk(side('all'), tb_folder('All bookmarks', '15', menu_href=None, share_href=None).replace('glyph link', 'glyph'), '<div class="glbl">Today</div>' + cards(8, 'Homelab')))
 reg('inbox', 'Inbox', 'Dashboard', dk(side('inbox'), tb_folder('Inbox', '2', menu_href=None, share_href=None).replace('glyph link', 'glyph'), '<div class="glbl">Today</div>' + cards(2, 'Inbox', add_tile=True)))
 reg('open-tab', 'The link opened in a new tab', 'Dashboard', browser('http://10.0.0.5:8080', over=''))
@@ -350,7 +353,7 @@ def save_form(title='', url='', dupe=None, err='', folders=(('Homelab', True),),
 
 reg('add-sheet', 'Add, the save sheet', 'Save', DASH(over=dlg(save_form())), keys(Escape='dash'))
 reg('add-noscheme', 'Add, address without http refused', 'Save', DASH(over=dlg(save_form(url='example.com', err='Enter a full address starting with http or https.')).replace('URL</span><a', 'URL</span><a')))
-reg('add-stale', 'Add, address fixed, the old error stays', 'Save', DASH(over=dlg(save_form(url='http://10.0.0.5:8080', dupe='dupe', err='Enter a full address starting with http or https.', primary='Save anyway'))))
+reg('add-stale', 'Add, address fixed, the old error is gone', 'Save', DASH(over=dlg(save_form(url='http://10.0.0.5:8080', dupe='dupe', primary='Save anyway'))))
 reg('add-dupe', 'Add, already saved', 'Save', DASH(over=dlg(save_form(url='http://10.0.0.5:8080', dupe='dupe', primary='Save anyway'))))
 reg('add-newport', 'Add, same host on another port is new', 'Save', DASH(over=dlg(save_form(title='Jellyfin new port', url='http://10.0.0.5:8096/', focus='title'))))
 reg('add-picker', 'Add, every folder', 'Save', DASH(over=dlg(save_form(url='http://10.0.0.5:8096/', picker=True), w=420, top=90)))
@@ -376,7 +379,7 @@ reg('howto-computer', 'How to save, Computer', 'Save', howto('Computer', [
     'On a page you want to keep, click <b>Save to Pinned</b>.']))
 reg('howto-extension', 'How to save, Extension', 'Save', howto('Extension', [
     'Download it, unzip it, and keep the folder where it can stay. If it moves, the browser drops the extension.<div class="mt8">' + pill('Download the extension') + '</div>',
-    'Load the folder.<div class="sm mute mt8">Brave, Chrome, Edge: Extensions, Developer mode, Load unpacked</div><div class="sm mute">Firefox: about:debugging, This Firefox, Load temporary add-on, manifest.json</div>',
+    'Load the folder.<div class="sm mute mt8">Brave, Chrome, Edge: Extensions, Developer mode, Load unpacked</div><div class="sm mute">Firefox: about:debugging, This Firefox, Load temporary add-on, manifest.json</div><div class="sm mute">Firefox removes it when it quits. After a restart, load it again and give it a new token.</div>',
     'In its options, enter your address and ' + A('tokens-empty', 'a token', 'lnk') + '. Allow access to your server when asked.' + '<div class="mt8">' + A('ext-options', 'Open the options (extension)', 'sm ink') + '</div>',
     'Open it <span class="kcap">Option</span><span class="kcap">Shift</span><span class="kcap">S</span>']))
 reg('howto-iphone', 'How to save, iPhone and Android', 'Save', howto('iPhone', [
@@ -400,18 +403,18 @@ def xpop(inner):
 
 reg('ext-options', 'Extension options, empty', 'Extension', browser('chrome-extension://.../options.html', page=(
     '<div class="opt"><b class="h2">Pinned</b><span class="sm">Connect the extension to your Pinned server. Create a token in the app and paste it here.</span>'
-    + fld('Address', 'https://bookmarks.example.com', None, ph=True, focus=True) + fld('Token', 'tk_', None, ph=True)
+    + fld('Address', '10.0.0.5:9095 or https://bookmarks.example.com', None, ph=True, focus=True) + fld('Token', 'tk_', None, ph=True)
     + '<span class="note2">Kept in this browser only. The extension talks to this address and nowhere else.</span>'
     + f'<div class="row">{pill("Test", "ext-options-fail")}{pill("Save", "ext-options-ok", pri=True)}</div>'
     + '<b class="ink mt14">Shortcut</b><span class="sm"><span class="kcap">Alt</span> <span class="kcap">Shift</span> <span class="kcap">S</span> opens the save popup.</span></div>')))
-reg('ext-options-fail', 'Extension options, LAN address without http, Test fails', 'Extension', browser('chrome-extension://.../options.html', page=(
-    '<div class="opt"><b class="h2">Pinned</b>' + fld('Address', '10.0.0.5:9095', None) + fld('Token', '&#8226;' * 30, None)
+reg('ext-options-fail', 'Extension options, nothing answers, Test names both addresses it tried', 'Extension', browser('chrome-extension://.../options.html', page=(
+    '<div class="opt"><b class="h2">Pinned</b>' + fld('Address', '10.0.0.5:9059', None) + fld('Token', '&#8226;' * 30, None)
     + f'<div class="row">{pill("Test", "ext-options-ok")}{pill("Save", "ext-options-ok", pri=True)}</div>'
-    + '<span class="errt">! Could not reach https://10.0.0.5:9095.</span><span class="note2">Nothing says it tried https, or that http:// is needed.</span></div>')))
-reg('ext-options-ok', 'Extension options, Test passed, Save asks for access', 'Extension', browser('chrome-extension://.../options.html', page=(
-    '<div class="opt"><b class="h2">Pinned</b>' + fld('Address', 'http://10.0.0.5:9095', None) + fld('Token', '&#8226;' * 30, None)
+    + '<span class="errt">! Could not reach https://10.0.0.5:9059 or http://10.0.0.5:9059. Check the address and that Pinned is running.</span><span class="note2">Without a scheme it tries https, then http. Save stores nothing when neither answers.</span></div>')))
+reg('ext-options-ok', 'Extension options, the address as typed, Test found it on http', 'Extension', browser('chrome-extension://.../options.html', page=(
+    '<div class="opt"><b class="h2">Pinned</b>' + fld('Address', '10.0.0.5:9095', None) + fld('Token', '&#8226;' * 30, None)
     + f'<div class="row">{pill("Test")}{pill("Save", "ext-popup", pri=True)}</div>'
-    + '<span class="okt">&#10003; Connected, 5 folders</span><span class="note2">After Save: Saved. Waiting for the browser to allow access to 10.0.0.5.</span></div>')))
+    + '<span class="okt">&#10003; Connected to http://10.0.0.5:9095, 5 folders.</span><span class="note2">Save asks the browser for access to 10.0.0.5, keeps http://10.0.0.5:9095 and says Saved http://10.0.0.5:9095.</span></div>')))
 reg('ext-popup-nosetup', 'Extension popup before setup', 'Extension', browser('https://www.example.com/article', ext_on=True, over=xpop(
     '<div class="dhead"><h3>Set your address and token first</h3><span class="x">&#10005;</span></div>' + big('Open settings', 'ext-options'))))
 EXTFORM = ('<div class="dhead"><span class="fav"></span>' + A(None, '&#10005;', 'x') + '</div>' + fld('Title', '<span style="background:var(--sel)">' + b(150, 9) + '</span>', None, focus=True)
@@ -440,7 +443,7 @@ reg('tile-menu', 'Card, More menu', 'Folders', dk(side('Homelab'), tb_folder('Ho
     [('Move', 'move-sheet'), ('Copy', 'folder'), ('Share', 'folder'), ('Trash', 'trash-toast', True), '-', ('Open', 'open-tab'), ('Rename', 'rename'), ('Pin', 'folder')], 420, 470)), keys(Escape='folder'))
 reg('move-sheet', 'Move, folder picker', 'Folders', FOLDER(over=dlg('<div class="dhead"><span class="fav"></span><span class="col gap4">' + b(120, 9) + b(90, 7, True) + '</span></div><div class="fl2"><span>Folder</span><div class="chips">'
     + ''.join(chip(n, 'folder-moved', on=(n == 'Homelab')) for n in ['Inbox', 'Homelab', 'Homelab / Network', 'Reading', 'Work']) + chip('+ New folder', None, dash=True) + '</div></div>', top=240)), keys(Escape='folder'))
-reg('folder-moved', 'Moved from the sheet: no toast, no Undo', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '7'), folder_body(4) + '<div class="tip" style="left:300px;top:420px">The card left. Nothing says where it went; Cmd Z has nothing to undo.</div>'))
+reg('folder-moved', 'Moved from the sheet: toast with Undo', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '7'), folder_body(4), over=toast('Moved to Reading', undo=True)))
 reg('folder-drag', 'Drag a card onto a sidebar folder', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '8'), folder_body(), over=gesture('Drag the first card onto Reading', 'folder-dragged', 30, 368, 240, 40)))
 reg('folder-dragged', 'Dropped on a folder: toast with Undo', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '7'), folder_body(4), over=toast('Moved to Reading', undo=True)))
 reg('rename', 'Rename in place', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '8'), folder_body().replace(b(102.4, 9), '<span class="inp focus" style="height:26px;width:150px">' + b(80, 9) + '<i class="caret"></i></span>', 1)), keys(Enter='folder', Escape='folder'))
@@ -461,9 +464,8 @@ reg('add-to', 'Add bookmarks to Media, pick existing ones', 'Folders', dk(side('
     + '<div class="plbl">Homelab</div>' + ''.join(f'<div class="row2"><i style="width:16px;height:16px;border-radius:4px;border:1.5px solid var(--rule)"></i><span class="fav sm"></span>{b(90 + i * 12, 9)}</div>' for i in range(3))
     + big('Move 2 to Media', 'folder-filled'), w=440, top=70)))
 reg('folder-filled', 'Media with the two links, toast with Undo', 'Folders', dk(side('Media', folders=MEDIA[:-1] + [('Media', '2', 0, 'folder-filled')]), tb_folder('Media', '2', menu_href='folder-menu-media'), folder_body(2, 'Media', subs=False), over=toast('Moved 2 to Media', undo=True)))
-FMENU = [('Add bookmarks', 'add-to'), ('New folder inside', 'new-folder'), ('Rename', 'new-folder'), ('Move to', 'fmove'), ('Hide from Recent', 'folder'), ('Lock with a password', 'lock-sheet'), '-', ('Delete', 'delete-folder', True)]
-reg('folder-menu', 'Folder actions, no Share among them', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '8'), folder_body(), over=menu(FMENU, 1028, 150)
-    + '<div class="tip" style="left:600px;top:150px">Share is only the link glyph by the title</div>'), keys(Escape='folder'))
+FMENU = [('Share', 'share-off'), ('Add bookmarks', 'add-to'), ('New folder inside', 'new-folder'), ('Rename', 'new-folder'), ('Move to', 'fmove'), ('Hide from Recent', 'folder'), ('Lock with a password', 'lock-sheet'), '-', ('Delete', 'delete-folder', True)]
+reg('folder-menu', 'Folder actions, Share first', 'Folders', dk(side('Homelab'), tb_folder('Homelab', '8'), folder_body(), over=menu(FMENU, 1028, 150)), keys(Escape='folder'))
 reg('folder-menu-media', 'Folder actions for Media', 'Folders', dk(side('Media', folders=MEDIA[:-1] + [('Media', '2', 0, 'folder-filled')]), tb_folder('Media', '2'), folder_body(2, 'Media', subs=False), over=menu(FMENU, 1028, 150)), keys(Escape='folder-filled'))
 reg('fmove', 'Move a folder', 'Folders', FOLDER(over=dlg('<div class="dhead"><h3>Homelab</h3></div><div class="fl2"><span>Move to</span><div class="chips">' + ''.join(chip(n, 'folder', on=(n == 'Top level')) for n in ['Top level', 'Reading', 'Work', 'Media']) + '</div></div>', top=260)), keys(Escape='folder'))
 reg('delete-folder', 'Delete a folder, asks first', 'Folders', dk(side('Media', folders=MEDIA[:-1] + [('Media', '2', 0, 'folder-filled')]), tb_folder('Media', '2'), folder_body(2, 'Media', subs=False), over=dlg(
@@ -475,7 +477,7 @@ PFOLDER_HEAD = ('<div class="phd">' + A('p-folders', '&#8249; Folders', 'sm mute
 reg('p-folder', 'Phone, a folder', 'Phone', phone(PFOLDER_HEAD + '<div class="pbody"><div class="row"><span class="ink" style="font-size:16px;font-weight:600">Newest</span><span class="sp"></span><span class="seg2" style="width:90px"><span class="on">G</span><span>L</span></span></div>'
     + pcards(4) + '<a class="gesture" href="p-select.html" style="left:18px;top:56px;width:160px;height:118px"><span>Hold a card to select it</span></a></div>' + ph_bot()))
 reg('p-folder-sheet', 'Phone, folder actions sheet', 'Phone', phone(PFOLDER_HEAD + '<div class="pbody">' + pcards(4) + '</div>' + ph_bot() + '<div class="blur"></div><div class="psh"><div class="grab"></div><b class="ink">Homelab</b>'
-    + ''.join(A(h, f'<i class="ic"></i>{l}', 'prow' + (' warn' if l == 'Delete' else '')) for l, h in [('Add bookmarks', 'p-folder'), ('New folder inside', 'p-folder'), ('Rename', 'p-folder'), ('Move to', 'p-folder'), ('Hide from Recent', 'p-folder'), ('Lock with a password', 'p-lock'), ('Delete', 'p-folder')]) + '</div>'))
+    + ''.join(A(h, f'<i class="ic"></i>{l}', 'prow' + (' warn' if l == 'Delete' else '')) for l, h in [('Share', 'p-share'), ('Add bookmarks', 'p-folder'), ('New folder inside', 'p-folder'), ('Rename', 'p-folder'), ('Move to', 'p-folder'), ('Hide from Recent', 'p-folder'), ('Lock with a password', 'p-lock'), ('Delete', 'p-folder')]) + '</div>'))
 reg('p-select', 'Phone, selecting after a long press', 'Phone', phone(PFOLDER_HEAD + '<div class="pbody"><div class="row"><b class="ink">1 selected</b><span class="sp"></span>' + tb('Done', 'p-folder') + '</div>'
     + '<div class="pgrid">' + ''.join(card(i, 'Homelab', pk=(i == 0)) for i in range(4)) + '</div></div>'
     + '<div class="selbar">' + ''.join(A(h, f'<i></i>{l}', 'warn' if l == 'Trash' else '') for l, h in [('Move', 'p-folder'), ('Copy', 'p-folder'), ('Share', 'p-folder'), ('Trash', 'p-folder'), ('More', 'p-folder')]) + '</div>'))
@@ -483,25 +485,25 @@ reg('p-select', 'Phone, selecting after a long press', 'Phone', phone(PFOLDER_HE
 # ---- 05 locked folders ----
 LOCKF = lambda on='dash', more=False: side(on, more=more)
 reg('lock-sheet', 'Lock with a password', 'Locks', dk(side('Work'), tb_folder('Work', '2'), folder_body(2, 'Work', subs=False), over=dlg(
-    '<div class="dhead"><h3>Work</h3></div>' + fld('Password', '', None, focus=True) + fld('Repeat password', '', None)
+    '<div class="dhead"><h3>Work</h3>' + A('folder', '&#10005;', 'x') + '</div>' + fld('Password', '', None, focus=True) + fld('Repeat password', '', None)
     + '<span class="sm">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span>' + big('Lock', 'locked'), w=360, top=180)), keys(Escape='folder'))
 reg('lock-error', 'Lock, passwords too short or not matching', 'Locks', dk(side('Work'), tb_folder('Work', '2'), folder_body(2, 'Work', subs=False), over=dlg(
-    '<div class="dhead"><h3>Work</h3></div>' + fld('Password', '&#8226;&#8226;&#8226;', None, focus=True) + fld('Repeat password', '&#8226;&#8226;&#8226;', None)
+    '<div class="dhead"><h3>Work</h3>' + A('folder', '&#10005;', 'x') + '</div>' + fld('Password', '&#8226;&#8226;&#8226;', None, focus=True) + fld('Repeat password', '&#8226;&#8226;&#8226;', None)
     + '<span class="sm">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span><span class="errt">Use at least 4 characters.</span>' + big('Lock', 'locked'), w=360, top=180)))
 LOCKED = [('Homelab', '8', 0, 'folder'), ('Network', '3', 1, 'folder'), ('Reading', '3', 0, 'reading'), ('Finance', 'lock', 0, 'unlock'), ('Work', 'lock', 0, 'unlock')]
 reg('locked', 'Locked, back on the Dashboard', 'Locks', dk(side(folders=LOCKED, counts=dict(all='13')), tb_dash(), dash_body(n=8), over=toast('Folder locked')))
-reg('unlock', 'Unlock dialog, no close button', 'Locks', dk(side(folders=LOCKED, counts=dict(all='13')), tb_dash(), dash_body(n=8), over=dlg(
-    '<div class="dhead"><h3>Finance</h3></div>' + fld('Password', '', None, focus=True) + big('Unlock', 'unlocked'), w=360, top=250)), keys(Escape='locked', Enter='unlocked'))
+reg('unlock', 'Unlock dialog, with a close button', 'Locks', dk(side(folders=LOCKED, counts=dict(all='13')), tb_dash(), dash_body(n=8), over=dlg(
+    '<div class="dhead"><h3>Finance</h3>' + A('locked', '&#10005;', 'x') + '</div>' + fld('Password', '', None, focus=True) + big('Unlock', 'unlocked'), w=360, top=250)), keys(Escape='locked', Enter='unlocked'))
 reg('unlock-wrong', 'Unlock, wrong password', 'Locks', dk(side(folders=LOCKED, counts=dict(all='13')), tb_dash(), dash_body(n=8), over=dlg(
-    '<div class="dhead"><h3>Finance</h3></div>' + fld('Password', '', None, focus=True) + '<span class="errt">Wrong password</span>' + big('Unlock', 'unlocked'), w=360, top=250)))
+    '<div class="dhead"><h3>Finance</h3>' + A('locked', '&#10005;', 'x') + '</div>' + fld('Password', '', None, focus=True) + '<span class="errt">Wrong password</span>' + big('Unlock', 'unlocked'), w=360, top=250)))
 UNL = [('Homelab', '8', 0, 'folder'), ('Network', '3', 1, 'folder'), ('Reading', '3', 0, 'reading'), ('Finance', '2', 0, 'unlocked'), ('Work', 'lock', 0, 'unlock')]
 reg('unlocked', 'Finance unlocked for 10 minutes', 'Locks', dk(side('Finance', folders=UNL), tb_folder('Finance', '2', menu_href='unlocked-menu').replace('<h2>', '<i class="lock"></i><h2>'), folder_body(2, 'Finance', subs=False)))
 reg('unlocked-menu', 'Unlocked folder actions: Relock now, Remove lock', 'Locks', dk(side('Finance', folders=UNL), tb_folder('Finance', '2'), folder_body(2, 'Finance', subs=False), over=menu(
     [('Add bookmarks', 'unlocked'), ('New folder inside', 'unlocked'), ('Rename', 'unlocked'), ('Move to', 'unlocked'), ('Hide from Recent', 'unlocked'), ('Relock now', 'locked'), ('Remove lock', 'remove-lock'), '-', ('Delete', 'unlocked', True)], 1028, 150)))
 reg('remove-lock', 'Remove lock, asks the app password', 'Locks', dk(side('Finance', folders=UNL), tb_folder('Finance', '2'), folder_body(2, 'Finance', subs=False), over=dlg(
-    '<div class="dhead"><h3>Finance</h3></div><span class="sm">Enter the app password to take the lock off Finance.</span>' + fld('App password', '', None, focus=True) + big('Remove lock', 'folder'), w=360, top=230)))
+    '<div class="dhead"><h3>Finance</h3>' + A('unlocked', '&#10005;', 'x') + '</div><span class="sm">Enter the app password to take the lock off Finance.</span>' + fld('App password', '', None, focus=True) + big('Remove lock', 'folder'), w=360, top=230)))
 reg('p-lock', 'Phone, lock dialog, note tight under the field', 'Phone', phone(PFOLDER_HEAD.replace('Homelab', 'Work') + '<div class="pbody faded">' + pcards(2, 'Work') + '</div>' + ph_bot()
-    + '<div class="blur"></div><div class="pdlg"><b class="ink" style="font-size:17px">Work</b>' + fld('Password', '', None, focus=True) + fld('Repeat password', '', None)
+    + '<div class="blur"></div><div class="pdlg"><div class="dhead"><b class="ink" style="font-size:17px">Work</b>' + A('p-folder', '&#10005;', 'x') + '</div>' + fld('Password', '', None, focus=True) + fld('Repeat password', '', None)
     + '<span class="sm" style="margin-top:-12px">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span>' + big('Lock', 'p-folders') + '</div>'))
 
 # ---- 06 share ----
@@ -547,12 +549,12 @@ reg('p-share', 'Phone, share sheet', 'Phone', phone(PFOLDER_HEAD.replace('Homela
     + share_sheet(on=True).replace('href="reading.html"', 'href="p-folder.html"') + '</div>'))
 
 # ---- 07 import, export ----
-reg('import-running', 'Import running, nothing shows', 'Data', dk(side(folders=[], counts=dict(all='0', inbox='0'), more=True), '<div class="ptb"><h2 class="serif">Dashboard</h2><span class="sp"></span>' + pill('+ Add', 'add-sheet', pri=True) + '</div>',
-    EMPTY.replace('margin: 150px', 'margin: 150px') + '<a class="gesture" href="imported.html" style="left:0;top:0;width:640px;height:40px"><span>File picked; about 15 s for 20 MB, no sign of work. Click when it ends.</span></a>'))
+reg('import-running', 'Import running: a toast says so, Import is disabled', 'Data', dk(side(folders=[], counts=dict(all='0', inbox='0'), more=True), '<div class="ptb"><h2 class="serif">Dashboard</h2><span class="sp"></span>' + pill('+ Add', 'add-sheet', pri=True) + '</div>',
+    EMPTY.replace('margin: 150px', 'margin: 150px') + '<a class="gesture" href="imported.html" style="left:0;top:0;width:640px;height:40px"><span>File picked; Import stays disabled until it ends. Click when it ends.</span></a>' + toast('Importing. This can take a moment for a big file.')))
 reg('imported', 'Imported, toast with the counts', 'Data', dk(side(more=True), tb_dash(), dash_body(), over=toast('Imported 15, skipped 0')))
 reg('import-bad', 'Import refused, not a bookmarks file', 'Data', dk(side(more=True), tb_dash(), dash_body(), over=toast('Not a bookmark file.') + '<div class="tip" style="left:520px;top:700px">Too deep: The folders in this file nest more than 256 deep. Pinned cannot import it.</div>'))
 reg('export', 'Export, bookmarks.html downloaded, locked folders left out', 'Data', dk(side(folders=LOCKED, more=True), tb_dash(), dash_body(), over=
-    '<div class="dlg" style="right:16px;top:12px;width:300px;left:auto"><span class="sm ink">Downloads</span><div class="row2"><span class="fav sm"></span><span class="meta">bookmarks.html<small>1.8 KB</small></span></div><span class="note2">Finance and Work are locked in this browser, so they are not in the file. The app does not say so.</span></div>'))
+    '<div class="dlg" style="right:16px;top:12px;width:300px;left:auto"><span class="sm ink">Downloads</span><div class="row2"><span class="fav sm"></span><span class="meta">bookmarks.html<small>1.8 KB</small></span></div></div>' + toast('Exported without 2 locked folders. Unlock them first to include them.')))
 reg('whats-new', "What's new", 'Data', DASH(over=dlg("<div class='dhead'><h3>What&#39;s new</h3>" + A('dash', '&#10005;', 'x') + "</div><b class='ink'>0.1.11 <span class='mute sm'>This version</span></b><span class='plbl'>New</span>" + ''.join(f'<span class="row gap4">&#8226; {b(260 - i * 20, 7, True)}</span>' for i in range(5)) + "<span class='plbl'>Fixes</span>" + ''.join(f'<span class="row gap4">&#8226; {b(240 - i * 18, 7, True)}</span>' for i in range(4)), w=460, top=80)))
 
 # ---- 08 second factor, signed in ----
@@ -593,7 +595,7 @@ reg('signed-out-other', 'The other browser after sign out, still showing bookmar
 def tokens_sheet(state='empty', err=False):
     h = '<div class="dhead"><h3>API tokens</h3>' + A('dash', '&#10005;', 'x') + '</div>'
     if state == 'created':
-        h += '<div class="plbl">Extension on my laptop</div><div class="row">' + inp('tk_OTJVyb-k1bky7QIOEA8_yhTgp...', None, mono=True, w=260) + tb('Copy', 'token-created') + '</div><span class="note2">Copy it now. It is not shown again.</span>'
+        h += '<div class="plbl">Extension on my laptop</div><div class="row">' + inp('tk_OTJVyb-k1bky7QIOEA8_yhTgp...', None, mono=True, w=260) + tb('Copy', 'token-created') + '</div><span class="note2">Copy it now. It is not shown again.</span><span class="note2">Next, paste it into the extension&#39;s options with the address <b class="ink">http://10.0.0.5:9095</b>, or into your script.</span>'
     else:
         h += '<div class="plbl">New token</div>' + inp('Extension on my laptop', None, ph=state != 'wrong', focus=state == 'empty') + '<div class="row">' + inp('App password', None, ph=True, focus=err, w=280) + tb('Create', 'token-created') + '</div>'
         if err:
@@ -663,8 +665,8 @@ reg('term-restore', 'Terminal, restoring the saved copy', 'Server', term('Termin
     ('dim2', '15 bookmarks and 5 folders back. Links saved after the upgrade are only in bookmarks-new.db.')]))
 
 # ---- 12 errors ----
-reg('save-down', 'Server down, Save fails', 'Errors', DASH(over=dlg(save_form(url='https://down.example/', err='Could not save. Try again.'))))
-reg('notice-down', 'Server down, could not load, Retry', 'Errors', dk(side('Homelab'), tb_folder('Homelab', '8'), '<div class="notice2"><b>!</b> Bookmarks could not load.<span class="sp"></span>' + pill('Retry', 'notice-down') + '</div><div class="faded">' + folder_body() + '</div>'))
+reg('save-down', 'Server down, Save fails', 'Errors', DASH(over=dlg(save_form(url='https://down.example/', err='Cannot reach your Pinned server. Check your connection, then try again.'))))
+reg('notice-down', 'Server down, could not load, Retry', 'Errors', dk(side('Homelab'), tb_folder('Homelab', '8'), '<div class="notice2"><b>!</b> Cannot reach your Pinned server.<span class="sp"></span>' + pill('Retry', 'notice-down') + '</div><div class="faded">' + folder_body() + '</div>'))
 reg('browser-down', 'Server down, reload shows the browser error', 'Errors', browser('http://10.0.0.5:9095', page='<b class="h2">This site cannot be reached</b><span class="sm">10.0.0.5 refused to connect. ERR_CONNECTION_REFUSED</span>'))
 
 

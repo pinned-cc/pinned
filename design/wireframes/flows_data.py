@@ -292,7 +292,7 @@ section li a{{color:var(--ink)}} section li span{{color:var(--marker);font-size:
 .cols{{columns:2 360px;column-gap:28px}} section{{break-inside:avoid}}
 </style></head><body><main>
 <h1>Pinned wireframes</h1>
-<p>Pinned as it is built (main at ad2cb8e, the 0.1.11 candidate), every screen and state the user flows touch, desktop at 1280 by 800 and the phone where it differs. {len(SC)} screens, {len(flows)} flows, {nsteps} steps walked in the real app: {cnt["works"]} work, {cnt["friction"]} with friction, {cnt["broken"]} broken.
+<p>Pinned as it is built (main at ad2cb8e, the 0.1.11 candidate), every screen and state the user flows touch, desktop at 1280 by 800 and the phone where it differs. {len(SC)} screens, {len(flows)} flows, {nsteps} steps walked in the real app: {cnt["works"]} work, {cnt["friction"]} with friction, {cnt["broken"]} broken. The screens the flow test fixes changed are drawn as fixed; the verdicts are those of the walk at ad2cb8e.
 Controls that lead somewhere are links. Drags and holds are dashed targets: press h on any screen to show them and outline every link. The findings, the gap list and the fixes are in flow-test.md; the flows as text and diagrams in flows/.</p>
 <h2>Flows</h2><ul class="flows">{cards}</ul>
 <h2>Every screen</h2><div class="cols">{secs}</div>
