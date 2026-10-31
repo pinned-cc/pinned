@@ -102,7 +102,7 @@ What is kept of a fetched icon: PNG, JPEG, GIF and ICO files are decoded and sto
 
 ### Heavy work and how it is bounded
 
-- **Import** reads up to 20 MB and up to 256 levels of folders. It writes in steps of about 100 milliseconds each, so saves and logins from other browsers get in between. If a folder it writes into is deleted or locked between two steps, it stops and says how many links came in. It needs a login; an API token cannot import.
+- **Import** reads up to 20 MB and up to 256 levels of folders. It writes in steps of about 100 milliseconds each, also when the links in the file are already saved, so saves and logins from other browsers get in between. If a folder it writes into is deleted or locked between two steps, it stops and says how many links came in. It needs a login; an API token cannot import.
 - **Export** builds the whole tree in memory and writes it as one file. Its size follows your data; there is no cap. It needs a login; an API token cannot export. The nightly export runs once a day at 03:00, and at start when the file is older than a day.
 - **Icon fetch** runs in the background with the limits above. Saving a bookmark never waits for it.
 - **Password checks** with bcrypt (folder and share passwords; the app password once at start) are slow on purpose. The limits above keep a guesser to about one try a second per client.

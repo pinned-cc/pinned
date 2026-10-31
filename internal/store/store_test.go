@@ -779,6 +779,37 @@ func TestWritesDuringImport(t *testing.T) {
 	}
 }
 
+// A re-import of links that are all saved already ends its batches by time
+// as well, so a write gets in before it ends. Found by the release
+// verification of 2026-10-31, where such a re-import held the lock to the
+// end.
+func TestWritesDuringSkippedImport(t *testing.T) {
+	s := open(t)
+	file := manyLinks(20000)
+	if _, err := s.Import(file, nil); err != nil {
+		t.Fatal(err)
+	}
+	old := importBatch
+	importBatch = time.Millisecond
+	defer func() { importBatch = old }()
+	batches := 0
+	var wrote error
+	betweenBatches = func() {
+		batches++
+		if batches == 1 {
+			_, _, wrote = s.Create(NewBookmark{Title: "x", URL: "https://side.example/"})
+		}
+	}
+	defer func() { betweenBatches = nil }()
+	res, err := s.Import(file, nil)
+	if err != nil || res.Added != 0 || res.Skipped != 20000 {
+		t.Fatalf("re-import: %+v %v", res, err)
+	}
+	if batches == 0 || wrote != nil {
+		t.Errorf("no write got in during the re-import: %d batches, %v", batches, wrote)
+	}
+}
+
 // A folder locked between two batches is not written into: the import stops
 // and keeps what came in before.
 func TestImportStopsWhenFolderLockedMidway(t *testing.T) {

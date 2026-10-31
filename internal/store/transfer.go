@@ -235,13 +235,15 @@ func (imp *importer) link(l netscape.Link, parentID *int64) error {
 	if err == nil {
 		err = urlkey.CheckLen(l.URL)
 	}
+	// A skipped link ends a batch by time too, so a file of links that
+	// are all saved already lets other writes in as often as any other.
 	if err != nil {
 		imp.res.Skipped++
-		return nil
+		return imp.tick()
 	}
 	if _, err := liveByKey(imp.tx, key, imp.hidden); err == nil {
 		imp.res.Skipped++
-		return nil
+		return imp.tick()
 	} else if !errors.Is(err, ErrNotFound) {
 		return err
 	}
