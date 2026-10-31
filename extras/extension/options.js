@@ -11,12 +11,16 @@
     status.className = 'status ' + kind;
     status.replaceChildren(icon(kind === 'ok' ? 'check' : 'warn'), h('span', { text: text }));
   }
+  /* what Test and Save work on: the addresses to try, in order (one when a scheme was typed, else https then http) */
   function read() {
-    var a = Pinned.cleanAddress(addr.value), t = tok.value.trim();
-    if (!a) { show('bad', 'Enter an address starting with http or https.'); addr.focus(); return null; }
+    var c = Pinned.addressCandidates(addr.value), t = tok.value.trim();
+    if (!c.length) { show('bad', 'Enter an address, such as 10.0.0.5:9095 or https://bookmarks.example.com.'); addr.focus(); return null; }
     if (!t) { show('bad', 'Enter the token.'); tok.focus(); return null; }
-    return { address: a, token: t };
+    return { candidates: c, token: t };
   }
+  function folderCount(f) { var n = Array.isArray(f) ? f.length : 0; return n + (n === 1 ? ' folder' : ' folders'); }
+  /* a refused token or another server answer, said with the address that answered */
+  function reachedButText(e) { return 'Reached ' + e.address + ', but ' + e.message.charAt(0).toLowerCase() + e.message.slice(1) + (/[.!?]$/.test(e.message) ? '' : '.'); }
 
   Pinned.config().then(function (c) { saved = c; addr.value = c.address; tok.value = c.token; if (!c.address) addr.focus(); });
 
@@ -24,31 +28,44 @@
     var cfg = read(); if (!cfg) return;
     testBtn.disabled = true; show('wait', 'Testing');
     try {
-      var folders = await Pinned.api(cfg, 'GET', '/api/folders');
-      var n = Array.isArray(folders) ? folders.length : 0;
-      show('ok', 'Connected, ' + n + (n === 1 ? ' folder' : ' folders'));
-    } catch (e) { show('bad', e.message + '.'); }
+      var got = await Pinned.probe(cfg.candidates, cfg.token);
+      show('ok', 'Connected to ' + got.address + ', ' + folderCount(got.folders) + '.');
+    } catch (e) { show('bad', e.address ? reachedButText(e) : e.message + '.'); }
     finally { testBtn.disabled = false; }
   });
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var cfg = read(); if (!cfg) return;
-    addr.value = cfg.address;
-    var pattern = Pinned.originPattern(cfg.address);
-    /* the request has to start inside the click, before anything is awaited */
-    var asked = ext.permissions.request({ origins: [pattern] }).catch(function () { return false; });
+    var patterns = cfg.candidates.map(Pinned.originPattern), host = new URL(cfg.candidates[0]).hostname;
+    /* the request has to start inside the click, before anything is awaited; without a scheme it asks for both,
+       and the one that does not answer is given back below */
+    var asked = ext.permissions.request({ origins: patterns }).catch(function () { return false; });
     var old = saved.address && Pinned.cleanAddress(saved.address);
     var oldPattern = old ? Pinned.originPattern(old) : '';
-    var next = { address: cfg.address, token: cfg.token };
-    if (old !== cfg.address) next.recent = []; /* folder ids belong to one server */
-    var stored = ext.storage.local.set(next);
-    saved = Object.assign({}, saved, next);
-    show('wait', 'Saved. Waiting for the browser to allow access to ' + new URL(cfg.address).hostname + '.');
-    Promise.all([asked, stored]).then(async function (r) {
-      var granted = r[0];
-      if (oldPattern && oldPattern !== pattern) { try { await ext.permissions.remove({ origins: [oldPattern] }); } catch (err) { /* was not granted */ } }
-      show(granted ? 'ok' : 'bad', granted ? 'Saved' : 'Saved, but access to ' + new URL(cfg.address).hostname + ' was not allowed.');
+    show('wait', 'Waiting for the browser to allow access to ' + host + '.');
+    asked.then(async function (granted) {
+      var address = cfg.candidates[0];
+      if (cfg.candidates.length > 1) {
+        show('wait', 'Looking for Pinned at ' + host + '.');
+        try { address = (await Pinned.probe(cfg.candidates, cfg.token)).address; }
+        catch (e) {
+          if (!e.address) {
+            if (granted) { try { await ext.permissions.remove({ origins: patterns }); } catch (err) { /* not granted */ } }
+            show('bad', e.message + '. Nothing was saved.'); return;
+          }
+          address = e.address; /* reached, the token is the problem: keep the address, the next Test says why */
+        }
+      }
+      addr.value = address;
+      var next = { address: address, token: cfg.token };
+      if (old !== address) next.recent = []; /* folder ids belong to one server */
+      await ext.storage.local.set(next);
+      saved = Object.assign({}, saved, next);
+      var keep = Pinned.originPattern(address), drop = patterns.filter(function (p) { return p !== keep; });
+      if (oldPattern && oldPattern !== keep) drop.push(oldPattern);
+      if (drop.length) { try { await ext.permissions.remove({ origins: drop }); } catch (err) { /* was not granted */ } }
+      show(granted ? 'ok' : 'bad', granted ? 'Saved ' + address + '.' : 'Saved, but access to ' + host + ' was not allowed. Save again and allow it.');
     });
   });
 })();

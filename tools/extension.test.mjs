@@ -93,6 +93,42 @@ test('cleanAddress keeps scheme, host, port and path, drops the rest', () => {
   for (const [raw, want] of cases) assert.equal(Pinned.cleanAddress(raw), want, String(raw));
 });
 
+test('addressCandidates tries https then http for an address typed without a scheme', () => {
+  const { Pinned } = load(['shared.js'], stubBrowser().browser);
+  const cases = [
+    ['10.0.0.5:9095', ['https://10.0.0.5:9095', 'http://10.0.0.5:9095']],
+    [' homelab:8080/pinned/ ', ['https://homelab:8080/pinned', 'http://homelab:8080/pinned']],
+    ['http://10.0.0.5:9095', ['http://10.0.0.5:9095']],
+    ['https://bookmarks.example.com/', ['https://bookmarks.example.com']],
+    ['ftp://example.com', []],
+    ['javascript:alert(1)', []],
+    ['', []],
+    [null, []],
+  ];
+  for (const [raw, want] of cases) assert.deepEqual(plain(Pinned.addressCandidates(raw)), want, String(raw));
+});
+
+test('probe falls back from https to http and names the address that answered', async () => {
+  const srv = await server((r, res) => r.headers.authorization === 'Bearer tk_ok' ? json(res, 200, [{ id: 1 }, { id: 2 }]) : json(res, 401, { error: 'unauthorized' }));
+  try {
+    const { Pinned } = load(['shared.js'], stubBrowser().browser);
+    const hostPort = srv.address.replace('http://', '');
+    const got = plain(await Pinned.probe(Pinned.addressCandidates(hostPort), 'tk_ok'));
+    assert.equal(got.address, srv.address);
+    assert.equal(got.folders.length, 2);
+    // a server that answers stops the search, and the error says where it was reached
+    await assert.rejects(Pinned.probe(['http://' + hostPort, 'http://127.0.0.1:1'], 'tk_bad'), e => {
+      assert.equal(e.address, srv.address); assert.equal(e.message, 'The token was not accepted'); return true; });
+    assert.equal(srv.requests.length, 2);
+  } finally { await srv.close(); }
+  // nothing answers: the message names every address tried
+  const { Pinned } = load(['shared.js'], stubBrowser().browser);
+  await assert.rejects(Pinned.probe(Pinned.addressCandidates('127.0.0.1:1'), 'tk'), e => {
+    assert.equal(e.network, true);
+    assert.equal(e.message, 'Could not reach https://127.0.0.1:1 or http://127.0.0.1:1. Check the address and that Pinned is running');
+    return true; });
+});
+
 test('originPattern asks for the host only, every port', () => {
   const { Pinned } = load(['shared.js'], stubBrowser().browser);
   assert.equal(Pinned.originPattern('http://10.0.0.5:9095'), 'http://10.0.0.5/*');

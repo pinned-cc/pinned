@@ -15,6 +15,27 @@ var Pinned = (function () {
     if ((u.protocol !== 'http:' && u.protocol !== 'https:') || !u.hostname) return '';
     return (u.origin + u.pathname).replace(/\/+$/, '');
   }
+  /* the addresses to try for what was typed: as typed when it names http or https, else https first, then http,
+     because a home server most often answers plain http on its port (10.0.0.5:9095). Empty when it is no address. */
+  function addressCandidates(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return [];
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) { var one = cleanAddress(s); return one ? [one] : []; }
+    var a = cleanAddress('https://' + s), b = cleanAddress('http://' + s);
+    return a && b ? [a, b] : [];
+  }
+  /* finds the first candidate that answers GET /api/folders with the token. Resolves with { address, folders }.
+     A server that answers with an error (a refused token) stops the search: that address was reached, and err.address
+     names it. When none answers, the error says which addresses were tried. */
+  async function probe(candidates, token, timeoutMs) {
+    for (var i = 0; i < candidates.length; i++) {
+      var cfg = { address: candidates[i], token: token, timeout: timeoutMs || 8000 };
+      try { return { address: cfg.address, folders: await api(cfg, 'GET', '/api/folders') }; }
+      catch (e) { if (!e.network) { e.address = cfg.address; throw e; } }
+    }
+    var err = new Error('Could not reach ' + candidates.join(' or ') + '. Check the address and that Pinned is running');
+    err.network = true; throw err;
+  }
   /* host permission pattern for the address; match patterns carry no port, so this covers every port on that host */
   function originPattern(address) {
     var u = new URL(address);
@@ -29,9 +50,11 @@ var Pinned = (function () {
   async function api(cfg, method, path, body) {
     var opt = { method: method, headers: { Authorization: 'Bearer ' + cfg.token }, credentials: 'omit', cache: 'no-store' };
     if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
-    var r;
+    var r, ctl = cfg.timeout && typeof AbortController === 'function' ? new AbortController() : null, timer = null;
+    if (ctl) { opt.signal = ctl.signal; timer = setTimeout(function () { ctl.abort(); }, cfg.timeout); }
     try { r = await fetch(cfg.address + path, opt); }
     catch (e) { var ne = new Error('Could not reach ' + cfg.address); ne.network = true; throw ne; }
+    finally { if (timer) clearTimeout(timer); }
     var data = null;
     if ((r.headers.get('content-type') || '').indexOf('json') !== -1) { try { data = await r.json(); } catch (e) { data = null; } }
     if (!r.ok) {
@@ -93,5 +116,5 @@ var Pinned = (function () {
     return s;
   }
 
-  return { cleanAddress: cleanAddress, originPattern: originPattern, config: config, api: api, remember: remember, folderIndex: folderIndex, h: h, icon: icon };
+  return { cleanAddress: cleanAddress, addressCandidates: addressCandidates, probe: probe, originPattern: originPattern, config: config, api: api, remember: remember, folderIndex: folderIndex, h: h, icon: icon };
 })();
