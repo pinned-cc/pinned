@@ -16,21 +16,27 @@ import (
 // with the client address and then the fields in kv, given as name, value
 // pairs. Never pass a secret: no password, code, token, cookie or hash.
 func (s *Server) security(r *http.Request, event string, kv ...any) {
-	var b strings.Builder
-	b.WriteString("security event=")
-	b.WriteString(event)
 	if r != nil {
 		ip := r.RemoteAddr
 		if a := s.clientAddr(r); a.IsValid() {
 			ip = a.String()
 		}
-		b.WriteString(" ip=")
-		b.WriteString(logValue(ip))
+		kv = append([]any{"ip", ip}, kv...)
 	}
+	s.log.Print(SecurityLine(event, kv...))
+}
+
+// SecurityLine is the text of a security log line, for events outside a
+// request too, such as icon.fail from the icon fetches: the event, then the
+// fields in kv as name, value pairs, quoted where needed.
+func SecurityLine(event string, kv ...any) string {
+	var b strings.Builder
+	b.WriteString("security event=")
+	b.WriteString(event)
 	for i := 0; i+1 < len(kv); i += 2 {
 		fmt.Fprintf(&b, " %v=%s", kv[i], logValue(fmt.Sprint(kv[i+1])))
 	}
-	s.log.Print(b.String())
+	return b.String()
 }
 
 // logValue quotes a value that holds spaces, quotes, an equals sign or
@@ -56,22 +62,27 @@ func (s *Server) failed(r *http.Request, area string, wait time.Duration, kv ...
 		s.security(r, area+".fail", kv...)
 		return
 	}
-	key := area + "|" + s.clientKey(r)
+	if s.firstIn(area+"|"+s.clientKey(r), wait) {
+		s.security(r, area+".wait", append(kv, "seconds", int(wait.Seconds()+0.999))...)
+	}
+}
+
+// firstIn reports whether key was not seen within the last d, and if so
+// remembers it for d. It bounds lines a client can make the log write.
+func (s *Server) firstIn(key string, d time.Duration) bool {
 	now := s.st.Now()
 	s.waitMu.Lock()
+	defer s.waitMu.Unlock()
 	for k, until := range s.waitLogged {
 		if !now.Before(until) {
 			delete(s.waitLogged, k)
 		}
 	}
-	_, seen := s.waitLogged[key]
-	if !seen {
-		s.waitLogged[key] = now.Add(wait)
+	if _, seen := s.waitLogged[key]; seen {
+		return false
 	}
-	s.waitMu.Unlock()
-	if !seen {
-		s.security(r, area+".wait", append(kv, "seconds", int(wait.Seconds()+0.999))...)
-	}
+	s.waitLogged[key] = now.Add(d)
+	return true
 }
 
 // logged logs event when err is nil and returns err, for one line call

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -50,10 +52,13 @@ func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error
 	if err != nil {
 		return Icon{}, err
 	}
-	answered := false
+	answered, kind := false, ""
 	get := func(ctx context.Context, client *http.Client, u string, limit int64) ([]byte, *url.URL, error) {
 		data, final, got, err := fetch(ctx, client, u, limit)
 		answered = answered || got
+		if k := failKind(err); kindRank[k] > kindRank[kind] {
+			kind = k
+		}
 		return data, final, err
 	}
 	var c Candidates
@@ -99,9 +104,77 @@ func Find(ctx context.Context, client *http.Client, pageURL string) (Icon, error
 		}
 	}
 	if !answered || ctx.Err() != nil {
-		return Icon{}, fmt.Errorf("no icon found: %w", ErrUnreachable)
+		return Icon{}, &noIcon{kind: "unreachable", unreachable: true}
 	}
-	return Icon{}, errors.New("no icon found")
+	if kind == "" {
+		kind = "no_icon"
+	}
+	return Icon{}, &noIcon{kind: kind}
+}
+
+// noIcon is the error of Find: why no icon was found, as a kind for the
+// log. It wraps ErrUnreachable when the site could not be reached.
+type noIcon struct {
+	kind        string
+	unreachable bool
+}
+
+func (e *noIcon) Error() string { return "no icon found: " + e.kind }
+
+func (e *noIcon) Unwrap() error {
+	if e.unreachable {
+		return ErrUnreachable
+	}
+	return nil
+}
+
+// FailKind names why Find found no icon, for the log: certificate (the
+// certificate check refused the site), blocked (an address the guard
+// refuses), no_such_host, http (an HTTP error), unreachable, no_icon (the
+// site answered but had no icon that decodes) or other.
+func FailKind(err error) string {
+	var e *noIcon
+	if errors.As(err, &e) {
+		return e.kind
+	}
+	if err == nil {
+		return ""
+	}
+	return "other"
+}
+
+// kindRank orders the kinds of a failed request: when several requests
+// for one bookmark fail, the most telling kind is the one logged.
+var kindRank = map[string]int{"": 0, "other": 1, "http": 2, "unreachable": 3, "no_such_host": 4, "blocked": 5, "certificate": 6}
+
+// errStatus is a response other than 200.
+type errStatus int
+
+func (e errStatus) Error() string { return fmt.Sprintf("status %d", int(e)) }
+
+// failKind is the kind of one failed request, "" for none.
+func failKind(err error) string {
+	var cert *tls.CertificateVerificationError
+	var unknown x509.UnknownAuthorityError
+	var invalid x509.CertificateInvalidError
+	var host x509.HostnameError
+	var status errStatus
+	var dns *net.DNSError
+	switch {
+	case err == nil:
+		return ""
+	case errors.As(err, &cert), errors.As(err, &unknown), errors.As(err, &invalid), errors.As(err, &host):
+		return "certificate"
+	case errors.Is(err, errBlocked):
+		return "blocked"
+	case errors.As(err, &status):
+		return "http"
+	case errors.As(err, &dns) && dns.IsNotFound && !dns.IsTimeout && !dns.IsTemporary:
+		return "no_such_host"
+	case outage(err):
+		return "unreachable"
+	}
+	return "other"
 }
 
 // fetch gets u. answered reports whether the failure, if any, is a lasting
@@ -118,7 +191,7 @@ func fetch(ctx context.Context, client *http.Client, u string, limit int64) (dat
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, true, fmt.Errorf("status %d", resp.StatusCode)
+		return nil, nil, true, errStatus(resp.StatusCode)
 	}
 	data, err = io.ReadAll(io.LimitReader(resp.Body, limit))
 	return data, resp.Request.URL, true, err
@@ -182,6 +255,21 @@ type Pool struct {
 	// before the first Enqueue.
 	off   bool
 	hosts Hosts
+	// logf writes a log line for a failed fetch; set with SetLog.
+	logf func(event string, kv ...any)
+}
+
+// SetLog sets where failed fetches are logged: one icon.fail event per
+// bookmark whose fetch failed, with the host and the kind of failure (see
+// FailKind), never the path or query. Call it before the first Enqueue.
+func (p *Pool) SetLog(logf func(event string, kv ...any)) { p.logf = logf }
+
+// logFail logs a failed fetch for b, unless the pool is stopping.
+func (p *Pool) logFail(host, kind string) {
+	if p.logf == nil || (p.ctx != nil && p.ctx.Err() != nil) {
+		return
+	}
+	p.logf("icon.fail", "host", host, "kind", kind)
 }
 
 // Configure applies ICONS=off (no fetch at all, every bookmark keeps its
@@ -361,12 +449,14 @@ func (p *Pool) Run(id int64) {
 	}
 	// A bookmark on a host outside ICON_HOSTS is not fetched, and not
 	// counted as a failure: the list may change.
-	if u, err := url.Parse(b.URL); err != nil || !p.hosts.Allow(u.Hostname()) {
+	u, err := url.Parse(b.URL)
+	if err != nil || !p.hosts.Allow(u.Hostname()) {
 		return
 	}
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("favicon: bookmark %d: icon fetch broke: %v", id, r)
+			p.logFail(u.Hostname(), "broke")
 			p.failed(b, true)
 		}
 	}()
@@ -385,6 +475,7 @@ func (p *Pool) Run(id int64) {
 	}
 	icon, err := Find(ctx, client, b.URL)
 	if err != nil {
+		p.logFail(u.Hostname(), FailKind(err))
 		if !errors.Is(err, ErrUnreachable) {
 			p.failed(b, false)
 		}

@@ -244,6 +244,7 @@ func run() error {
 	defer stop()
 	icons := favicon.NewPool(ctx, filepath.Join(dataDir, "icons"), st)
 	icons.Configure(c.iconsOff, c.iconHosts)
+	icons.SetLog(func(event string, kv ...any) { log.Print(server.SecurityLine(event, kv...)) })
 	// Bookmarks still showing a letter get another try at start, so an
 	// improved icon search reaches links that were saved before it. A link
 	// whose icon failed store.IconGiveUp times is left alone until the next

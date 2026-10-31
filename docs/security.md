@@ -159,7 +159,7 @@ Everything is in the data folder. Nothing is encrypted at rest; use disk encrypt
 | Database copies before an upgrade | `bookmarks-schema<N>-<date>.db` | As the database | File 0600. The last three are kept. |
 | Nightly export | `export/bookmarks.html` | As the database | File 0600. Holds every live link, locked folders included. Leaves out Trash, pins, locks, shares, sessions and tokens. |
 | Site icons | `icons/` | Low. The file names hold bookmark ids. | Files 0600. |
-| Logs | standard error of the process, not the data folder | Low. They hold client addresses, ids and token names. | See Logs. |
+| Logs | standard error of the process, not the data folder | Low. They hold client addresses, ids, token names, and the host of a bookmark whose icon fetch failed. | See Logs. |
 
 Held in memory only, gone at a restart: the wrong password counts, the wrong code count and its wait, the step of the last second factor code used, the app password and its fingerprint.
 
@@ -194,9 +194,13 @@ The client address is read the same way as for the wrong password limits: from `
 | `token.create`, `token.delete` | A token was created or revoked | `token`, and `name` on create |
 | `reauth.fail`, `reauth.wait` | A wrong app password when it is asked again | `for` (`token.create`, `lock.remove`, `session.end` or `session.end_others`), `folder` |
 | `lock.fail`, `lock.wait` | A wrong folder password | `folder` |
+| `lock.unlock` | A folder was unlocked with its password | `folder` |
 | `lock.set`, `lock.change`, `lock.remove` | A folder lock was set, changed or removed | `folder` |
 | `share.fail`, `share.wait` | A wrong share password | `folder` |
+| `share.unlock` | A share link was opened with its password | `folder` |
 | `share.create`, `share.change`, `share.delete` | A share link was made, changed or revoked | `folder` and `password` (whether it has one) on create and change |
+| `csrf.refused` | A request that changes something came without `X-Requested-With: fetch`, as a form or page on another site would send it. At most one line a minute per client | `method`, `route` |
+| `icon.fail` | An icon fetch for a bookmark failed | `host` (never the path or query), `kind`: `certificate`, `blocked` (an address the fetch may not reach), `no_such_host`, `http`, `unreachable`, `no_icon`, `broke` or `other`; no `ip` |
 | `password.changed` | At start, when `APP_PASSWORD` changed | `sessions=ended tokens=revoked`, no `ip` |
 
 A `.wait` line is written once per client and kind while the wait lasts, so a client hammering during its wait cannot flood the log.

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 // lockedBuffer collects log lines written from handler goroutines.
@@ -166,4 +167,57 @@ func cookieOf(e *env, name string) string {
 		}
 	}
 	return ""
+}
+
+// Right folder and share passwords are logged too, so a right guess after
+// many wrong ones shows. CSRF refusals are logged at most once a minute per
+// client.
+func TestUnlocksAndCSRFRefusalsAreLogged(t *testing.T) {
+	f := newLockFixture(t)
+	e := f.e
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.wantEvent("lock.unlock", 1)
+	if l := e.events("lock.unlock"); len(l) == 1 && !strings.Contains(l[0], "folder="+itoa(f.work.ID)) {
+		t.Errorf("lock.unlock line: %s", l[0])
+	}
+
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/share", map[string]any{"password": "share password"}, 201))
+	v := e.visitor()
+	if code := v.unlock(sh.Token, "share password"); code != 204 {
+		t.Fatalf("share unlock: %d", code)
+	}
+	e.wantEvent("share.unlock", 1)
+	if l := e.events("share.unlock"); len(l) == 1 && !strings.Contains(l[0], "folder="+itoa(f.reading.ID)) {
+		t.Errorf("share.unlock line: %s", l[0])
+	}
+	if strings.Contains(e.logs.String(), sh.Token) || strings.Contains(e.logs.String(), "s3cret") {
+		t.Errorf("a secret in the log:\n%s", e.logs.String())
+	}
+
+	for range 3 {
+		resp, err := e.client.Post(e.srv.URL+"/api/bookmarks", "application/json", strings.NewReader(`{"url":"https://example.com"}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != 403 {
+			t.Fatalf("without the header: %d", resp.StatusCode)
+		}
+	}
+	e.wantEvent("csrf.refused", 1)
+	if l := e.events("csrf.refused"); len(l) == 1 && !strings.Contains(l[0], "method=POST") {
+		t.Errorf("csrf.refused line: %s", l[0])
+	}
+	later := time.Now().Add(61 * time.Second)
+	e.st.Now = func() time.Time { return later }
+	resp, _ := e.client.Post(e.srv.URL+"/api/login", "application/json", strings.NewReader(`{"password":"pw"}`))
+	resp.Body.Close()
+	e.wantEvent("csrf.refused", 2)
+}
+
+func TestSecurityLineWithoutRequest(t *testing.T) {
+	if got := SecurityLine("icon.fail", "host", "example.com", "kind", "certificate"); got != "security event=icon.fail host=example.com kind=certificate" {
+		t.Errorf("line: %s", got)
+	}
 }

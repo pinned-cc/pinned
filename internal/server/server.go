@@ -284,11 +284,17 @@ func (s *Server) loggedIn(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-// csrf rejects mutating requests that do not carry X-Requested-With: fetch.
-// A form or image on another site cannot set that header.
+// csrf rejects mutating requests that do not carry X-Requested-With: fetch,
+// and logs csrf.refused. A form or image on another site cannot set that
+// header.
 func (s *Server) csrf(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Header.Get("X-Requested-With") != "fetch" {
+			// At most one line a minute per client, so a page that keeps
+			// trying cannot flood the log.
+			if s.firstIn("csrf|"+s.clientKey(r), time.Minute) {
+				s.security(r, "csrf.refused", "method", r.Method, "route", r.Pattern)
+			}
 			writeError(w, http.StatusForbidden, "missing X-Requested-With: fetch header")
 			return
 		}

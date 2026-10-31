@@ -347,6 +347,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 			refuseAttempt(w, wait, http.StatusUnauthorized, "Wrong password")
 			return
 		}
+		s.security(r, "share.unlock", "folder", sh.FolderID)
 	}
 	exp := s.st.Now().Add(unlockTTL).Unix()
 	http.SetCookie(w, &http.Cookie{

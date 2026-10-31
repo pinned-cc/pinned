@@ -345,6 +345,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 		Name: name, Value: signedVersion + s.folderUnlockValue(f, exp), Path: "/",
 		MaxAge: int(folderUnlockTTL.Seconds()), HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: secure,
 	})
+	s.security(r, "lock.unlock", "folder", id)
 	w.WriteHeader(http.StatusNoContent)
 }
 
