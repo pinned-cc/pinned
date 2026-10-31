@@ -24,7 +24,7 @@ You need Docker with the compose plugin, on amd64 or arm64. A NAS, a Raspberry P
 curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | sh
 ```
 
-It asks for the password on the terminal. Where there is no terminal to ask on, such as cloud-init, pass it in: `curl -fsSL ... | APP_PASSWORD='...' sh`. Pinned then answers on port 9095. Put HTTPS in front before you use it from outside your network, see Behind a reverse proxy. `PINNED_DIR`, `PINNED_PORT` and `APP_PASSWORD` in the environment override the questions. Not yet run on a rented server at the time of writing; the steps below are the same thing by hand.
+It asks for the password on the terminal. Where there is no terminal to ask on, such as cloud-init, pass it in: `curl -fsSL ... | APP_PASSWORD='...' sh`. Pinned then answers on plain http on port 9095 of the server's public address, and the script ends with that warning: your password crosses the internet unencrypted until HTTPS is in front. Put HTTPS in front before you log in from outside your network, see Behind a reverse proxy. `PINNED_DIR`, `PINNED_PORT` and `APP_PASSWORD` in the environment override the questions. Not yet run on a rented server at the time of writing; the steps below are the same thing by hand.
 
 ### By hand
 
@@ -141,7 +141,7 @@ It opens without browser bars, like an app.
 **Android share target.** Once the app is on the Android home screen, it shows up in the share sheet as Pinned.
 Share a page to it and the save page opens.
 
-**Browser extension.** Download it from the How to save page and load it unpacked in Brave, Chrome or Edge, or as a temporary add-on in Firefox.
+**Browser extension.** Download it from the How to save page and load it unpacked in Brave, Chrome or Edge, or as a temporary add-on in Firefox. Firefox removes a temporary add-on when it quits, so after a restart load it again and give it a new token. In its options the address can be typed without `http://`: it tries https, then http.
 It has a save popup with your recent folders and a right click menu. See `extras/extension/README.md`.
 
 **The API with a token.** Scripts, Raycast, Home Assistant and n8n can save with an API token.
@@ -215,6 +215,8 @@ On Nginx Proxy Manager, add a proxy host for your server and port 9095 with an S
 On Umbrel with the App Store package (`umbrel/` holds the draft), Umbrel's login sits in front of the app. These paths must get past it, because the extension, scripts and share links do not carry an Umbrel login: `/api/*`, `/s/*`, `/extras/*` and `/health`, and for share link pages `/static/*` and `/favicon.svg`. The app's own password, tokens and share links still protect them.
 
 ## Troubleshooting
+
+**The container restarts and the log says it cannot write to /data as user 1000.** Docker made the data folder as root, because it did not exist when the container first started. The container runs as user 1000. Give the folder to that user and start again: `sudo chown -R 1000:1000 ./data`, then `docker compose up -d`.
 
 **The Save bookmark opens a black page in Safari on the iPhone, marked Not Secure.** This happens with iCloud Private Relay on, when the app is reached through a Tailscale address (`*.ts.net`). Save runs inside the page you are on, and with Private Relay that page goes through Apple, which cannot reach your tailnet. Safari then falls back to http. Opening the app directly still works, which makes it look like a bookmark problem. It is not.
 

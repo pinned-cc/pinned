@@ -8,7 +8,7 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | APP_PASSWORD='...' sh
 #
-# Afterwards Pinned answers on port 9095 of the server. Put it behind HTTPS before you use it from
+# Afterwards Pinned answers on plain http on port 9095 of the server, on its public address. Put it behind HTTPS before you use it from
 # outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README.
 set -eu
 
@@ -25,7 +25,12 @@ if ! command -v docker >/dev/null 2>&1; then
   say "Installing Docker"
   curl -fsSL https://get.docker.com | sh
 fi
-docker compose version >/dev/null 2>&1 || die "Docker is installed but the compose plugin is missing; install docker-compose-plugin and run this again"
+# right after Docker is installed, a user who is not root is not yet in the docker group: use sudo for this run
+DOCKER=docker
+if ! docker info >/dev/null 2>&1 && [ "$(id -u)" != 0 ]; then
+  DOCKER="sudo docker"
+fi
+$DOCKER compose version >/dev/null 2>&1 || die "Docker is installed but the compose plugin is missing; install docker-compose-plugin and run this again"
 
 if [ -z "${APP_PASSWORD:-}" ]; then
   # with curl ... | sh the script itself is on stdin, so ask on the terminal
@@ -78,15 +83,18 @@ printf 'APP_PASSWORD=%s\n' "$APP_PASSWORD" > .env
 # the container runs as uid 1000 and needs to write the data folder
 chown 1000:1000 data 2>/dev/null || sudo chown 1000:1000 data
 
-docker compose pull
-docker compose up -d
+$DOCKER compose pull
+$DOCKER compose up -d
 
 IP="$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || true)"
 say ""
 say "Pinned is running."
 say "  address   http://${IP:-this-server}:$PORT"
 say "  files     $DIR/compose.yml, $DIR/.env, $DIR/data/bookmarks.db"
-say "  update    cd $DIR && docker compose pull && docker compose up -d"
-say "  stop      cd $DIR && docker compose down"
+say "  update    cd $DIR && $DOCKER compose pull && $DOCKER compose up -d"
+say "  stop      cd $DIR && $DOCKER compose down"
 say ""
-say "Before you use it from outside your network, put HTTPS in front of it. See the README."
+say "WARNING: Pinned answers on plain http, on the server's public address."
+say "Your password would cross the internet unencrypted. Do not log in from outside yet."
+say "Put HTTPS in front first (Caddy, Traefik or a Cloudflare tunnel) and keep port $PORT closed to the internet:"
+say "  https://github.com/pinned-cc/pinned#behind-a-reverse-proxy"

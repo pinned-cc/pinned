@@ -37,6 +37,23 @@ Not released yet.
 - An SVG icon is kept only when everything in it is on a list of drawing elements and attributes; anything that could run script, link or load from outside is refused and the letter mark is shown. PNG, JPEG and GIF icons are stored as a new PNG, so nothing hidden in the file is kept. GIF icons now show.
 - Icons saved by older versions are checked once at the first start: PNG and JPEG icons are stored again as a new PNG, and an icon that does not decode or an SVG that fails the new check is removed, so the letter mark shows. The old PNG and JPEG files stay in the icons folder and are not served, so going back to 0.1.10 with the saved database copy still shows them.
 - The icon fetch refuses more special network ranges (such as NAT64 and 6to4), IPv6 addresses with an interface name (such as `fe80::1%en0`), ports other than 80, 443 and the bookmark's own, and redirects from https to plain http.
+- A login, share or folder password held after too many tries now says how long the wait really is, for example "Too many tries. Wait 2 minutes, then try again." Before, it always said 30 seconds, also when the second factor held logins for a minute or more.
+- With the second factor on, a wrong code says that a code works only once, so wait for the next one.
+- In the browser extension's options, an address typed without `http://` or `https://`, such as `10.0.0.5:9095`, is tried with https first and then with http, and the one that answers is kept. Test says which address it reached, or which addresses it tried when none answered. Before, it only tried https, which fails for a home server on plain http.
+- When the data folder belongs to another user, as when Docker made a missing `./data` as root, Pinned now stops with a message that names user 1000 and the command that fixes it: `sudo chown -R 1000:1000 ./data`.
+- The one command install for a server (`extras/vps/setup.sh`) now ends with a clear warning that Pinned answers on plain http on the server's public address, and links the README part on putting HTTPS in front. Right after it installs Docker, it runs Docker with sudo for a user who is not yet in the docker group.
+- How to save and the extension's README say that Firefox removes a temporary add-on when it quits, so after a restart you load it again and give it a new token.
+- Export says when it leaves out folders locked in this browser, and that you unlock them first to include them.
+- While an import runs, a toast says so and Import is disabled until it ends.
+- In the save sheet, an error about the address goes away as soon as you type the address again.
+- The folder's three dots menu has Share, as the right click menu already had.
+- When the server cannot be reached, the app says "Cannot reach your Pinned server" instead of "Could not save" or "Bookmarks could not load".
+- Moving bookmarks from the Move sheet shows where they went, with Undo, as a drag did already.
+- The lock, unlock and remove lock dialogs have a Close button.
+- With More open in the sidebar on a window about 800 px high, the folder list keeps four folders in view and the actions scroll in their own space. Before, only two folders showed.
+- A new API token says the next step: paste it into the extension's options with this address, or into your script.
+- The share password field says the password needs 8 or more characters before you set it.
+- From this version on, when Pinned refuses a database that a newer version upgraded, the message names the copy to restore from the data folder.
 
 ### Changes
 
