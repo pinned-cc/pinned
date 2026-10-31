@@ -329,8 +329,7 @@ func safeCSS(s string) bool {
 			for j > 0 && cssName(v[j-1]) {
 				j--
 			}
-			word := string(v[j:end])
-			if j > 0 && v[j-1] == '@' && cssAtRules[word] || j < end && cssBlockWords[word] {
+			if j > 0 && v[j-1] == '@' && cssAtRules[string(v[j:end])] || j < end && cssBlockWords[string(v[j:end])] {
 				continue
 			}
 			return false
