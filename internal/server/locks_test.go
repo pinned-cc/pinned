@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
@@ -46,7 +48,7 @@ func TestLockHidesEverythingInside(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "abc"}, 400)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 
 	st := e.state()
 	work := f.folder(st, f.work.ID)
@@ -110,10 +112,10 @@ func TestLockHidesEverythingInside(t *testing.T) {
 func TestUnlockRelockAndExpiry(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "wrong"}, 403)
 	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/unlock", map[string]any{"password": "x"}, 400)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 
 	st := e.state()
 	if w := f.folder(st, f.work.ID); !w.Locked || !w.Unlocked {
@@ -148,15 +150,15 @@ func TestUnlockRelockAndExpiry(t *testing.T) {
 	e.st.Now = time.Now
 
 	// Relock hides it again at once.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/relock", nil, 204)
 	if e.state().find(f.inWork.ID) != nil {
 		t.Error("relock did not hide")
 	}
 
 	// A new password makes the old cookie worthless.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "n3w pass", "current_password": "s3cret-lock"}, 204)
 	if e.state().find(f.inWork.ID) != nil {
 		t.Error("old cookie still opens after a password change")
 	}
@@ -168,21 +170,21 @@ func TestUnlockRelockAndExpiry(t *testing.T) {
 func TestUnlockRateLimitAndRemoveLock(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	for i := 0; i < 4; i++ {
 		e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "no"}, 403)
 	}
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "no"}, 429)
 	// During the wait the password is not checked, so even the right one
 	// is refused; once the wait is over it opens.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 429)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 429)
 	later := time.Now().Add(auth.Wait + time.Second)
 	e.server.folderLimiters.get(f.work.ID).Now = func() time.Time { return later }
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 
 	// Per folder: another locked folder still accepts tries.
-	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/lock", map[string]any{"password": "read"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/unlock", map[string]any{"password": "read"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/lock", map[string]any{"password": "reading-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/unlock", map[string]any{"password": "reading-lock"}, 204)
 
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"app_password": "nope"}, 403)
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"app_password": "pw"}, 204)
@@ -201,7 +203,7 @@ func TestLockAndShares(t *testing.T) {
 	// Locking the client folder removes its share; the parent's share no
 	// longer shows the client folder or its bookmarks or icons.
 	e.st.SetIcon(f.inClient.ID, "https://example.org/portal", "c.png", nil)
-	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	v := e.visitor()
 	if code, _ := v.get("/s/" + child.Token + "/data"); code != 404 {
 		t.Errorf("share of the locked folder survived: %d", code)
@@ -215,12 +217,12 @@ func TestLockAndShares(t *testing.T) {
 	}
 
 	// Locking the parent removes the parent share, and shares are refused.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	if code, _ := v.get("/s/" + parent.Token + "/data"); code != 404 {
 		t.Errorf("parent share survived the lock: %d", code)
 	}
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/share", map[string]any{}, 409)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/share", map[string]any{}, 409)
 	if w := f.folder(e.state(), f.work.ID); w.Share != nil {
 		t.Error("state still carries the removed share")
@@ -231,7 +233,7 @@ func TestLockedTrashAndFolderDelete(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
 	e.expect("DELETE", "/api/bookmarks/"+itoa(f.inClient.ID), nil, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 
 	// Trashed from a locked folder: hidden in Trash, and Empty trash keeps it.
 	if e.state().find(f.inClient.ID) != nil {
@@ -245,13 +247,13 @@ func TestLockedTrashAndFolderDelete(t *testing.T) {
 
 	// Deleting the open parent would spill the locked child into Trash.
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID), nil, 409)
-	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID), nil, 204)
 }
 
 func TestLockRoutesNeedSessionAndHeader(t *testing.T) {
 	f := newLockFixture(t)
-	resp, _ := f.e.client.Post(f.e.srv.URL+"/api/folders/"+itoa(f.work.ID)+"/lock", "application/json", strings.NewReader(`{"password":"s3cret"}`))
+	resp, _ := f.e.client.Post(f.e.srv.URL+"/api/folders/"+itoa(f.work.ID)+"/lock", "application/json", strings.NewReader(`{"password":"s3cret-lock"}`))
 	io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
 	if resp.StatusCode != 403 {
@@ -260,8 +262,8 @@ func TestLockRoutesNeedSessionAndHeader(t *testing.T) {
 	if code, _ := f.e.visitor().get("/api/state"); code != 401 {
 		t.Errorf("state without session: %d", code)
 	}
-	f.e.expect("POST", "/api/folders/999/lock", map[string]any{"password": "s3cret"}, 404)
-	f.e.expect("POST", "/api/folders/999/unlock", map[string]any{"password": "s3cret"}, 404)
+	f.e.expect("POST", "/api/folders/999/lock", map[string]any{"password": "s3cret-lock"}, 404)
+	f.e.expect("POST", "/api/folders/999/unlock", map[string]any{"password": "s3cret-lock"}, 404)
 	f.e.expect("POST", "/api/folders/999/relock", nil, 404)
 }
 
@@ -269,22 +271,75 @@ func TestChangingALockNeedsItsPassword(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
 	lock := "/api/folders/" + itoa(f.work.ID) + "/lock"
-	e.expect("POST", lock, map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", lock, map[string]any{"password": "s3cret-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	// Unlocked, but without the current password the lock stays.
 	e.expect("POST", lock, map[string]any{"password": "taken over"}, 403)
 	e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 403)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.wantEvent("lock.fail", 2)
 	// Wrong current passwords count with the unlock tries of that folder.
 	for i := 0; i < 4; i++ {
 		e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 403)
 	}
 	e.expect("POST", lock, map[string]any{"password": "taken over", "current_password": "guess"}, 429)
-	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 429)
+	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret-lock"}, 429)
 	later := time.Now().Add(auth.Wait + time.Second)
 	e.server.folderLimiters.get(f.work.ID).Now = func() time.Time { return later }
-	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret"}, 204)
+	e.expect("POST", lock, map[string]any{"password": "n3w pass", "current_password": "s3cret-lock"}, 204)
 	e.wantEvent("lock.change", 1)
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "n3w pass"}, 204)
+}
+
+// New lock and share passwords need 8 characters, may be long and in any
+// script, and are refused when common or made of the app's words or host.
+func TestPasswordRules(t *testing.T) {
+	old := auth.BcryptCost
+	t.Cleanup(func() { auth.BcryptCost = old })
+	auth.BcryptCost = bcrypt.MinCost
+	e := newEnv(t, Config{BaseURL: "https://links.halftone.example"})
+	e.login()
+	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
+	lock := "/api/folders/" + itoa(f.ID) + "/lock"
+	if body := e.expect("POST", lock, map[string]any{"password": "seven77"}, 400); !strings.Contains(string(body), "at least 8 characters") {
+		t.Errorf("short lock password: %s", body)
+	}
+	for _, pw := range []string{"Password1", "ILOVEYOU", "pinned2026", "p@ssw0rd", "halftone!", "bookmarks"} {
+		if body := e.expect("POST", lock, map[string]any{"password": pw}, 400); !strings.Contains(string(body), "too easy to guess") {
+			t.Errorf("lock password %q: %s", pw, body)
+		}
+	}
+	g := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Shared"}, 201))
+	if body := e.expect("POST", "/api/folders/"+itoa(g.ID)+"/share", map[string]any{"password": "sunshine"}, 400); !strings.Contains(string(body), "too easy to guess") {
+		t.Errorf("common share password on create: %s", body)
+	}
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(g.ID)+"/share", map[string]any{}, 201))
+	if body := e.expect("PATCH", "/api/shares/"+sh.Token, map[string]any{"password": "Pinned-Password"}, 400); !strings.Contains(string(body), "too easy to guess") {
+		t.Errorf("common share password on change: %s", body)
+	}
+
+	long := strings.Repeat("long pass ", 10)
+	cur := ""
+	for _, pw := range []string{"eight ch", long, strings.Repeat("ü", 64), "日本語のパスワード"} {
+		e.expect("POST", lock, map[string]any{"password": pw, "current_password": cur}, 204)
+		cur = pw
+		e.expect("POST", "/api/folders/"+itoa(f.ID)+"/relock", nil, 204)
+		e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": pw + "x"}, 403)
+		e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": pw}, 204)
+		e.expect("PATCH", "/api/shares/"+sh.Token, map[string]any{"password": pw}, 200)
+		v := e.visitor()
+		if v.unlock(sh.Token, pw+"x") == 204 {
+			t.Errorf("share %q opened with a longer guess", pw)
+		}
+		if v.unlock(sh.Token, pw) != 204 {
+			t.Errorf("share password %q does not open", pw)
+		}
+	}
+	// 100 characters that share their first 72 bytes are different passwords.
+	if n := len(long); n != 100 {
+		t.Fatalf("long password has %d bytes", n)
+	}
+	e.expect("POST", lock, map[string]any{"password": long, "current_password": cur}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": long[:72] + strings.Repeat("z", 28)}, 403)
+	e.expect("POST", "/api/folders/"+itoa(f.ID)+"/unlock", map[string]any{"password": long}, 204)
 }

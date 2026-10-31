@@ -4,8 +4,8 @@ import "testing"
 
 // A password stamp changes when the password is set, changed or removed,
 // and stays when the hash is only replaced. Rows from before schema 11
-// have none: their key is the hash, as before, and their hash is not
-// replaced, since that would change the key.
+// have none: their key is the hash, as before, and a replaced hash gives
+// them a stamp. A replace whose old hash no longer matches does nothing.
 func TestPasswordStamps(t *testing.T) {
 	s := open(t)
 	f, _ := s.CreateFolder("Work", nil)
@@ -17,7 +17,10 @@ func TestPasswordStamps(t *testing.T) {
 		t.Fatal(err)
 	}
 	k1 := key()
-	if err := s.ReplaceLockHash(f.ID, "hash2"); err != nil {
+	if err := s.ReplaceLockHash(f.ID, "other", "hash2"); err != ErrNotFound {
+		t.Errorf("rehash from a hash that is not stored: %v", err)
+	}
+	if err := s.ReplaceLockHash(f.ID, "hash1", "hash2"); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := s.Folder(f.ID); key() != k1 || *got.LockHash != "hash2" {
@@ -33,11 +36,11 @@ func TestPasswordStamps(t *testing.T) {
 	if key() != "hash3" {
 		t.Errorf("a lock from before schema 11: key %q", key())
 	}
-	if err := s.ReplaceLockHash(f.ID, "hash4"); err != ErrNotFound {
+	if err := s.ReplaceLockHash(f.ID, "hash3", "hash4"); err != nil {
 		t.Errorf("rehash of a lock without a stamp: %v", err)
 	}
-	if k := key(); k != "hash3" {
-		t.Errorf("a rehash changed the key of a lock without a stamp: %q", k)
+	if got, _ := s.Folder(f.ID); got.LockStamp == nil || *got.LockHash != "hash4" || key() == "hash3" {
+		t.Errorf("a rehash of a lock without a stamp: key %q", key())
 	}
 	if err := s.RemoveLock(f.ID); err != nil || key() != "" {
 		t.Errorf("removed lock: key %q, %v", key(), err)
@@ -50,7 +53,7 @@ func TestPasswordStamps(t *testing.T) {
 		t.Fatalf("share with a password has no stamp: %+v %v", sh, err)
 	}
 	k1 = sh.PasswordKey()
-	s.ReplaceShareHash("tok", "share2")
+	s.ReplaceShareHash("tok", "share1", "share2")
 	if sh, _ = s.ShareByToken("tok"); sh.PasswordKey() != k1 || *sh.PasswordHash != "share2" {
 		t.Error("a rehash changed the share's key")
 	}
@@ -61,16 +64,16 @@ func TestPasswordStamps(t *testing.T) {
 	if sh, _ = s.UpdateShare("tok", true, nil, false, nil); sh.PasswordStamp != nil || sh.PasswordKey() != "" {
 		t.Errorf("a removed share password left a key: %+v", sh)
 	}
-	if err := s.ReplaceShareHash("tok", "x"); err != ErrNotFound {
+	if err := s.ReplaceShareHash("tok", "share3", "x"); err != ErrNotFound {
 		t.Errorf("rehash of a share without a password: %v", err)
 	}
 	h = "share4"
 	s.UpdateShare("tok", true, &h, false, nil)
 	s.db.Exec(`UPDATE shares SET password_stamp = NULL WHERE token = 'tok'`)
-	if err := s.ReplaceShareHash("tok", "share5"); err != ErrNotFound {
+	if err := s.ReplaceShareHash("tok", "share4", "share5"); err != nil {
 		t.Errorf("rehash of a share password without a stamp: %v", err)
 	}
-	if sh, _ = s.ShareByToken("tok"); sh.PasswordKey() != "share4" {
-		t.Errorf("a rehash changed the key of a share password without a stamp: %q", sh.PasswordKey())
+	if sh, _ = s.ShareByToken("tok"); sh.PasswordStamp == nil || *sh.PasswordHash != "share5" {
+		t.Errorf("a rehash of a share password without a stamp: %+v", sh)
 	}
 }

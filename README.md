@@ -63,7 +63,7 @@ The image is published at `ghcr.io/pinned-cc/pinned` for amd64 and arm64, from v
        # The image has a HEALTHCHECK (pinned -healthcheck), nothing to add here.
    ```
 
-3. Start it with a password of at least 8 characters:
+3. Start it with a password of at least 8 characters that is not a common password (docs/security.md says which are refused):
 
    ```sh
    APP_PASSWORD='choose a long one' docker compose up -d
@@ -237,7 +237,7 @@ Turn Tailscale off and on again on the iPhone. How to save in the app has the sa
 Everything is in the data folder:
 
 - `bookmarks.db`, the SQLite database, with `bookmarks.db-wal` and `bookmarks.db-shm` next to it while the app runs.
-- `secret.key`, the key for sessions and tokens. Without it every session ends and every token stops working. How to replace it is in [docs/security.md](docs/security.md#rotating-secretkey).
+- `secret.key`, the key for sessions, tokens and folder and share passwords. Without it every session ends, every token stops working and folder and share passwords no longer match. How to replace it is in [docs/security.md](docs/security.md#rotating-secretkey).
 - `icons/`, the site icons.
 - `export/bookmarks.html`, written every night at 03:00 (in `TZ`) and on start when it is older than a day. It is a normal browser bookmarks file with your folders and links, locked folders included. It leaves out Trash, pins, locks and shares.
 - `bookmarks-schema6-2026-10-30-154210.db` and the like, copies of the database taken before an upgrade (see Upgrading).
@@ -272,7 +272,7 @@ Keep `secret.key` and `icons/` with the database.
 
 ## Locked folders and share links
 
-**Locked folders.** A folder can have its own password, so its links stay out of sight when you share your screen or show the app to someone. While a folder is locked, its subfolders and bookmarks do not show anywhere in the app: not in the folder lists, search, Recent, the pinned row, Inbox or Trash. Only the folder's name is shown. Unlocking opens it in that browser for 10 minutes, or until you lock it again. A folder password needs at least 4 characters. Changing it asks for the current one.
+**Locked folders.** A folder can have its own password, so its links stay out of sight when you share your screen or show the app to someone. While a folder is locked, its subfolders and bookmarks do not show anywhere in the app: not in the folder lists, search, Recent, the pinned row, Inbox or Trash. Only the folder's name is shown. Unlocking opens it in that browser for 10 minutes, or until you lock it again. A folder password needs at least 8 characters and cannot be a common password; locks set earlier with fewer characters keep working. Changing it asks for the current one.
 
 What a lock does not do:
 
@@ -287,7 +287,7 @@ A locked folder cannot be shared. Locking a folder removes any share link on it 
 
 - The link looks like `https://bookmarks.example.com/s/#<token>`. The part after `#` never reaches the server or a proxy's log. Links of the older form `/s/<token>` keep working.
 - The token holds 24 random bytes, so it cannot be guessed. It works for anyone who has it, so send it like a password. It is kept as it is, so the share sheet shows the link again whenever you open it.
-- You can add a password of at least 8 characters. After the right password, the browser stays unlocked for 7 days. Wrong passwords are counted for each link on its own (see Wrong passwords and tokens).
+- You can add a password of at least 8 characters that is not a common password. After the right password, the browser stays unlocked for 7 days. Wrong passwords are counted for each link on its own (see Wrong passwords and tokens).
 - You can set it to expire after 1 to 3650 days, or never.
 - Revoke stops it at once. Changing the share password locks out browsers that were already unlocked.
 - The app counts how often the link was opened (once per browser per hour) and when.

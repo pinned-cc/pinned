@@ -28,14 +28,18 @@ The server speaks plain HTTP on `PORT` (8080 in the container). HTTPS is the job
 | Bookmark title | Trimmed and cut to 500 characters. An empty title on a new bookmark becomes the host. |
 | Folder name | Trimmed, cut to 200 characters, not empty. Folders nest at most 32 deep. |
 | API token name | Trimmed, cut to 80 characters, not empty. |
-| `APP_PASSWORD` | At least 8 characters, no upper limit: the stored hash is bcrypt over its SHA-256. The app does not start with a shorter one. |
-| Folder password | At least 4 characters, at most 72 bytes. |
-| Share password | At least 8 characters, at most 72 bytes. |
+| `APP_PASSWORD` | At least 8 characters, no upper limit: the stored hash is bcrypt over its SHA-256. Not a common password (see below). The app does not start with a shorter or common one. |
+| Folder password | At least 8 characters, no upper limit, not a common password. Checked when it is set or changed; a lock set before 0.1.11 with fewer characters keeps working. |
+| Share password | At least 8 characters, no upper limit, not a common password. Checked when it is set or changed. |
 | Share expiry | 1 to 3650 days, or never. |
 | `TOTP_SECRET` | Base32, at least 16 bytes (26 characters). |
 | `SESSION_DAYS`, `SESSION_MAX_DAYS` | Whole numbers above 0. |
 
 An import file is parsed as a browser bookmarks file. Folders that nest more than 256 deep refuse the whole file before anything is written. Folders deeper than 32 land in the folder at depth 32. Folder names are cut to 200 characters. Links that are not `http` or `https`, that are longer than 8192 bytes, or that are already saved outside a locked folder are skipped.
+
+A common password is refused: one of 10000 common passwords embedded in the app, compared without regard to case, or a password made only of the words pinned, bookmark, bookmarks, password, passwort or passwd, or of parts of the host name (of `BASE_URL`, the address the request came to, and for `APP_PASSWORD` the machine's name), with digits and symbols around them or in leet spelling such as `p@ssw0rd`. The check runs inside the app; no password is ever sent anywhere. Pinned does not suggest or make passwords: use your own password manager.
+
+The list is the first 10000 entries of 8 characters or more, in lower case and without repeats, of `Passwords/Common-Credentials/xato-net-10-million-passwords-100000.txt` from SecLists (https://github.com/danielmiessler/SecLists), copyright (c) 2018 Daniel Miessler, under the MIT licence. It is in `internal/auth/common-passwords.txt`.
 
 There is no cap on the number of bookmarks, folders, API tokens or signed in browsers. A folder has at most one share link.
 
@@ -116,11 +120,11 @@ What is kept of a fetched icon: PNG, JPEG, GIF and ICO files are decoded and sto
 | Session cookie | 32 random bytes; the database keeps HMAC-SHA256 of it, keyed with `secret.key` | The login. The cookie value itself is not stored. |
 | API token | `tk_` and 32 random bytes; the database keeps HMAC-SHA256 of it, keyed with `secret.key` | Scripts and the extension. Shown once, never stored. |
 | Share token | 24 random bytes, stored as is | The share link. |
-| Signed cookies: device, folder unlock, share unlock | `v1.`, the value, and an HMAC-SHA256 keyed with `secret.key` | The device cookie signs its id and the app password's fingerprint. A folder unlock signs the folder, its password stamp and the expiry. A share unlock signs the token, the share's creation time, its password stamp and the expiry. The stamp is random, made when the password is set; locks and share passwords set before 0.1.11 sign their hash instead until the password is set again. A new password, a new share or a new key makes the old cookies worthless; a stronger hash of the same password does not. `v1.` marks the format; a later format can take another marker. |
+| Signed cookies: device, folder unlock, share unlock | `v1.`, the value, and an HMAC-SHA256 keyed with `secret.key` | The device cookie signs its id and the app password's fingerprint. A folder unlock signs the folder, its password stamp and the expiry. A share unlock signs the token, the share's creation time, its password stamp and the expiry. The stamp is random, made when the password is set; locks and share passwords set before 0.1.11 sign their hash instead until the next right password stores a new hash with a stamp, after which other browsers unlock once more. A new password, a new share or a new key makes the old cookies worthless; a stronger hash of the same password does not. `v1.` marks the format; a later format can take another marker. |
 | App password | bcrypt, cost 10, over the SHA-256 of the password, in the database | Only to notice at start that `APP_PASSWORD` changed. |
 | App password at login | Both sides hashed with SHA-256, then compared in constant time | The login checks the password in the environment, held in memory. |
 | App password fingerprint | HMAC-SHA256 of the password, keyed with `secret.key`, held in memory only | Part of what the device cookie signs. |
-| Folder and share passwords | bcrypt, cost 10 | A hash made at a lower cost is replaced at the next right password; unlock cookies keep working. A password set before 0.1.11 has no stamp and keeps its hash (made at cost 10) until it is set again. |
+| Folder and share passwords | bcrypt, cost 10, over the HMAC-SHA256 of the password keyed with `secret.key`, base64 encoded; stored with the marker `k1:` | The HMAC is 44 bytes for any password, so bcrypt's 72 byte limit neither refuses nor cuts long passwords. A hash without the marker, from before 0.1.11, is bcrypt over the password itself: it is checked that way, a guess over 72 bytes never matches it, and the next right password replaces it with a marked hash, as it does a hash made at a lower cost. |
 | Second factor | TOTP (RFC 6238): HMAC-SHA1, 6 digits, 30 second steps, one step of clock drift either way | The login code, when `TOTP_SECRET` is set. HMAC-SHA1 is what authenticator apps use, and it is still sound as an HMAC. |
 | Icon file names | 4 bytes of SHA-256 of the file | Naming only, not security. |
 | Outbound TLS | Go's standard library defaults; certificates checked against the CA certificates in the image | Icon fetches. A site with a self-signed certificate gets no icon. Nothing else goes out. |
@@ -135,7 +139,8 @@ Do it when the key may have left your hands, for example a backup of the data fo
 - every API token stops working. The tokens stay in the list; revoke them and create new ones;
 - every device cookie ends, so browsers count as new for the wrong password limits until they log in again;
 - every unlocked folder locks again, and every unlocked share link asks for its password again;
-- share links keep working, and folder, share and app passwords stay as they are.
+- share links keep working, and the app password stays as it is;
+- folder and share passwords set or used since 0.1.11 no longer match, since their hash is made with the key. Remove each folder lock with the app password and lock it again, and set each share password again.
 
 A `secret.key` shorter than 32 bytes stops the start with a message, so a damaged file is never replaced without a word.
 

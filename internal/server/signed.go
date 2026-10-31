@@ -2,6 +2,8 @@ package server
 
 import (
 	"log"
+	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/pinned-cc/pinned/internal/auth"
@@ -18,42 +20,56 @@ const signedVersion = "v1."
 // signedPayload returns a signed cookie value without its version marker.
 func signedPayload(v string) string { return strings.TrimPrefix(v, signedVersion) }
 
-// checkStored checks password against a stored bcrypt hash. When it
-// matches, the hash's cost is below auth.BcryptCost and save is not nil,
-// save gets a new hash at the current cost.
-func checkStored(hash, password string, save func(newHash string)) bool {
-	ok, rehash := auth.CheckPasswordHash(hash, password)
+// checkStored checks a lock or share password against its stored hash
+// (see auth.CheckKeyedPassword). When it matches and the hash is from
+// before 0.1.11 or its cost is below auth.BcryptCost, save gets a new hash
+// in the current form at the current cost; save may be nil.
+func (s *Server) checkStored(hash, password string, save func(oldHash, newHash string)) bool {
+	ok, rehash := auth.CheckKeyedPassword(s.secret, hash, password)
 	if ok && rehash && save != nil {
-		if h, err := auth.HashPassword(password); err == nil {
-			save(h)
+		if h, err := auth.HashKeyedPassword(s.secret, password); err == nil {
+			save(hash, h)
 		}
 	}
 	return ok
 }
 
-// lockRehash is what checkStored saves a stronger hash of f's lock password
-// with, or nil for a lock set before schema 11: it has no stamp, its
-// unlock cookies sign the hash, and a new hash would end them. Every
-// release before 0.1.11 hashed at cost 10, the cost used now.
-func (s *Server) lockRehash(f *store.Folder) func(string) {
-	if f.LockStamp == nil {
-		return nil
+// hashPassword is the stored hash of a new lock or share password.
+func (s *Server) hashPassword(password string) (string, error) {
+	return auth.HashKeyedPassword(s.secret, password)
+}
+
+// easyPassword reports whether a new lock or share password is common or
+// made of the app's own words or its host name (see auth.CommonPassword).
+func (s *Server) easyPassword(r *http.Request, password string) bool {
+	hosts := []string{r.Host}
+	if s.cfg.BaseURL != "" {
+		if u, err := url.Parse(s.cfg.BaseURL); err == nil {
+			hosts = append(hosts, u.Host)
+		}
 	}
-	return func(h string) { s.rehashLock(f, h) }
+	return auth.CommonPassword(password, auth.HostWords(hosts...)...)
+}
+
+// errEasyPassword is the answer to a password easyPassword refuses.
+const errEasyPassword = "This password is too easy to guess. Choose another one."
+
+// lockRehash stores a new hash of f's lock password through rehashLock.
+func (s *Server) lockRehash(f *store.Folder) func(string, string) {
+	return func(oldHash, h string) { s.rehashLock(f, oldHash, h) }
 }
 
 // shareRehash is lockRehash for a share password.
-func (s *Server) shareRehash(sh *store.Share) func(string) {
-	if sh.PasswordStamp == nil {
-		return nil
-	}
-	return func(h string) { s.rehashShare(sh, h) }
+func (s *Server) shareRehash(sh *store.Share) func(string, string) {
+	return func(oldHash, h string) { s.rehashShare(sh, oldHash, h) }
 }
 
-// rehashLock stores a stronger hash of a folder's lock password. Unlock
-// cookies sign the lock's stamp, which stays, so they keep working.
-func (s *Server) rehashLock(f *store.Folder, hash string) {
-	if err := s.st.ReplaceLockHash(f.ID, hash); err != nil {
+// rehashLock stores a new hash of a folder's lock password. Unlock cookies
+// sign the lock's stamp, which stays, so they keep working. A lock set
+// before schema 11 has no stamp and its cookies signed the hash: it gets a
+// stamp now, so other browsers unlock it once more.
+func (s *Server) rehashLock(f *store.Folder, oldHash, hash string) {
+	if err := s.st.ReplaceLockHash(f.ID, oldHash, hash); err != nil {
 		log.Printf("rehash lock: %v", err)
 		return
 	}
@@ -62,10 +78,9 @@ func (s *Server) rehashLock(f *store.Folder, hash string) {
 	}
 }
 
-// rehashShare stores a stronger hash of a share password, keeping its
-// stamp and so the unlock cookies of other browsers.
-func (s *Server) rehashShare(sh *store.Share, hash string) {
-	if err := s.st.ReplaceShareHash(sh.Token, hash); err != nil {
+// rehashShare is rehashLock for a share password.
+func (s *Server) rehashShare(sh *store.Share, oldHash, hash string) {
+	if err := s.st.ReplaceShareHash(sh.Token, oldHash, hash); err != nil {
 		log.Printf("rehash share: %v", err)
 		return
 	}

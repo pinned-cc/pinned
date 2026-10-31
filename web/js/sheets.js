@@ -84,7 +84,7 @@ export function lockHTML(s, f) {
   const err = s.err ? `<p class="fld-err" role="alert">${esc(s.err)}</p>` : '', shake = s.shake ? ' shake' : '';
   const pw = (name, label, ac, focus) => `<label class="fld"><span class="sh-lbl">${label}</span><input class="fld-in${shake}" type="password" name="${name}" autocomplete="${ac}" enterkeyhint="go"${focus ? ' data-autofocus' : ''}></label>`;
   if (s.type === 'lock') return fHead(f) + `<form data-lock>${pw('pw', 'Password', 'new-password', true)}${pw('pw2', 'Repeat password', 'new-password')}
-    <p class="sh-text">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</p>${f.share ? `<p class="sh-text">Locking ends the share link.</p>` : ''}
+    <p class="sh-text">Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</p>${f.share ? `<p class="sh-text">Locking ends the share link.</p>` : ''}
     ${err}<div class="sv-acts"><button type="submit" class="save">Lock</button></div></form>`;
   if (s.type === 'unlock') return fHead(f) + `<form data-lock>${pw('pw', 'Password', 'current-password', true)}${err}<div class="sv-acts"><button type="submit" class="save">Unlock</button></div></form>`;
   return fHead(f) + `<form data-lock><p class="sh-text">Enter the app password to take the lock off ${esc(f.name)}.</p>${pw('pw', 'App password', 'current-password', true)}${err}
@@ -94,7 +94,7 @@ export const lockErr = e => e.status === 429 ? errorText(e, 'Try again in 30 sec
 export async function submitLock(f) {
   const s = layers.sheet, pw = f.elements.pw.value, btn = f.querySelector('button[type=submit]');
   const fail = (msg, shake) => { s.err = msg; s.shake = shake; fillSheet(); const i = sheetEl().querySelector('input[name=pw]'); if (i) i.focus(); s.shake = false; };
-  if (s.type === 'lock') { if (pw.length < 4) { fail('Use at least 4 characters.'); return; } if (pw !== f.elements.pw2.value) { fail('The passwords do not match.'); return; } }
+  if (s.type === 'lock') { if ([...pw].length < 8) { fail('Use at least 8 characters.'); return; } if (pw !== f.elements.pw2.value) { fail('The passwords do not match.'); return; } }
   else if (!pw) { f.elements.pw.focus(); return; }
   btn.disabled = true;
   try {
@@ -138,7 +138,7 @@ export async function shareToggle() {
 }
 export async function sharePatch(body) { const f = folderById.get(layers.sheet.fid); if (!f || !f.share) return; const r = await run(api('PATCH', `/api/shares/${f.share.token}`, body)); if (r.ok && layers.sheet && layers.sheet.type === 'share') fillSheet();
   if (r.ok && 'expires_days' in body) announce(body.expires_days == null ? 'The link does not expire' : `The link expires in ${plural(body.expires_days, 'day', 'days')}`); }
-/* a share password: the server's refusal (too short) shows under the field, which stays open */
+/* a share password: the server's refusal (too short, too easy to guess) shows under the field, which stays open */
 export async function sharePassword(form, password) {
   const s = layers.sheet, f = folderById.get(s.fid); if (!f || !f.share) return;
   const btn = form.querySelector('button[type=submit]'); btn.disabled = true;

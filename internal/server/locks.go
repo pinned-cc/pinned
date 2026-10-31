@@ -12,7 +12,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
 
@@ -23,7 +22,7 @@ import (
 const (
 	unlockCookiePrefix = "pinned_unlock_"
 	folderUnlockTTL    = 10 * time.Minute
-	minLockPassword    = 4
+	minLockPassword    = 8
 )
 
 func unlockCookieName(folderID int64) string {
@@ -240,17 +239,17 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if utf8.RuneCountInString(in.Password) < minLockPassword {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("password must have at least %d characters", minLockPassword))
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("Use at least %d characters.", minLockPassword))
 		return
 	}
-	if len(in.Password) > 72 {
-		writeError(w, http.StatusBadRequest, "password is too long")
+	if s.easyPassword(r, in.Password) {
+		writeError(w, http.StatusBadRequest, errEasyPassword)
 		return
 	}
 	if f.LockHash != nil {
 		key, known := s.limitKey(r)
 		ok, wait := s.attempt(r, s.folderLimiters.get(id), key, known, func() bool {
-			return checkStored(*f.LockHash, in.CurrentPassword, s.lockRehash(&f))
+			return s.checkStored(*f.LockHash, in.CurrentPassword, s.lockRehash(&f))
 		})
 		if !ok {
 			s.failed(r, "lock", wait, "folder", id)
@@ -258,9 +257,9 @@ func (s *Server) apiLockFolder(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	hash, err := auth.HashPassword(in.Password)
+	hash, err := s.hashPassword(in.Password)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "password is too long")
+		writeStoreError(w, err)
 		return
 	}
 	if err := s.st.SetLock(id, hash); err != nil {
@@ -338,7 +337,7 @@ func (s *Server) apiUnlockFolder(w http.ResponseWriter, r *http.Request) {
 	}
 	key, known := s.limitKey(r)
 	ok, wait := s.attempt(r, s.folderLimiters.get(id), key, known, func() bool {
-		return checkStored(*f.LockHash, in.Password, s.lockRehash(&f))
+		return s.checkStored(*f.LockHash, in.Password, s.lockRehash(&f))
 	})
 	if !ok {
 		s.failed(r, "lock", wait, "folder", id)

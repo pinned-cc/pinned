@@ -99,7 +99,7 @@ func LoadSecret(dataDir string) ([]byte, error) {
 	b, err := os.ReadFile(path)
 	if err == nil {
 		if len(b) < SecretSize {
-			return nil, fmt.Errorf("%s holds %d bytes, it needs at least %d; restore it from a backup, or delete it to start over (this signs out every session and revokes every API token)", path, len(b), SecretSize)
+			return nil, fmt.Errorf("%s holds %d bytes, it needs at least %d; restore it from a backup, or delete it to start over (this signs out every session, revokes every API token, and folder and share passwords must be set again)", path, len(b), SecretSize)
 		}
 		return b, nil
 	}

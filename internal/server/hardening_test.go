@@ -112,8 +112,8 @@ func TestTokenScope(t *testing.T) {
 func TestTokenStateHidesLockedFolders(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	tok := e.newToken("ext")
 	// The session is unlocked, the token never is.
 	body := string(readAll(e.bearer("GET", "/api/state", tok, nil)))
@@ -334,7 +334,7 @@ func TestHealthWithSession(t *testing.T) {
 func TestImportNeverWritesIntoLockedFolder(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	file := `<DL><p>
 <DT><H3>Work</H3>
 <DL><p>
@@ -480,7 +480,7 @@ func TestPinnedOrderAndBulkRespectLocks(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
 	e.expect("PATCH", "/api/bookmarks/"+itoa(f.plain.ID), map[string]any{"pinned": true}, 200)
-	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.expect("PUT", "/api/pinned/order", map[string]any{"ids": []int64{f.inClient.ID, f.plain.ID}}, 404)
 	e.expect("PUT", "/api/pinned/order", map[string]any{"ids": []int64{f.plain.ID}}, 204)
 	e.expect("POST", "/api/bookmarks/bulk", map[string]any{"ids": []int64{f.plain.ID, f.inClient.ID}, "action": "move", "folder_id": f.reading.ID}, 404)
@@ -498,7 +498,7 @@ func TestCheckHidesIconsOfLockedBookmarks(t *testing.T) {
 	if chk["icon"] == nil {
 		t.Fatal("icon not offered while open")
 	}
-	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.client.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	chk = decode[map[string]any](t, e.expect("GET", "/api/check?url="+url.QueryEscape("https://example.org/other"), nil, 200))
 	if chk["icon"] != nil {
 		t.Errorf("icon of a hidden bookmark offered: %v", chk)

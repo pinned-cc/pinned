@@ -37,6 +37,17 @@ func TestRefusesShortPassword(t *testing.T) {
 	}
 }
 
+func TestRefusesEasyPassword(t *testing.T) {
+	t.Setenv("DATA_DIR", t.TempDir())
+	t.Setenv("BASE_URL", "https://links.halftone.example")
+	for _, pw := range []string{"Password123", "SUNSHINE", "pinned2026!", "P@ssw0rd!", "halftone1234"} {
+		t.Setenv("APP_PASSWORD", pw)
+		if err := run(); err == nil || !strings.Contains(err.Error(), "APP_PASSWORD is too easy to guess") {
+			t.Errorf("%q: want a clear error, got %v", pw, err)
+		}
+	}
+}
+
 func TestRefusesBadSettings(t *testing.T) {
 	t.Setenv("APP_PASSWORD", "long enough")
 	t.Setenv("DATA_DIR", t.TempDir())

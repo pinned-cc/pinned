@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -142,6 +143,19 @@ func syncPassword(st *store.Store, secret []byte, password string) (changed bool
 	}, func() (string, error) { return auth.HashAppPassword(password) })
 }
 
+// easyAppPassword reports whether the app password is common or made of
+// the app's own words or the host name of BASE_URL or of this machine.
+func easyAppPassword(password, baseURL string) bool {
+	var hosts []string
+	if u, err := url.Parse(baseURL); err == nil && u.Host != "" {
+		hosts = append(hosts, u.Host)
+	}
+	if h, err := os.Hostname(); err == nil {
+		hosts = append(hosts, h)
+	}
+	return auth.CommonPassword(password, auth.HostWords(hosts...)...)
+}
+
 // settings is what run reads from the environment before it touches the
 // data folder.
 type settings struct {
@@ -168,6 +182,9 @@ func readSettings() (c settings, err error) {
 	}
 	if utf8.RuneCountInString(c.password) < minPassword {
 		return c, fmt.Errorf("APP_PASSWORD is shorter than %d characters. Choose a longer password, then start again", minPassword)
+	}
+	if easyAppPassword(c.password, os.Getenv("BASE_URL")) {
+		return c, errors.New("APP_PASSWORD is too easy to guess: it is a common password, or made of words like pinned, password or your host name. Choose another one, then start again")
 	}
 	c.dataDir = env("DATA_DIR", "/data")
 	c.port = env("PORT", "8080")

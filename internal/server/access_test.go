@@ -96,13 +96,13 @@ func TestSVGCharset(t *testing.T) {
 func TestExportLeavesOutLockedFolders(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	body := string(readAll(e.get("/api/export")))
 	if strings.Contains(body, "example.org/portal") || strings.Contains(body, "example.com/board") ||
 		strings.Contains(body, ">Work</H3>") || strings.Contains(body, ">Client</H3>") || !strings.Contains(body, "https://example.net/a") {
 		t.Errorf("export while locked: %s", body)
 	}
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	body = string(readAll(e.get("/api/export")))
 	if !strings.Contains(body, "https://example.org/portal") || !strings.Contains(body, ">Client</H3>") {
 		t.Errorf("export after unlock lost the links: %s", body)
@@ -122,7 +122,7 @@ func TestLockedDuplicateIsNotTold(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
 	tok := e.newToken("ext")
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	u := "https://example.org/portal"
 	fresh := func(body []byte) {
 		t.Helper()
@@ -170,7 +170,7 @@ func TestLockedDuplicateIsNotTold(t *testing.T) {
 	}
 
 	// After unlocking, the hidden bookmarks show beside the new ones.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	st := e.state()
 	count := func(addr string) int {
 		n := 0
@@ -192,7 +192,7 @@ func TestLockedDuplicateIsNotTold(t *testing.T) {
 func TestHealthHasNoCount(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	h := decode[map[string]any](t, readAll(e.get("/health")))
 	if _, ok := h["bookmarks"]; ok || h["ok"] != true {
 		t.Errorf("health: %v", h)
@@ -207,7 +207,7 @@ func TestIconsOnlyOfVisibleBookmarks(t *testing.T) {
 	e.iconFor(f.plain.ID, "https://example.net/a", "open.png")
 	inbox := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.com/inbox"}, 201))
 	e.iconFor(inbox.ID, "https://example.com/inbox", "inbox.png")
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	status := func(name string) int {
 		resp := e.get("/icons/" + name)
 		resp.Body.Close()
@@ -223,7 +223,7 @@ func TestIconsOnlyOfVisibleBookmarks(t *testing.T) {
 		t.Errorf("icon nobody uses: %d", code)
 	}
 	// The same icon on a visible bookmark makes it visible.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	if code := status("locked.png"); code != 200 {
 		t.Errorf("icon after unlock: %d", code)
 	}
@@ -235,8 +235,8 @@ func TestMoveIntoLockedFolderEndsShare(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
 	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/share", map[string]any{}, 201))
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.expect("PATCH", "/api/folders/"+itoa(f.reading.ID), map[string]any{"parent_id": f.client.ID}, 200)
 	if _, err := e.st.ShareByToken(sh.Token); err == nil {
 		t.Error("share survived the move into a locked folder")
@@ -251,7 +251,7 @@ func TestMoveIntoLockedFolderEndsShare(t *testing.T) {
 func TestLeftoverShareUnderLock(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	// What an older version left: a share inside the locked folder.
 	sh, err := e.st.CreateShare(f.client.ID, "leftoverleftoverleftoverleftover", nil, nil)
 	if err != nil {
@@ -401,11 +401,11 @@ func overHTTPS(t *testing.T, e *env, method, path, cookie, body string) *http.Re
 func TestUnlockAndShareCookiePrefixes(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
 	login := loginOver(t, e, true)
 	session := "__Host-" + CookieName + "=" + cookieNamed(login, "__Host-"+CookieName).Value
 
-	resp := overHTTPS(t, e, "POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", session, `{"password":"s3cret"}`)
+	resp := overHTTPS(t, e, "POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", session, `{"password":"s3cret-lock"}`)
 	name := "__Host-pinned_unlock_" + itoa(f.work.ID)
 	c := cookieNamed(resp, name)
 	if resp.StatusCode != 204 || c == nil || !c.Secure || c.Path != "/" || c.Domain != "" || cookieNamed(resp, "pinned_unlock_"+itoa(f.work.ID)) != nil {
@@ -516,11 +516,11 @@ func TestShareLimitIsPerShare(t *testing.T) {
 func TestFolderLimitIsPerFolderAndSparesKnownBrowsers(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/lock", map[string]any{"password": "read"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/lock", map[string]any{"password": "reading-lock"}, 204)
 	fillCap(e.server.folderLimiters.get(f.work.ID))
 	// This browser logged in with the password: not held.
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	// A session without a device cookie is held, for that folder only.
 	var session string
 	for _, c := range e.client.Jar.Cookies(mustURL(e.srv.URL + "/")) {
@@ -539,10 +539,10 @@ func TestFolderLimitIsPerFolderAndSparesKnownBrowsers(t *testing.T) {
 		resp.Body.Close()
 		return resp.StatusCode
 	}
-	if code := try(f.work.ID, "s3cret"); code != 429 {
+	if code := try(f.work.ID, "s3cret-lock"); code != 429 {
 		t.Errorf("unknown browser over the folder's cap: %d", code)
 	}
-	if code := try(f.reading.ID, "read"); code != 204 {
+	if code := try(f.reading.ID, "reading-lock"); code != 204 {
 		t.Errorf("other folder held by the cap: %d", code)
 	}
 }

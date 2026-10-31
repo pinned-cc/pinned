@@ -18,7 +18,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/pinned-cc/pinned/internal/auth"
 	"github.com/pinned-cc/pinned/internal/store"
 )
 
@@ -138,9 +137,13 @@ func (s *Server) readShareInput(w http.ResponseWriter, r *http.Request) (shareIn
 				writeError(w, http.StatusBadRequest, fmt.Sprintf("A share password needs at least %d characters.", minSharePassword))
 				return in, false
 			}
-			h, err := auth.HashPassword(*pw)
+			if s.easyPassword(r, *pw) {
+				writeError(w, http.StatusBadRequest, errEasyPassword)
+				return in, false
+			}
+			h, err := s.hashPassword(*pw)
 			if err != nil {
-				writeError(w, http.StatusBadRequest, "password is too long")
+				writeStoreError(w, err)
 				return in, false
 			}
 			in.hash = &h
@@ -332,7 +335,7 @@ func (s *Server) shareUnlock(w http.ResponseWriter, r *http.Request) {
 	if sh.PasswordHash != nil {
 		key, known := s.limitKey(r)
 		ok, wait := s.attempt(r, s.shareLimiters.get(sh.ID), key, known, func() bool {
-			return checkStored(*sh.PasswordHash, in.Password, s.shareRehash(&sh))
+			return s.checkStored(*sh.PasswordHash, in.Password, s.shareRehash(&sh))
 		})
 		if !ok {
 			s.failed(r, "share", wait, "folder", sh.FolderID)

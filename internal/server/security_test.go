@@ -175,8 +175,8 @@ func cookieOf(e *env, name string) string {
 func TestUnlocksAndCSRFRefusalsAreLogged(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
-	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret-lock"}, 204)
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret-lock"}, 204)
 	e.wantEvent("lock.unlock", 1)
 	if l := e.events("lock.unlock"); len(l) == 1 && !strings.Contains(l[0], "folder="+itoa(f.work.ID)) {
 		t.Errorf("lock.unlock line: %s", l[0])
@@ -191,7 +191,7 @@ func TestUnlocksAndCSRFRefusalsAreLogged(t *testing.T) {
 	if l := e.events("share.unlock"); len(l) == 1 && !strings.Contains(l[0], "folder="+itoa(f.reading.ID)) {
 		t.Errorf("share.unlock line: %s", l[0])
 	}
-	if strings.Contains(e.logs.String(), sh.Token) || strings.Contains(e.logs.String(), "s3cret") {
+	if strings.Contains(e.logs.String(), sh.Token) || strings.Contains(e.logs.String(), "s3cret-lock") {
 		t.Errorf("a secret in the log:\n%s", e.logs.String())
 	}
 

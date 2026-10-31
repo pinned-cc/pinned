@@ -742,6 +742,8 @@ async function desktop(browser, engine) {
     const pw = page.locator('#sheet form[data-sharepw] input[name=pw]'); await visible(pw);
     await pw.fill('short1'); await pw.press('Enter');
     await visible(page.locator('#sheet .share-pwf .fld-err', { hasText: 'at least 8' }));
+    await page.locator('#sheet form[data-sharepw] input[name=pw]').fill('sunshine'); await page.locator('#sheet form[data-sharepw] input[name=pw]').press('Enter');
+    await visible(page.locator('#sheet .share-pwf .fld-err', { hasText: 'too easy to guess' }));
     await page.locator('#sheet form[data-sharepw] input[name=pw]').fill('long-enough-1');
     await page.locator('#sheet form[data-sharepw] input[name=pw]').press('Enter');
     await visible(page.locator('#sheet .share-locked'));
@@ -846,7 +848,9 @@ async function desktop(browser, engine) {
     await menuItem(page, 'Lock with a password').click();
     await visible(page.locator('#layer.dialog.open #sheet'));
     await page.fill('#sheet input[name=pw]', 'abc'); await page.fill('#sheet input[name=pw2]', 'abc'); await page.press('#sheet input[name=pw2]', 'Enter');
-    await visible(page.locator('#sheet .fld-err', { hasText: 'at least 4' }));
+    await visible(page.locator('#sheet .fld-err', { hasText: 'at least 8' }));
+    await page.fill('#sheet input[name=pw]', 'Password1'); await page.fill('#sheet input[name=pw2]', 'Password1'); await page.press('#sheet input[name=pw2]', 'Enter');
+    await visible(page.locator('#sheet .fld-err', { hasText: 'too easy to guess' }));
     await page.fill('#sheet input[name=pw]', T.lockPw); await page.fill('#sheet input[name=pw2]', T.lockPw); await page.press('#sheet input[name=pw2]', 'Enter');
     await toastWith(page, 'Folder locked'); await announced(page, /^Folder locked$/, 'folder locked');
     await visible(page.locator(`#side .sf.locked[data-fid="${folderId}"]`));
