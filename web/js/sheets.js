@@ -356,7 +356,7 @@ export function checkUrl(now) {
 }
 export async function doSave(inbox) {
   const s = layers.save; if (s.busy || s.ticked) return; const url = s.url.trim();
-  if (!validUrl(url)) { s.err = 'Enter a full address starting with http or https.'; fillSheet(); sheetEl().querySelector('textarea').focus(); return; }
+  if (!validUrl(url)) { s.err = 'Enter a full address starting with http or https.'; fillSheet(); const ta = sheetEl().querySelector('textarea'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return; } /* the caret at the end, where the fix usually goes */
   const folder = inbox ? null : s.folder;
   const body = { title: s.title.trim() || hostFromUrl(url), url, folder_id: folder == null ? null : folder }; if (s.dup) body.force = true;
   s.busy = true; s.err = '';

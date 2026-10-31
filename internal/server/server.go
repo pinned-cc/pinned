@@ -480,15 +480,24 @@ func (s *Server) checkApp(r *http.Request, check func() bool) (ok bool, wait tim
 // the wait back without any check, so a wrong and a right password answer
 // alike; it is logged as totp.wait.
 func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wait time.Duration) {
+	ok, wait, _ = s.checkLoginTried(r, password, code)
+	return ok, wait
+}
+
+// checkLoginTried is checkLogin that also reports whether the password was
+// compared at all: true for a wrong try that itself started the wait (the
+// fifth), false for a try refused because a wait already held.
+func (s *Server) checkLoginTried(r *http.Request, password, code string) (ok bool, wait time.Duration, tried bool) {
 	if s.totp != nil {
 		if wait := s.codeBackoff.Waiting(); wait > 0 {
 			s.failed(r, "totp", wait)
-			return false, wait
+			return false, wait, false
 		}
 	}
 	codeWrong := false
 	var codeWait time.Duration
 	ok, wait = s.checkApp(r, func() bool {
+		tried = true
 		if !auth.PasswordOK(s.cfg.Password, password) {
 			return false
 		}
@@ -507,7 +516,7 @@ func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wa
 		return okCode
 	})
 	if ok {
-		return true, 0
+		return true, 0, true
 	}
 	area := "login"
 	if codeWrong {
@@ -515,7 +524,7 @@ func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wa
 	}
 	wait = max(wait, codeWait)
 	s.failed(r, area, wait)
-	return false, wait
+	return false, wait, tried
 }
 
 // wrongLogin is the message for a refused login.

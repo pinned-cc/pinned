@@ -2000,9 +2000,9 @@ async function flowFixes(browser, engine) {
   await page.reload(); await visible(page.locator('#side .si'));
   const openFolder = async f => { await page.click(`#side .sf[data-fid="${f.id}"]`); await until(page, n => (document.querySelector('#tbwrap h2') || {}).textContent === n, f.name, 'folder view'); };
 
-  await check('login page: a wait says the time the server sent, a wrong code says a code works once', async () => {
+  await check('login page: a wait says the time the server sent; the wrong try that starts it says both', async () => {
     const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }), lp = await c.newPage();
-    for (const [q, want] of [['error=wait&wait=75', 'Too many tries. Wait 75 seconds, then try again.'], ['error=wait&wait=600', 'Too many tries. Wait 10 minutes, then try again.'], ['error=wait', 'Too many tries. Wait 30 seconds, then try again.']]) {
+    for (const [q, want] of [['error=1&wait=30', 'Wrong password. Wait 30 seconds before the next try.'], ['error=wait&wait=75', 'Too many tries. Wait 75 seconds, then try again.'], ['error=wait&wait=600', 'Too many tries. Wait 10 minutes, then try again.'], ['error=wait', 'Too many tries. Wait 30 seconds, then try again.']]) {
       await lp.goto(`${BASE}/login?${q}`); const got = (await lp.textContent('#login-err')).trim(); assert(got === want, q + ': ' + got); }
     await c.close();
   });
@@ -2011,9 +2011,11 @@ async function flowFixes(browser, engine) {
     await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
     await page.fill('#sheet [data-f=url]', 'example.com'); await page.click('#sheet [data-a="save-go"]');
     await visible(page.locator('#sheet .fld-err', { hasText: 'Enter a full address' }));
-    await page.locator('#sheet [data-f=url]').press('End'); await page.keyboard.type('/x');
+    /* the caret waits at the end of the address, so typing goes on from there (End on macOS scrolls, it does not move it) */
+    await page.keyboard.type('/x');
     await gone(page.locator('#sheet .fld-err'));
     assert(await page.evaluate(() => document.activeElement && document.activeElement.dataset.f === 'url'), 'the caret left the address');
+    assert(await page.inputValue('#sheet [data-f=url]') === 'example.com/x', 'typing after the error landed elsewhere: ' + await page.inputValue('#sheet [data-f=url]'));
     await page.keyboard.press('Escape'); await sheetClosed(page);
   });
 
@@ -2041,6 +2043,9 @@ async function flowFixes(browser, engine) {
     await openFolder(B); await page.click('#tbwrap [data-a="folder-menu"]'); await menuItem(page, 'Lock with a password').click();
     await visible(page.locator('#layer.dialog.open #sheet'));
     const x = page.locator('#sheet .sh-head [data-a="close"][aria-label="Close"]'); await visible(x);
+    /* the dialog scales in; measure once its transitions have ended */
+    await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
+    await page.waitForTimeout(50);
     const box = await x.boundingBox(); assert(box.width >= 44 && box.height >= 44, 'Close is smaller than 44 px');
     await shot(page, `${engine}-fix-lock-close`);
     await x.click(); await sheetClosed(page);

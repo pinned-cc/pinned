@@ -279,8 +279,14 @@ func TestLoginFormRateLimit(t *testing.T) {
 		resp, _ := e.client.PostForm(e.srv.URL+"/login", url.Values{"password": {"x"}})
 		loc = resp.Header.Get("Location")
 	}
-	if !strings.HasPrefix(loc, "/login?error=wait&wait=30&") {
+	// the fifth wrong try was compared and started the wait: it says both
+	if !strings.HasPrefix(loc, "/login?error=1&wait=30&") {
 		t.Errorf("after 5 failures: %s", loc)
+	}
+	// a try during the wait is not compared at all, right or wrong
+	resp, _ := e.client.PostForm(e.srv.URL+"/login", url.Values{"password": {"pw"}})
+	if loc := resp.Header.Get("Location"); !strings.HasPrefix(loc, "/login?error=wait&wait=30&") {
+		t.Errorf("during the wait: %s", loc)
 	}
 }
 

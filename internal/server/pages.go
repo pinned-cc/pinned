@@ -83,8 +83,9 @@ func (s *Server) loginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // loginForm handles the plain HTML form. On failure it goes back to
-// /login?error=1 (wrong password) or /login?error=wait&wait=<seconds>
-// (rate limited), so the page can say how long the wait really is.
+// /login?error=1 (wrong password), error=1&wait=<seconds> (wrong, and that
+// try started a wait) or error=wait&wait=<seconds> (refused during a wait),
+// so the page can say how long the wait really is.
 func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 	if err := r.ParseForm(); err != nil {
@@ -95,10 +96,14 @@ func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 	if next == "/" {
 		next = safeNext(r.URL.Query().Get("next"))
 	}
-	ok, wait := s.checkLogin(r, r.PostForm.Get("password"), r.PostForm.Get("code"))
+	ok, wait, tried := s.checkLoginTried(r, r.PostForm.Get("password"), r.PostForm.Get("code"))
 	if !ok {
+		// a wrong try that starts the wait says both: error=1 with the wait
 		reason := "1"
-		if wait > 0 {
+		switch {
+		case wait > 0 && tried:
+			reason = "1&wait=" + strconv.Itoa(int(wait.Seconds()+0.999))
+		case wait > 0:
 			reason = "wait&wait=" + strconv.Itoa(int(wait.Seconds()+0.999))
 		}
 		http.Redirect(w, r, "/login?error="+reason+"&next="+url.QueryEscape(next), http.StatusSeeOther)
