@@ -204,10 +204,35 @@ var migrations = []string{
 // NewerSchemaError means the database was written by a later version. That
 // version may have changed tables this one would misread, so it does not
 // start at all.
-type NewerSchemaError struct{ Have, Know int }
+// Backup names the newest copy in the data folder taken before an upgrade
+// from this version's schema, the one to go back to, or is empty.
+type NewerSchemaError struct {
+	Have, Know int
+	Backup     string
+}
 
 func (e *NewerSchemaError) Error() string {
-	return fmt.Sprintf("database was written by a newer Pinned (schema %d); this version knows %d. Update the image or restore a backup.", e.Have, e.Know)
+	msg := fmt.Sprintf("database was written by a newer Pinned (schema %d); this version knows %d. Update the image", e.Have, e.Know)
+	if e.Backup == "" {
+		return msg + " or restore a backup."
+	}
+	return msg + ", or to stay on this version restore " + e.Backup + " from the data folder as bookmarks.db (README, Going back to an older version)."
+}
+
+// newestBackup returns the file name of the newest upgrade copy of schema
+// next to the database at dbPath, or "".
+func newestBackup(dbPath string, schema int) string {
+	all, err := listBackups(dbPath)
+	if err != nil {
+		return ""
+	}
+	best := backupFile{}
+	for _, b := range all {
+		if b.schema == schema && (best.name == "" || b.name > best.name) {
+			best = b
+		}
+	}
+	return best.name
 }
 
 // BackupError means the copy taken before a schema upgrade failed, so the
@@ -237,7 +262,7 @@ func (s *Store) migrate(path string) error {
 		return err
 	}
 	if version > len(migrations) {
-		return &NewerSchemaError{Have: version, Know: len(migrations)}
+		return &NewerSchemaError{Have: version, Know: len(migrations), Backup: newestBackup(path, len(migrations))}
 	}
 	// A new database (version 0) has nothing to keep.
 	if version > 0 && version < len(migrations) {

@@ -237,6 +237,31 @@ func readSettings() (c settings, err error) {
 	return c, nil
 }
 
+// prepareDataDir makes the data folder and its icons and export folders and
+// checks that a file can be written there. A folder owned by another user,
+// as when Docker made a missing ./data as root, gets a message that names
+// the user Pinned runs as and the chown that fixes it.
+func prepareDataDir(dataDir string) error {
+	for _, dir := range []string{dataDir, filepath.Join(dataDir, "icons"), filepath.Join(dataDir, "export")} {
+		if err := os.MkdirAll(dir, dirMode); err != nil {
+			return dataDirError(dataDir, dir, os.Getuid(), err)
+		}
+	}
+	f, err := os.CreateTemp(dataDir, ".write-check-*")
+	if err != nil {
+		return dataDirError(dataDir, dataDir, os.Getuid(), err)
+	}
+	f.Close()
+	return os.Remove(f.Name())
+}
+
+func dataDirError(dataDir, dir string, uid int, err error) error {
+	if errors.Is(err, fs.ErrPermission) {
+		return fmt.Errorf("cannot write to %s as user %d, the user Pinned runs as. On the host, give the folder you mount at %s to that user, for example: sudo chown -R %d:%d ./data. Then start again", dir, uid, dataDir, uid, uid)
+	}
+	return fmt.Errorf("cannot create %s: %w (check that DATA_DIR is writable)", dir, err)
+}
+
 func run() error {
 	c, err := readSettings()
 	if err != nil {
@@ -245,10 +270,8 @@ func run() error {
 	password, dataDir, port, totpKey := c.password, c.dataDir, c.port, c.totpKey
 
 	privateUmask()
-	for _, dir := range []string{dataDir, filepath.Join(dataDir, "icons"), filepath.Join(dataDir, "export")} {
-		if err := os.MkdirAll(dir, dirMode); err != nil {
-			return fmt.Errorf("cannot create %s: %w (check that DATA_DIR is writable)", dir, err)
-		}
+	if err := prepareDataDir(dataDir); err != nil {
+		return err
 	}
 	tightenModes(dataDir)
 	secret, err := auth.LoadSecret(dataDir)

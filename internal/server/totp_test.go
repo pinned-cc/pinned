@@ -123,11 +123,21 @@ func TestTOTPCodeBackoff(t *testing.T) {
 		t.Fatalf("right code during the wait: %d %s", code, out)
 	}
 	e.expect("POST", "/api/login", map[string]string{"password": "nope", "code": "222222"}, 429)
+	// The login form goes back with the real wait, not a fixed 30 seconds.
+	newAddress()
+	resp, err := e.client.PostForm(e.srv.URL+"/login", url.Values{"password": {"pw"}, "code": {codeAt(*now)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if loc := resp.Header.Get("Location"); !strings.Contains(loc, "error=wait&wait=60&") {
+		t.Errorf("form login during the code wait went to %q", loc)
+	}
 	// After the wait one more wrong code doubles it.
 	clock = clock.Add(time.Minute)
 	newAddress()
 	code, out = e.do("POST", "/api/login", map[string]string{"password": "pw", "code": "111111"})
-	if code != 429 || !strings.Contains(string(out), "120 seconds") {
+	if code != 429 || !strings.Contains(string(out), "2 minutes") {
 		t.Fatalf("wrong code after the first wait: %d %s", code, out)
 	}
 	clock = clock.Add(2 * time.Minute)

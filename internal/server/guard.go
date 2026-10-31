@@ -178,7 +178,26 @@ func refuseAttempt(w http.ResponseWriter, wait time.Duration, status int, msg st
 func tooMany(w http.ResponseWriter, wait time.Duration) {
 	secs := int(wait.Seconds() + 0.999)
 	w.Header().Set("Retry-After", strconv.Itoa(secs))
-	writeError(w, http.StatusTooManyRequests, fmt.Sprintf("Too many tries. Wait %d seconds.", secs))
+	writeError(w, http.StatusTooManyRequests, "Too many tries. Wait "+waitText(secs)+", then try again.")
+}
+
+// waitText says a wait in seconds the way a person would: "30 seconds",
+// "2 minutes", "3 hours", rounded up so the wait is never shorter than said.
+func waitText(secs int) string {
+	unit := func(n int, one string) string {
+		if n == 1 {
+			return "1 " + one
+		}
+		return strconv.Itoa(n) + " " + one + "s"
+	}
+	switch {
+	case secs < 120:
+		return unit(max(secs, 1), "second")
+	case secs < 2*3600:
+		return unit((secs+59)/60, "minute")
+	default:
+		return unit((secs+3599)/3600, "hour")
+	}
 }
 
 // Security headers on every response. /icons and the share pages narrow

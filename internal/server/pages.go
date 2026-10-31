@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -82,7 +83,8 @@ func (s *Server) loginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // loginForm handles the plain HTML form. On failure it goes back to
-// /login?error=1 (wrong password) or /login?error=wait (rate limited).
+// /login?error=1 (wrong password) or /login?error=wait&wait=<seconds>
+// (rate limited), so the page can say how long the wait really is.
 func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 	if err := r.ParseForm(); err != nil {
@@ -97,7 +99,7 @@ func (s *Server) loginForm(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		reason := "1"
 		if wait > 0 {
-			reason = "wait"
+			reason = "wait&wait=" + strconv.Itoa(int(wait.Seconds()+0.999))
 		}
 		http.Redirect(w, r, "/login?error="+reason+"&next="+url.QueryEscape(next), http.StatusSeeOther)
 		return

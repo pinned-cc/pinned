@@ -604,6 +604,23 @@ func TestOpenRefusesNewerSchema(t *testing.T) {
 	if err.Error() != want {
 		t.Errorf("message %q", err)
 	}
+	// With copies in the folder, the message names the newest one of this
+	// version's schema, the one to go back to.
+	dir := filepath.Dir(path)
+	for _, name := range []string{
+		fmt.Sprintf("test-schema%d-2026-10-01-100000.db", len(migrations)),
+		fmt.Sprintf("test-schema%d-2026-11-02-090000.db", len(migrations)),
+		fmt.Sprintf("test-schema%d-2026-12-01-100000.db", len(migrations)-1),
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, err = Open(path)
+	wantFile := fmt.Sprintf("test-schema%d-2026-11-02-090000.db", len(migrations))
+	if !errors.As(err, &e) || e.Backup != wantFile || !strings.Contains(err.Error(), "restore "+wantFile+" from the data folder as bookmarks.db") {
+		t.Errorf("message with copies: %v", err)
+	}
 }
 
 func TestIconFailures(t *testing.T) {

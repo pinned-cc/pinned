@@ -279,8 +279,17 @@ func TestLoginFormRateLimit(t *testing.T) {
 		resp, _ := e.client.PostForm(e.srv.URL+"/login", url.Values{"password": {"x"}})
 		loc = resp.Header.Get("Location")
 	}
-	if !strings.HasPrefix(loc, "/login?error=wait") {
+	if !strings.HasPrefix(loc, "/login?error=wait&wait=30&") {
 		t.Errorf("after 5 failures: %s", loc)
+	}
+}
+
+func TestWaitText(t *testing.T) {
+	for secs, want := range map[int]string{0: "1 second", 1: "1 second", 30: "30 seconds", 119: "119 seconds",
+		120: "2 minutes", 121: "3 minutes", 3600: "60 minutes", 7200: "2 hours", 86400: "24 hours"} {
+		if got := waitText(secs); got != want {
+			t.Errorf("waitText(%d) = %q, want %q", secs, got, want)
+		}
 	}
 }
 

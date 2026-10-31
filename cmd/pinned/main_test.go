@@ -3,11 +3,14 @@ package main
 import (
 	"bytes"
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
@@ -270,5 +273,33 @@ func TestThirdPartyNotices(t *testing.T) {
 		if !strings.Contains(n, want) {
 			t.Errorf("notices lack %q", want)
 		}
+	}
+}
+
+func TestDataDirNotWritableNamesUserAndChown(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("root writes anywhere")
+	}
+	dir := filepath.Join(t.TempDir(), "data")
+	if err := os.Mkdir(dir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o700) })
+	err := prepareDataDir(dir)
+	uid := os.Getuid()
+	want := fmt.Sprintf("as user %d, the user Pinned runs as. On the host, give the folder you mount at %s to that user, for example: sudo chown -R %d:%d ./data. Then start again", uid, dir, uid, uid)
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("message: %v", err)
+	}
+	// a writable folder passes and keeps no check file behind
+	ok := t.TempDir()
+	if err := prepareDataDir(ok); err != nil {
+		t.Fatal(err)
+	}
+	if left, _ := filepath.Glob(filepath.Join(ok, ".write-check-*")); len(left) != 0 {
+		t.Errorf("check file left: %v", left)
+	}
+	if err := dataDirError("/data", "/data", 1000, errors.New("disk full")); !strings.Contains(err.Error(), "cannot create /data: disk full") {
+		t.Errorf("other error: %v", err)
 	}
 }
