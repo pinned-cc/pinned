@@ -9,12 +9,15 @@
 #   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | APP_PASSWORD='...' sh
 #
 # Afterwards Pinned answers on plain http on port 9095 of the server, on its public address. Put it behind HTTPS before you use it from
-# outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README.
+# outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README. With the proxy on
+# this server, run it again with PINNED_BIND=127.0.0.1: a firewall such as ufw does not block Docker's ports.
 set -eu
 
 DIR="${PINNED_DIR:-$HOME/pinned}"
 PORT="${PINNED_PORT:-9095}"
 IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:latest}"
+# PINNED_BIND=127.0.0.1 publishes the port on this server only, for a proxy on the same server that does HTTPS
+BIND="${PINNED_BIND:-}"
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
@@ -45,7 +48,7 @@ if [ -z "${APP_PASSWORD:-}" ]; then
   stty -echo <"$TTY" 2>/dev/null || true
   trap 'stty echo <"$TTY" 2>/dev/null' EXIT
   trap 'exit 130' INT TERM
-  read -r APP_PASSWORD <"$TTY" || true
+  IFS= read -r APP_PASSWORD <"$TTY" || true
   stty echo <"$TTY" 2>/dev/null || true
   trap - EXIT INT TERM
   printf '\n'
@@ -62,12 +65,13 @@ services:
     container_name: pinned
     restart: unless-stopped
     ports:
-      - "$PORT:8080"
+      - "${BIND:+$BIND:}$PORT:8080"
     environment:
-      APP_PASSWORD: \${APP_PASSWORD:?set APP_PASSWORD}
+      APP_PASSWORD_FILE: /run/secrets/app_password
       TZ: \${TZ:-UTC}
     volumes:
       - ./data:/data
+      - ./app_password:/run/secrets/app_password:ro
     read_only: true
     tmpfs:
       - /tmp
@@ -77,24 +81,45 @@ services:
       - no-new-privileges:true
 YAML
 
-# the password lives in a file only this user can read; compose reads it as .env
+# the password goes into a file as it was typed, not into .env, where compose would read $ and " #" in it.
+# Only the user the container runs as (1000) can read it.
 umask 077
-printf 'APP_PASSWORD=%s\n' "$APP_PASSWORD" > .env
-# the container runs as uid 1000 and needs to write the data folder
-chown 1000:1000 data 2>/dev/null || sudo chown 1000:1000 data
+rm -f app_password .env  # a file from an earlier run, and the .env older versions of this script wrote
+printf '%s' "$APP_PASSWORD" > app_password
+# the container runs as uid 1000: it needs to write the data folder and read the password file
+chown 1000:1000 data app_password 2>/dev/null || sudo chown 1000:1000 data app_password
 
 $DOCKER compose pull
 $DOCKER compose up -d
 
+# say it runs only once it answers: a refused password makes the container restart instead
+up=""
+for _ in $(seq 1 30); do
+  if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/health" 2>/dev/null; then up=1; break; fi
+  sleep 2
+done
+if [ -z "$up" ]; then
+  $DOCKER compose logs --tail 20 pinned >&2 || true
+  die "Pinned did not start; the log above says why. Fix it, then: cd $DIR && $DOCKER compose up -d"
+fi
+
 IP="$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || true)"
 say ""
 say "Pinned is running."
-say "  address   http://${IP:-this-server}:$PORT"
-say "  files     $DIR/compose.yml, $DIR/.env, $DIR/data/bookmarks.db"
+if [ -n "$BIND" ]; then
+  say "  address   http://$BIND:$PORT, for your HTTPS proxy on this server"
+else
+  say "  address   http://${IP:-this-server}:$PORT"
+fi
+say "  files     $DIR/compose.yml, $DIR/app_password, $DIR/data/bookmarks.db"
 say "  update    cd $DIR && $DOCKER compose pull && $DOCKER compose up -d"
 say "  stop      cd $DIR && $DOCKER compose down"
-say ""
-say "WARNING: Pinned answers on plain http, on the server's public address."
-say "Your password would cross the internet unencrypted. Do not log in from outside yet."
-say "Put HTTPS in front first (Caddy, Traefik or a Cloudflare tunnel) and keep port $PORT closed to the internet:"
-say "  https://github.com/pinned-cc/pinned#behind-a-reverse-proxy"
+if [ -z "$BIND" ]; then
+  say ""
+  say "WARNING: Pinned answers on plain http, on the server's public address."
+  say "Your password would cross the internet unencrypted. Do not log in from outside yet."
+  say "Put HTTPS in front first (Caddy, Traefik or a Cloudflare tunnel). A firewall such as ufw does"
+  say "not block a port Docker publishes, so once the proxy runs on this server, run this again with"
+  say "PINNED_BIND=127.0.0.1 to keep port $PORT off the internet:"
+  say "  https://github.com/pinned-cc/pinned#behind-a-reverse-proxy"
+fi
