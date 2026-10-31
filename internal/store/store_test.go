@@ -618,7 +618,7 @@ func TestOpenRefusesNewerSchema(t *testing.T) {
 	}
 	_, err = Open(path)
 	wantFile := fmt.Sprintf("test-schema%d-2026-11-02-090000.db", len(migrations))
-	if !errors.As(err, &e) || e.Backup != wantFile || !strings.Contains(err.Error(), "restore "+wantFile+" from the data folder as bookmarks.db") {
+	if !errors.As(err, &e) || e.Backup != wantFile || !strings.Contains(err.Error(), "restore "+wantFile+" from the data folder as bookmarks.db") || !strings.Contains(err.Error(), "share links revoked since are back") {
 		t.Errorf("message with copies: %v", err)
 	}
 }

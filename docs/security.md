@@ -28,7 +28,7 @@ The server speaks plain HTTP on `PORT` (8080 in the container). HTTPS is the job
 | Bookmark title | Trimmed and cut to 500 characters. An empty title on a new bookmark becomes the host. |
 | Folder name | Trimmed, cut to 200 characters, not empty. Folders nest at most 32 deep. |
 | API token name | Trimmed, cut to 80 characters, not empty. |
-| `APP_PASSWORD` | At least 8 characters, no upper limit: the stored hash is bcrypt over its SHA-256. Not a common password (see below). The app does not start with a shorter or common one. |
+| `APP_PASSWORD` | At least 8 characters, no upper limit: the stored hash is bcrypt over its SHA-256. Not a common password (see below). The app does not start with a shorter one, nor with a common one on a new install or after a change. A common one that ran before 0.1.11 still starts, with a warning in the log and in the app. |
 | Folder password | At least 8 characters, no upper limit, not a common password. Checked when it is set or changed; a lock set before 0.1.11 with fewer characters keeps working. |
 | Share password | At least 8 characters, no upper limit, not a common password. Checked when it is set or changed. |
 | Share expiry | 1 to 3650 days, or never. |
@@ -207,6 +207,7 @@ The client address is read the same way as for the wrong password limits: from `
 | `csrf.refused` | A request that changes something came without `X-Requested-With: fetch`, as a form or page on another site would send it. At most one line a minute per client | `method`, `route` |
 | `icon.fail` | An icon fetch for a bookmark failed | `host` (never the path or query), `kind`: `certificate`, `blocked` (an address the fetch may not reach), `no_such_host`, `http`, `unreachable`, `no_icon`, `broke` or `other`; no `ip` |
 | `password.changed` | At start, when `APP_PASSWORD` changed | `sessions=ended tokens=revoked`, no `ip` |
+| `password.easy` | At start, when `APP_PASSWORD` is common but ran before 0.1.11 | `action=warned`, no `ip` |
 
 A `.wait` line is written once per client and kind while the wait lasts, so a client hammering during its wait cannot flood the log.
 

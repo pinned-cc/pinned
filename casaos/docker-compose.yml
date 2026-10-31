@@ -64,7 +64,7 @@ x-casaos:
       The server contacts only the sites you save, to fetch their icons. No telemetry, no update checks.
   tips:
     before_install:
-      en_US: Set APP_PASSWORD to a password of at least 8 characters before you install. Pinned does not start without it. Put HTTPS in front before you use it from outside your network.
+      en_US: Set APP_PASSWORD to a password of at least 8 characters that is not a common one before you install. Pinned does not start without it. An install that ran with a common one before 0.1.11 still starts and asks you to change it. Put HTTPS in front before you use it from outside your network.
   author: Pinned
   developer: Pinned
   category: Productivity

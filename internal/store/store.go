@@ -216,7 +216,7 @@ func (e *NewerSchemaError) Error() string {
 	if e.Backup == "" {
 		return msg + " or restore a backup."
 	}
-	return msg + ", or to stay on this version restore " + e.Backup + " from the data folder as bookmarks.db (README, Going back to an older version)."
+	return msg + ", or to stay on this version restore " + e.Backup + " from the data folder as bookmarks.db. That copy is the state before the upgrade: links saved since are missing, and folders locked, passwords changed and share links revoked since are back as they were, so lock and revoke them again (README, Going back to an older version)."
 }
 
 // newestBackup returns the file name of the newest upgrade copy of schema
