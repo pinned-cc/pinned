@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -141,53 +142,73 @@ func syncPassword(st *store.Store, secret []byte, password string) (changed bool
 	}, func() (string, error) { return auth.HashAppPassword(password) })
 }
 
-func run() error {
-	password, err := secretSetting("APP_PASSWORD")
-	if err != nil {
-		return err
+// settings is what run reads from the environment before it touches the
+// data folder.
+type settings struct {
+	password       string
+	dataDir        string
+	port           string
+	sessionDays    int
+	sessionMaxDays int
+	proxies        []netip.Prefix
+	hstsMaxAge     int
+	iconsOff       bool
+	iconHosts      favicon.Hosts
+	totpKey        []byte
+}
+
+// readSettings reads and checks every setting, and says what to fix when
+// one is wrong.
+func readSettings() (c settings, err error) {
+	if c.password, err = secretSetting("APP_PASSWORD"); err != nil {
+		return c, err
 	}
-	if password == "" {
-		return errors.New("APP_PASSWORD is not set. Set it, or APP_PASSWORD_FILE, to the password you want to log in with, then start again")
+	if c.password == "" {
+		return c, errors.New("APP_PASSWORD is not set. Set it, or APP_PASSWORD_FILE, to the password you want to log in with, then start again")
 	}
-	if utf8.RuneCountInString(password) < minPassword {
-		return fmt.Errorf("APP_PASSWORD is shorter than %d characters. Choose a longer password, then start again", minPassword)
+	if utf8.RuneCountInString(c.password) < minPassword {
+		return c, fmt.Errorf("APP_PASSWORD is shorter than %d characters. Choose a longer password, then start again", minPassword)
 	}
-	dataDir := env("DATA_DIR", "/data")
-	port := env("PORT", "8080")
-	sessionDays, err := strconv.Atoi(env("SESSION_DAYS", strconv.Itoa(server.DefaultSessionDays)))
-	if err != nil || sessionDays <= 0 {
-		return fmt.Errorf("SESSION_DAYS must be a positive number of days")
+	c.dataDir = env("DATA_DIR", "/data")
+	c.port = env("PORT", "8080")
+	c.sessionDays, err = strconv.Atoi(env("SESSION_DAYS", strconv.Itoa(server.DefaultSessionDays)))
+	if err != nil || c.sessionDays <= 0 {
+		return c, fmt.Errorf("SESSION_DAYS must be a positive number of days")
 	}
-	sessionMaxDays, err := strconv.Atoi(env("SESSION_MAX_DAYS", strconv.Itoa(server.DefaultSessionMaxDays)))
-	if err != nil || sessionMaxDays <= 0 {
-		return fmt.Errorf("SESSION_MAX_DAYS must be a positive number of days")
+	c.sessionMaxDays, err = strconv.Atoi(env("SESSION_MAX_DAYS", strconv.Itoa(server.DefaultSessionMaxDays)))
+	if err != nil || c.sessionMaxDays <= 0 {
+		return c, fmt.Errorf("SESSION_MAX_DAYS must be a positive number of days")
 	}
-	proxies, err := server.ParseProxies(os.Getenv("TRUSTED_PROXIES"))
-	if err != nil {
-		return err
+	if c.proxies, err = server.ParseProxies(os.Getenv("TRUSTED_PROXIES")); err != nil {
+		return c, err
 	}
-	hstsMaxAge, err := server.ParseHSTS(os.Getenv("HSTS"))
-	if err != nil {
-		return err
+	if c.hstsMaxAge, err = server.ParseHSTS(os.Getenv("HSTS")); err != nil {
+		return c, err
 	}
-	iconsOff, err := parseIcons(os.Getenv("ICONS"))
-	if err != nil {
-		return err
+	if c.iconsOff, err = parseIcons(os.Getenv("ICONS")); err != nil {
+		return c, err
 	}
-	iconHosts, err := favicon.ParseHosts(os.Getenv("ICON_HOSTS"))
-	if err != nil {
-		return err
+	if c.iconHosts, err = favicon.ParseHosts(os.Getenv("ICON_HOSTS")); err != nil {
+		return c, err
 	}
 	totpSecret, err := secretSetting("TOTP_SECRET")
 	if err != nil {
-		return err
+		return c, err
 	}
-	var totpKey []byte
 	if totpSecret != "" {
-		if totpKey, err = auth.ParseTOTPSecret(totpSecret); err != nil {
-			return fmt.Errorf("TOTP_SECRET: %v. It takes 20 random bytes in base32, for example from: head -c 20 /dev/urandom | base32", err)
+		if c.totpKey, err = auth.ParseTOTPSecret(totpSecret); err != nil {
+			return c, fmt.Errorf("TOTP_SECRET: %v. It takes 20 random bytes in base32, for example from: head -c 20 /dev/urandom | base32", err)
 		}
 	}
+	return c, nil
+}
+
+func run() error {
+	c, err := readSettings()
+	if err != nil {
+		return err
+	}
+	password, dataDir, port, totpKey := c.password, c.dataDir, c.port, c.totpKey
 
 	privateUmask()
 	for _, dir := range []string{dataDir, filepath.Join(dataDir, "icons"), filepath.Join(dataDir, "export")} {
@@ -222,7 +243,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	icons := favicon.NewPool(ctx, filepath.Join(dataDir, "icons"), st)
-	icons.Configure(iconsOff, iconHosts)
+	icons.Configure(c.iconsOff, c.iconHosts)
 	// Bookmarks still showing a letter get another try at start, so an
 	// improved icon search reaches links that were saved before it. A link
 	// whose icon failed store.IconGiveUp times is left alone until the next
@@ -261,12 +282,12 @@ func run() error {
 		Password:       password,
 		DataDir:        dataDir,
 		BaseURL:        os.Getenv("BASE_URL"),
-		SessionDays:    sessionDays,
-		SessionMaxDays: sessionMaxDays,
+		SessionDays:    c.sessionDays,
+		SessionMaxDays: c.sessionMaxDays,
 		Version:        version,
 		Changelog:      pinned.Changelog,
-		TrustedProxies: proxies,
-		HSTSMaxAge:     hstsMaxAge,
+		TrustedProxies: c.proxies,
+		HSTSMaxAge:     c.hstsMaxAge,
 		TOTPKey:        totpKey,
 	}, st, web, icons, secret)
 
