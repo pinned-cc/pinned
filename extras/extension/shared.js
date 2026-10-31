@@ -24,17 +24,47 @@ var Pinned = (function () {
     var a = cleanAddress('https://' + s), b = cleanAddress('http://' + s);
     return a && b ? [a, b] : [];
   }
+  /* a host on the user's own network, where a home server answers plain http: loopback, private and link-local
+     addresses, Tailscale's 100.64.0.0/10, a name without a dot, and .local, .lan, .home.arpa and .internal names */
+  function localHost(hostname) {
+    var h = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+    var m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h);
+    if (m) {
+      var a = +m[1], b = +m[2];
+      return a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127);
+    }
+    if (h.indexOf(':') !== -1) return h === '::1' || /^f[cd][0-9a-f]{0,2}:/.test(h) || /^fe[89ab][0-9a-f]?:/.test(h);
+    return h === 'localhost' || h.indexOf('.') === -1 || /\.(local|lan|home\.arpa|internal)$/.test(h);
+  }
   /* finds the first candidate that answers GET /api/folders with the token. Resolves with { address, folders }.
      A server that answers with an error (a refused token) stops the search: that address was reached, and err.address
-     names it. When none answers, the error says which addresses were tried. */
+     names it. When none answers, the error says which addresses were tried.
+     The token goes over plain http only to an address typed with http:// or to a host on the user's own network.
+     For any other host, when https does not answer, http is asked for /health without the token; if it answers, the
+     error (err.plain) says to type http:// to use it, so a broken https never hands the token over unencrypted. */
   async function probe(candidates, token, timeoutMs) {
     for (var i = 0; i < candidates.length; i++) {
       var cfg = { address: candidates[i], token: token, timeout: timeoutMs || 8000 };
+      if (i > 0 && /^http:/.test(cfg.address) && !localHost(new URL(cfg.address).hostname)) {
+        if (await answers(cfg.address, cfg.timeout)) {
+          var pe = new Error(candidates[0] + ' did not answer. ' + cfg.address + ' does, but on plain http your token would cross the internet unencrypted. Use https, or type ' + cfg.address + ' to connect anyway');
+          pe.plain = cfg.address; throw pe;
+        }
+        continue;
+      }
       try { return { address: cfg.address, folders: await api(cfg, 'GET', '/api/folders') }; }
       catch (e) { if (!e.network) { e.address = cfg.address; throw e; } }
     }
     var err = new Error('Could not reach ' + candidates.join(' or ') + '. Check the address and that Pinned is running');
     err.network = true; throw err;
+  }
+  /* whether anything answers GET /health at the address; sends no token */
+  async function answers(address, timeout) {
+    var ctl = typeof AbortController === 'function' ? new AbortController() : null, timer = null;
+    var opt = { method: 'GET', credentials: 'omit', cache: 'no-store' };
+    if (ctl) { opt.signal = ctl.signal; timer = setTimeout(function () { ctl.abort(); }, timeout); }
+    try { await fetch(address + '/health', opt); return true; } catch (e) { return false; }
+    finally { if (timer) clearTimeout(timer); }
   }
   /* host permission pattern for the address; match patterns carry no port, so this covers every port on that host */
   function originPattern(address) {
@@ -116,5 +146,5 @@ var Pinned = (function () {
     return s;
   }
 
-  return { cleanAddress: cleanAddress, addressCandidates: addressCandidates, probe: probe, originPattern: originPattern, config: config, api: api, remember: remember, folderIndex: folderIndex, h: h, icon: icon };
+  return { cleanAddress: cleanAddress, addressCandidates: addressCandidates, localHost: localHost, probe: probe, originPattern: originPattern, config: config, api: api, remember: remember, folderIndex: folderIndex, h: h, icon: icon };
 })();

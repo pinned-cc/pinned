@@ -40,6 +40,7 @@
     var patterns = cfg.candidates.map(Pinned.originPattern), host = new URL(cfg.candidates[0]).hostname;
     /* the request has to start inside the click, before anything is awaited; without a scheme it asks for both,
        and the one that does not answer is given back below */
+    var had = Promise.all(patterns.map(function (p) { return ext.permissions.contains({ origins: [p] }).catch(function () { return false; }); }));
     var asked = ext.permissions.request({ origins: patterns }).catch(function () { return false; });
     var old = saved.address && Pinned.cleanAddress(saved.address);
     var oldPattern = old ? Pinned.originPattern(old) : '';
@@ -51,7 +52,9 @@
         try { address = (await Pinned.probe(cfg.candidates, cfg.token)).address; }
         catch (e) {
           if (!e.address) {
-            if (granted) { try { await ext.permissions.remove({ origins: patterns }); } catch (err) { /* not granted */ } }
+            /* give back only what this Save was granted, never the access the saved address uses */
+            var before = await had, fresh = patterns.filter(function (p, i) { return !before[i] && p !== oldPattern; });
+            if (granted && fresh.length) { try { await ext.permissions.remove({ origins: fresh }); } catch (err) { /* not granted */ } }
             show('bad', e.message + '. Nothing was saved.'); return;
           }
           address = e.address; /* reached, the token is the problem: keep the address, the next Test says why */

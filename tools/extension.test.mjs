@@ -47,11 +47,11 @@ function stubBrowser(stored = {}) {
 }
 
 // Loads the named scripts, in order, into one context, as the manifest does.
-function load(scripts, browser) {
+function load(scripts, browser, extra = {}) {
   const ctx = vm.createContext({
-    browser, URL, fetch, console,
+    browser, URL, fetch, console, AbortController, ...extra,
     // the badge clears itself after two seconds; the tests do not wait for that
-    setTimeout: () => 0, clearTimeout: () => {},
+    setTimeout: () => 0, clearTimeout: () => {}, ...extra,
   });
   for (const s of scripts) vm.runInContext(source(s), ctx, { filename: s });
   return ctx;
@@ -279,4 +279,77 @@ test('background: without an address or token the options page opens and nothing
   await click(listeners, rec, { menuItemId: 'pinned-page', pageUrl: 'https://a.example/' }, { title: 'A' });
   assert.equal(rec.optionsOpened, 1);
   assert.deepEqual(rec.badges, []);
+});
+
+test('localHost: own network hosts only', () => {
+  const { Pinned } = load(['shared.js'], stubBrowser().browser);
+  for (const h of ['10.0.0.5', '127.0.0.1', '172.16.3.4', '172.31.0.1', '192.168.1.20', '169.254.1.1', '100.100.1.1', '[::1]', '[fd12::1]', '[fe80::1]', 'localhost', 'homelab', 'nas.local', 'pinned.lan', 'box.home.arpa', 'x.internal'])
+    assert.equal(Pinned.localHost(h), true, h);
+  for (const h of ['bookmarks.example.com', '203.0.113.5', '172.32.0.1', '100.128.0.1', '8.8.8.8', '[2001:db8::1]', 'local.example.com'])
+    assert.equal(Pinned.localHost(h), false, h);
+});
+
+// A fetch stand-in: https fails as a blocked or broken TLS connection would, http answers. Records every request.
+function fakeFetch() {
+  const seen = [];
+  const f = async (url, opt) => {
+    seen.push({ url, auth: opt && opt.headers && opt.headers.Authorization });
+    if (url.startsWith('https:')) throw new TypeError('TLS failed');
+    return new Response(JSON.stringify([{ id: 1 }]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  return { f, seen };
+}
+
+test('probe never sends the token over plain http to a public host it fell back to', async () => {
+  const { f, seen } = fakeFetch();
+  const { Pinned } = load(['shared.js'], stubBrowser().browser, { fetch: f });
+  await assert.rejects(Pinned.probe(Pinned.addressCandidates('bookmarks.example.com'), 'tk_secret'), e => {
+    assert.equal(e.plain, 'http://bookmarks.example.com');
+    assert.match(e.message, /type http:\/\/bookmarks\.example\.com to connect anyway/);
+    return true; });
+  for (const r of seen) if (r.url.startsWith('http:')) assert.equal(r.auth, undefined, 'token sent to ' + r.url);
+  assert.deepEqual(plain(seen.filter(r => r.url.startsWith('http:')).map(r => r.url)), ['http://bookmarks.example.com/health']);
+  // typed with http://, the user chose plain http: the token goes there
+  seen.length = 0;
+  const got = plain(await Pinned.probe(Pinned.addressCandidates('http://bookmarks.example.com'), 'tk_secret'));
+  assert.equal(got.address, 'http://bookmarks.example.com');
+  assert.equal(seen[0].auth, 'Bearer tk_secret');
+  // a home server falls back to http with the token, as before
+  seen.length = 0;
+  assert.equal(plain(await Pinned.probe(Pinned.addressCandidates('10.0.0.5:9095'), 'tk_secret')).address, 'http://10.0.0.5:9095');
+});
+
+// The options page in a stand-in DOM: the elements options.js reads, a form whose submit can be fired, permissions in memory.
+function optionsPage(stored, granted) {
+  const { browser, rec } = stubBrowser(stored);
+  const perms = new Set(granted);
+  rec.removed = [];
+  browser.permissions = {
+    async contains({ origins }) { return origins.every(o => perms.has(o)); },
+    async request({ origins }) { origins.forEach(o => perms.add(o)); return true; },
+    async remove({ origins }) { origins.forEach(o => { perms.delete(o); rec.removed.push(o); }); return true; },
+  };
+  const node = () => ({ value: '', hidden: true, className: '', disabled: false, children: [], textContent: '',
+    handlers: {}, setAttribute() {}, appendChild(c) { this.children.push(c); }, focus() {},
+    addEventListener(k, f) { this.handlers[k] = f; }, replaceChildren(...c) { this.children = c; } });
+  const els = { form: node(), address: node(), token: node(), test: node(), status: node() };
+  const document = { getElementById: id => els[id], createElement: node, createElementNS: node, createTextNode: t => ({ textContent: t }) };
+  const statusText = () => els.status.children.map(c => c.textContent || (c.children || []).map(x => x.textContent).join('')).join('');
+  return { browser, rec, perms, els, document, statusText };
+}
+const settle = () => new Promise(ok => setTimeout(ok, 50));
+
+test('options: a failed Save keeps the access the saved address uses', async () => {
+  const page = optionsPage({ address: 'http://127.0.0.1:1', token: 'tk_old' }, ['http://127.0.0.1/*']);
+  const ctx = load(['shared.js', 'options.js'], page.browser, { document: page.document, setTimeout, clearTimeout });
+  await settle();
+  page.els.address.value = '127.0.0.1:1'; page.els.token.value = 'tk_new';
+  page.els.form.handlers.submit({ preventDefault() {} });
+  for (let i = 0; i < 40 && !/Nothing was saved/.test(page.statusText()); i++) await settle();
+  assert.match(page.statusText(), /Nothing was saved/);
+  assert.ok(page.perms.has('http://127.0.0.1/*'), 'the saved address lost its access');
+  assert.ok(!page.perms.has('https://127.0.0.1/*'), 'the access this Save was granted stayed');
+  assert.deepEqual(plain(page.rec.removed), ['https://127.0.0.1/*']);
+  assert.equal(page.rec.store.address, 'http://127.0.0.1:1');
+  assert.ok(ctx);
 });
