@@ -41,11 +41,34 @@ func (b *Backoff) Waiting() time.Duration {
 	return 0
 }
 
+// Check runs check unless a wait holds, and records its result, all in one
+// step under the lock: a failure counts as Fail, a success as Success. So
+// requests that arrive together cannot all run their check before the
+// wait starts. It returns whether check ran and passed, and the wait that
+// holds or that the failure started. Checks run one at a time, so check
+// must be quick.
+func (b *Backoff) Check(check func() bool) (ok bool, wait time.Duration) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if now := b.Now(); now.Before(b.until) {
+		return false, b.until.Sub(now)
+	}
+	if !check() {
+		return false, b.fail()
+	}
+	b.fails, b.until = 0, time.Time{}
+	return true, 0
+}
+
 // Fail records a failure and returns the wait it starts, zero while the
 // failures are still free.
 func (b *Backoff) Fail() time.Duration {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	return b.fail()
+}
+
+func (b *Backoff) fail() time.Duration {
 	b.fails++
 	if b.fails < BackoffFree {
 		return 0

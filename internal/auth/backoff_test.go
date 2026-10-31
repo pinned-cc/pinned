@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -64,5 +66,42 @@ func TestBackoffDailyBudget(t *testing.T) {
 	}
 	if n := count(30 * 24 * time.Hour); n > 31 {
 		t.Errorf("next 30 days: %d guesses, want at most 31", n)
+	}
+}
+
+// TestBackoffCheckIsOneStep: checks that start together run no more often
+// than the free failures allow, and a passing check clears the count.
+func TestBackoffCheckIsOneStep(t *testing.T) {
+	now := time.Unix(1800000000, 0)
+	b := NewBackoff()
+	b.Now = func() time.Time { return now }
+	var ran atomic.Int64
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	for range 100 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			b.Check(func() bool { ran.Add(1); return false })
+		}()
+	}
+	close(start)
+	wg.Wait()
+	if n := ran.Load(); n != BackoffFree {
+		t.Errorf("%d checks ran, want %d", n, BackoffFree)
+	}
+	if ok, w := b.Check(func() bool { t.Error("check ran during the wait"); return true }); ok || w != BackoffFirst {
+		t.Errorf("during the wait: %v %v", ok, w)
+	}
+	b = NewBackoff()
+	b.Fail()
+	if ok, w := b.Check(func() bool { return true }); !ok || w != 0 {
+		t.Errorf("passing check: %v %v", ok, w)
+	}
+	for i := 1; i < BackoffFree; i++ {
+		if b.Fail() != 0 {
+			t.Fatal("a passing check did not clear the failures")
+		}
 	}
 }

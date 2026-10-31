@@ -493,14 +493,16 @@ func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wa
 		if s.totp == nil {
 			return true
 		}
-		step, match := s.totp.Match(code)
-		if !match || !s.totp.Use(step) {
-			codeWrong = true
-			codeWait = s.codeBackoff.Fail()
-			return false
+		// The code is checked and counted in one step, so logins that
+		// arrive together check no more codes than one after another.
+		okCode, w := s.codeBackoff.Check(func() bool {
+			step, match := s.totp.Match(code)
+			return match && s.totp.Use(step)
+		})
+		if !okCode {
+			codeWrong, codeWait = true, w
 		}
-		s.codeBackoff.Success()
-		return true
+		return okCode
 	})
 	if ok {
 		return true, 0

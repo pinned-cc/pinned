@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -135,6 +138,41 @@ func TestTOTPCodeBackoff(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		newAddress()
 		e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": "111111"}, 401)
+	}
+}
+
+// TestTOTPCodeBackoffBurst: logins with the right password and a wrong
+// code that arrive together from many addresses check no more codes than
+// the free ones; the rest get the wait. Found by the release verification
+// of 2026-10-31, where a burst of 20 checked 20 codes.
+func TestTOTPCodeBackoffBurst(t *testing.T) {
+	for _, n := range []int{20, 200} {
+		e, now := newTOTPEnv(t)
+		s := e.server
+		s.sleep = func(time.Duration) {}
+		var checked atomic.Int64
+		fixed := *now
+		s.totp.Now = func() time.Time { checked.Add(1); return fixed }
+		var wg sync.WaitGroup
+		start := make(chan struct{})
+		for i := range n {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				r := httptest.NewRequest("POST", "/api/login", nil)
+				r.RemoteAddr = fmt.Sprintf("10.1.%d.%d:1234", i/250, i%250+1)
+				<-start
+				s.checkLogin(r, "pw", "000001")
+			}()
+		}
+		close(start)
+		wg.Wait()
+		if c := checked.Load(); c > auth.BackoffFree {
+			t.Errorf("burst of %d checked %d codes, want at most %d", n, c, auth.BackoffFree)
+		}
+		if s.codeBackoff.Waiting() == 0 {
+			t.Errorf("burst of %d started no wait", n)
+		}
 	}
 }
 

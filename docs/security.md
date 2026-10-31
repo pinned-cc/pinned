@@ -53,7 +53,7 @@ There is no cap on the number of bookmarks, folders, API tokens or signed in bro
 - Every wrong try waits 1 second before it answers. Password tries from one client are checked one at a time.
 - During a wait no password is checked, not even the right one, and the answer is 429 with `Retry-After`.
 - A valid API token is never held by these counts.
-- A wrong second factor code also counts as a wrong app password for its client. While the code wait holds, no login is checked at all, from any browser, so a wrong and a right password answer alike. Someone who has the password can try at most 15 codes in the first day and about one a day after that. To get in during a wait, wait, or remove `TOTP_SECRET` and restart.
+- A wrong second factor code also counts as a wrong app password for its client. While the code wait holds, no login is checked at all, from any browser, so a wrong and a right password answer alike. Someone who has the password can try at most 15 codes in the first day and about one a day after that, also with many logins sent at once, since codes are checked one at a time and each is counted before the next. To get in during a wait, wait, or remove `TOTP_SECRET` and restart.
 - The counts live in memory. A restart clears them, and a client quiet for an hour is forgotten.
 
 ### Sessions and cookies
