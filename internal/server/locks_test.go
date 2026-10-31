@@ -83,9 +83,9 @@ func TestLockHidesEverythingInside(t *testing.T) {
 	e.expect("PATCH", "/api/folders/"+itoa(f.reading.ID), map[string]any{"parent_id": f.work.ID}, 404)
 	e.expect("DELETE", "/api/folders/"+itoa(f.work.ID), nil, 404)
 
-	// The save page learns only what a save would tell: saved, in a locked folder.
+	// The save page learns nothing of a link in a locked folder.
 	chk := e.expect("GET", "/api/check?url="+url.QueryEscape("https://example.org/portal"), nil, 200)
-	if strings.TrimSpace(string(chk)) != `{"duplicate":null,"icon":null,"locked":true}` {
+	if strings.TrimSpace(string(chk)) != `{"duplicate":null,"icon":null}` {
 		t.Errorf("check: %s", chk)
 	}
 	// The remembered folders never name a hidden folder, even when the
@@ -96,9 +96,13 @@ func TestLockHidesEverythingInside(t *testing.T) {
 	if s := e.state().Settings; s.LastFolder != nil || len(s.RecentFolders) != 1 || s.RecentFolders[0] != f.reading.ID {
 		t.Errorf("settings leak hidden folders: last %v recent %v", s.LastFolder, s.RecentFolders)
 	}
-	out := e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.org/portal", "force": true}, 409)
-	if strings.Contains(string(out), "portal") || !strings.Contains(string(out), `"locked":true`) {
-		t.Errorf("save anyway leaks or moves: %s", out)
+	// Save anyway makes a new bookmark and leaves the hidden one where it is.
+	out := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.org/portal", "force": true}, 201))
+	if out.ID == f.inClient.ID || out.FolderID != nil {
+		t.Errorf("save anyway moved the hidden bookmark: %+v", out)
+	}
+	if b, _ := e.st.Bookmark(f.inClient.ID); b.FolderID == nil || *b.FolderID != f.client.ID {
+		t.Errorf("hidden bookmark moved: %+v", b)
 	}
 
 }

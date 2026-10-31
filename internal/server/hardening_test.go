@@ -376,7 +376,9 @@ func TestImportNeverWritesIntoLockedFolder(t *testing.T) {
 			inImported++
 		}
 	}
-	if inImported != 1 { // known is skipped: the same URL is saved already
+	// known is imported too: the bookmark with that address sits in the
+	// locked folder, which this session cannot see.
+	if inImported != 2 {
 		t.Errorf("bookmarks in Work (imported): %d", inImported)
 	}
 	// A second import reuses the (imported) folder.

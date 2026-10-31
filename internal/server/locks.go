@@ -124,6 +124,17 @@ func (v *lockView) bookmarkHidden(b store.Bookmark) bool {
 	return b.FolderID != nil && v.hidden(*b.FolderID)
 }
 
+// hiddenSet is every hidden folder, for the store's duplicate lookups.
+func (v *lockView) hiddenSet() store.Hidden {
+	h := store.Hidden{}
+	for id := range v.folders {
+		if v.hidden(id) {
+			h[id] = true
+		}
+	}
+	return h
+}
+
 // hasHiddenBelow reports whether a folder below id is locked and not unlocked.
 func (v *lockView) hasHiddenBelow(id int64) bool {
 	for fid := range v.folders {
@@ -176,10 +187,8 @@ func (s *Server) visibleBookmark(r *http.Request, id int64) (store.Bookmark, *lo
 }
 
 // writeLockedDuplicate answers a duplicate whose original is hidden without
-// telling anything about it but that it exists. The unique key on live
-// URLs allows one live bookmark per address, so the save cannot go through
-// beside it; answering as if it had would lose the save without a word.
-// apiCheck and an import's skipped count say the same.
+// telling anything about it. The duplicate lookups skip hidden folders, so
+// it should not happen; it stays so a hidden bookmark is never shown.
 func writeLockedDuplicate(w http.ResponseWriter) {
 	writeJSON(w, http.StatusConflict, map[string]any{"error": "Already saved", "duplicate": nil, "locked": true})
 }

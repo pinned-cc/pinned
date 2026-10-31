@@ -46,7 +46,8 @@ func clip(s string, n int) string {
 	return s
 }
 
-// DuplicateError is returned when a live bookmark already has the same url_key.
+// DuplicateError is returned when a live bookmark the caller can see
+// already has the same url_key.
 type DuplicateError struct{ Existing Bookmark }
 
 func (e *DuplicateError) Error() string { return "already saved" }
@@ -193,6 +194,11 @@ var migrations = []string{
 	// working. Rows from before have none and sign the hash as before.
 	`ALTER TABLE folders ADD COLUMN lock_stamp TEXT NULL;
 	ALTER TABLE shares ADD COLUMN password_stamp TEXT NULL;`,
+	// Live bookmarks are unique by url_key only among those one caller can
+	// see (see Hidden), so a save cannot tell an address sits in a locked
+	// folder. The code checks it inside the write transaction;
+	// bookmarks_url_key still serves the lookups.
+	`DROP INDEX bookmarks_live_key;`,
 }
 
 // NewerSchemaError means the database was written by a later version. That

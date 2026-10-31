@@ -102,13 +102,37 @@ func getBookmark(q querier, id int64) (Bookmark, error) {
 	return b, err
 }
 
-// liveByKey returns the live bookmark with key, or ErrNotFound.
-func liveByKey(q querier, key string) (Bookmark, error) {
-	b, err := scanBookmark(q.QueryRow(`SELECT `+bookmarkCols+` FROM bookmarks WHERE url_key = ? AND deleted_at IS NULL`, key))
-	if errors.Is(err, sql.ErrNoRows) {
-		return b, ErrNotFound
+// Hidden is the set of folders a caller cannot see: those under a lock it
+// has not unlocked. Looking up whether an address is saved skips the
+// bookmarks in them, so a save, a check, a restore or an import cannot tell
+// that an address sits in a locked folder: it saves a second bookmark
+// instead. Nil hides nothing.
+type Hidden map[int64]bool
+
+func (h Hidden) has(folderID *int64) bool { return folderID != nil && h[*folderID] }
+
+// liveByKey returns the oldest live bookmark with key outside hidden, or
+// ErrNotFound. Live bookmarks are unique by key among those one caller can
+// see; one in a locked folder may share its key with one outside.
+func liveByKey(q querier, key string, hidden Hidden) (Bookmark, error) {
+	rows, err := q.Query(`SELECT `+bookmarkCols+` FROM bookmarks WHERE url_key = ? AND deleted_at IS NULL ORDER BY id`, key)
+	if err != nil {
+		return Bookmark{}, err
 	}
-	return b, err
+	defer rows.Close()
+	for rows.Next() {
+		b, err := scanBookmark(rows)
+		if err != nil {
+			return b, err
+		}
+		if !hidden.has(b.FolderID) {
+			return b, nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return Bookmark{}, err
+	}
+	return Bookmark{}, ErrNotFound
 }
 
 // Bookmark returns one bookmark.
@@ -126,13 +150,14 @@ func (s *Store) CountLive() (int, error) {
 	return n, err
 }
 
-// FindLive returns the live bookmark with the same identity as rawURL.
-func (s *Store) FindLive(rawURL string) (Bookmark, error) {
+// FindLive returns the live bookmark with the same identity as rawURL,
+// outside hidden.
+func (s *Store) FindLive(rawURL string, hidden Hidden) (Bookmark, error) {
 	key, err := urlkey.Key(rawURL)
 	if err != nil {
 		return Bookmark{}, err
 	}
-	return liveByKey(s.db, key)
+	return liveByKey(s.db, key, hidden)
 }
 
 // OriginIcon is an icon used by a bookmark, with that bookmark's folder so
@@ -204,8 +229,11 @@ type NewBookmark struct {
 	FolderID *int64
 	// Force saves even when the URL is already saved: the existing bookmark
 	// is moved to FolderID and takes the new title, because two live
-	// bookmarks never share an identity.
+	// bookmarks the caller can see never share an identity.
 	Force bool
+	// Hidden are the folders the caller cannot see; a bookmark in them does
+	// not count as saved.
+	Hidden Hidden
 }
 
 // Create saves a bookmark. created is false when Force updated an existing
@@ -234,7 +262,7 @@ func (s *Store) Create(in NewBookmark) (b Bookmark, created bool, err error) {
 				return ErrNoFolder
 			}
 		}
-		existing, err := liveByKey(tx, key)
+		existing, err := liveByKey(tx, key, in.Hidden)
 		switch {
 		case err == nil && !in.Force:
 			return &DuplicateError{Existing: existing}
@@ -294,6 +322,9 @@ type Patch struct {
 	FolderSet bool
 	FolderID  *int64
 	Pinned    *bool
+	// Hidden are the folders the caller cannot see: a new URL that only a
+	// bookmark in them has is not a duplicate.
+	Hidden Hidden
 }
 
 // Update changes a bookmark. urlChanged reports whether the identity changed,
@@ -325,7 +356,7 @@ func (s *Store) Update(id int64, p Patch) (b Bookmark, urlChanged bool, err erro
 			}
 			if key != cur.URLKey {
 				if cur.DeletedAt == nil {
-					if other, err := liveByKey(tx, key); err == nil && other.ID != id {
+					if other, err := liveByKey(tx, key, p.Hidden); err == nil && other.ID != id {
 						return &DuplicateError{Existing: other}
 					}
 				}
@@ -403,12 +434,13 @@ func (s *Store) Trash(id int64) error {
 
 // Restore takes a bookmark out of Trash. If its folder is gone it lands in
 // Inbox (the foreign key already cleared folder_id). If the same URL was saved
-// again meanwhile, it returns a *DuplicateError and stays in Trash.
-func (s *Store) Restore(id int64) error {
-	return s.withTx(func(tx *sql.Tx) error { return restore(tx, id) })
+// again meanwhile outside hidden, it returns a *DuplicateError and stays in
+// Trash.
+func (s *Store) Restore(id int64, hidden Hidden) error {
+	return s.withTx(func(tx *sql.Tx) error { return restore(tx, id, hidden) })
 }
 
-func restore(tx *sql.Tx, id int64) error {
+func restore(tx *sql.Tx, id int64, hidden Hidden) error {
 	b, err := getBookmark(tx, id)
 	if err != nil {
 		return err
@@ -416,7 +448,7 @@ func restore(tx *sql.Tx, id int64) error {
 	if b.DeletedAt == nil {
 		return nil
 	}
-	if other, err := liveByKey(tx, b.URLKey); err == nil {
+	if other, err := liveByKey(tx, b.URLKey, hidden); err == nil {
 		return &DuplicateError{Existing: other}
 	}
 	pos, err := nextPosition(tx, b.FolderID)
@@ -539,7 +571,7 @@ func (s *Store) SetIcon(id int64, forKey string, icon string, tile *string) (pre
 // unpin or delete. Restoring a bookmark whose URL was saved again leaves it
 // in Trash. Delete only removes bookmarks already in Trash; live ones are
 // left alone, so nothing skips Trash by accident.
-func (s *Store) Bulk(ids []int64, action string, folderID *int64) (orphanIcons []string, err error) {
+func (s *Store) Bulk(ids []int64, action string, folderID *int64, hidden Hidden) (orphanIcons []string, err error) {
 	now := s.now()
 	err = s.withTx(func(tx *sql.Tx) error {
 		if action == "move" && folderID != nil {
@@ -562,7 +594,7 @@ func (s *Store) Bulk(ids []int64, action string, folderID *int64) (orphanIcons [
 			case "trash":
 				_, err = tx.Exec(`UPDATE bookmarks SET deleted_at = COALESCE(deleted_at, ?) WHERE id = ?`, now, id)
 			case "restore":
-				err = restore(tx, id)
+				err = restore(tx, id, hidden)
 				var dup *DuplicateError
 				if errors.As(err, &dup) || errors.Is(err, ErrNotFound) {
 					err = nil

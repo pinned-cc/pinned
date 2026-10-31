@@ -54,7 +54,7 @@ Folders nest at most 32 deep.
 | `opened_at` | INTEGER NULL | Last time it was opened from the app. |
 | `deleted_at` | INTEGER NULL | Set when the bookmark is in Trash. NULL otherwise. |
 
-A bookmark with `deleted_at` NULL is live. Live bookmarks are unique by `url_key` (a unique index on `url_key` where `deleted_at IS NULL`), so the same address can sit in Trash and be saved again. An index on `folder_id, position` over the live bookmarks gives the end of a folder at once, for saves, moves and imports. Bookmarks in Trash for 30 days are deleted for good by a daily job.
+A bookmark with `deleted_at` NULL is live. The same address can sit in Trash and be saved again. Live bookmarks are unique by `url_key` among those one browser or token can see; the app checks it when it saves, edits, restores or imports. A bookmark in a locked folder that is not unlocked does not count, so the same address can be live inside a locked folder and outside it. Up to schema 11 a unique index on `url_key` where `deleted_at IS NULL` enforced one live bookmark per address everywhere; schema 12 drops it, and the index on `url_key` serves the lookups. An index on `folder_id, position` over the live bookmarks gives the end of a folder at once, for saves, moves and imports. Bookmarks in Trash for 30 days are deleted for good by a daily job.
 
 ### settings
 

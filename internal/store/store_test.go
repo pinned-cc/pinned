@@ -108,7 +108,7 @@ func TestTrashRestoreAndRestoreConflict(t *testing.T) {
 	// The same URL can be saved again while the old one is in Trash.
 	mustCreate(t, s, "A again", "https://example.com/", nil)
 	var dup *DuplicateError
-	if err := s.Restore(b.ID); !errors.As(err, &dup) {
+	if err := s.Restore(b.ID, nil); !errors.As(err, &dup) {
 		t.Errorf("want duplicate on restore, got %v", err)
 	}
 	if err := s.Trash(999); !errors.Is(err, ErrNotFound) {
@@ -221,11 +221,11 @@ func TestImportFixturesAndReimport(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		res, err := s.Import(root)
+		res, err := s.Import(root, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		again, err := s.Import(root)
+		again, err := s.Import(root, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -271,7 +271,7 @@ func TestBulkAndOrder(t *testing.T) {
 	b := mustCreate(t, s, "B", "https://example.com/b", nil)
 	c := mustCreate(t, s, "C", "https://example.com/c", nil)
 
-	if _, err := s.Bulk([]int64{a.ID, b.ID}, "move", &f.ID); err != nil {
+	if _, err := s.Bulk([]int64{a.ID, b.ID}, "move", &f.ID, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.OrderBookmarks(&f.ID, []int64{b.ID, a.ID}); err != nil {
@@ -282,26 +282,26 @@ func TestBulkAndOrder(t *testing.T) {
 	if *ga.FolderID != f.ID || gb.Position != 0 || ga.Position != 1 {
 		t.Errorf("move or order failed: %+v %+v", ga, gb)
 	}
-	s.Bulk([]int64{a.ID, b.ID, c.ID}, "pin", nil)
+	s.Bulk([]int64{a.ID, b.ID, c.ID}, "pin", nil, nil)
 	s.OrderPinned([]int64{c.ID, a.ID, b.ID})
 	gc, _ := s.Bookmark(c.ID)
 	if !gc.Pinned || gc.PinnedPosition != 0 {
 		t.Errorf("pin order: %+v", gc)
 	}
-	s.Bulk([]int64{c.ID}, "trash", nil)
-	s.Bulk([]int64{c.ID}, "restore", nil)
+	s.Bulk([]int64{c.ID}, "trash", nil, nil)
+	s.Bulk([]int64{c.ID}, "restore", nil, nil)
 	if gc, _ = s.Bookmark(c.ID); gc.DeletedAt != nil {
 		t.Error("restore failed")
 	}
 	// Delete skips bookmarks that are not in Trash.
-	if _, err := s.Bulk([]int64{a.ID, c.ID}, "delete", nil); err != nil {
+	if _, err := s.Bulk([]int64{a.ID, c.ID}, "delete", nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.Bookmark(c.ID); err != nil {
 		t.Errorf("live bookmark deleted without Trash: %v", err)
 	}
-	s.Bulk([]int64{c.ID}, "trash", nil)
-	if _, err := s.Bulk([]int64{a.ID, c.ID}, "delete", nil); err != nil {
+	s.Bulk([]int64{c.ID}, "trash", nil, nil)
+	if _, err := s.Bulk([]int64{a.ID, c.ID}, "delete", nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.Bookmark(c.ID); !errors.Is(err, ErrNotFound) {
@@ -310,7 +310,7 @@ func TestBulkAndOrder(t *testing.T) {
 	if ga, err := s.Bookmark(a.ID); err != nil || ga.DeletedAt != nil {
 		t.Errorf("live bookmark touched by delete: %+v %v", ga, err)
 	}
-	if _, err := s.Bulk([]int64{a.ID}, "explode", nil); err == nil {
+	if _, err := s.Bulk([]int64{a.ID}, "explode", nil, nil); err == nil {
 		t.Error("unknown action accepted")
 	}
 }
@@ -460,7 +460,7 @@ func TestImportDeepFileExportsSmall(t *testing.T) {
 		f = sub
 	}
 	f.Links = []netscape.Link{{Title: "bottom", URL: "https://example.com/bottom"}}
-	res, err := s.Import(root)
+	res, err := s.Import(root, nil)
 	if err != nil || res.Folders != MaxDepth || res.Added != 1 {
 		t.Fatalf("import: %+v %v", res, err)
 	}
@@ -483,11 +483,11 @@ func TestImportBesideLockedFolder(t *testing.T) {
 	work, _ := s.CreateFolder("Work", nil)
 	s.SetLock(work.ID, "hash")
 	root := &netscape.Folder{Folders: []*netscape.Folder{{Name: "Work", Links: []netscape.Link{{Title: "x", URL: "https://example.com/x"}}}}}
-	res, err := s.Import(root)
+	res, err := s.Import(root, nil)
 	if err != nil || res.Folders != 1 || res.Added != 1 {
 		t.Fatalf("import: %+v %v", res, err)
 	}
-	b, _ := s.FindLive("https://example.com/x")
+	b, _ := s.FindLive("https://example.com/x", nil)
 	f, _ := s.Folder(*b.FolderID)
 	if f.ID == work.ID || f.Name != "Work (imported)" || f.ParentID != nil {
 		t.Errorf("landed in %+v", f)
@@ -495,8 +495,8 @@ func TestImportBesideLockedFolder(t *testing.T) {
 	// "Work (imported)" locked too: the next one gets another suffix.
 	s.SetLock(f.ID, "hash")
 	root.Folders[0].Links[0].URL = "https://example.com/y"
-	s.Import(root)
-	b, _ = s.FindLive("https://example.com/y")
+	s.Import(root, nil)
+	b, _ = s.FindLive("https://example.com/y", nil)
 	if g, _ := s.Folder(*b.FolderID); g.Name != "Work (imported) (imported)" {
 		t.Errorf("second landed in %q", g.Name)
 	}
@@ -669,7 +669,7 @@ func TestImportRefusesTreeTooDeep(t *testing.T) {
 		f = sub
 	}
 	f.Links = []netscape.Link{{Title: "x", URL: "https://example.com/"}}
-	if _, err := s.Import(root); !errors.Is(err, netscape.ErrTooDeep) {
+	if _, err := s.Import(root, nil); !errors.Is(err, netscape.ErrTooDeep) {
 		t.Fatalf("a million levels: %v", err)
 	}
 	if fs, _ := s.Folders(); len(fs) != 0 {
@@ -693,7 +693,7 @@ func TestImportTimeIsLinear(t *testing.T) {
 	timeImport := func(s *Store) time.Duration {
 		root := manyLinks(500)
 		start := time.Now()
-		res, err := s.Import(root)
+		res, err := s.Import(root, nil)
 		if err != nil || res.Added != 500 {
 			t.Fatalf("import: %+v %v", res, err)
 		}
@@ -726,7 +726,7 @@ func TestImportPositionsAcrossBatches(t *testing.T) {
 		root := manyLinks(5)
 		root.Folders = []*netscape.Folder{{Name: "Work", Links: manyLinks(3).Links}, {Name: "New", Links: manyLinks(2).Links}}
 		root.Folders[0].Links = append(root.Folders[0].Links, netscape.Link{URL: "https://example.com/x"})
-		res, err := s.Import(root)
+		res, err := s.Import(root, nil)
 		importBatch = old
 		if err != nil || res.Added != 6 || res.Skipped != 5 || res.Folders != 1 || len(res.AddedIDs) != 6 {
 			t.Fatalf("batch %v: %+v %v", batch, res, err)
@@ -756,7 +756,7 @@ func TestWritesDuringImport(t *testing.T) {
 	s := open(t)
 	done := make(chan error, 1)
 	go func() {
-		_, err := s.Import(manyLinks(10000))
+		_, err := s.Import(manyLinks(10000), nil)
 		done <- err
 	}()
 	time.Sleep(20 * time.Millisecond)
@@ -789,7 +789,7 @@ func TestImportStopsWhenFolderLockedMidway(t *testing.T) {
 	betweenBatches = func() { s.SetLock(f.ID, "hash") }
 	defer func() { importBatch, betweenBatches = old, nil }()
 	root := &netscape.Folder{Folders: []*netscape.Folder{{Name: "Work", Links: manyLinks(3).Links}}}
-	res, err := s.Import(root)
+	res, err := s.Import(root, nil)
 	if !errors.Is(err, ErrImportChanged) || res.Added != 1 || len(res.AddedIDs) != 1 {
 		t.Fatalf("import: %+v %v", res, err)
 	}
@@ -811,7 +811,7 @@ func TestLongURLRefused(t *testing.T) {
 		t.Errorf("update: %v", err)
 	}
 	root := &netscape.Folder{Links: []netscape.Link{{URL: long}, {URL: "https://example.com/b"}}}
-	res, err := s.Import(root)
+	res, err := s.Import(root, nil)
 	if err != nil || res.Added != 1 || res.Skipped != 1 {
 		t.Errorf("import: %+v %v", res, err)
 	}

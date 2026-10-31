@@ -35,7 +35,7 @@ The server speaks plain HTTP on `PORT` (8080 in the container). HTTPS is the job
 | `TOTP_SECRET` | Base32, at least 16 bytes (26 characters). |
 | `SESSION_DAYS`, `SESSION_MAX_DAYS` | Whole numbers above 0. |
 
-An import file is parsed as a browser bookmarks file. Folders that nest more than 256 deep refuse the whole file before anything is written. Folders deeper than 32 land in the folder at depth 32. Folder names are cut to 200 characters. Links that are not `http` or `https`, that are longer than 8192 bytes, or that are already saved are skipped.
+An import file is parsed as a browser bookmarks file. Folders that nest more than 256 deep refuse the whole file before anything is written. Folders deeper than 32 land in the folder at depth 32. Folder names are cut to 200 characters. Links that are not `http` or `https`, that are longer than 8192 bytes, or that are already saved outside a locked folder are skipped.
 
 There is no cap on the number of bookmarks, folders, API tokens or signed in browsers. A folder has at most one share link.
 
@@ -149,7 +149,7 @@ Everything is in the data folder. Nothing is encrypted at rest; use disk encrypt
 |---|---|---|---|
 | Bookmark titles and addresses | `bookmarks.db` | Private. An address can carry another site's token or key in its query. | Plain in the database, file 0600. In the nightly export and the export in the app. Shown to anyone with a share link to its folder. |
 | Folder names | `bookmarks.db` | Private | The name of a locked folder still shows in the app. |
-| Contents of locked folders | `bookmarks.db` | Private | Hidden in the app, from API tokens and from the export in the app until unlocked in that browser. Plain in the database and in the nightly export. |
+| Contents of locked folders | `bookmarks.db` | Private | Hidden in the app, from API tokens and from the export in the app until unlocked in that browser. A save, check, restore or import of an address that sits only in a locked folder answers as if it were not saved. Plain in the database and in the nightly export. |
 | App password | the environment, or the file `APP_PASSWORD_FILE` names | Secret | Never written to the data folder or the log. The database keeps a bcrypt hash. `docker inspect` shows environment variables to anyone who may run Docker; a file keeps it out of there. |
 | Folder and share passwords | `bookmarks.db` | Secret | bcrypt hashes only. |
 | Session cookies and API tokens | `bookmarks.db` | Secret | HMAC-SHA256 hashes only. Each session also keeps a short browser name, such as `Firefox on macOS`, and when it logged in and was last used. Each token keeps the extension address it is bound to. |

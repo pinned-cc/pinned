@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/store"
 )
 
 // iconFor gives bookmark id the icon file name in DATA_DIR/icons.
@@ -78,28 +79,79 @@ func TestExportLeavesOutLockedFolders(t *testing.T) {
 	}
 }
 
-// A URL in a locked folder answers the same everywhere: saved, in a locked
-// folder, with nothing about the bookmark itself.
-func TestLockedDuplicateAnswersAlike(t *testing.T) {
+// A URL that sits only in a locked folder answers like a URL not saved at
+// all, for a session and for a token: check finds nothing, a save makes a
+// new bookmark, an import brings it in, an edit or a restore to it goes
+// through. A duplicate the caller can see is still refused, and after
+// unlocking both bookmarks show.
+func TestLockedDuplicateIsNotTold(t *testing.T) {
 	f := newLockFixture(t)
 	e := f.e
+	tok := e.newToken("ext")
 	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/lock", map[string]any{"password": "s3cret"}, 204)
 	u := "https://example.org/portal"
-	chk := decode[map[string]any](t, e.expect("GET", "/api/check?url="+url.QueryEscape(u), nil, 200))
-	if chk["locked"] != true || chk["duplicate"] != nil || chk["icon"] != nil {
-		t.Errorf("check: %v", chk)
-	}
-	for _, force := range []bool{false, true} {
-		out := decode[map[string]any](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": u, "force": force}, 409))
-		if out["locked"] != true || out["duplicate"] != nil {
-			t.Errorf("save (force %v): %v", force, out)
+	fresh := func(body []byte) {
+		t.Helper()
+		if s := strings.TrimSpace(string(body)); s != `{"duplicate":null,"icon":null}` {
+			t.Errorf("check: %s", s)
 		}
 	}
-	// A URL that is not saved anywhere carries no locked flag.
-	chk = decode[map[string]any](t, e.expect("GET", "/api/check?url="+url.QueryEscape("https://example.org/new"), nil, 200))
-	if _, ok := chk["locked"]; ok {
-		t.Errorf("check of a new URL: %v", chk)
+	fresh(e.expect("GET", "/api/check?url="+url.QueryEscape(u), nil, 200))
+	resp := e.bearer("GET", "/api/check?url="+url.QueryEscape(u), tok, nil)
+	fresh(readAll(resp))
+
+	// A token saves it as new.
+	resp = e.bearer("POST", "/api/bookmarks", tok, map[string]any{"url": u})
+	saved := decode[bookmarkJSON](t, readAll(resp))
+	if resp.StatusCode != 201 || saved.ID == f.inClient.ID {
+		t.Fatalf("token save: %d %+v", resp.StatusCode, saved)
 	}
+	// Now it is visible once: a second save is refused with that one.
+	out := decode[map[string]any](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": u}, 409))
+	if d, _ := out["duplicate"].(map[string]any); d == nil || int64(d["id"].(float64)) != saved.ID {
+		t.Errorf("visible duplicate: %v", out)
+	}
+	chk := decode[map[string]any](t, e.expect("GET", "/api/check?url="+url.QueryEscape(u), nil, 200))
+	if d, _ := chk["duplicate"].(map[string]any); d == nil || int64(d["id"].(float64)) != saved.ID {
+		t.Errorf("check after the save: %v", chk)
+	}
+
+	// An edit of another bookmark to the address of the hidden one in Work.
+	board := "https://example.com/board"
+	e.expect("PATCH", "/api/bookmarks/"+itoa(f.plain.ID), map[string]any{"url": board}, 200)
+	// A restore of a bookmark whose address was saved again, but only in
+	// the locked folder.
+	temp := "https://example.org/temp"
+	tmp := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": temp}, 201))
+	e.expect("DELETE", "/api/bookmarks/"+itoa(tmp.ID), nil, 204)
+	if _, _, err := e.st.Create(store.NewBookmark{URL: temp, FolderID: &f.client.ID}); err != nil {
+		t.Fatal(err)
+	}
+	e.expect("POST", "/api/bookmarks/"+itoa(tmp.ID)+"/restore", nil, 204)
+
+	// An import brings in an address that is only in the locked folder.
+	code, body := e.upload([]byte(`<DL><p><DT><A HREF="https://example.org/portal">p</A><DT><A HREF="https://example.com/fresh-import">f</A></DL><p>`))
+	if code != 200 || !strings.Contains(string(body), `"skipped":1`) {
+		t.Errorf("import: %d %s", code, body) // the portal is visible now, so it is the one skipped
+	}
+
+	// After unlocking, the hidden bookmarks show beside the new ones.
+	e.expect("POST", "/api/folders/"+itoa(f.work.ID)+"/unlock", map[string]any{"password": "s3cret"}, 204)
+	st := e.state()
+	count := func(addr string) int {
+		n := 0
+		for _, b := range st.Bookmarks {
+			if b.URL == addr {
+				n++
+			}
+		}
+		return n
+	}
+	if count(u) != 2 || count(board) != 2 || count(temp) != 2 {
+		t.Errorf("after unlock: portal %d, board %d, temp %d", count(u), count(board), count(temp))
+	}
+	// Unlocked, the folder's bookmarks count as saved again.
+	e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.com/board"}, 409)
 }
 
 // /health gives no bookmark count, which would count locked folders too.

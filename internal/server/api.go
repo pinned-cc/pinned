@@ -183,9 +183,9 @@ func (s *Server) apiState(w http.ResponseWriter, r *http.Request) {
 }
 
 // apiCheck tells the save page whether the URL is already saved, and offers
-// the icon of another bookmark on the same host and port. A URL saved in a
-// hidden folder answers "locked": true with no duplicate and no icon, the
-// same as a save of it would (see writeLockedDuplicate).
+// the icon of another bookmark on the same host and port. A URL saved only
+// in a hidden folder answers like one not saved at all, and a save of it
+// makes a new bookmark (see store.Hidden).
 func (s *Server) apiCheck(w http.ResponseWriter, r *http.Request) {
 	raw := r.URL.Query().Get("url")
 	if _, err := urlkey.Key(raw); err != nil {
@@ -198,12 +198,7 @@ func (s *Server) apiCheck(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	if b, err := s.st.FindLive(raw); err == nil {
-		if v.bookmarkHidden(b) {
-			out["locked"] = true
-			writeJSON(w, http.StatusOK, out)
-			return
-		}
+	if b, err := s.st.FindLive(raw, v.hiddenSet()); err == nil {
 		out["duplicate"] = toJSON(b)
 	} else if !errors.Is(err, store.ErrNotFound) {
 		writeStoreError(w, err)
@@ -236,12 +231,9 @@ func (s *Server) apiCreate(w http.ResponseWriter, r *http.Request) {
 		writeStoreError(w, err)
 		return
 	}
-	// Save anyway must never pull a bookmark out of a locked folder.
-	if existing, err := s.st.FindLive(in.URL); err == nil && v.bookmarkHidden(existing) {
-		writeLockedDuplicate(w)
-		return
-	}
-	b, created, err := s.st.Create(store.NewBookmark{Title: in.Title, URL: in.URL, FolderID: in.FolderID, Force: in.Force})
+	// A bookmark in a hidden folder does not count as saved, so Save anyway
+	// never pulls one out of a locked folder.
+	b, created, err := s.st.Create(store.NewBookmark{Title: in.Title, URL: in.URL, FolderID: in.FolderID, Force: in.Force, Hidden: v.hiddenSet()})
 	if err != nil {
 		if !handleDuplicate(w, v, err) {
 			writeStoreError(w, err)
@@ -330,6 +322,7 @@ func (s *Server) apiPatch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	p.Hidden = v.hiddenSet()
 	b, urlChanged, err := s.st.Update(id, p)
 	if err != nil {
 		if !handleDuplicate(w, v, err) {
@@ -358,7 +351,7 @@ func (s *Server) apiRestore(w http.ResponseWriter, r *http.Request) {
 	}
 	_, v, err := s.visibleBookmark(r, id)
 	if err == nil {
-		err = s.st.Restore(id)
+		err = s.st.Restore(id, v.hiddenSet())
 	}
 	if err != nil {
 		if !handleDuplicate(w, v, err) {
@@ -430,7 +423,7 @@ func (s *Server) apiEmptyTrash(w http.ResponseWriter, r *http.Request) {
 			ids = append(ids, b.ID)
 		}
 	}
-	orphans, err := s.st.Bulk(ids, "delete", nil)
+	orphans, err := s.st.Bulk(ids, "delete", nil, nil)
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -462,7 +455,7 @@ func (s *Server) apiBulk(w http.ResponseWriter, r *http.Request) {
 	if !s.allVisibleIn(w, v, in.IDs) {
 		return
 	}
-	orphans, err := s.st.Bulk(in.IDs, in.Action, in.FolderID)
+	orphans, err := s.st.Bulk(in.IDs, in.Action, in.FolderID, v.hiddenSet())
 	if err != nil {
 		writeStoreError(w, err)
 		return
@@ -686,7 +679,12 @@ func (s *Server) apiImport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "not a bookmark file")
 		return
 	}
-	res, err := s.st.Import(root)
+	v, err := s.lockView(r)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+	res, err := s.st.Import(root, v.hiddenSet())
 	// An import that stops midway keeps the batches it saved; their links
 	// get icons too.
 	for _, id := range res.AddedIDs {

@@ -160,7 +160,7 @@ curl -H 'Authorization: Bearer tk_...' -H 'Content-Type: application/json' \
   https://bookmarks.example.com/api/bookmarks
 ```
 
-A saved link answers 201. A link that is already saved answers 409 with the bookmark that has it, or without it when that bookmark sits in a locked folder.
+A saved link answers 201. A link that is already saved answers 409 with the bookmark that has it. A link saved only in a locked folder counts as not saved: it is saved again, outside the locked folder.
 
 ## API tokens
 
@@ -268,7 +268,7 @@ Keep `secret.key` and `icons/` with the database.
 
 **Changing the password.** Change `APP_PASSWORD` and run `docker compose up -d`. Every browser is logged out, every API token is revoked and every device cookie ends. Create new tokens for the extension and your scripts.
 
-**Import.** Export a bookmarks file from your browser and use Import in the app. Folders are kept. Links that are already saved are skipped, so importing the same file twice adds nothing. Files can be up to 20 MB. Links whose address is longer than 8192 bytes are skipped. Folders nest at most 32 deep; anything deeper in the file lands in the folder at depth 32. A file whose folders nest more than 256 deep is refused with a message. A large file is saved in short steps, so saving and logging in from other browsers go on meanwhile. If a folder it writes into is deleted or locked meanwhile, the import stops with a message saying how many links came in; import the file again to add the rest. Tested with files in Brave's export format.
+**Import.** Export a bookmarks file from your browser and use Import in the app. Folders are kept. Links that are already saved are skipped, so importing the same file twice adds nothing; a link saved only in a locked folder comes in again. Files can be up to 20 MB. Links whose address is longer than 8192 bytes are skipped. Folders nest at most 32 deep; anything deeper in the file lands in the folder at depth 32. A file whose folders nest more than 256 deep is refused with a message. A large file is saved in short steps, so saving and logging in from other browsers go on meanwhile. If a folder it writes into is deleted or locked meanwhile, the import stops with a message saying how many links came in; import the file again to add the rest. Tested with files in Brave's export format.
 
 ## Locked folders and share links
 
@@ -278,7 +278,7 @@ What a lock does not do:
 
 - It does not encrypt anything. The database and the nightly `export/bookmarks.html` hold every link in plain form, locked folders included. Export in the app leaves out the folders that are locked in that browser.
 - It does not protect against someone who has the app password.
-- It does not hide whether an address is saved. Saving an exact address that sits in a locked folder answers Already saved, without saying where.
+- Saving, checking or importing an address that sits only in a locked folder does not say so: it is saved again as a new bookmark, outside the locked folder. After you unlock the folder, that address shows twice; delete the one you do not want.
 - A folder password cannot be recovered. If you forget it, remove the lock with the app password.
 
 A locked folder cannot be shared. Locking a folder removes any share link on it or its subfolders, and so does moving a shared folder into a locked one. An import never writes into a locked folder: a folder in the file with the same name comes in beside it as `<name> (imported)`.

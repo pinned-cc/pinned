@@ -25,8 +25,9 @@ const MaxImportName = 200
 
 // Import adds the bookmarks of a parsed file. Folders are matched by name
 // under the same parent and created when missing. Links whose identity is
-// already saved, that are not http or https, or whose address is longer than
-// urlkey.MaxLen are skipped. Links at the root of the file land in Inbox.
+// already saved outside hidden, that are not http or https, or whose address
+// is longer than urlkey.MaxLen are skipped. Links at the root of the file
+// land in Inbox.
 //
 // Import never writes into a locked folder: a file folder whose name matches
 // a locked folder becomes a new folder beside it, named "<name> (imported)".
@@ -40,11 +41,11 @@ const MaxImportName = 200
 //
 // A tree deeper than netscape.MaxNesting is refused with netscape.ErrTooDeep
 // before anything is written; Parse never returns one.
-func (s *Store) Import(root *netscape.Folder) (ImportResult, error) {
+func (s *Store) Import(root *netscape.Folder, hidden Hidden) (ImportResult, error) {
 	if treeDepth(root) > netscape.MaxNesting {
 		return ImportResult{}, netscape.ErrTooDeep
 	}
-	imp := &importer{s: s, now: s.now()}
+	imp := &importer{s: s, now: s.now(), hidden: hidden}
 	if err := imp.begin(); err != nil {
 		return ImportResult{}, err
 	}
@@ -96,11 +97,14 @@ var betweenBatches func()
 // an import costs the same per link however full a folder is. They are read
 // again in a batch that follows other writes.
 type importer struct {
-	s     *Store
-	tx    *sql.Tx
-	now   int64
-	start time.Time
-	res   ImportResult
+	s *Store
+	// hidden are the folders the importing caller cannot see; a link
+	// saved only in them is imported again.
+	hidden Hidden
+	tx     *sql.Tx
+	now    int64
+	start  time.Time
+	res    ImportResult
 	// pending counts what the open batch added; it moves into res when the
 	// batch commits, so res only ever reports what is saved.
 	pending        int
@@ -235,7 +239,7 @@ func (imp *importer) link(l netscape.Link, parentID *int64) error {
 		imp.res.Skipped++
 		return nil
 	}
-	if _, err := liveByKey(imp.tx, key); err == nil {
+	if _, err := liveByKey(imp.tx, key, imp.hidden); err == nil {
 		imp.res.Skipped++
 		return nil
 	} else if !errors.Is(err, ErrNotFound) {
