@@ -189,7 +189,7 @@ async function desktop(browser, engine) {
     await page.keyboard.press('Escape'); await gone(page.locator('#screen.selecting'));
     await shot(page, `${engine}-desktop-dashboard`);
   });
-  await check('folder chips, the current sidebar folder and search hits reach 4.5:1, the bulb 3:1, light and dark', async () => {
+  await check('folder chips, the current sidebar folder, the picked folder tile in the pickers and search hits reach 4.5:1, the bulb 3:1, light and dark', async () => {
     const low = await page.evaluate(() => {
       const parse = c => { let m = c.match(/rgba?\(([^)]+)\)/); if (m) { const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p[3] == null ? 1 : p[3]]; }
         m = c.match(/color\(srgb ([^)]+)\)/); const p = m[1].split(/[ /]+/).filter(Boolean).map(Number); return [p[0] * 255, p[1] * 255, p[2] * 255, p[3] == null ? 1 : p[3]]; };
@@ -201,9 +201,10 @@ async function desktop(browser, engine) {
       const out = [], root = document.documentElement, was = root.dataset.theme, host = document.getElementById('body');
       for (const t of ['light', 'dark']) { root.dataset.theme = t;
         for (const h of ['cyan', 'coral', 'lilac', 'lime', 'mint', 'rose', 'tray', 'plain']) {
-          const w = document.createElement('div'); w.innerHTML = `<span class="gc-chip hue-${h}"><span class="dot"></span><span class="gc-cn">Folder</span></span><button type="button" class="si hue-${h}" aria-current="true" style="--hp:var(--${h}-p);--h:var(--${h})"><span class="si-n">Folder</span></button><p class="t-host"><mark class="hit">hit</mark></p>`;
-          host.prepend(w); const r = [ratio(w.querySelector('.gc-cn')), ratio(w.querySelector('.si-n')), ratio(w.querySelector('mark'))]; w.remove();
-          r.forEach((v, i) => { if (v < 4.5) out.push(`${t} ${h} ${['chip', 'sidebar', 'hit'][i]} ${v.toFixed(2)}`); }); }
+          const w = document.createElement('div'); w.innerHTML = `<span class="gc-chip hue-${h}"><span class="dot"></span><span class="gc-cn">Folder</span></span><button type="button" class="si hue-${h}" aria-current="true" style="--hp:var(--${h}-p);--h:var(--${h})"><span class="si-n">Folder</span></button><p class="t-host"><mark class="hit">hit</mark></p><div class="fpick"><button type="button" class="fmini hue-${h} fill"><span class="v"><span class="nm"><span class="nt">Folder</span></span></span></button></div><div class="sheet"><div class="fpick"><button type="button" class="fmini hue-${h} fill"><span class="v"><span class="nm"><span class="nt">Folder</span></span></span></button></div></div>`;
+          host.prepend(w); const tiles = w.querySelectorAll('.fmini .nt');
+          const r = [ratio(w.querySelector('.gc-cn')), ratio(w.querySelector('.si-n')), ratio(w.querySelector('mark')), ratio(tiles[0]), ratio(tiles[1])]; w.remove();
+          r.forEach((v, i) => { if (v < 4.5) out.push(`${t} ${h} ${['chip', 'sidebar', 'hit', 'picked tile', 'picked tile in a sheet'][i]} ${v.toFixed(2)}`); }); }
         const b = document.querySelector('.bulb'); if (b) { const cs = getComputedStyle(b); for (const c of [cs.getPropertyValue('--bulb-rim').trim() || cs.color, cs.color]) {
           const d = document.createElement('i'); d.style.color = c; document.body.appendChild(d); const v = ratio(b, getComputedStyle(d).color); d.remove(); if (v < 3) out.push(`${t} bulb ${v.toFixed(2)}`); } } }
       root.dataset.theme = was; return out; });

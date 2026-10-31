@@ -1543,6 +1543,8 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
 :root[data-theme="light"] .pbottom .padd{color:var(--ink);box-shadow:var(--shadow-float)}
 :root[data-theme="light"] .ptab-ind{box-shadow:0 0 0 1px var(--line-2),var(--card-shadow)}
 :root[data-theme="light"] .sheet .fld-in,:root[data-theme="light"] .sheet .ps,:root[data-theme="light"] .sheet .seg,:root[data-theme="light"] .sheet .fpick .fmini:not(.fill) .v{background:rgba(255,255,255,.7)}
+/* the picked folder tile: a lighter fill on paper, so its name keeps 4.5:1 (24 percent gave 4.0 to 4.3) */
+:root[data-theme="light"] .fmini.fill .v,:root[data-theme="light"] .sheet .fpick .fmini.fill .v{background:color-mix(in srgb,var(--h) 16%,var(--fold))}
 :root[data-theme="light"] .fgrid>.ftile .ft-faces .fav{box-shadow:0 0 0 2px rgba(250,248,243,.9)}
 :root[data-theme="light"] .chk{border-color:rgba(27,26,23,.3);background:rgba(250,248,243,.7)}
 /* How to save in light: the iPhone drawings keep their dark screen, the drawn dots and icons a visible grey */
