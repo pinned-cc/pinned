@@ -561,7 +561,7 @@ button.t-title{width:100%;text-align:left}
 .tk-addr{font-weight:500;color:var(--ink);overflow-wrap:anywhere}
 .share-opens{margin-top:var(--s-9)}
 .share-pwf,.share-locked{margin-top:var(--s-5)}
-.share-pw-rule{margin:var(--s-3) var(--s-1) 0}
+.sh-text.share-pw-rule{margin:var(--s-3) var(--s-1) 0}
 /* API tokens: the same sections as the share sheet */
 .tk-sec{margin-top:var(--s-9)}
 .tk-sec[aria-busy]{min-height:72px}

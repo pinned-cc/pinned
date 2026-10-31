@@ -127,6 +127,13 @@ const announced = (page, re, what) => until(page, src => new RegExp(src).test((d
 const focusIn = page => page.evaluate(() => !!document.activeElement && !!document.activeElement.closest('#sheet'));
 /* a long list: a folder of 300 links from an import (more than the 240 a view draws at once), named "ui-test long" and
    removed again with bulk calls, so cleanup does not delete 300 links one by one */
+/* the share password rule sits below the field and below the error line, never over them; '' when clear */
+const ruleClear = page => page.evaluate(() => { const box = q => { const e = document.querySelector(q); return e ? e.getBoundingClientRect() : null; };
+  const rule = box('#sheet #share-pw-rule'), field = box('#sheet form[data-sharepw] input[name=pw]'), err = box('#sheet .share-pwf .fld-err');
+  if (!rule || !field) return 'no rule or field';
+  if (rule.top < field.bottom - 0.5) return `rule starts ${field.bottom - rule.top} px above the field's bottom edge`;
+  if (err && rule.top < err.bottom - 0.5) return `rule starts ${err.bottom - rule.top} px above the error line's bottom`;
+  return ''; });
 const LONG_N = 300, LONG_CAP = 240;
 async function seedLong(page) {
   const id = await page.evaluate(async n => {
@@ -729,7 +736,8 @@ async function desktop(browser, engine) {
     await c.close();
   });
 
-  await check('share sheet from a folder menu: link, password, expiry', async () => {
+  await check('share sheet from a folder menu at 1280: link, password, expiry; the password rule clear of the field and the error', async () => {
+    await page.setViewportSize({ width: 1280, height: 900 }); await page.waitForTimeout(250);
     const ft = page.locator(`#side .sf[data-fid="${folderId}"]`);
     await ft.click({ button: 'right' });
     await menuItem(page, 'Share').first().click(); await sheetOpen(page);
@@ -744,6 +752,7 @@ async function desktop(browser, engine) {
     assert(await pw.getAttribute('aria-describedby') === 'share-pw-rule', 'the password rule is not tied to the field');
     await pw.fill('short1'); await pw.press('Enter');
     await visible(page.locator('#sheet .share-pwf .fld-err', { hasText: 'at least 8' }));
+    { const r = await ruleClear(page); assert(!r, '1280: ' + r); }
     await page.locator('#sheet form[data-sharepw] input[name=pw]').fill('sunshine'); await page.locator('#sheet form[data-sharepw] input[name=pw]').press('Enter');
     await visible(page.locator('#sheet .share-pwf .fld-err', { hasText: 'too easy to guess' }));
     await page.locator('#sheet form[data-sharepw] input[name=pw]').fill('long-enough-1');
@@ -756,6 +765,7 @@ async function desktop(browser, engine) {
     await until(page, () => (document.querySelector('#sheet [data-exp="7"]') || {}).getAttribute?.('aria-checked') === 'true', null, '7 days checked');
     await visible(page.locator('#sheet .share-meta', { hasText: 'Until' }));
     await page.keyboard.press('Escape'); await sheetClosed(page);
+    await page.setViewportSize({ width: 1440, height: 900 }); await page.waitForTimeout(250);
   });
 
   await check('API tokens: keyboard, focus stays in the sheet and returns to the opener', async () => {
@@ -1642,6 +1652,23 @@ async function phone(browser, engine) {
       fire('pointerup', y);
     });
     await sheetClosed(page);
+  });
+  await check('390: the share password rule sits under the field and under the error line', async () => {
+    const f = (await apiIn(page, 'POST', '/api/folders', { name: 'ui-test share rule' })).data;
+    try {
+      await page.evaluate(async v => { const a = await import('/static/js/actions.js'); await window.Pinned.load(); a.goView(v); }, f.id);
+      await page.locator('[data-a="share-open"]').first().click(); await sheetOpen(page);
+      await page.click('#sheet [data-a="share-toggle"]');
+      await until(page, () => /\/s\//.test((document.getElementById('share-url') || {}).value || ''), null, 'share link');
+      await page.click('#sheet [data-a="share-lock"]');
+      const pw = page.locator('#sheet form[data-sharepw] input[name=pw]'); await visible(pw); await pw.focus(); await page.waitForTimeout(300);
+      let r = await ruleClear(page); assert(!r, '390: ' + r);
+      if (process.env.SHARE_SHOT && engine === 'webkit') await page.screenshot({ path: process.env.SHARE_SHOT });
+      await pw.fill('short1'); await pw.press('Enter');
+      await visible(page.locator('#sheet .share-pwf .fld-err', { hasText: 'at least 8' }));
+      r = await ruleClear(page); assert(!r, '390 with the error: ' + r);
+      await page.keyboard.press('Escape'); await sheetClosed(page);
+    } finally { await apiIn(page, 'DELETE', `/api/folders/${f.id}`); await page.evaluate(async () => { const a = await import('/static/js/actions.js'); a.goView('dashboard'); await window.Pinned.load(); }); }
   });
   await check('390: a long folder shows 240 cards, the count and Show all at 44 px; a tap draws the rest without a seam; a redraw keeps the place', async () => {
     const id = await seedLong(page);
