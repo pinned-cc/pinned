@@ -39,6 +39,40 @@ func TestIconPolicy(t *testing.T) {
 	}
 }
 
+// An icon file no bookmark names, such as a PNG kept after the re-encode
+// of 0.1.11 for a way back with the database copy, is not served, in the
+// app or in a share.
+func TestUnnamedIconFileNotServed(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	g := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Shared"}, 201))
+	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"url": "https://example.com", "folder_id": g.ID}, 201))
+	e.iconFor(b.ID, "https://example.com/", "1-bbbbbbbb.png")
+	if err := os.WriteFile(filepath.Join(e.dir, "icons", "1-aaaaaaaa.png"), []byte("\x89PNG\r\n\x1a\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(g.ID)+"/share", map[string]any{}, 201))
+	v := e.visitor()
+	for path, want := range map[string]int{
+		"/icons/1-bbbbbbbb.png": 200,
+		"/icons/1-aaaaaaaa.png": 404,
+	} {
+		resp := e.get(path)
+		resp.Body.Close()
+		if resp.StatusCode != want {
+			t.Errorf("%s: %d, want %d", path, resp.StatusCode, want)
+		}
+	}
+	for path, want := range map[string]int{
+		"/s/" + sh.Token + "/icons/1-bbbbbbbb.png": 200,
+		"/s/" + sh.Token + "/icons/1-aaaaaaaa.png": 404,
+	} {
+		if code, _ := v.get(path); code != want {
+			t.Errorf("%s: %d, want %d", path, code, want)
+		}
+	}
+}
+
 // SVG answers name their charset, the app's icon and fetched icons alike.
 func TestSVGCharset(t *testing.T) {
 	e := newEnv(t, Config{})

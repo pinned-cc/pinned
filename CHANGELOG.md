@@ -34,7 +34,7 @@ Not released yet.
 - A shared folder moved into a locked folder keeps no share link. Before, its link stayed alive and could not be seen or revoked while the parent was locked.
 - Logging in ends the login the browser held before.
 - An SVG icon is kept only when everything in it is on a list of drawing elements and attributes; anything that could run script, link or load from outside is refused and the letter mark is shown. PNG, JPEG and GIF icons are stored as a new PNG, so nothing hidden in the file is kept. GIF icons now show.
-- Icons saved by older versions are checked once at the first start: PNG and JPEG icons are stored again as a new PNG, and an icon that does not decode or an SVG that fails the new check is removed, so the letter mark shows.
+- Icons saved by older versions are checked once at the first start: PNG and JPEG icons are stored again as a new PNG, and an icon that does not decode or an SVG that fails the new check is removed, so the letter mark shows. The old PNG and JPEG files stay in the icons folder and are not served, so going back to 0.1.10 with the saved database copy still shows them.
 - The icon fetch refuses more special network ranges (such as NAT64 and 6to4), ports other than 80, 443 and the bookmark's own, and redirects from https to plain http.
 
 ### Changes

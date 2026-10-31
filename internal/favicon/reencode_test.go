@@ -101,8 +101,9 @@ func TestPoolDropsStoredUnsafeSVG(t *testing.T) {
 }
 
 // Raster icons stored byte for byte by an earlier version are re-encoded
-// once at start: the bookmark points to a new PNG, a file that does not
-// decode is dropped, and a second start leaves everything alone.
+// once at start: the bookmark points to a new PNG, the old file stays for
+// a way back to 0.1.10 with the database copy, a file that does not decode
+// is dropped, and a second start leaves everything alone.
 func TestPoolReencodesStoredRaster(t *testing.T) {
 	dir := t.TempDir()
 	st := newTestStore(t)
@@ -154,8 +155,11 @@ func TestPoolReencodesStoredRaster(t *testing.T) {
 		if _, err := png.Decode(bytes.NewReader(data)); err != nil {
 			t.Errorf("%s: new file is not a png: %v", f.name, err)
 		}
-		if _, err := os.Stat(filepath.Join(dir, f.name)); !os.IsNotExist(err) {
-			t.Errorf("%s: old file kept", f.name)
+		if data, err := os.ReadFile(filepath.Join(dir, f.name)); err != nil || !bytes.Equal(data, f.data) {
+			t.Errorf("%s: old file not kept as it was: %v", f.name, err)
+		}
+		if st.IconInUse(f.name) {
+			t.Errorf("%s: old file still named by a bookmark", f.name)
 		}
 	}
 	if b, _ := st.Bookmark(ids[2]); b.Icon != nil {

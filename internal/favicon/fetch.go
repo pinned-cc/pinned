@@ -325,8 +325,11 @@ func (p *Pool) recheckSVG() {
 
 // reencodeStored stores every PNG and JPEG icon that versions before 0.1.11
 // kept byte for byte as a new PNG of what it shows, the way new icons are
-// stored, and points its bookmarks to the new file. A file that does not
-// decode is taken off its bookmarks and deleted, so they show their letter.
+// stored, and points its bookmarks to the new file. The old file stays on
+// disk: no bookmark names it any more, so it is not served, and the
+// database copy saved before the upgrade still names it, so going back to
+// 0.1.10 with that copy shows the icon. A file that does not decode is
+// taken off its bookmarks and deleted, so they show their letter.
 // It runs once: a settings flag records the pass, so later starts skip it.
 // If anything could not be finished, the flag is not set and the next start
 // tries again.
@@ -399,8 +402,7 @@ func (p *Pool) reencodeOne(path string) bool {
 		}
 		return false
 	}
-	remove(path)
-	return true
+	return true // the old file stays, see reencodeStored
 }
 
 // Wait blocks until every worker has stopped.
