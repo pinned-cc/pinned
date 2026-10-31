@@ -190,7 +190,7 @@ The client address is read the same way as for the wrong password limits: from `
 | `session.end` | Another browser was signed out from Signed in | `session` |
 | `session.end_others` | Sign out all others | `ended` |
 | `token.fail`, `token.wait` | A wrong API token | `seconds` on a wait |
-| `token.refused` | A valid token called something tokens may not | `token`, `route` |
+| `token.refused` | A valid token called something tokens may not, or came with another origin than the extension it is bound to | `token`, `route`, and `reason=origin` for the second |
 | `token.create`, `token.delete` | A token was created or revoked | `token`, and `name` on create |
 | `reauth.fail`, `reauth.wait` | A wrong app password when it is asked again | `for` (`token.create`, `lock.remove`, `session.end` or `session.end_others`), `folder` |
 | `lock.fail`, `lock.wait` | A wrong folder password | `folder` |

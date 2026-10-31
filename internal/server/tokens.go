@@ -55,8 +55,8 @@ func extensionOrigin(origin string) bool {
 // cookie cannot be used cross site.
 //
 // The allow list is per token: a token is bound to the extension origin
-// that first uses it (see serveBearer), and requests with it from any
-// other origin are refused, so another extension cannot read anything
+// that first uses it (see serveBearer), and requests with it that carry
+// any other Origin are refused, so another extension cannot read anything
 // with it. A preflight carries no token, so it is answered for any
 // extension origin; it returns nothing.
 func allowExtension(w http.ResponseWriter, r *http.Request) bool {
@@ -119,15 +119,22 @@ func (s *Server) serveBearer(w http.ResponseWriter, r *http.Request, token strin
 		writeError(w, http.StatusForbidden, "not allowed with a token")
 		return
 	}
-	if origin := r.Header.Get("Origin"); extensionOrigin(origin) {
-		bound := origin
+	// A token is bound to the first extension origin that uses it. Once
+	// bound, a request that carries any other Origin, another extension's
+	// or a web page's, is refused. A request without an Origin, from a
+	// script or a shortcut, is not a browser page and passes.
+	if origin := r.Header.Get("Origin"); origin != "" {
+		bound := ""
 		if t.Origin != nil {
 			bound = *t.Origin
-		} else if bound, err = s.st.BindTokenOrigin(t.ID, origin); err != nil {
-			writeStoreError(w, err)
-			return
+		} else if extensionOrigin(origin) {
+			if bound, err = s.st.BindTokenOrigin(t.ID, origin); err != nil {
+				writeStoreError(w, err)
+				return
+			}
 		}
-		if bound != origin {
+		if bound != "" && bound != origin {
+			s.security(r, "token.refused", "token", t.ID, "route", r.Pattern, "reason", "origin")
 			writeError(w, http.StatusForbidden, "This token is used by another copy of the extension. Create a new token for this one.")
 			return
 		}

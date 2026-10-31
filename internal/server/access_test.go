@@ -461,9 +461,9 @@ func TestFolderLimitIsPerFolderAndSparesKnownBrowsers(t *testing.T) {
 	}
 }
 
-// A token is bound to the first extension origin that uses it: answers to
-// any other extension origin are refused, and requests without an Origin,
-// from scripts, keep working.
+// A token is bound to the first extension origin that uses it: requests
+// with any other Origin, extension or web, are refused, and requests
+// without an Origin, from scripts, keep working.
 func TestTokenBoundToFirstExtensionOrigin(t *testing.T) {
 	e := newEnv(t, Config{})
 	e.login()
@@ -496,14 +496,21 @@ func TestTokenBoundToFirstExtensionOrigin(t *testing.T) {
 			t.Errorf("other extension %s: %d", other, resp.StatusCode)
 		}
 	}
-	if resp := call("https://evil.example"); resp.StatusCode != 200 || resp.Header.Get("Access-Control-Allow-Origin") != "" {
-		t.Errorf("web origin: %d %v", resp.StatusCode, resp.Header)
+	for _, other := range []string{"https://evil.example", "null"} {
+		if resp := call(other); resp.StatusCode != 403 || resp.Header.Get("Access-Control-Allow-Origin") != "" {
+			t.Errorf("origin %s with a bound token: %d %v", other, resp.StatusCode, resp.Header)
+		}
 	}
+	e.wantEvent("token.refused", 4)
 	if resp := call(""); resp.StatusCode != 200 {
 		t.Errorf("script after binding: %d", resp.StatusCode)
 	}
-	// A new token is free again.
+	// A token not bound yet is not bound by a web origin.
 	tok = e.newToken("ext 2")
+	if resp := call("https://evil.example"); resp.StatusCode != 200 {
+		t.Errorf("unbound token from a web origin: %d", resp.StatusCode)
+	}
+	// A new token is free again.
 	if resp := call("chrome-extension://other"); resp.StatusCode != 200 {
 		t.Errorf("new token from another extension: %d", resp.StatusCode)
 	}

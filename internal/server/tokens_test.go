@@ -228,7 +228,10 @@ func TestCORSPreflight(t *testing.T) {
 	// Actual bearer responses carry the same Allow-Origin, never "*".
 	e.login()
 	tok := e.newToken("ext")
-	for _, c := range []struct{ origin, want string }{{"chrome-extension://abcdef", "chrome-extension://abcdef"}, {"https://evil.example", ""}} {
+	for _, c := range []struct {
+		origin, want string
+		code         int
+	}{{"chrome-extension://abcdef", "chrome-extension://abcdef", 200}, {"https://evil.example", "", 403}} {
 		req, _ := http.NewRequest("GET", e.srv.URL+"/api/folders", nil)
 		req.Header.Set("Authorization", "Bearer "+tok)
 		req.Header.Set("Origin", c.origin)
@@ -237,7 +240,7 @@ func TestCORSPreflight(t *testing.T) {
 			t.Fatal(err)
 		}
 		resp.Body.Close()
-		if resp.StatusCode != 200 || resp.Header.Get("Access-Control-Allow-Origin") != c.want {
+		if resp.StatusCode != c.code || resp.Header.Get("Access-Control-Allow-Origin") != c.want {
 			t.Errorf("bearer GET from %s: %d %q", c.origin, resp.StatusCode, resp.Header.Get("Access-Control-Allow-Origin"))
 		}
 	}

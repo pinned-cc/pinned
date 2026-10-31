@@ -177,7 +177,7 @@ Everything else answers 403 with a token: export, import, Trash and delete, crea
 
 Creating a token asks for the app password again, so a browser left open cannot hand out tokens.
 
-A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage. A token belongs to the first copy of the extension that uses it; any other extension gets 403 with it. After you reinstall the extension in Firefox or Safari, create a new token for it. Scripts are not affected.
+A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage. A token belongs to the first copy of the extension that uses it. After that, a request with the token that names any other origin, another extension or a web page, gets 403; a request that names no origin, as scripts, shortcuts and the examples send, still works. After you reinstall the extension in Firefox or Safari, create a new token for it. Scripts are not affected.
 
 ## Signed in browsers
 
