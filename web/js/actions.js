@@ -3,7 +3,7 @@
 import { api } from './api.js';
 import { closeMenu, menuOrSheet, openMenu, selItems, tileMenu } from './menu.js';
 import { openPalette } from './palette.js';
-import { deskBody, render, switchLayout } from './render.js';
+import { deskBody, render, showAll, switchLayout } from './render.js';
 import { FPICK, emptySpace, exitSelect, pickRange, selSync, toggle } from './select.js';
 import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openReleases, openSessions, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sessionsAsk, sessionsSubmit, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
 import { FSORTS, SORTS, bm, chain, count, data, descSet, fid, folderById, foldersSel, hidesRecent, isLocked, layers, live, load, loadQuiet, lockedAt, ownLock, run, selectables, setFsort, setSort, ui } from './state.js';
@@ -140,7 +140,7 @@ export async function doImport(file) {
 export function goView(v) {
   if (v === 'settings' && ui.tokenCount == null) api('GET', '/api/tokens').then(l => { ui.tokenCount = l.length; if (ui.view === 'settings') render(); }).catch(() => {});
   const lk = lockedAt(v); if (lk) { openSheet({ type: 'unlock', fid: lk.id, to: v }); return; }
-  ui.selecting = false; ui.picked.clear(); closeMenu();
+  ui.selecting = false; ui.picked.clear(); closeMenu(); if (v !== ui.view) ui.full = null;
   if (ui.mode === 'phone') { ui.view = v; render(); window.scrollTo(0, 0); return; }
   ui.view = v; render(); const c = byId('content'); if (c) c.scrollTop = 0;
 }
@@ -228,6 +228,7 @@ export function onClick(e) {
     case 'tk-cancel': layers.sheet.confirm = null; fillSheet(); break;
     case 'tk-revoke-yes': a.disabled = true; tokenRevoke(+a.dataset.id); break;
     case 'logout': logout(); break;
+    case 'show-all': showAll(); break;
     case 'retry': data.error = null; data.loaded = false; render(); load(); break;
     case 'close': closeSheet(); break;
     case 'confirm': { const r = layers.sheet.run; a.disabled = true; r().then(() => closeSheet(), err => { if (!err.auth) toast(errorText(err, 'That did not work. Try again.')); closeSheet(); }); break; }

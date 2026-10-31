@@ -82,6 +82,9 @@ export const dayDiff = ts => { const a = new Date(); a.setHours(0, 0, 0, 0); con
 export const fmtDay = ts => { const d = new Date(ts * 1000); return `${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() === new Date().getFullYear() ? '' : ' ' + d.getFullYear()}`; };
 export const fmtDate = ts => { if (!ts) return ''; const n = dayDiff(ts); if (n === 0) return 'Today'; if (n === 1) return 'Yesterday'; return fmtDay(ts); };
 export const groupName = ts => { const n = dayDiff(ts); return n <= 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 7 ? 'This week' : 'Earlier'; };
+/* groupName for many dates at once: the day bounds are worked out once, not two dates per bookmark */
+export const grouper = () => { const d = new Date(); d.setHours(0, 0, 0, 0); const t0 = d.getTime(); d.setDate(d.getDate() - 1); const t1 = d.getTime(); d.setDate(d.getDate() - 5); const t6 = d.getTime();
+  return ts => { const ms = ts * 1000; return ms >= t0 ? 'Today' : ms >= t1 ? 'Yesterday' : ms >= t6 ? 'This week' : 'Earlier'; }; };
 export const isoDate = ts => { const d = new Date(ts * 1000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 export async function copy(text) {

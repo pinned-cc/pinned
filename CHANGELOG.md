@@ -24,7 +24,7 @@ Not released yet.
 - In the browser extension's options, an address typed with another scheme, such as `ftp://example.com`, was turned into `https://ftp//example.com`. It is now refused with the message to enter an address starting with http or https.
 - An import file whose folders nest more than 256 deep could stop the server. It is now refused with a message.
 - Someone guessing passwords from many addresses could make every login wait, yours included. A browser that logs in with the password now keeps a signed device cookie, is counted on its own and is no longer held by that limit. Changing the app password ends these cookies. Other browsers keep the limit as before.
-- A large import no longer makes saves and logins fail while it runs, and it is much faster: a 20 MB file with about 470000 links now takes about 15 seconds instead of more than 12 minutes.
+- A large import no longer makes saves and logins fail while it runs: the file is saved in short steps, so saving and logging in from other browsers go on meanwhile, and it is much faster than before. A view with more than 240 links, such as All bookmarks after a large import, shows the first 240 with the count and Show all. Show all draws the rest in steps as you scroll. Before, All bookmarks held the page for about 2 seconds at 10000 links and froze it at 100000.
 - On the keyboard, Tab moves through every sheet again (it stayed on the first button), and on the desktop Tab goes on past the search field to the rest of the page. Escape in the search leaves the focus in the search field. Enter in the search field opens the search.
 - Deleting a bookmark from Trash for good now asks first, like Empty trash.
 - Login, How to save, the save page and shared folders follow light and dark like the app. They were always dark.
@@ -43,6 +43,7 @@ Not released yet.
 - New setting `HSTS`, off by default. `HSTS=true` sends `Strict-Transport-Security` on HTTPS answers. Switch it on only when Pinned has its own host name on the public internet and the proxy does not already send it, since it applies to every port of that host name.
 - `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback, private and `100.64.0.0/10` addresses. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie behind `tailscale serve` is Secure too.
 - The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, use the copy saved before the upgrade.
+- The bookmarks the app loads are sent gzipped when the browser accepts it: in a test with 100000 links, 31 MB became 2.4 MB.
 - Pages load faster on the second visit: the scripts, styles and fonts carry a validator, so the browser checks them and downloads nothing when they have not changed.
 - Images are built with Go 1.27.3, which fixes a certificate check flaw in Go 1.27.2 (GO-2026-6809), and golang.org/x/net 0.62.0.
 - New share links keep the token after `#`, for example `https://host/s/#token`, so it never reaches the server's or a proxy's log. Links made before keep working.

@@ -2,9 +2,11 @@
 package server
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -543,6 +545,63 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v) // a client that went away is not an error worth logging
+}
+
+// writeJSONGzip is writeJSON for the one large answer, /api/state (29 MB of JSON at
+// 100000 links, refetched on every focus): gzipped when the client accepts it. That
+// answer reflects nothing from the request, so compressing it gives an observer of
+// its length nothing to probe its secrets with (BREACH).
+func writeJSONGzip(w http.ResponseWriter, r *http.Request, status int, v any) {
+	w.Header().Add("Vary", "Accept-Encoding")
+	if !acceptsGzip(r.Header.Values("Accept-Encoding")) {
+		writeJSON(w, status, v)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Del("Content-Length")
+	w.WriteHeader(status)
+	gz := gzipPool.Get().(*gzip.Writer)
+	gz.Reset(w)
+	_ = json.NewEncoder(gz).Encode(v) // as in writeJSON: a client that went away is not worth logging
+	_ = gz.Close()
+	gz.Reset(io.Discard)
+	gzipPool.Put(gz)
+}
+
+// gzipPool keeps the compressors: each holds about a megabyte of tables.
+var gzipPool = sync.Pool{New: func() any {
+	gz, _ := gzip.NewWriterLevel(io.Discard, gzip.BestSpeed) // BestSpeed is a valid level, so no error
+	return gz
+}}
+
+// acceptsGzip reads Accept-Encoding: gzip, or *, listed without q=0. gzip named
+// on its own wins over *.
+func acceptsGzip(headers []string) bool {
+	star := false
+	for _, h := range headers {
+		for _, part := range strings.Split(h, ",") {
+			name, params, _ := strings.Cut(part, ";")
+			name = strings.ToLower(strings.TrimSpace(name))
+			if name != "gzip" && name != "*" {
+				continue
+			}
+			ok := true
+			for _, p := range strings.Split(params, ";") {
+				k, val, _ := strings.Cut(strings.TrimSpace(p), "=")
+				if strings.EqualFold(strings.TrimSpace(k), "q") {
+					if q, err := strconv.ParseFloat(strings.TrimSpace(val), 64); err != nil || q <= 0 {
+						ok = false
+					}
+				}
+			}
+			if name == "gzip" {
+				return ok
+			}
+			star = star || ok
+		}
+	}
+	return star
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {

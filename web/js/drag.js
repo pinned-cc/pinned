@@ -5,7 +5,7 @@ import { api } from './api.js';
 import { openMenu, tileMenu } from './menu.js';
 import { render } from './render.js';
 import { closeSheet, openSheet } from './sheets.js';
-import { bm, canSelect, folderById, foldersSel, layers, run, setFsort, setSort, ui } from './state.js';
+import { bm, canSelect, folderById, foldersSel, layers, run, sections, setFsort, setSort, ui } from './state.js';
 import { toast } from './toast.js';
 import { FPICK, selSync } from './select.js';
 import { byId, reduce } from './util.js';
@@ -124,7 +124,10 @@ export function dragEnd() {
   const ids = [...cont.children].filter(x => x.matches(DSEL[k])).map(dragId);
   if (ids.join(',') === before) return;
   if (k === 'tile') { const c = cont.dataset.container, folder = c === 'inbox' ? null : +c;
-    const all = [...document.querySelectorAll(`#app [data-container="${c}"] > article`)].map(x => +x.dataset.id);
+    const drawn = [...document.querySelectorAll(`#app [data-container="${c}"] > article`)].map(x => +x.dataset.id), on = new Set(drawn);
+    /* a long list draws only part of its cards: the ones not drawn keep their places around the drawn ones */
+    const whole = sections().filter(s => s.container === folder).flatMap(s => s.items.map(b => b.id)), q = [...drawn];
+    const ws = new Set(whole), all = drawn.every(id => ws.has(id)) ? whole.map(id => on.has(id) ? q.shift() : id) : drawn;
     setSort('manual'); run(api('PUT', '/api/bookmarks/order', { folder_id: folder, ids: all })).then(r => { if (r.ok) toast('Order saved'); }); }
   /* the Folders screen holds the top level: its new order is the sidebar's too, and the screen switches to Your order */
   else if (k === 'ftile') { setFsort('manual'); run(api('PUT', '/api/folders/order', { parent_id: null, ids })).then(r => { if (r.ok) toast('Order saved'); }); }

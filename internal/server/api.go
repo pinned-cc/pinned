@@ -171,7 +171,7 @@ func (s *Server) apiState(w http.ResponseWriter, r *http.Request) {
 			recent = append(recent, id)
 		}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
+	writeJSONGzip(w, r, http.StatusOK, map[string]any{
 		"folders":   fj,
 		"bookmarks": bj,
 		"settings": map[string]any{

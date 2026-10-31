@@ -4,7 +4,7 @@ import { api } from './api.js';
 import { render } from './render.js';
 import { fillSheet } from './sheets.js';
 import { toast } from './toast.js';
-import { errorText, groupName, hostFromUrl, store } from './util.js';
+import { errorText, grouper, hostFromUrl, store } from './util.js';
 
 /* ---------- data ---------- */
 export const data = { folders: [], bms: [], settings: { last_folder: null, recent_folders: [] }, loaded: false, has: false, error: null };
@@ -51,8 +51,14 @@ export function count(v) {
   if (v === 'inbox') return live().filter(b => fid(b) == null).length;
   if (v === 'folders') return kids(null).length;
   if (v === 'settings') return '';
-  const s = descSet(v); return live().filter(b => fid(b) != null && s.has(b.folder_id)).length;
+  const s = descSet(v);
+  if (!countMemo) return live().filter(b => fid(b) != null && s.has(b.folder_id)).length;
+  if (!countMemo.size) for (const b of data.bms) if (!b.deleted_at && fid(b) != null) countMemo.set(b.folder_id, (countMemo.get(b.folder_id) || 0) + 1);
+  let n = 0; for (const id of s) n += countMemo.get(id) || 0; return n;
 }
+/* while one render draws, the folder counts are read from one pass over the bookmarks instead of one pass per folder */
+let countMemo = null;
+export const memoCounts = on => { countMemo = on ? new Map() : null; };
 export const viewName = v => ({ dashboard: 'Dashboard', all: 'All bookmarks', inbox: 'Inbox', trash: 'Trash', folders: 'Folders', settings: 'Settings' })[v] || (folderById.get(v) || { name: 'Folder' }).name;
 export const pinned = () => live().filter(b => b.pinned).sort((a, b) => a.pinned_position - b.pinned_position || a.id - b.id);
 export const hostOf = b => b.host || hostFromUrl(b.url);
@@ -66,6 +72,7 @@ export const FSORTS = { manual: 'Your order', name: 'A to Z', saved: 'Newest' };
 export const ui = {
   view: 'dashboard', q: '', sort: SORTS[store.get('sort', 'saved')] ? store.get('sort', 'saved') : 'saved', fsort: FSORTS[store.get('fsort', 'manual')] ? store.get('fsort', 'manual') : 'manual', layout: store.get('layout', 'grid') === 'list' ? 'list' : 'grid', footOpen: store.get('foot', '') === 'open',
   selecting: false, picked: new Set(), renaming: null,
+  full: null, /* the view whose long list shows every card (Show all); a new view starts capped again */
   version: null, /* from /health, which tells it only to a logged in session */
   mode: null, /* 'desk' or 'phone', set by render() */
   anchor: null, /* the bookmark id a Shift click or Shift arrow range starts from */
@@ -110,16 +117,19 @@ export function listFor(v = ui.view) {
 /* single container views can be reordered by drag in any sort; the drop switches the sort to "Your order" */
 export const soleContainer = () => { const v = ui.view;
   if (v === 'inbox') return null; if (typeof v === 'number') return v; return undefined; };
+/* the same orders as localeCompare, made once: a collator compares 100000 titles many times faster */
+const COLL = new Intl.Collator(), COLL_BASE = new Intl.Collator(undefined, { sensitivity: 'base' });
 export function sections() {
   const L = listFor(), v = ui.view;
   if (!L.length) return [];
-  const by = k => (a, b) => (b[k] || 0) - (a[k] || 0) || a.title.localeCompare(b.title);
-  const grouped = (items, k) => { const out = []; for (const b of items) { const g = groupName(b[k]); let s = out.find(x => x.label === g);
+  const by = k => (a, b) => (b[k] || 0) - (a[k] || 0) || COLL.compare(a.title, b.title);
+  const gname = grouper();
+  const grouped = (items, k) => { const out = []; for (const b of items) { const g = gname(b[k]); let s = out.find(x => x.label === g);
     if (!s) { s = { label: g, items: [], date: x => x[k] }; out.push(s); } s.items.push(b); } return out; };
   const sole = soleContainer();
   const mark = S => { if (sole !== undefined) S.forEach(s => { s.container = sole; }); return S; };
   if (v === 'trash') return [{ label: 'Kept for 30 days', items: L.sort(by('deleted_at')), date: b => b.deleted_at }];
-  if (ui.sort === 'name') return mark([{ label: 'A to Z', items: L.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })), date: b => b.created_at }]);
+  if (ui.sort === 'name') return mark([{ label: 'A to Z', items: L.sort((a, b) => COLL_BASE.compare(a.title, b.title)), date: b => b.created_at }]);
   if (ui.sort === 'opened') {
     const o = L.filter(b => b.opened_at).sort(by('opened_at')), n = L.filter(b => !b.opened_at).sort(by('created_at'));
     const S = grouped(o, 'opened_at');

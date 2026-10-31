@@ -6,19 +6,24 @@ import { exitSelect, extendByKey, selSync } from './select.js';
 import { atKey, closeSheet, sheetEl } from './sheets.js';
 import { bm, canSelect, foldersSel, layers, selectables, ui } from './state.js';
 import { runUndo } from './toast.js';
+import { drawCard, listIds } from './render.js';
 
 /* keyboard */
 export function moveFocus(key) {
   const sel = ui.mode === 'phone' ? '#app .pt-in, #app .g-in' : '#app .t-title, #app .g-in';
-  const all = [...document.querySelectorAll(sel)]; if (!all.length) return;
+  let all = [...document.querySelectorAll(sel)]; if (!all.length) return;
   const cur = document.activeElement && document.activeElement.closest('#app article') ? document.activeElement.closest('article').querySelector('.t-title, .pt-in, .g-in') : null;
+  /* a long list draws its cards in blocks: the cards around the focus are drawn first */
+  const ids = listIds(); if (ids && cur) { const k = ids.indexOf(+cur.closest('article').dataset.id); if (k >= 0) { drawCard(ids[k + 12]); drawCard(ids[k - 12]); all = [...document.querySelectorAll(sel)]; } }
   let i = all.indexOf(cur), j;
   if (i < 0) j = 0;
   else if (key === 'ArrowLeft') j = Math.max(0, i - 1);
   else if (key === 'ArrowRight') j = Math.min(all.length - 1, i + 1);
   else { const R = el => el.closest('article').getBoundingClientRect(), r = R(cur), cx = r.left + r.width / 2, down = key === 'ArrowDown';
     let best = -1, bd = Infinity;
-    all.forEach((el, n) => { const q = R(el); const dy = down ? q.top - r.top : r.top - q.top; if (dy < 4) return;
+    /* only the cards near the focus can be a row away: measuring every card of a long list would hold the page */
+    const lo = Math.max(0, i - 40), hi = Math.min(all.length, i + 41);
+    all.slice(lo, hi).forEach((el, m) => { const n = lo + m, q = R(el); const dy = down ? q.top - r.top : r.top - q.top; if (dy < 4) return;
       const score = dy * 4 + Math.abs(q.left + q.width / 2 - cx); if (score < bd) { bd = score; best = n; } });
     j = best < 0 ? i : best; }
   all[j].focus(); all[j].closest('article').scrollIntoView({ block: 'nearest' });

@@ -2,7 +2,7 @@
    space, and painting a selection with a finger at any width. On the Folders screen the same gestures pick folders. */
 import { moveFocus } from './keys.js';
 import { galShell } from './home.js';
-import { deskToolbar, phoneBulk, ptShell, render, setDeskBar, setTb } from './render.js';
+import { deskToolbar, listIds, phoneBulk, ptShell, render, setDeskBar, setTb } from './render.js';
 import { bm, foldersSel, layers, listFor, ui } from './state.js';
 import { byId, setBar } from './util.js';
 
@@ -66,7 +66,7 @@ export function barSync() {
 }
 
 /* Finder style selection: Cmd click toggles, Shift click and Shift arrows take a range */
-export const visualIds = () => pickEls().map(pickId);
+export const visualIds = () => (!foldersSel() && listIds()) || pickEls().map(pickId);
 export function pickRange(a, b) { const ids = visualIds(); let i = ids.indexOf(a), j = ids.indexOf(b); if (i < 0) i = j; if (i > j) [i, j] = [j, i]; ids.slice(i, j + 1).forEach(id => ui.picked.add(id)); }
 export function extendByKey(key) {
   const cur = document.activeElement && document.activeElement.closest && document.activeElement.closest('#app article[data-id]'); if (!cur) { moveFocus(key); return; }

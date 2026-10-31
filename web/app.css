@@ -373,6 +373,20 @@ button.t-title{width:100%;text-align:left}
 /* while selecting, the date steps left of the tick, so the two never overlap; the other columns stay put */
 .selecting .is-list .t-strip time{margin-right:var(--s-14)}
 .glbl+.grid.is-list{margin-top:calc(var(--s-1) * -1)}
+/* a long list: the first cards, then the count and Show all; after Show all the rest follows in blocks that join without a seam */
+.more{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-5) var(--s-8);margin-top:var(--s-12)}
+.more-n{margin:0;font:500 var(--t-meta)/var(--lh-16) var(--sans);color:var(--ink-weak)}
+/* a drawn block off screen skips layout and paint; the padding keeps focus rings inside its clip, the margins take it back */
+.lazy{content-visibility:auto;padding-top:6px;padding-bottom:6px;margin-top:-6px;margin-bottom:-6px}
+.grid.lazy{padding-left:6px;padding-right:6px;margin-left:-6px;margin-right:-6px}
+.grid.lazy.cont{margin-top:calc(var(--s-8) - 6px)}
+.grid.is-list.lazy.cont{border-top:0;margin-top:-6px}
+.glbl+.grid.is-list.lazy{padding-top:0;margin-top:calc(var(--s-1) * -1)}
+.pmore{display:flex;align-items:center;justify-content:space-between;gap:var(--s-5);margin:var(--s-8) var(--gut) 0}
+.pmore .tbtn{padding:0 var(--s-2)}
+.pgrid.lazy{padding-top:6px;padding-bottom:6px}
+.pgrid.lazy.cont{margin-top:calc(var(--s-6) - 6px)}
+.pgrid.is-list.lazy.cont{margin-top:-6px}
 .is-list .tile.picked{background:var(--picked-fill)}
 
 .menu{position:fixed;z-index:60;min-width:180px;padding:var(--s-2);border-radius:var(--r-l);background:var(--surface-up);border:1px solid var(--line-2);box-shadow:0 12px 32px rgba(0,0,0,.45)}

@@ -2,9 +2,10 @@
    phone Recent row and bottom bar. render() picks the layout and redraws. */
 import { galleryHTML, inboxIdle, sortedHTML } from './home.js';
 import { closeMenu } from './menu.js';
+import { announce } from './toast.js';
 import { closePalette, openPalette, palFill, palRecentFill } from './palette.js';
 import { PHONE_TABS, vvSync } from './phone.js';
-import { FSORTS, SORTS, SOURCE_URL, chain, count, data, descSet, dfs, fid, folderById, foldersSel, galLinks, galleryOn, hostOf, hue, hueClass, iconSrc, isLocked, kids, listFor, live, pathOf, pickable, pinned, sections, selectables, sortable, sortedTop, layers, ui, viewName } from './state.js';
+import { FSORTS, SORTS, SOURCE_URL, chain, count, data, descSet, dfs, fid, folderById, foldersSel, galLinks, galleryOn, hostOf, hue, hueClass, iconSrc, isLocked, kids, listFor, live, memoCounts, pathOf, pickable, pinned, sections, selectables, sortable, sortedTop, layers, ui, viewName } from './state.js';
 import { byId, setBar, COARSE, esc, fmtDate, highlight, ic, isMac, isPhone, isoDate, reduce, store, truncStart } from './util.js';
 
 /* search hits: the query given marks the text, none leaves it plain */
@@ -164,8 +165,8 @@ export function deskBody() {
     else h += `<div class="glbl">&nbsp;</div><div class="empty">Nothing here yet.<button type="button" class="add" data-a="add">${ic('plus')}Add</button></div>`;
     body.innerHTML = h; return;
   }
-  h += S.map((s, n) => `<div class="glbl">${esc(s.label)}</div><div class="${gridCls}"${contAttr(s.container)}>${s.items.map(b => deskTile(b, s.date(b))).join('')}${n === S.length - 1 && showAddTile() ? addTileHTML('addtile') : ''}</div>`).join('');
-  body.innerHTML = h;
+  const L = longList(S, false);
+  body.innerHTML = h + L.html; L.start(body);
 }
 /* the toolbar keeps its nodes while only Select's state differs: Select flips in place */
 const selFree = h => h.replace(/ aria-pressed="(true|false)" aria-label="(Select|Done)"/g, '');
@@ -325,9 +326,10 @@ export function phoneBody() {
   if (!S.length && onlySubs()) return h + `<div class="pgrid solo${ui.layout === 'list' ? ' is-list' : ''}">${addTileHTML('pt-add')}</div>`;
   if (!S.length) return h + (ui.view === 'inbox' ? sortedHTML(true) : (canAddTo() ? emptyMerge('pempty merge') : `<div class="pempty">Nothing here yet.</div>`));
   /* the view row names the order, so a first section label that says the same is left out */
-  const bar = phoneVbar(), same = bar ? vbarLabel() : null;
-  return h + bar + S.map((s, i) => `${!i && s.label === same ? '' : `<div class="pglbl"><span>${esc(s.label)}</span></div>`}<div class="pgrid${ui.layout === 'list' ? ' is-list' : ''}"${contAttr(s.container)}>${s.items.map(b => phoneTile(b, s.date(b))).join('')}${s === S[S.length - 1] && showAddTile() ? addTileHTML('pt-add') : ''}</div>`).join('');
+  const bar = phoneVbar(), same = bar ? vbarLabel() : null, L = longList(S, true, same);
+  phoneLot = L; return h + bar + L.html;
 }
+let phoneLot = null;
 export function phoneRecents() {
   if (!data.has) return '';
   const head = PHONE_TABS.includes(ui.view) ? `<div class="phead"><h1 class="phead-t">Pinned</h1><button type="button" class="bulb" data-theme-toggle aria-label="${document.documentElement.dataset.theme === 'light' ? 'Dark mode' : 'Light mode'}">${ic('bulb')}</button><button type="button" class="ib gear" data-view="settings" aria-label="Settings">${ic('gear')}</button></div>` : '';
@@ -359,6 +361,7 @@ export function renderPhoneMain() {
   fresh.querySelectorAll(KEEP).forEach((e, i) => { const o = old[i], s = sig(e);
     if (o && o._sig === s) { const nb = e.querySelector('[data-a="select"]'), ob = o.querySelector('[data-a="select"]'); if (nb && ob) for (const a of ['aria-pressed', 'aria-label']) ob.setAttribute(a, nb.getAttribute(a)); e.replaceWith(o); } else e._sig = s; });
   m.replaceChildren(fresh);
+  if (phoneLot && !st) phoneLot.start(m.querySelector('.bd')); phoneLot = null;
   const now = [...m.querySelectorAll(rows)], same = phoneMainView === ui.view; phoneMainView = ui.view;
   if (same && sx.length === now.length) now.forEach((e, i) => { if (sx[i]) e.scrollLeft = sx[i]; });
   placeTabInd(m, from);
@@ -380,6 +383,90 @@ export function renderPhone() {
   setBar(byId('pbulkwrap'), ui.selecting ? phoneBulk() : '');
 }
 
+/* ================= long lists ================= */
+/* A view with more than CAP cards draws the first CAP at once and offers Show all with the count; drawing 100000 cards
+   in one go held the page for minutes. Show all lays out the rest as empty blocks of CHUNK cards at their final height,
+   so the scroll bar and scroll position are right at once, and fills each block as it nears the screen and, between
+   frames, in order from the top until DRAWN cards are drawn. Past that, a block drawn near the screen empties the one
+   farthest from it, so the page never holds more than about DRAWN cards (WebKit stalls for seconds with 100000).
+   A redraw of a list shown in full does the same again. CHUNK is a multiple of every column count the grid takes
+   (1 to 4 on the desktop, 1 or 2 on the phone), so the blocks join without a short row. */
+export const CAP = 240, CHUNK = 120, DRAWN = 6000;
+let lot = null, mustDraw = null;
+/* the cards of a section, cut where the cap runs out; later sections wait for Show all */
+export function longList(S, phone, same) {
+  if (lot) lot.stop(); lot = null;
+  const total = S.reduce((n, s) => n + s.items.length, 0), cut = total > CAP, full = cut && ui.full === ui.view;
+  const gcls = (phone ? 'pgrid' : 'grid') + (ui.layout === 'list' ? ' is-list' : ''), tile = phone ? phoneTile : deskTile, add = phone ? 'pt-add' : 'addtile';
+  const label = (s, i) => phone ? (!i && s.label === same ? '' : `<div class="pglbl"><span>${esc(s.label)}</span></div>`) : `<div class="glbl">${esc(s.label)}</div>`;
+  const cards = (s, items, last) => items.map(b => tile(b, s.date(b))).join('') + (last && showAddTile() ? addTileHTML(add) : '');
+  if (!cut) return { html: S.map((s, i) => label(s, i) + `<div class="${gcls}"${contAttr(s.container)}>${cards(s, s.items, i === S.length - 1)}</div>`).join(''), start() {} };
+  /* the head: whole sections while they fit, then the part of the next one that fills whole blocks */
+  let left = CAP, h = '', shown = 0;
+  const blocks = [];
+  S.forEach((s, i) => {
+    let k = left >= s.items.length ? s.items.length : Math.floor(left / CHUNK) * CHUNK;
+    if (k > 0) { h += label(s, i) + `<div class="${gcls}"${contAttr(s.container)}>${cards(s, s.items.slice(0, k), false)}</div>`; shown += k; left -= k; }
+    else k = 0;
+    for (let j = k; j < s.items.length; j += CHUNK) blocks.push({ s, i, from: j, to: Math.min(j + CHUNK, s.items.length), cont: j > 0 });
+  });
+  if (!full) {
+    const word = ui.view === 'trash' ? 'in the Trash' : 'bookmarks';
+    h += `<div class="${phone ? 'pmore' : 'more'}"><p class="more-n">Showing ${shown} of ${total} ${word}</p><button type="button" class="${phone ? 'tbtn' : 'btn'} more-b" data-a="show-all" aria-label="Show all ${total} ${word}">Show all ${total}</button></div>`;
+    return { html: h, start() {} };
+  }
+  if (blocks.length) blocks[blocks.length - 1].last = true;
+  let prev = null;
+  blocks.forEach((b, n) => { if (b.s !== prev) { if (!b.cont) h += label(b.s, b.i); prev = b.s; }
+    h += `<div class="${gcls} lazy${b.cont ? ' cont' : ''}" data-block="${n}"${contAttr(b.s.container)}></div>`; });
+  const at = new Map(); blocks.forEach((b, n) => { for (let j = b.from; j < b.to; j++) at.set(b.s.items[j].id, n); });
+  const L = { html: h, blocks, ids: S.flatMap(s => s.items.map(b => b.id)), at, root: null, io: null, job: 0, next: 0, stopped: false, drawn: new Set(), near: new Set(), pad: {} };
+  const padOf = el => { const k = el.className; if (L.pad[k] == null) { const ps = getComputedStyle(el); L.pad[k] = parseFloat(ps.paddingTop) + parseFloat(ps.paddingBottom) + parseFloat(ps.borderTopWidth); } return L.pad[k]; };
+  L.fill = n => { const b = blocks[n]; if (!b || b.done || L.stopped) return; const el = L.els[n]; if (!el) return;
+    b.done = true; L.drawn.add(n); el.innerHTML = cards(b.s, b.s.items.slice(b.from, b.to), b.last); el.style.height = '';
+    /* drawn and off screen, a block keeps its height and skips layout and paint (content-visibility in app.css) */
+    if (b.ch) el.style.containIntrinsicSize = `auto ${b.ch}px`;
+    if (L.drawn.size * CHUNK > DRAWN) L.trim(n); };
+  /* empties the drawn blocks farthest from block n, never one near the screen or holding the focus */
+  L.trim = n => { const far = [...L.drawn].filter(m => m !== n && !L.near.has(m) && !L.els[m].contains(document.activeElement)).sort((a, b) => Math.abs(b - n) - Math.abs(a - n));
+    for (const m of far) { if (L.drawn.size * CHUNK <= DRAWN) break; const b = blocks[m], el = L.els[m];
+      if (b.ch == null) continue; el.style.height = (b.ch + padOf(el)) + 'px'; el.style.containIntrinsicSize = ''; el.textContent = ''; b.done = false; L.drawn.delete(m); } };
+  /* empty blocks take the height their cards will: rows of the head's card height and gap */
+  L.size = () => { const g = L.root.querySelector(`.${gcls.split(' ')[0]}:not(.lazy)`) || L.root.querySelector('.lazy'), t = L.root.querySelector('article');
+    if (!g || !t) return; const cs = getComputedStyle(g), cols = Math.max(1, cs.gridTemplateColumns.split(' ').length), gap = parseFloat(cs.rowGap) || 0, th = t.getBoundingClientRect().height;
+    blocks.forEach((b, n) => { const el = L.els[n]; if (!el) return; const rows = Math.ceil((b.to - b.from + (b.last && showAddTile() ? 1 : 0)) / cols);
+      b.ch = rows * th + (rows - 1) * gap;
+      if (b.done) { el.style.containIntrinsicSize = `auto ${b.ch}px`; return; }
+      el.style.height = (b.ch + padOf(el)) + 'px'; }); };
+  L.start = root => { L.root = root; L.els = [...root.querySelectorAll('.lazy')]; /* in block order; a lookup per block would walk every card drawn before it */
+    if (mustDraw != null && at.has(mustDraw)) L.fill(at.get(mustDraw));
+    if (ui.renaming != null && at.has(ui.renaming)) L.fill(at.get(ui.renaming));
+    L.size();
+    if (window.IntersectionObserver) { L.io = new IntersectionObserver(es => {
+        for (const e of es) { const n = +e.target.dataset.block; if (e.isIntersecting) L.near.add(n); else L.near.delete(n); }
+        for (const e of es) if (e.isIntersecting) L.fill(+e.target.dataset.block); },
+      { root: phone ? null : byId('content'), rootMargin: '1200px 0px' });
+      L.els.forEach(el => L.io.observe(el)); }
+    /* the rest, top down, a few blocks per frame while the frame has time, until DRAWN cards are drawn */
+    const step = () => { if (L.stopped) return; const t0 = performance.now();
+      while (L.next < blocks.length && (L.drawn.size + 1) * CHUNK <= DRAWN && performance.now() - t0 < 8) { if (!blocks[L.next].done) L.fill(L.next); L.next++; }
+      if (L.next < blocks.length && (L.drawn.size + 1) * CHUNK <= DRAWN) L.job = requestAnimationFrame(step); };
+    L.job = requestAnimationFrame(step); };
+  L.stop = () => { L.stopped = true; cancelAnimationFrame(L.job); if (L.io) L.io.disconnect(); };
+  lot = L; return L;
+}
+/* the order of every card in the list, drawn or not, for Shift ranges; null when the list is drawn whole */
+export const listIds = () => lot && !lot.stopped ? lot.ids : null;
+/* draws the block a card waits in, for focus, rename and arrows */
+export const drawCard = id => { if (lot && !lot.stopped && lot.at.has(id)) lot.fill(lot.at.get(id)); };
+/* Show all: the rest of the list in blocks, the focus on the first card that was not shown */
+export function showAll() {
+  ui.full = ui.view; render();
+  if (!lot || !lot.blocks.length) return;
+  const b = lot.blocks[0], id = b.s.items[b.from].id;
+  drawCard(id); announce(`Showing all ${lot.ids.length} ${ui.view === 'trash' ? 'in the Trash' : 'bookmarks'}`); const el = document.querySelector(`#app article[data-id="${id}"] :is(.t-title, .pt-in)`); if (el) el.focus({ preventScroll: true });
+}
+
 /* ================= render ================= */
 export function render() {
   if (document.body.dataset.page !== 'app') return;
@@ -394,7 +481,11 @@ export function render() {
   const ae = document.activeElement, tileEl = ae && ae.closest ? ae.closest('#app [data-id]') : null;
   const keep = tileEl ? { id: tileEl.dataset.id, a: ae.dataset.a, title: ae.matches('.t-title,.pt-in,.g-in,.dk'), dock: !!ae.closest('[data-dock]') } : null;
   const cs = byId('content'), top = cs ? cs.scrollTop : 0;
-  if (mode === 'phone') renderPhone(); else renderDesk();
+  if (lot) { lot.stop(); lot = null; }
+  mustDraw = keep && !keep.dock ? +keep.id : null;
+  memoCounts(true);
+  try { if (mode === 'phone') renderPhone(); else renderDesk(); } finally { memoCounts(false); }
+  mustDraw = null;
   if (cs) cs.scrollTop = top;
   if (carry) openPalette(carry);
   else if (layers.palette && !layers.palette.had && data.has) { palRecentFill(); palFill(); } /* a search opened before the bookmarks loaded */
@@ -450,6 +541,7 @@ export function installRender() {
   addEventListener('resize', () => { if (ui.mode === 'desk' && ui.selecting) fitBulk(); });
   addEventListener('resize', () => syncSearch());
   addEventListener('resize', hideTip);
+  addEventListener('resize', () => { if (lot && !lot.stopped && lot.root) lot.size(); });
   document.addEventListener('pointerover', e => { const el = e.target.closest && e.target.closest(TIPS); if (el && e.pointerType === 'mouse') showTip(el); else hideTip(); });
   document.addEventListener('focusin', e => { const el = e.target.closest && e.target.closest(TIPS); if (el && el.matches(':focus-visible')) showTip(el); else hideTip(); });
   document.addEventListener('scroll', hideTip, true);

@@ -125,6 +125,28 @@ const sheetClosed = page => until(page, () => !document.querySelector('#layer.op
 const menuItem = (page, label) => page.locator('.menu [role^=menuitem]', { hasText: label });
 const announced = (page, re, what) => until(page, src => new RegExp(src).test((document.getElementById('announce') || {}).textContent || ''), re.source, 'announced: ' + what);
 const focusIn = page => page.evaluate(() => !!document.activeElement && !!document.activeElement.closest('#sheet'));
+/* a long list: a folder of 300 links from an import (more than the 240 a view draws at once), named "ui-test long" and
+   removed again with bulk calls, so cleanup does not delete 300 links one by one */
+const LONG_N = 300, LONG_CAP = 240;
+async function seedLong(page) {
+  const id = await page.evaluate(async n => {
+    let h = '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n<DL><p>\n<DT><H3>ui-test long</H3>\n<DL><p>\n';
+    for (let i = 0; i < n; i++) h += `<DT><A HREF="https://ui-test.example/long/${i}" ADD_DATE="${1700000000 + i}">ui-test long ${i}</A>\n`;
+    h += '</DL><p>\n</DL><p>\n';
+    const fd = new FormData(); fd.append('file', new Blob([h], { type: 'text/html' }), 'long.html');
+    const r = await fetch('/api/import', { method: 'POST', credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' }, body: fd }); if (!r.ok) return null;
+    const s = await (await fetch('/api/state', { credentials: 'same-origin' })).json(); const f = s.folders.find(x => x.name === 'ui-test long'); return f ? f.id : null;
+  }, LONG_N);
+  assert(id, 'the long folder did not import'); return id;
+}
+async function dropLong(page, id) {
+  const s = (await apiIn(page, 'GET', '/api/state')).data, ids = s.bookmarks.filter(b => b.url.startsWith('https://ui-test.example/long/')).map(b => b.id);
+  if (ids.length) { await apiIn(page, 'POST', '/api/bookmarks/bulk', { ids, action: 'trash' }); await apiIn(page, 'POST', '/api/bookmarks/bulk', { ids, action: 'delete' }); }
+  if (id) await apiIn(page, 'DELETE', `/api/folders/${id}`);
+}
+/* where the drawn head of a long list meets the first block drawn by Show all: the same gap as between two rows of the head */
+const seamGap = (page, sel, cols) => page.evaluate(([sel, cols, cap]) => { const A = [...document.querySelectorAll(sel)].map(a => a.getBoundingClientRect());
+  return { head: A[cap - cols].top - A[cap - 2 * cols].bottom, seam: A[cap].top - A[cap - cols].bottom, dx: Math.abs(A[cap].left - A[cap - cols].left) }; }, [sel, cols, LONG_CAP]);
 async function tabsStayInSheet(page, n = 10) {
   for (let i = 0; i < n; i++) { await page.keyboard.press(i % 3 === 2 ? 'Shift+Tab' : 'Tab'); assert(await focusIn(page), `focus left the sheet after ${i + 1} tabs`); }
 }
@@ -993,6 +1015,48 @@ async function desktop(browser, engine) {
     assert(!bad.length, 'dates not in the fixed form: ' + JSON.stringify(bad.slice(0, 3)));
   });
 
+  await check('a long list: the first 240 cards, the count and Show all; Show all from the keyboard draws the rest without a seam, focus on the next card, screen readers hear the count; search finds any card; a new visit starts capped', async () => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const id = await seedLong(page);
+    try {
+      await page.evaluate(() => window.Pinned.load()); await visible(page.locator(`#side .sf[data-fid="${id}"]`));
+      await page.click(`#side .sf[data-fid="${id}"]`); await visible(page.locator('#body .more'));
+      assert(await page.locator('#body article').count() === LONG_CAP, 'not 240 cards: ' + await page.locator('#body article').count());
+      assert((await page.locator('#body .more-n').textContent()).trim() === `Showing ${LONG_CAP} of ${LONG_N} bookmarks`, 'count line: ' + await page.locator('#body .more-n').textContent());
+      const btn = page.locator('#body [data-a="show-all"]');
+      assert((await btn.textContent()).trim() === `Show all ${LONG_N}`, 'button: ' + await btn.textContent());
+      assert(await btn.getAttribute('aria-label') === `Show all ${LONG_N} bookmarks`, 'button label: ' + await btn.getAttribute('aria-label'));
+      assert(await page.locator('#body .addtile').count() === 0, 'the add tile shows under a cut list');
+      const h = await btn.boundingBox(); assert(h && h.height >= 32, 'Show all is smaller than the other buttons');
+      await btn.scrollIntoViewIfNeeded(); await shot(page, `${engine}-long-capped`);
+      await btn.focus(); await page.keyboard.press('Enter');
+      await until(page, n => document.querySelectorAll('#body article').length === n && !document.querySelector('#body .more'), LONG_N, 'every card drawn');
+      await announced(page, new RegExp(`Showing all ${LONG_N} bookmarks`), 'the count');
+      const f = await page.evaluate(() => { const a = document.activeElement, arts = [...document.querySelectorAll('#body article')];
+        return { title: !!a && a.matches('.t-title'), at: a && a.closest('article') ? arts.indexOf(a.closest('article')) : -1 }; });
+      assert(f.title && f.at === LONG_CAP, `focus is not on card ${LONG_CAP + 1}: ${JSON.stringify(f)}`);
+      assert(await page.locator('#body .addtile').count() === 1, 'no add tile after the last card');
+      const g = await seamGap(page, '#body article', 4);
+      assert(Math.abs(g.seam - g.head) < 1 && g.dx < 1, `seam ${g.seam} px against ${g.head} px between rows, ${g.dx} px across`);
+      const at = () => page.evaluate(() => [...document.querySelectorAll('#body article')].indexOf(document.activeElement.closest('article')));
+      await page.keyboard.press('ArrowLeft'); assert(await at() === LONG_CAP - 1, 'ArrowLeft does not cross back to the head');
+      await page.keyboard.press('ArrowDown'); assert(await at() === LONG_CAP + 3, 'ArrowDown does not reach the next row: ' + await at());
+      await shot(page, `${engine}-long-full`);
+      /* the list layout joins the same way */
+      await page.click('#tbwrap .vsw [data-layout="list"]'); await until(page, n => document.querySelectorAll('#body .grid.is-list article').length === n, LONG_N, 'list drawn whole');
+      const gl = await seamGap(page, '#body article', 1);
+      await page.click('#tbwrap .vsw [data-layout="grid"]'); await page.waitForTimeout(300);
+      assert(Math.abs(gl.seam - gl.head) < 1, `list seam ${gl.seam} px against ${gl.head} px`);
+      /* search finds a card whatever was drawn */
+      await page.click('#q'); await page.keyboard.type('ui-test long 299');
+      await visible(page.locator('#pal .pal-it', { hasText: 'ui-test long 299' }));
+      await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      await page.click('#side [data-view="dashboard"]'); await page.click(`#side .sf[data-fid="${id}"]`);
+      await visible(page.locator('#body .more'));
+      assert(await page.locator('#body article').count() === LONG_CAP, 'a new visit is not capped again');
+    } finally { await dropLong(page, id); await page.evaluate(() => window.Pinned.load()); }
+  });
+
   await check('no script errors', async () => assert(!errors.length, errors.join('; ')));
   beforeEach = null;
   await cleanup(page);
@@ -1550,6 +1614,25 @@ async function phone(browser, engine) {
       fire('pointerup', y);
     });
     await sheetClosed(page);
+  });
+  await check('390: a long folder shows 240 cards, the count and Show all at 44 px; a tap draws the rest without a seam', async () => {
+    const id = await seedLong(page);
+    try {
+      await page.evaluate(async v => { const a = await import('/static/js/actions.js'); await window.Pinned.load(); a.goView(v); }, id);
+      await visible(page.locator('#pmain .pmore'));
+      assert(await page.locator('#pmain article').count() === LONG_CAP, 'not 240 cards');
+      assert((await page.locator('#pmain .more-n').textContent()).trim() === `Showing ${LONG_CAP} of ${LONG_N} bookmarks`, 'count line');
+      const btn = page.locator('#pmain [data-a="show-all"]'), bb = await btn.boundingBox();
+      assert(bb && bb.height >= 44, 'Show all is under 44 px: ' + (bb && bb.height));
+      assert(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'the page scrolls sideways');
+      await btn.scrollIntoViewIfNeeded(); await shot(page, `${engine}-phone-long-capped`);
+      await btn.tap();
+      await until(page, n => document.querySelectorAll('#pmain article').length === n && !document.querySelector('#pmain .pmore'), LONG_N, 'every card drawn');
+      await announced(page, new RegExp(`Showing all ${LONG_N} bookmarks`), 'the count');
+      const g = await seamGap(page, '#pmain article', 2);
+      assert(Math.abs(g.seam - g.head) < 1 && g.dx < 1, `seam ${g.seam} px against ${g.head} px between rows, ${g.dx} px across`);
+      await shot(page, `${engine}-phone-long-full`);
+    } finally { await dropLong(page, id); await page.evaluate(async () => { const a = await import('/static/js/actions.js'); a.goView('dashboard'); await window.Pinned.load(); }); }
   });
   await check('no script errors', async () => assert(!errors.length, errors.join('; ')));
   await cleanup(page);
