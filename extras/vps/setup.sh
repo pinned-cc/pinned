@@ -18,6 +18,12 @@ PORT="${PINNED_PORT:-9095}"
 IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:latest}"
 # PINNED_BIND=127.0.0.1 publishes the port on this server only, for a proxy on the same server that does HTTPS
 BIND="${PINNED_BIND:-}"
+case "$BIND" in
+  '') PUBLISH="" ;;
+  \[*) PUBLISH="$BIND:" ;;
+  *:*) PUBLISH="[$BIND]:" ;;
+  *) PUBLISH="$BIND:" ;;
+esac
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
@@ -65,7 +71,7 @@ services:
     container_name: pinned
     restart: unless-stopped
     ports:
-      - "${BIND:+$BIND:}$PORT:8080"
+      - "$PUBLISH$PORT:8080"
     environment:
       APP_PASSWORD_FILE: /run/secrets/app_password
       TZ: \${TZ:-UTC}
@@ -90,12 +96,20 @@ printf '%s' "$APP_PASSWORD" > app_password
 chown 1000:1000 data app_password 2>/dev/null || sudo chown 1000:1000 data app_password
 
 $DOCKER compose pull
-$DOCKER compose up -d
+# recreate, so a new password or address from a re-run applies now and not at the next restart
+$DOCKER compose up -d --force-recreate
 
 # say it runs only once it answers: a refused password makes the container restart instead
+# ask on the address the port is published on; all addresses answer on 127.0.0.1, an IPv6 one needs brackets
+case "$BIND" in
+  ''|0.0.0.0|::|'[::]') CHECK=127.0.0.1 ;;
+  \[*) CHECK="$BIND" ;;
+  *:*) CHECK="[$BIND]" ;;
+  *) CHECK="$BIND" ;;
+esac
 up=""
 for _ in $(seq 1 30); do
-  if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/health" 2>/dev/null; then up=1; break; fi
+  if curl -fsS -o /dev/null "http://$CHECK:$PORT/health" 2>/dev/null; then up=1; break; fi
   sleep 2
 done
 if [ -z "$up" ]; then
@@ -106,15 +120,17 @@ fi
 IP="$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || true)"
 say ""
 say "Pinned is running."
-if [ -n "$BIND" ]; then
-  say "  address   http://$BIND:$PORT, for your HTTPS proxy on this server"
+# empty, 0.0.0.0 or :: publish on every address, the public one too
+case "$BIND" in ''|0.0.0.0|::|'[::]') PUBLIC=1 ;; *) PUBLIC="" ;; esac
+if [ -z "$PUBLIC" ]; then
+  say "  address   http://$PUBLISH$PORT, for your HTTPS proxy"
 else
   say "  address   http://${IP:-this-server}:$PORT"
 fi
 say "  files     $DIR/compose.yml, $DIR/app_password, $DIR/data/bookmarks.db"
 say "  update    cd $DIR && $DOCKER compose pull && $DOCKER compose up -d"
 say "  stop      cd $DIR && $DOCKER compose down"
-if [ -z "$BIND" ]; then
+if [ -n "$PUBLIC" ]; then
   say ""
   say "WARNING: Pinned answers on plain http, on the server's public address."
   say "Your password would cross the internet unencrypted. Do not log in from outside yet."
