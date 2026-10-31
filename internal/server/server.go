@@ -56,6 +56,9 @@ type Config struct {
 	// TOTPKey turns on the second factor for the app login (TOTP_SECRET):
 	// the login then needs the code of an authenticator app too.
 	TOTPKey []byte
+	// EasyPassword is set when APP_PASSWORD is common but ran before this
+	// version refused it; the app then shows a warning to change it.
+	EasyPassword bool
 }
 
 // ParseHSTS reads HSTS: empty, "false" or "0" is off, "true" is

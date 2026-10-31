@@ -639,7 +639,8 @@ type stateJSON struct {
 		LastFolder    *int64  `json:"last_folder"`
 		RecentFolders []int64 `json:"recent_folders"`
 	} `json:"settings"`
-	Version string `json:"version"`
+	Version      string `json:"version"`
+	PasswordEasy bool   `json:"password_easy"`
 }
 
 func (s stateJSON) find(id int64) *bookmarkJSON {
@@ -667,6 +668,21 @@ func readAll(resp *http.Response) []byte {
 }
 
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
+
+// The app tells the browser when APP_PASSWORD is easy but kept from an
+// earlier version, so it can show the warning.
+func TestStateSaysWhenPasswordIsEasy(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	if e.state().PasswordEasy {
+		t.Error("warned without reason")
+	}
+	e = newEnv(t, Config{EasyPassword: true})
+	e.login()
+	if !e.state().PasswordEasy {
+		t.Error("no warning for an easy password")
+	}
+}
 
 func TestFolderHideRecent(t *testing.T) {
 	e := newEnv(t, Config{})

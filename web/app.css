@@ -308,6 +308,7 @@ mark.hit{background:rgba(95,211,154,.18);color:color-mix(in srgb,currentColor 60
 .notice svg.i{width:var(--icon-s);height:var(--icon-s);color:var(--danger)}
 .notice .sp{flex:1}
 .notice .btn{height:32px}
+.notice.pw-easy,.pnotice.pw-easy{height:auto;min-height:44px;padding-top:var(--s-3);padding-bottom:var(--s-3);padding-right:var(--s-7);line-height:var(--lh-16)}
 
 .glbl{font:500 var(--t-label)/var(--lh-16) var(--sans);color:var(--ink-weak);margin:var(--s-13) 0 var(--s-5)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--s-8)}

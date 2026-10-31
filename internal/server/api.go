@@ -178,7 +178,8 @@ func (s *Server) apiState(w http.ResponseWriter, r *http.Request) {
 			"last_folder":    last,
 			"recent_folders": recent,
 		},
-		"version": s.cfg.Version,
+		"version":       s.cfg.Version,
+		"password_easy": s.cfg.EasyPassword,
 	})
 }
 

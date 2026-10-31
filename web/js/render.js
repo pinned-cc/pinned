@@ -147,10 +147,12 @@ export function deskTile(b, ts) {
 export const skel = () => `<div class="tile sk" aria-hidden="true"><div class="t-main"><div class="b"></div><div class="b l1"></div><div class="b l2"></div></div><div class="t-strip"><span class="b"></span></div></div>`;
 export const noticeHTML = phone => `<div class="${phone ? 'pnotice' : 'notice'}" role="alert">${ic('warn')}<span>${data.error && data.error.network ? 'Cannot reach your Pinned server.' : 'Bookmarks could not load.'}</span><span class="sp"></span>
   <button type="button" class="${phone ? 'tbtn' : 'btn'}" data-a="retry">${phone ? '' : ic('restore')}Retry</button></div>`;
+/* APP_PASSWORD is common but ran before 0.1.11 refused it: Pinned started anyway and says what to do */
+export const pwNoticeHTML = phone => data.pwEasy ? `<div class="${phone ? 'pnotice' : 'notice'} pw-easy" role="status">${ic('warn')}<span>Your app password is easy to guess. Set a stronger APP_PASSWORD and restart Pinned.</span></div>` : '';
 export function deskBody() {
   const body = byId('body'), gridCls = 'grid' + (ui.layout === 'list' ? ' is-list' : '');
   body.classList.toggle('dim', !!data.error && data.has);
-  let h = data.error ? noticeHTML(false) : '';
+  let h = (data.error ? noticeHTML(false) : '') + pwNoticeHTML(false);
   if (!data.loaded || (!data.has && !data.error)) { body.innerHTML = `<div class="glbl">&nbsp;</div><div class="${gridCls}" aria-busy="true">${Array.from({ length: 8 }, skel).join('')}</div>`; return; }
   if (!data.has) { body.innerHTML = h; return; }
   if (ui.view === 'folders') { body.innerHTML = h + foldersScreen(false); return; }
@@ -319,8 +321,8 @@ export function settingsScreen() {
   </div>`;
 }
 export function phoneBody() {
-  let h = data.error ? noticeHTML(true) : '';
-  if (ui.view === 'settings') return settingsScreen();
+  let h = (data.error ? noticeHTML(true) : '') + pwNoticeHTML(true);
+  if (ui.view === 'settings') return pwNoticeHTML(true) + settingsScreen();
   if (!data.loaded || (!data.has && !data.error)) return h + `<div class="pglbl"><span>&nbsp;</span></div><div class="pgrid" aria-busy="true">${Array.from({ length: 6 }, pskel).join('')}</div>`;
   if (!data.has) return h;
   if (ui.view === 'folders') return h + phoneVbar() + foldersScreen(true);

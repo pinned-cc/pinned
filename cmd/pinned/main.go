@@ -151,14 +151,34 @@ func secretSetting(name string) (string, error) {
 // syncPassword checks APP_PASSWORD against the bcrypt hash stored at the
 // last start, moving the HMAC record of older versions to a hash, and
 // reports whether the password changed.
-func syncPassword(st *store.Store, secret []byte, password string) (changed bool, err error) {
-	return st.SyncPassword(func(stored string, legacy bool) (same, rehash bool) {
+//
+// An easy password (see easyAppPassword) is refused on a new install and
+// when it replaces another password. When the same password already ran
+// under an earlier version it is kept, so an upgrade still starts, and
+// kept reports that; the caller then warns.
+func syncPassword(st *store.Store, secret []byte, password string, easy bool) (changed, kept bool, err error) {
+	same := false
+	changed, err = st.SyncPassword(func(stored string, legacy bool) (bool, bool) {
+		var rehash bool
 		if legacy {
-			return hmac.Equal([]byte(stored), []byte(auth.PasswordFingerprint(secret, password))), true
+			same, rehash = hmac.Equal([]byte(stored), []byte(auth.PasswordFingerprint(secret, password))), true
+		} else {
+			same, rehash = auth.CheckAppPassword(stored, password)
 		}
-		return auth.CheckAppPassword(stored, password)
-	}, func() (string, error) { return auth.HashAppPassword(password) })
+		return same, rehash
+	}, func() (string, error) {
+		if easy && !same {
+			return "", errEasyPassword
+		}
+		return auth.HashAppPassword(password)
+	})
+	if errors.Is(err, errEasyPassword) {
+		return false, false, err
+	}
+	return changed, easy && err == nil, err
 }
+
+var errEasyPassword = errors.New("APP_PASSWORD is too easy to guess: it is a common password, or made of words like pinned, password or your host name. Choose another one, then start again")
 
 // easyAppPassword reports whether the app password is common or made of
 // the app's own words or the host name of BASE_URL or of this machine.
@@ -186,6 +206,7 @@ type settings struct {
 	iconsOff       bool
 	iconHosts      favicon.Hosts
 	totpKey        []byte
+	easy           bool
 }
 
 // readSettings reads and checks every setting, and says what to fix when
@@ -200,9 +221,8 @@ func readSettings() (c settings, err error) {
 	if utf8.RuneCountInString(c.password) < minPassword {
 		return c, fmt.Errorf("APP_PASSWORD is shorter than %d characters. Choose a longer password, then start again", minPassword)
 	}
-	if easyAppPassword(c.password, os.Getenv("BASE_URL")) {
-		return c, errors.New("APP_PASSWORD is too easy to guess: it is a common password, or made of words like pinned, password or your host name. Choose another one, then start again")
-	}
+	// An easy password is refused in run, unless it already ran before.
+	c.easy = easyAppPassword(c.password, os.Getenv("BASE_URL"))
 	c.dataDir = env("DATA_DIR", "/data")
 	c.port = env("PORT", "8080")
 	c.sessionDays, err = strconv.Atoi(env("SESSION_DAYS", strconv.Itoa(server.DefaultSessionDays)))
@@ -283,9 +303,16 @@ func run() error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	defer st.Close()
-	changed, err := syncPassword(st, secret, password)
+	changed, easyKept, err := syncPassword(st, secret, password, c.easy)
+	if errors.Is(err, errEasyPassword) {
+		return err
+	}
 	if err != nil {
 		return fmt.Errorf("check the password: %w", err)
+	}
+	if easyKept {
+		log.Print("security event=password.easy action=warned")
+		log.Print("WARNING: APP_PASSWORD is too easy to guess: it is a common password, or made of words like pinned, password or your host name. Pinned starts anyway because it ran with it before. Set a stronger APP_PASSWORD and restart")
 	}
 	if changed {
 		log.Print("security event=password.changed sessions=ended tokens=revoked")
@@ -347,6 +374,7 @@ func run() error {
 		TrustedProxies: c.proxies,
 		HSTSMaxAge:     c.hstsMaxAge,
 		TOTPKey:        totpKey,
+		EasyPassword:   easyKept,
 	}, st, web, icons, secret)
 
 	httpServer := &http.Server{

@@ -229,35 +229,85 @@ func TestPasswordStoredAsBcrypt(t *testing.T) {
 	// An install from before keeps an HMAC: the first start checks it and
 	// replaces it with a bcrypt hash, without signing anyone out.
 	db.Exec(`INSERT INTO settings (key, value) VALUES ('password_hmac', ?)`, auth.PasswordFingerprint(secret, "first password"))
-	if changed, err := syncPassword(st, secret, "first password"); err != nil || changed {
+	if changed, _, err := syncPassword(st, secret, "first password", false); err != nil || changed {
 		t.Fatalf("move: changed=%v err=%v", changed, err)
 	}
 	if setting("password_hmac") != "" || bcrypt.CompareHashAndPassword([]byte(setting("password_hash")), []byte(auth.AppPasswordKey("first password"))) != nil {
 		t.Fatal("the HMAC was not replaced by a bcrypt hash of the password")
 	}
 	before := setting("password_hash")
-	if changed, _ := syncPassword(st, secret, "first password"); changed || setting("password_hash") != before {
+	if changed, _, _ := syncPassword(st, secret, "first password", false); changed || setting("password_hash") != before {
 		t.Error("an unchanged password rewrote its hash")
 	}
-	if changed, _ := syncPassword(st, secret, "second password"); !changed {
+	if changed, _, _ := syncPassword(st, secret, "second password", false); !changed {
 		t.Error("a new password was not noticed")
 	}
 
 	// A hash below the current cost is replaced at the next start.
 	weak, _ := bcrypt.GenerateFromPassword([]byte(auth.AppPasswordKey("second password")), bcrypt.MinCost)
 	db.Exec(`UPDATE settings SET value = ? WHERE key = 'password_hash'`, string(weak))
-	if changed, _ := syncPassword(st, secret, "second password"); changed || cost() != auth.BcryptCost {
+	if changed, _, _ := syncPassword(st, secret, "second password", false); changed || cost() != auth.BcryptCost {
 		t.Errorf("weak hash: changed=%v cost=%d", changed, cost())
 	}
 
 	// An app password longer than bcrypt's 72 bytes still starts, and a
 	// change after its 72nd byte is noticed.
 	long := strings.Repeat("long password ", 8)
-	if _, err := syncPassword(st, secret, long); err != nil {
+	if _, _, err := syncPassword(st, secret, long, false); err != nil {
 		t.Fatalf("long password: %v", err)
 	}
-	if changed, err := syncPassword(st, secret, long+"x"); err != nil || !changed {
+	if changed, _, err := syncPassword(st, secret, long+"x", false); err != nil || !changed {
 		t.Errorf("a change after byte 72: changed=%v err=%v", changed, err)
+	}
+}
+
+// An APP_PASSWORD that 0.1.11 calls easy but that ran before keeps
+// starting, with a warning; a new install or a change to an easy password
+// is still refused, and the refusal changes nothing in the database.
+func TestEasyPasswordThatRanBeforeStillStarts(t *testing.T) {
+	path := t.TempDir() + "/bookmarks.db"
+	st, err := store.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	secret := []byte("0123456789abcdef0123456789abcdef")
+
+	if _, _, err := syncPassword(st, secret, "Password123", true); !errors.Is(err, errEasyPassword) {
+		t.Fatalf("new install with an easy password: %v", err)
+	}
+	// The earlier version stored it without the check.
+	if _, _, err := syncPassword(st, secret, "Password123", false); err != nil {
+		t.Fatal(err)
+	}
+	changed, kept, err := syncPassword(st, secret, "Password123", true)
+	if err != nil || changed || !kept {
+		t.Fatalf("upgrade: changed=%v kept=%v err=%v", changed, kept, err)
+	}
+	// The legacy HMAC record of an older version counts as having run too.
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	db.Exec(`DELETE FROM settings WHERE key = 'password_hash'`)
+	db.Exec(`INSERT INTO settings (key, value) VALUES ('password_hmac', ?)`, auth.PasswordFingerprint(secret, "Password123"))
+	if _, kept, err := syncPassword(st, secret, "Password123", true); err != nil || !kept {
+		t.Fatalf("legacy record: kept=%v err=%v", kept, err)
+	}
+	// Changing to another easy password is refused, the old hash stays.
+	var before string
+	db.QueryRow(`SELECT value FROM settings WHERE key = 'password_hash'`).Scan(&before)
+	if _, _, err := syncPassword(st, secret, "SUNSHINE1", true); !errors.Is(err, errEasyPassword) {
+		t.Fatalf("change to an easy password: %v", err)
+	}
+	var after string
+	db.QueryRow(`SELECT value FROM settings WHERE key = 'password_hash'`).Scan(&after)
+	if before != after {
+		t.Error("a refused password changed the stored hash")
+	}
+	if changed, kept, err := syncPassword(st, secret, "a much better one", false); err != nil || !changed || kept {
+		t.Errorf("strong password: changed=%v kept=%v err=%v", changed, kept, err)
 	}
 }
 

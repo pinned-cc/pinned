@@ -13,6 +13,7 @@ export function setData(s) {
   data.folders = s.folders || []; data.bms = s.bookmarks || [];
   data.settings = Object.assign({ last_folder: null, recent_folders: [] }, s.settings || {});
   data.settings.recent_folders = data.settings.recent_folders || [];
+  data.pwEasy = !!s.password_easy;
   folderById = new Map(data.folders.map(f => [f.id, f])); childrenOf = new Map();
   for (const f of data.folders) { const k = f.parent_id == null ? null : f.parent_id; if (!childrenOf.has(k)) childrenOf.set(k, []); childrenOf.get(k).push(f); }
   for (const a of childrenOf.values()) a.sort((x, y) => x.position - y.position || x.id - y.id);
