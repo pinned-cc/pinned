@@ -28,12 +28,13 @@ Not released yet.
 - On the keyboard, Tab moves through every sheet again (it stayed on the first button), and on the desktop Tab goes on past the search field to the rest of the page. Escape in the search leaves the focus in the search field. Enter in the search field opens the search.
 - Deleting a bookmark from Trash for good now asks first, like Empty trash.
 - Login, How to save, the save page and shared folders follow light and dark like the app. They were always dark.
-- Folder colours in light mode, search hits and the light switch are easier to read, the share page footer too. Touch targets on How to save, the folder share button and the card buttons are at least 44 px.
+- Folder colours in light mode, the picked folder in the folder pickers, search hits and the light switch are easier to read, the share page footer too. Touch targets on How to save, the folder share button and the card buttons are at least 44 px.
 - What's new can be reached again at window widths between 720 and 999 px.
 - Opening a shared folder with a password no longer shows an error in the browser console.
 - A shared folder moved into a locked folder keeps no share link. Before, its link stayed alive and could not be seen or revoked while the parent was locked.
 - Logging in ends the login the browser held before.
-- An SVG icon that holds script or loads anything from outside is refused; the letter mark is shown.
+- An SVG icon is kept only when everything in it is on a list of drawing elements and attributes; anything that could run script, link or load from outside is refused and the letter mark is shown. PNG, JPEG and GIF icons are stored as a new PNG, so nothing hidden in the file is kept. GIF icons now show.
+- Icons saved by older versions are checked once at the first start: PNG and JPEG icons are stored again as a new PNG, and an icon that does not decode or an SVG that fails the new check is removed, so the letter mark shows.
 - The icon fetch refuses more special network ranges (such as NAT64 and 6to4), ports other than 80, 443 and the bookmark's own, and redirects from https to plain http.
 
 ### Changes
