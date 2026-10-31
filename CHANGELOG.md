@@ -14,7 +14,7 @@ Not released yet.
 - `APP_PASSWORD_FILE` reads the app password from a file, for Docker or compose secrets.
 - New settings `ICONS` and `ICON_HOSTS`. `ICONS=off` stops every icon fetch, so nothing leaves the server and bookmarks keep their letter mark. `ICON_HOSTS` keeps icon fetches to the host names you list.
 - The save page and How to save have a Log out.
-- Logs record logins, failed logins, lockouts, logouts, API tokens, folder locks and share links as `security event=...` lines with the client address, never a password, token or cookie.
+- Logs record logins, failed logins, lockouts, logouts, API tokens, folder locks and unlocks, share links and unlocks, refused cross site requests and failed icon fetches as `security event=...` lines with the client address, never a password, token or cookie.
 - docs/security.md lists the limits Pinned enforces, the cryptography and keys it uses, what it stores and how it protects it, and what it logs.
 
 ### Fixes
@@ -50,19 +50,21 @@ Not released yet.
 - Sessions end at the latest `SESSION_MAX_DAYS` (365 by default) after the login, however often they are used. `SESSION_DAYS` stays the time a login lasts without use. Logins from before count from the upgrade.
 - A new `APP_PASSWORD` now also revokes every API token, as it already ended sessions and device cookies.
 - Creating an API token asks for the app password again.
-- An API token works only with the browser extension that used it first. After reinstalling the extension in Firefox or Safari, create a new token.
+- Signing out other browsers in Signed in asks for the app password.
+- With the second factor on, wrong codes after the right password hold every login for a time that grows from one minute up to a day; the right code clears it.
+- An API token used by the browser extension works only with that extension: requests from any other web page or extension are refused, scripts without an origin keep working. After reinstalling the extension in Firefox or Safari, create a new token.
 - Changing the password of a locked folder through the API needs its current password.
 - The export in the app leaves out folders that are locked in that browser. The nightly export in the data folder still holds everything, it is the backup.
-- Checking an address that sits in a locked folder says Already saved, the same answer as saving it. The `/health` answer no longer carries a bookmark count.
+- Saving, checking or importing a link no longer tells whether it sits in a locked folder: a link that is only in a locked folder is saved again where you save it, so after unlocking it can show twice. The `/health` answer no longer carries a bookmark count.
 - Site icons are served only for bookmarks you can see, so icons of locked folders stay hidden.
 - Bookmark addresses can be at most 8192 bytes. An import skips longer ones and counts them as skipped.
 - Data files are readable only by the user Pinned runs as: folders 0700, files 0600. At start Pinned makes files from older versions private too. A backup job that reads `export/bookmarks.html` as another user needs the same user or a group change.
-- The app password is kept as a bcrypt hash in the database instead of a fast keyed hash. Older lock and share password hashes are strengthened at the next right password.
+- The app password is kept as a bcrypt hash in the database instead of a fast keyed hash. Older lock and share password hashes are strengthened at the next right password, without ending the unlocks of other browsers.
 - Log lines carry the time in UTC with the zone.
 - Bookmarked sites no longer see which Pinned address a link was opened from (`Referrer-Policy: no-referrer`). The content policy also forbids plugins and base elements, and icons can never be framed. SVG answers name their charset.
 - Over HTTPS, the folder unlock and share cookies get the `__Host-` or `__Secure-` prefix, and a device cookie from plain http moves to the prefixed name.
 - The developer note under `/extras/README.txt` is no longer served.
-- The database gets an index for positions in folders, three columns for sessions and one for API tokens. 0.1.10 does not start on it; to go back, use the copy saved before the upgrade.
+- The database goes to schema 12: an index for positions in folders, columns for sessions, API tokens and password stamps, and the address of a bookmark is no longer unique across locked folders. 0.1.10 does not start on it; to go back, use the copy saved before the upgrade.
 - Images are built with a software bill of materials and provenance, and CI checks the Go modules with govulncheck. Dependabot waits a week before proposing a new version.
 
 ## 0.1.10, 2026-10-28
