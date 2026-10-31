@@ -17,7 +17,7 @@ You need the `extras/extension` folder, or the zip from your server at `/extras/
 
 1. In Pinned, create an API token.
 2. Open the extension's options (right click the toolbar button, then Options).
-3. Enter the address of your server, for example `https://bookmarks.example.com` or `10.0.0.5:9095`, and the token. Without `http://` or `https://` in front, the extension tries https first, then http, and keeps the one that answers. It falls back to http with your token only for a server on your own network (a private address, a name without a dot, or a `.local` or `.lan` name). For any other host it does not send the token over plain http: it says that http answers and that you type `http://` in front to use it anyway.
+3. Enter the address of your server, for example `https://bookmarks.example.com` or `10.0.0.5:9095`, and the token. Without `http://` or `https://` in front, the extension tries https first, then http, and keeps the one that answers. It falls back to http with your token only for a server on your own network (a private, loopback, link-local or Tailscale `100.64.0.0/10` address, a name without a dot, or a `.local`, `.lan`, `.home.arpa` or `.internal` name). For any other host it does not send the token over plain http: it says that http answers and that you type `http://` in front to use it anyway.
 4. Test checks the address and the token and says which address answered and how many folders it found, or why it failed. Save stores both in this browser.
 
 When you save, the browser asks to allow access to that one server. Say yes.
