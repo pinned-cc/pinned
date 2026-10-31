@@ -28,6 +28,8 @@ jobs:
       - run: go test -race ./...
       # The browser extension's tests: node's own test runner, no dependencies.
       - run: node --test tools/extension.test.mjs
+      # The server install script against stand-ins for docker and curl.
+      - run: sh tools/setup.test.sh
       - run: CGO_ENABLED=0 go build ./cmd/pinned
 
   image:

@@ -4,6 +4,7 @@
 
 - `go test -race ./...`, `go vet`, `gofmt` and `staticcheck`: the server. In CI on every push.
 - `node --test tools/extension.test.mjs`: the browser extension (`extras/extension`), with node's own test runner and no dependencies. In CI on every push.
+- `sh tools/setup.test.sh`: the server install script (`extras/vps/setup.sh`) against stand-ins for docker, curl and chown; nothing is installed. In CI on every push. It does not replace one real run on a fresh server.
 - `tools/ui-test.mjs`: the web front end in real browsers with Playwright, in Chromium, WebKit and Firefox. Not in CI. Run it by hand before a release and record the result below.
 
 ## Run the browser test

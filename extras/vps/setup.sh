@@ -2,37 +2,51 @@
 # Pinned on a fresh server: installs Docker if it is missing, writes the compose file, asks for the
 # password once and starts the container. Debian, Ubuntu and most Docker-capable distributions.
 #
-#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/v0.1.11/extras/vps/setup.sh | sh
 #
 # It asks for the password on the terminal. Without one (cloud-init, CI), set APP_PASSWORD:
 #
-#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/main/extras/vps/setup.sh | APP_PASSWORD='...' sh
+#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/v0.1.11/extras/vps/setup.sh | APP_PASSWORD='...' sh
 #
-# Afterwards Pinned answers on plain http on port 9095 of the server, on its public address. Put it behind HTTPS before you use it from
-# outside your network: a Caddy or Traefik in front, or a Cloudflare tunnel. See the README. With the proxy on
-# this server, run it again with PINNED_BIND=127.0.0.1: a firewall such as ufw does not block Docker's ports.
+# Afterwards Pinned answers on port 9095 of this server only (127.0.0.1), for a proxy on the same server that
+# does HTTPS: Caddy, Traefik or a Cloudflare tunnel. See the README. To reach it on plain http from other
+# machines instead, set PINNED_BIND=0.0.0.0 (or one address of the server); the script then warns you.
 set -eu
 
 DIR="${PINNED_DIR:-$HOME/pinned}"
 PORT="${PINNED_PORT:-9095}"
-IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:latest}"
-# PINNED_BIND=127.0.0.1 publishes the port on this server only, for a proxy on the same server that does HTTPS
-BIND="${PINNED_BIND:-}"
+# the release this script belongs to; a re-run of a newer release's script updates
+IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:0.1.11}"
+# the address the port is published on: this server only by default. A firewall such as ufw does not block
+# Docker's ports, so any other address is reachable from every network that reaches it.
+BIND="${PINNED_BIND:-127.0.0.1}"
 case "$BIND" in
-  '') PUBLISH="" ;;
   \[*) PUBLISH="$BIND:" ;;
   *:*) PUBLISH="[$BIND]:" ;;
   *) PUBLISH="$BIND:" ;;
 esac
+case "$BIND" in 127.*|::1|'[::1]') LOOPBACK=1 ;; *) LOOPBACK="" ;; esac
+# Docker's installer, pinned to one commit of github.com/docker/docker-install and checked by its sha256.
+# It installs the current Docker Engine from Docker's own package repository.
+DOCKER_INSTALL_URL=https://raw.githubusercontent.com/docker/docker-install/ada7a567e59b3935bd601bb21e422da50e80e376/install.sh
+DOCKER_INSTALL_SHA256=2b102d809152ea157a59f171319f489d971273b2d26dd7e9a6d1d737ce89289d
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
+# every download gives up instead of hanging, and tries again on a passing network fault
+fetch() { curl -fsSL --proto '=https' --connect-timeout 10 --max-time 120 --retry 3 --retry-delay 2 "$@"; }
 
 command -v curl >/dev/null 2>&1 || die "curl is needed"
 
 if ! command -v docker >/dev/null 2>&1; then
   say "Installing Docker"
-  curl -fsSL https://get.docker.com | sh
+  command -v sha256sum >/dev/null 2>&1 || die "sha256sum is needed to check Docker's installer; install Docker yourself, then run this again"
+  INSTALLER="$(mktemp)"
+  fetch -o "$INSTALLER" "$DOCKER_INSTALL_URL" || die "could not download Docker's installer; check the network, or install Docker yourself, then run this again"
+  printf '%s  %s\n' "$DOCKER_INSTALL_SHA256" "$INSTALLER" | sha256sum -c - >/dev/null 2>&1 \
+    || { rm -f "$INSTALLER"; die "Docker's installer did not match its checksum; nothing was installed. Install Docker yourself, then run this again"; }
+  sh "$INSTALLER"
+  rm -f "$INSTALLER"
 fi
 # right after Docker is installed, a user who is not root is not yet in the docker group: use sudo for this run
 DOCKER=docker
@@ -102,14 +116,14 @@ $DOCKER compose up -d --force-recreate
 # say it runs only once it answers: a refused password makes the container restart instead
 # ask on the address the port is published on; all addresses answer on 127.0.0.1, an IPv6 one needs brackets
 case "$BIND" in
-  ''|0.0.0.0|::|'[::]') CHECK=127.0.0.1 ;;
+  0.0.0.0|::|'[::]') CHECK=127.0.0.1 ;;
   \[*) CHECK="$BIND" ;;
   *:*) CHECK="[$BIND]" ;;
   *) CHECK="$BIND" ;;
 esac
 up=""
 for _ in $(seq 1 30); do
-  if curl -fsS -o /dev/null "http://$CHECK:$PORT/health" 2>/dev/null; then up=1; break; fi
+  if curl -fsS --connect-timeout 2 --max-time 5 -o /dev/null "http://$CHECK:$PORT/health" 2>/dev/null; then up=1; break; fi
   sleep 2
 done
 if [ -z "$up" ]; then
@@ -117,25 +131,32 @@ if [ -z "$up" ]; then
   die "Pinned did not start; the log above says why. Fix it, then: cd $DIR && $DOCKER compose up -d"
 fi
 
-IP="$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || true)"
 say ""
 say "Pinned is running."
-# empty, 0.0.0.0 or :: publish on every address, the public one too
-case "$BIND" in ''|0.0.0.0|::|'[::]') PUBLIC=1 ;; *) PUBLIC="" ;; esac
-if [ -z "$PUBLIC" ]; then
-  say "  address   http://$PUBLISH$PORT, for your HTTPS proxy"
+if [ -n "$LOOPBACK" ]; then
+  say "  address   http://$PUBLISH$PORT, on this server only"
 else
-  say "  address   http://${IP:-this-server}:$PORT"
+  case "$BIND" in
+    0.0.0.0|::|'[::]')
+      # the address this server reaches the internet from; ifconfig.me only when the server cannot tell
+      IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i = 1; i < NF; i++) if ($i == "src") { print $(i + 1); exit }}')"
+      [ -n "$IP" ] || IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+      [ -n "$IP" ] || IP="$(curl -fsS -4 --connect-timeout 5 --max-time 10 https://ifconfig.me 2>/dev/null || true)"
+      say "  address   http://${IP:-this-server}:$PORT" ;;
+    *) say "  address   http://$PUBLISH$PORT" ;;
+  esac
 fi
 say "  files     $DIR/compose.yml, $DIR/app_password, $DIR/data/bookmarks.db"
-say "  update    cd $DIR && $DOCKER compose pull && $DOCKER compose up -d"
+say "  update    run the setup command of the newer release again; it keeps your data"
 say "  stop      cd $DIR && $DOCKER compose down"
-if [ -n "$PUBLIC" ]; then
-  say ""
-  say "WARNING: Pinned answers on plain http, on the server's public address."
-  say "Your password would cross the internet unencrypted. Do not log in from outside yet."
-  say "Put HTTPS in front first (Caddy, Traefik or a Cloudflare tunnel). A firewall such as ufw does"
-  say "not block a port Docker publishes, so once the proxy runs on this server, run this again with"
-  say "PINNED_BIND=127.0.0.1 to keep port $PORT off the internet:"
+say ""
+if [ -n "$LOOPBACK" ]; then
+  say "Next: put HTTPS in front (Caddy, Traefik or a Cloudflare tunnel) and point it at 127.0.0.1:$PORT."
+  say "Set BASE_URL to the https address you give it. How: https://github.com/pinned-cc/pinned#behind-a-reverse-proxy"
+else
+  say "WARNING: Pinned answers on plain http on $BIND, which other machines can reach."
+  say "Your password would cross the network unencrypted. Do not log in from outside your own network."
+  say "Put HTTPS in front first (Caddy, Traefik or a Cloudflare tunnel), then run this again without"
+  say "PINNED_BIND, so port $PORT answers on this server only. A firewall such as ufw does not block it."
   say "  https://github.com/pinned-cc/pinned#behind-a-reverse-proxy"
 fi
