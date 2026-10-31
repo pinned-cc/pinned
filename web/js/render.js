@@ -512,7 +512,7 @@ export function showAll() {
   ui.full = ui.view; render();
   const b = lot && lot.blocks.find(x => !x.head); if (!b) return;
   const id = b.s.items[b.from].id;
-  drawCard(id); announce(`Showing all ${lot.ids.length} ${ui.view === 'trash' ? 'in the Trash' : 'bookmarks'}`); const el = document.querySelector(`#app article[data-id="${id}"] :is(.t-title, .pt-in)`); if (el) el.focus({ preventScroll: true });
+  drawCard(id); announce(`Showing all ${lot.ids.length} ${ui.view === 'trash' ? 'in the Trash' : 'bookmarks'}`); const el = document.querySelector(`#app article[data-id="${id}"] :is(.t-title, .pt-in)`); if (el) { el.focus({ preventScroll: true }); el.closest('article').scrollIntoView({ block: 'nearest' }); }
 }
 
 /* ================= render ================= */

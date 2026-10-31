@@ -740,6 +740,8 @@ async function desktop(browser, engine) {
     await announced(page, /^Sharing on$/, 'sharing on');
     await page.click('#sheet [data-a="share-lock"]');
     const pw = page.locator('#sheet form[data-sharepw] input[name=pw]'); await visible(pw);
+    await visible(page.locator('#sheet #share-pw-rule', { hasText: 'Use at least 8 characters.' }));
+    assert(await pw.getAttribute('aria-describedby') === 'share-pw-rule', 'the password rule is not tied to the field');
     await pw.fill('short1'); await pw.press('Enter');
     await visible(page.locator('#sheet .share-pwf .fld-err', { hasText: 'at least 8' }));
     await page.locator('#sheet form[data-sharepw] input[name=pw]').fill('sunshine'); await page.locator('#sheet form[data-sharepw] input[name=pw]').press('Enter');
@@ -977,6 +979,16 @@ async function desktop(browser, engine) {
       assert(g.share, 'the share button beside the folder title is under 44 px');
       assert(g.ab[0] >= 44 && g.ab[1] >= 44, 'card action buttons ' + g.ab.join(' by '));
     } finally { await c.close(); }
+  });
+
+  await check('768 with touch: Show all under a long list takes a 44 px tap', async () => {
+    const id = await seedLong(page);
+    const c = await browser.newContext({ viewport: { width: 768, height: 900 }, hasTouch: true, locale: 'en-US' }); await c.addCookies(await ctx.cookies()); const p = await c.newPage();
+    try {
+      await p.goto(BASE + '/'); await visible(p.locator('#side .si')); await p.click(`#side [data-view="${id}"]`);
+      const b = await p.locator('#body [data-a="show-all"]').boundingBox();
+      assert(b && b.height >= 44, 'Show all is under 44 px: ' + (b && b.height));
+    } finally { await c.close(); await dropLong(page, id); }
   });
 
   await check('login, How to save and save pages follow the system scheme and the bulb\'s pick, as the app does', async () => {
@@ -1645,6 +1657,11 @@ async function phone(browser, engine) {
       await btn.tap();
       await until(page, n => document.querySelectorAll('#pmain article').length === n && !document.querySelector('#pmain .pmore'), LONG_N, 'every card drawn');
       await announced(page, new RegExp(`Showing all ${LONG_N} bookmarks`), 'the count');
+      /* the card Show all focuses, and the one ArrowDown moves to, sit clear of the bottom bar */
+      const clear = () => page.evaluate(() => { const a = document.activeElement && document.activeElement.closest('article'), bar = document.querySelector('.pbottom');
+        if (!a || !bar) return 'no focused card or bar'; const r = a.getBoundingClientRect(), t = bar.getBoundingClientRect().top; return r.bottom <= t + 0.5 ? '' : `card ends at ${r.bottom}, bar starts at ${t}`; });
+      await page.waitForTimeout(300); let under = await clear(); assert(!under, 'after Show all: ' + under);
+      await page.keyboard.press('ArrowDown'); await page.waitForTimeout(300); under = await clear(); assert(!under, 'after ArrowDown: ' + under);
       const g = await seamGap(page, '#pmain article', 2);
       assert(Math.abs(g.seam - g.head) < 1 && g.dx < 1, `seam ${g.seam} px against ${g.head} px between rows, ${g.dx} px across`);
       await shot(page, `${engine}-phone-long-full`);

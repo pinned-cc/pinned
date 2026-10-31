@@ -561,6 +561,7 @@ button.t-title{width:100%;text-align:left}
 .tk-addr{font-weight:500;color:var(--ink);overflow-wrap:anywhere}
 .share-opens{margin-top:var(--s-9)}
 .share-pwf,.share-locked{margin-top:var(--s-5)}
+.share-pw-rule{margin:var(--s-3) var(--s-1) 0}
 /* API tokens: the same sections as the share sheet */
 .tk-sec{margin-top:var(--s-9)}
 .tk-sec[aria-busy]{min-height:72px}
@@ -710,6 +711,8 @@ textarea.fld-in{resize:none;overflow:hidden;font:400 var(--t-input)/var(--lh-20)
 
 /* ================= phone (below 720) ================= */
 body.phone{min-height:100vh;min-height:100dvh}
+/* the focus stops above the bottom bar: Tab, arrows and Show all scroll a card clear of it */
+html:has(body.phone){scroll-padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 .papp{position:relative;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;padding-top:env(safe-area-inset-top);padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 .ptbar{height:52px;display:flex;align-items:center;padding:0 var(--s-3) 0 var(--s-2);gap:var(--s-1)}
 .ptbar.home{padding-left:var(--gut)}
@@ -1447,6 +1450,7 @@ body.phone .menu button{height:var(--tap);padding:0 var(--s-6);border-radius:var
   .side-add{width:var(--tap);height:var(--tap);margin-right:calc(var(--s-3) * -1)}
   .tb{height:48px}
   .tb .btn,.tb .add{height:var(--tap);border-radius:var(--r-pill)}
+  .more-b{height:var(--tap);border-radius:var(--r-pill)}
   .tb .btn.icon,.tb .btn.lbl{min-width:var(--tap)}
   .vsw{height:auto;padding:var(--s-1);border-radius:calc(var(--r-l) + 3px)}
   .vsw button{width:var(--tap);height:var(--tap);border-radius:var(--r-l)}
