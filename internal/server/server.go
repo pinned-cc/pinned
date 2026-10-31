@@ -103,6 +103,9 @@ type Server struct {
 	mux   *http.ServeMux
 	// totp checks the second factor; nil when TOTP_SECRET is not set.
 	totp *auth.TOTP
+	// codeBackoff counts wrong codes after a right password, across all
+	// clients, and holds every code check for a growing time.
+	codeBackoff *auth.Backoff
 	// log takes the security events; tests replace it.
 	log *log.Logger
 	// waitLogged holds, per area and client, the end of a wait already
@@ -124,6 +127,7 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 		loginLimiter: auth.NewLimiter(), tokenLimiter: auth.NewLimiter(),
 		sleep: time.Sleep, mux: http.NewServeMux(),
 		log: log.Default(), waitLogged: map[string]time.Time{},
+		codeBackoff: auth.NewBackoff(),
 	}
 	if len(cfg.TOTPKey) > 0 {
 		s.totp = auth.NewTOTP(cfg.TOTPKey)
@@ -461,8 +465,21 @@ func (s *Server) checkApp(r *http.Request, check func() bool) (ok bool, wait tim
 // set, the code, both under the login limiter. A device cookie does not
 // skip the code. A code is used up only when the password is right too.
 // The failure is logged as login, or as totp when only the code was wrong.
+//
+// A wrong code after a right password also counts in codeBackoff, across
+// all clients: after 5 in a row no login is checked for a minute, then two,
+// doubling to a day, until a right code. During that wait every login gets
+// the wait back without any check, so a wrong and a right password answer
+// alike; it is logged as totp.wait.
 func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wait time.Duration) {
+	if s.totp != nil {
+		if wait := s.codeBackoff.Waiting(); wait > 0 {
+			s.failed(r, "totp", wait)
+			return false, wait
+		}
+	}
 	codeWrong := false
+	var codeWait time.Duration
 	ok, wait = s.checkApp(r, func() bool {
 		if !auth.PasswordOK(s.cfg.Password, password) {
 			return false
@@ -473,18 +490,22 @@ func (s *Server) checkLogin(r *http.Request, password, code string) (ok bool, wa
 		step, match := s.totp.Match(code)
 		if !match || !s.totp.Use(step) {
 			codeWrong = true
+			codeWait = s.codeBackoff.Fail()
 			return false
 		}
+		s.codeBackoff.Success()
 		return true
 	})
-	if !ok {
-		area := "login"
-		if codeWrong {
-			area = "totp"
-		}
-		s.failed(r, area, wait)
+	if ok {
+		return true, 0
 	}
-	return ok, wait
+	area := "login"
+	if codeWrong {
+		area = "totp"
+	}
+	wait = max(wait, codeWait)
+	s.failed(r, area, wait)
+	return false, wait
 }
 
 // wrongLogin is the message for a refused login.

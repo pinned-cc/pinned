@@ -47,11 +47,13 @@ There is no cap on the number of bookmarks, folders, API tokens or signed in bro
 | API token | client | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes, counted apart from the login |
 | Share password | client, for each share link on its own | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes for that link |
 | Folder password: unlocking, changing it | client, for each folder on its own | 30 seconds after 5 wrong tries | 100 wrong tries in 10 minutes for that folder |
+| Second factor code after the right password | everyone together | 1 minute after 5 wrong codes in a row, doubling with each further wrong code up to 1 day; a right code clears it | the wait itself |
 
 - A client is its address, IPv6 by its /64. A browser that has logged in with the app password carries a signed device cookie and is counted by that cookie instead; the cap for everyone does not hold it.
 - Every wrong try waits 1 second before it answers. Password tries from one client are checked one at a time.
 - During a wait no password is checked, not even the right one, and the answer is 429 with `Retry-After`.
 - A valid API token is never held by these counts.
+- A wrong second factor code also counts as a wrong app password for its client. While the code wait holds, no login is checked at all, from any browser, so a wrong and a right password answer alike. Someone who has the password can try at most 15 codes in the first day and about one a day after that. To get in during a wait, wait, or remove `TOTP_SECRET` and restart.
 - The counts live in memory. A restart clears them, and a client quiet for an hour is forgotten.
 
 ### Sessions and cookies
@@ -148,7 +150,7 @@ Everything is in the data folder. Nothing is encrypted at rest; use disk encrypt
 | Site icons | `icons/` | Low. The file names hold bookmark ids. | Files 0600. |
 | Logs | standard error of the process, not the data folder | Low. They hold client addresses, ids and token names. | See Logs. |
 
-Held in memory only, gone at a restart: the wrong password counts, the step of the last second factor code used, the app password and its fingerprint.
+Held in memory only, gone at a restart: the wrong password counts, the wrong code count and its wait, the step of the last second factor code used, the app password and its fingerprint.
 
 How long things are kept: Trash 30 days; expired logins until the next nightly run; API tokens until revoked or `APP_PASSWORD` changes; share links until revoked or expired, or until their folder is deleted, locked or moved into a locked folder; database copies, the last three.
 
@@ -172,7 +174,7 @@ The client address is read the same way as for the wrong password limits: from `
 |---|---|---|
 | `login.ok` | A login | `via` (`form` or `api`), `known_browser` |
 | `login.fail`, `login.wait` | A wrong app password; the client now has to wait | `seconds` on a wait |
-| `totp.fail`, `totp.wait` | The password was right, the code wrong or used already | `seconds` on a wait |
+| `totp.fail`, `totp.wait` | The password was right, the code wrong or used already; a login came in while wrong codes hold every login | `seconds` on a wait |
 | `logout` | A browser logged out | |
 | `session.end` | Another browser was signed out from Signed in | `session` |
 | `session.end_others` | Sign out all others | `ended` |

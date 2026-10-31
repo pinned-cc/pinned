@@ -12,6 +12,8 @@ import (
 	"testing"
 	"testing/fstest"
 	"time"
+
+	"github.com/pinned-cc/pinned/internal/auth"
 )
 
 var totpKey = []byte("12345678901234567890")
@@ -88,9 +90,52 @@ func TestTOTPWrongCodesCountInTheLimiter(t *testing.T) {
 	e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": codeAt(*now)}, 429)
 	e.wantEvent("totp.wait", 1)
 	// A refused login during the wait did not use the code up.
-	later := time.Now().Add(31 * time.Second)
+	later := time.Now().Add(61 * time.Second)
 	e.server.loginLimiter.Now = func() time.Time { return later }
+	e.server.codeBackoff.Now = func() time.Time { return later }
 	e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": codeAt(*now)}, 204)
+}
+
+// TestTOTPCodeBackoff: wrong codes after the right password count across
+// all addresses. After 5 no login is checked for a minute, then two, and
+// so on; a right code clears it. A guesser who has the password gets 15
+// codes in the first day and one a day after (auth.TestBackoffDailyBudget).
+func TestTOTPCodeBackoff(t *testing.T) {
+	e, now := newTOTPEnv(t)
+	clock := time.Now()
+	e.server.codeBackoff.Now = func() time.Time { return clock }
+	newAddress := func() { e.server.loginLimiter = auth.NewLimiter() }
+	for i := 0; i < 4; i++ {
+		newAddress()
+		e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": "111111"}, 401)
+	}
+	newAddress()
+	e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": "111111"}, 429)
+	e.wantEvent("totp.wait", 1)
+	// From another address, the right code waits too, and a wrong password
+	// answers the same, so the wait tells nothing about the password.
+	newAddress()
+	code, out := e.do("POST", "/api/login", map[string]string{"password": "pw", "code": codeAt(*now)})
+	if code != 429 || !strings.Contains(string(out), "60 seconds") {
+		t.Fatalf("right code during the wait: %d %s", code, out)
+	}
+	e.expect("POST", "/api/login", map[string]string{"password": "nope", "code": "222222"}, 429)
+	// After the wait one more wrong code doubles it.
+	clock = clock.Add(time.Minute)
+	newAddress()
+	code, out = e.do("POST", "/api/login", map[string]string{"password": "pw", "code": "111111"})
+	if code != 429 || !strings.Contains(string(out), "120 seconds") {
+		t.Fatalf("wrong code after the first wait: %d %s", code, out)
+	}
+	clock = clock.Add(2 * time.Minute)
+	newAddress()
+	e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": codeAt(*now)}, 204)
+	// The right code cleared it: 4 wrong codes are free again.
+	e.expect("POST", "/api/logout", nil, 204)
+	for i := 0; i < 4; i++ {
+		newAddress()
+		e.expect("POST", "/api/login", map[string]string{"password": "pw", "code": "111111"}, 401)
+	}
 }
 
 func TestTOTPLoginForm(t *testing.T) {
