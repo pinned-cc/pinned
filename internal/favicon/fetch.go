@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -162,6 +163,9 @@ type Store interface {
 	IconInUse(icon string) bool
 	IconFailed(id int64, forKey string, final bool) error
 	DropIcon(icon string) error
+	RenameIcon(old, new string) error
+	IconsReencoded() bool
+	MarkIconsReencoded() error
 }
 
 // Pool fetches icons in the background, at most four at a time.
@@ -186,8 +190,9 @@ func (p *Pool) Configure(off bool, hosts Hosts) {
 	p.off, p.hosts = off, hosts
 }
 
-// NewPool checks the stored SVG icons once (see recheckSVG), then starts
-// the workers. Icons are written to dir. The workers stop, and fetches in
+// NewPool checks the stored SVG icons (see recheckSVG) and, once per data
+// folder, re-encodes the stored raster icons (see reencodeStored), then
+// starts the workers. Icons are written to dir. The workers stop, and fetches in
 // flight are cancelled, when ctx ends; Wait waits for them.
 func NewPool(ctx context.Context, dir string, st Store) *Pool {
 	p := &Pool{
@@ -197,6 +202,7 @@ func NewPool(ctx context.Context, dir string, st Store) *Pool {
 		ctx:   ctx,
 	}
 	p.recheckSVG()
+	p.reencodeStored()
 	p.wg.Add(workers)
 	for i := 0; i < workers; i++ {
 		go p.work()
@@ -227,6 +233,86 @@ func (p *Pool) recheckSVG() {
 		log.Printf("favicon: dropped stored icon %s: it fails the SVG check", name)
 		remove(path)
 	}
+}
+
+// reencodeStored stores every PNG and JPEG icon that versions before 0.1.11
+// kept byte for byte as a new PNG of what it shows, the way new icons are
+// stored, and points its bookmarks to the new file. A file that does not
+// decode is taken off its bookmarks and deleted, so they show their letter.
+// It runs once: a settings flag records the pass, so later starts skip it.
+// If anything could not be finished, the flag is not set and the next start
+// tries again.
+func (p *Pool) reencodeStored() {
+	if p.store.IconsReencoded() {
+		return
+	}
+	var names []string
+	for _, pat := range []string{"*.png", "*.jpg"} {
+		m, err := filepath.Glob(filepath.Join(p.dir, pat))
+		if err != nil {
+			return
+		}
+		names = append(names, m...)
+	}
+	done := true
+	for _, path := range names {
+		if !p.reencodeOne(path) {
+			done = false
+		}
+	}
+	if done {
+		if err := p.store.MarkIconsReencoded(); err != nil {
+			log.Printf("favicon: re-encode: %v", err)
+		}
+	}
+}
+
+// reencodeOne re-encodes one stored raster icon. It reports false when the
+// work could not be finished and should be tried again.
+func (p *Pool) reencodeOne(path string) bool {
+	name := filepath.Base(path)
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+	if err != nil {
+		log.Printf("favicon: re-encode %s: %v", name, err)
+		return false
+	}
+	icon, err := Process(data)
+	if err != nil || icon.Ext != "png" {
+		if err := p.store.DropIcon(name); err != nil {
+			log.Printf("favicon: re-encode %s: %v", name, err)
+			return false
+		}
+		log.Printf("favicon: dropped stored icon %s: it does not decode", name)
+		remove(path)
+		return true
+	}
+	// The same naming as a fresh fetch: the bookmark id part is kept, the
+	// hash and the extension follow the new file.
+	prefix := strings.TrimSuffix(name, filepath.Ext(name))
+	if i := strings.LastIndexByte(prefix, '-'); i > 0 {
+		prefix = prefix[:i]
+	}
+	sum := sha256.Sum256(icon.Data)
+	newName := fmt.Sprintf("%s-%s.png", prefix, hex.EncodeToString(sum[:4]))
+	if err := writeFile(filepath.Join(p.dir, newName), icon.Data); err != nil {
+		log.Printf("favicon: re-encode %s: %v", name, err)
+		return false
+	}
+	if newName == name {
+		return true
+	}
+	if err := p.store.RenameIcon(name, newName); err != nil {
+		log.Printf("favicon: re-encode %s: %v", name, err)
+		if !p.store.IconInUse(newName) {
+			remove(filepath.Join(p.dir, newName))
+		}
+		return false
+	}
+	remove(path)
+	return true
 }
 
 // Wait blocks until every worker has stopped.

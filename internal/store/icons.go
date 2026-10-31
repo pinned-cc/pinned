@@ -110,3 +110,24 @@ func (s *Store) DropIcon(icon string) error {
 	_, err := s.db.Exec(`UPDATE bookmarks SET icon = NULL, tile = NULL WHERE icon = ?`, icon)
 	return err
 }
+
+// RenameIcon points every bookmark that uses icon old to icon new.
+func (s *Store) RenameIcon(old, new string) error {
+	_, err := s.db.Exec(`UPDATE bookmarks SET icon = ? WHERE icon = ?`, new, old)
+	return err
+}
+
+// IconsReencoded reports whether the one-off pass that stores raster icons
+// of older versions as new PNG files has run on this data folder.
+func (s *Store) IconsReencoded() bool {
+	var v string
+	err := s.db.QueryRow(`SELECT value FROM settings WHERE key = 'icons_reencoded'`).Scan(&v)
+	return err == nil && v == "true"
+}
+
+// MarkIconsReencoded records that the pass has run.
+func (s *Store) MarkIconsReencoded() error {
+	_, err := s.db.Exec(`INSERT INTO settings (key, value) VALUES ('icons_reencoded', 'true')
+		ON CONFLICT (key) DO UPDATE SET value = excluded.value`)
+	return err
+}

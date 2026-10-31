@@ -62,7 +62,7 @@ A bookmark with `deleted_at` NULL is live. Live bookmarks are unique by `url_key
 | `key` | TEXT PRIMARY KEY | |
 | `value` | TEXT | JSON. |
 
-Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to three folder ids, newest first), and `password_hash`, a bcrypt hash of `APP_PASSWORD`. When the password in the environment no longer matches it at start, every session and every API token is deleted. A hash made with a lower bcrypt cost than the current one is replaced at start. Versions before 0.1.11 kept `password_hmac`, an HMAC of the password keyed with `secret.key`, instead; the first start of a newer version checks it once and replaces it with `password_hash`. `icon_failures_version` is the app version that recorded the rows of `icon_failures`; a start with another version empties that table.
+Keys in use: `last_folder` (a folder id), `recent_folders` (an array of up to three folder ids, newest first), and `password_hash`, a bcrypt hash of `APP_PASSWORD`. When the password in the environment no longer matches it at start, every session and every API token is deleted. A hash made with a lower bcrypt cost than the current one is replaced at start. Versions before 0.1.11 kept `password_hmac`, an HMAC of the password keyed with `secret.key`, instead; the first start of a newer version checks it once and replaces it with `password_hash`. `icon_failures_version` is the app version that recorded the rows of `icon_failures`; a start with another version empties that table. `icons_reencoded` is `true` once the stored PNG and JPEG icons of older versions have been re-encoded.
 
 ### sessions
 
@@ -150,4 +150,4 @@ The nightly file is written at 03:00 in the time zone set by `TZ`, and on start 
 
 ## Icons
 
-When a bookmark is saved or its address changes, the server looks for the site's icon and stores it in `icons/` as `<bookmark id>-<8 hex characters of the file's SHA-256>.<ext>`, where `<ext>` is `png`, `jpg` or `svg`. ICO files are converted to PNG. The `icon` column holds the file name. Bookmarks on the same host and port can share one file. Icon files that no bookmark uses any more are removed.
+When a bookmark is saved or its address changes, the server looks for the site's icon and stores it in `icons/` as `<bookmark id>-<8 hex characters of the file's SHA-256>.<ext>`, where `<ext>` is `png` or `svg`. PNG, JPEG, GIF and ICO files are stored as a new PNG of what they show; an SVG is kept as it is, only when it passes the check in `docs/security.md`. Versions before 0.1.11 also stored `jpg` files and kept PNG and JPEG files as fetched; the first start of 0.1.11 or later re-encodes those once to a new PNG, points their bookmarks to it and removes the old file, and drops any stored icon that does not decode or whose SVG fails the check. The `icon` column holds the file name. Bookmarks on the same host and port can share one file. Icon files that no bookmark uses any more are removed.
