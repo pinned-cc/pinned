@@ -1,6 +1,6 @@
 # Pinned browser extension
 
-Saves the page you are on to your own Pinned server. It works in Brave, Chrome, Edge and Firefox from the same folder.
+Saves the page you are on to your own Pinned server. It works in Brave, Chrome and Edge.
 
 - The toolbar button opens a small save popup: the page title (you can change it), the address, a note when the link is already saved, your three most recent folders, Choose another folder for the full list, Save to Inbox and Save. Enter saves, Escape closes.
 - Right click a page or a link and pick Save to Pinned. The link goes to the Inbox. The toolbar button shows a check for two seconds, or `=` when the link was already saved, or `!` when the save failed.
@@ -11,7 +11,6 @@ Saves the page you are on to your own Pinned server. It works in Brave, Chrome, 
 You need the `extras/extension` folder, or the zip from your server at `/extras/pinned-extension.zip`, unpacked.
 
 - Brave, Chrome, Edge: open `brave://extensions`, `chrome://extensions` or `edge://extensions`, switch on Developer mode, choose Load unpacked and pick the folder.
-- Firefox: open `about:debugging#/runtime/this-firefox`, choose Load Temporary Add-on and pick `manifest.json` in the folder. Firefox removes temporary add-ons when it quits, and each load counts as a new copy of the extension. A token belongs to the first copy that uses it, so after every Firefox restart load the add-on again, create a new token in Pinned and paste it into the options. Firefox 142 or newer.
 
 ## Set it up
 
@@ -24,7 +23,7 @@ When you save, the browser asks to allow access to that one server. Say yes.
 
 ## Shortcut
 
-`Alt+Shift+S` opens the popup. To change it, open `chrome://extensions/shortcuts` (Brave and Edge have the same page), or in Firefox the gear menu on `about:addons`, then Manage Extension Shortcuts.
+`Alt+Shift+S` opens the popup. To change it, open `chrome://extensions/shortcuts` (Brave and Edge have the same page).
 
 ## Permissions and why
 

@@ -141,7 +141,7 @@ It opens without browser bars, like an app.
 **Android share target.** Once the app is on the Android home screen, it shows up in the share sheet as Pinned.
 Share a page to it and the save page opens.
 
-**Browser extension.** Download it from the How to save page and load it unpacked in Brave, Chrome or Edge, or as a temporary add-on in Firefox. Firefox removes a temporary add-on when it quits, so after a restart load it again and give it a new token. In its options the address can be typed without `http://`: it tries https, then http.
+**Browser extension.** Download it from the How to save page and load it unpacked in Brave, Chrome or Edge. In its options the address can be typed without `http://`: it tries https, then http.
 It has a save popup with your recent folders and a right click menu. See `extras/extension/README.md`.
 
 **The API with a token.** Scripts, Raycast, Home Assistant and n8n can save with an API token.
@@ -177,7 +177,7 @@ Everything else answers 403 with a token: export, import, Trash and delete, crea
 
 Creating a token asks for the app password again, so a browser left open cannot hand out tokens.
 
-A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage. A token belongs to the first copy of the extension that uses it. After that, a request with the token that names any other origin, another extension or a web page, gets 403; a request that names no origin, as scripts, shortcuts and the examples send, still works. After you reinstall the extension in Firefox or Safari, create a new token for it. Scripts are not affected.
+A token never sees inside a locked folder, even one you unlocked in your browser. The extension keeps its token in the browser's storage. A token belongs to the first copy of the extension that uses it. After that, a request with the token that names any other origin, another extension or a web page, gets 403; a request that names no origin, as scripts, shortcuts and the examples send, still works. After you reinstall the extension, create a new token for it. Scripts are not affected.
 
 ## Signed in browsers
 

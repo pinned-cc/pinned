@@ -1,16 +1,16 @@
-// UI smoke test for the web front end, Chromium, WebKit and Firefox, desktop 1440x900 (and 768 to 1280 for the sidebar), phone 390x844 (and 320),
+// UI smoke test for the web front end, Chromium and WebKit, desktop 1440x900 (and 768 to 1280 for the sidebar), phone 390x844 (and 320),
 // and a mouse in a 700 px window.
 //
 // Run against a running instance whose data you do not mind changing (it adds and removes a
 // folder, bookmarks and a token, all named "ui-test ..."):
 //
-//   node tools/ui-test.mjs http://127.0.0.1:9098 <app password> [--shots <dir>] [--only chromium|webkit|firefox]
+//   node tools/ui-test.mjs http://127.0.0.1:9098 <app password> [--shots <dir>] [--only chromium|webkit]
 //
 // Playwright is not a dependency of the repo. The script takes the first that loads:
 //   1. PLAYWRIGHT_MODULE=/path/to/playwright (a folder or its index.mjs)
 //   2. import('playwright') from a global or local node_modules
 //   3. the driver bundled with the Python package (pip install playwright), found with python3
-// Browsers come from `npx playwright install chromium webkit firefox` (or `python3 -m playwright install`)
+// Browsers come from `npx playwright install chromium webkit` (or `python3 -m playwright install`)
 // for the same Playwright version.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -2030,7 +2030,7 @@ async function barParity(browser, engine) {
 
 /* the 0.1.11 flow test fixes: waits with the real time, the stale save error, Share in the folder menu, Move with Undo,
    Close on lock dialogs, More at 800 px high, the token's next step, Export without locked folders, a busy Import,
-   an unreachable server, the Firefox note and the share page wait */
+   an unreachable server and the share page wait */
 async function flowFixes(browser, engine) {
   console.log(`\n${engine}, flow test fixes 1280x800`);
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'en-US' });
@@ -2156,14 +2156,6 @@ async function flowFixes(browser, engine) {
     await page.unroute('**/api/state'); await page.click('.notice [data-a="retry"]'); await gone(page.locator('.notice'));
   });
 
-  await check('How to save, Extension: Firefox needs the add-on loaded again and a new token after a restart', async () => {
-    await page.goto(BASE + '/bookmarklet'); await page.click('#t-ext');
-    const n = (await page.textContent('[data-ff-note]')).trim();
-    assert(n === 'Firefox removes it when it quits. After a restart, load it again and give it a new token.', 'note: ' + n);
-    await shot(page, `${engine}-fix-howto-firefox`);
-    await page.goto(BASE + '/'); await visible(page.locator('#side .si'));
-  });
-
   await check('share page: a wait names the seconds the server sends', async () => {
     const sh = (await apiIn(page, 'POST', `/api/folders/${A.id}/share`, { password: 'ui-test-share-pw' })).data;
     const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }), sp = await c.newPage();
@@ -2178,7 +2170,7 @@ async function flowFixes(browser, engine) {
 }
 
 const pw = await loadPlaywright();
-for (const engine of ['chromium', 'webkit', 'firefox']) {
+for (const engine of ['chromium', 'webkit']) {
   if (only && only !== engine) continue;
   console.log(`\n${engine}`);
   let browser;

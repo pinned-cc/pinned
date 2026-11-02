@@ -36,7 +36,7 @@ node --test tools/extension.test.mjs   # the browser extension, needs Node 20 or
 
 The CI also runs `staticcheck`.
 
-A change to the web front end also gets a run of the browser test, `tools/ui-test.mjs`, in Chromium, WebKit and Firefox. How to run it, and the result of the last run, are in `docs/testing.md`.
+A change to the web front end also gets a run of the browser test, `tools/ui-test.mjs`, in Chromium and WebKit. How to run it, and the result of the last run, are in `docs/testing.md`.
 
 Keep pull requests small: one change, with a test when it touches the server. Explain why in the description, not only what.
 
