@@ -5,7 +5,7 @@
 - `go test -race ./...`, `go vet`, `gofmt` and `staticcheck`: the server. In CI on every push.
 - `node --test tools/extension.test.mjs`: the browser extension (`extras/extension`), with node's own test runner and no dependencies. In CI on every push.
 - `sh tools/setup.test.sh`: the server install script (`extras/vps/setup.sh`) against stand-ins for docker, curl and chown; nothing is installed. In CI on every push. It does not replace one real run on a fresh server.
-- `tools/ui-test.mjs`: the web front end in real browsers with Playwright, in Chromium and WebKit. Firefox is not tested from 0.1.11 on and Pinned does not claim it. Not in CI. Run it by hand before a release and record the result below.
+- `tools/ui-test.mjs`: the web front end in real browsers with Playwright, in Chromium, WebKit and Firefox. Not in CI. Run it by hand before a release and record the result below.
 
 ## Run the browser test
 
@@ -20,9 +20,10 @@ Then, in a second terminal:
 
 ```sh
 node tools/ui-test.mjs http://127.0.0.1:9098 ui-test-password
+node tools/ui-test.mjs http://127.0.0.1:9098 ui-test-password --only firefox
 ```
 
-Playwright is not a dependency of the repo; the head of `tools/ui-test.mjs` says where it looks for it. Install the browsers for the same Playwright version with `npx playwright install chromium webkit`. A browser that does not start counts as a failure and the other engines still run. On macOS there is no `timeout`; to cap a run, use `perl -e 'alarm 900; exec @ARGV' -- node tools/ui-test.mjs ...`.
+Playwright is not a dependency of the repo; the head of `tools/ui-test.mjs` says where it looks for it. Install the browsers for the same Playwright version with `npx playwright install chromium webkit firefox`. A browser that does not start counts as a failure and the other engines still run. On macOS there is no `timeout`; to cap a run, use `perl -e 'alarm 900; exec @ARGV' -- node tools/ui-test.mjs ...`.
 
 ## Results
 
@@ -30,7 +31,6 @@ One line per run, newest first: date, commit, Playwright version, result per eng
 
 | Date | Commit | Playwright | Chromium | WebKit | Firefox |
 |---|---|---|---|---|---|
-| 2026-11-02 | b109f46 plus Firefox taken out (0.1.11, not released) | 1.61.0 | 139 passed, 0 failed | 138 passed, 0 failed | taken out, not tested. |
 | 2026-10-31 | b1b6a0b (0.1.11, not released) | 1.61.0 | 140 passed, 0 failed | 139 passed, 0 failed | not run here: to be run on a plain terminal. |
 | 2026-10-31 | 96776ed (0.1.11, not released) | 1.61.0 | 139 passed, 0 failed | 138 passed, 0 failed | not run here: to be run on a plain terminal. |
 | 2026-10-31 | 636ff04 (0.1.11, not released) | 1.61.0 | 138 passed, 0 failed (two runs) | 137 passed, 0 failed | not run here: to be run on a plain terminal. |
