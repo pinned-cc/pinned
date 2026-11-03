@@ -63,7 +63,7 @@ The image is published at `ghcr.io/pinned-cc/pinned` for amd64 and arm64, from v
        # The image has a HEALTHCHECK (pinned -healthcheck), nothing to add here.
    ```
 
-3. Start it with a password of at least 8 characters that is not a common password (docs/security.md says which are refused):
+3. Start it with a password of at least 8 characters that is not a common password or one of the 1000000 breached passwords built into the app (docs/security.md says which are refused):
 
    ```sh
    APP_PASSWORD='choose a long one' docker compose up -d
@@ -334,5 +334,7 @@ Then use `image: pinned` in the compose file. For working on the code, see `CONT
 ## Licence
 
 AGPL-3.0-only. See [LICENSE](LICENSE).
+
+The common and breached password lists come from SecLists under the MIT licence; `pinned -licenses` prints it with the other third party licences.
 
 Copyright 2026 the Pinned authors.

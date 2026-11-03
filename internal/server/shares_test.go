@@ -210,7 +210,7 @@ func TestSharePassword(t *testing.T) {
 	e.login()
 	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
 	e.expect("POST", "/api/bookmarks", map[string]any{"title": "Docs", "url": "https://example.com/docs", "folder_id": f.ID}, 201)
-	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame", "expires_days": 30}, 201))
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame kiwi", "expires_days": 30}, 201))
 	if !sh.HasPassword || sh.ExpiresAt == nil {
 		t.Fatalf("share: %+v", sh)
 	}
@@ -222,7 +222,7 @@ func TestSharePassword(t *testing.T) {
 	if v.unlock(sh.Token, "wrong") != 401 {
 		t.Error("wrong password accepted")
 	}
-	if v.unlock(sh.Token, "open sesame") != 204 {
+	if v.unlock(sh.Token, "open sesame kiwi") != 204 {
 		t.Fatal("right password refused")
 	}
 	if code, body := v.get("/s/" + sh.Token + "/data"); code != 200 || strings.Contains(body, `"locked"`) {

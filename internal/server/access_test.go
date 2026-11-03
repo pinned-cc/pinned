@@ -297,7 +297,7 @@ func TestShareTokenInFragment(t *testing.T) {
 	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
 	b := decode[bookmarkJSON](t, e.expect("POST", "/api/bookmarks", map[string]any{"title": "Docs", "url": "https://example.com/docs", "folder_id": f.ID}, 201))
 	e.iconFor(b.ID, "https://example.com/docs", "d.png")
-	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame"}, 201))
+	sh := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame kiwi"}, 201))
 	if sh.URL != "http://homelab:9095/s/#"+sh.Token {
 		t.Fatalf("link: %s", sh.URL)
 	}
@@ -323,7 +323,7 @@ func TestShareTokenInFragment(t *testing.T) {
 	if code, _ := v.withToken("POST", "/s/-/unlock", sh.Token, `{"password":"wrong"}`); code != 401 {
 		t.Errorf("wrong password: %d", code)
 	}
-	if code, _ := v.withToken("POST", "/s/-/unlock", sh.Token, `{"password":"open sesame"}`); code != 204 {
+	if code, _ := v.withToken("POST", "/s/-/unlock", sh.Token, `{"password":"open sesame kiwi"}`); code != 204 {
 		t.Fatalf("right password: %d", code)
 	}
 	code, body := v.withToken("GET", "/s/-/data", sh.Token, "")
@@ -359,7 +359,7 @@ func TestOldShareCookieStillWorks(t *testing.T) {
 	e := newEnv(t, Config{})
 	e.login()
 	f := decode[folderJSON](t, e.expect("POST", "/api/folders", map[string]any{"name": "Work"}, 201))
-	tok := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame"}, 201)).Token
+	tok := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.ID)+"/share", map[string]any{"password": "open sesame kiwi"}, 201)).Token
 	sh, err := e.st.ShareByToken(tok)
 	if err != nil {
 		t.Fatal(err)
@@ -430,9 +430,9 @@ func TestUnlockAndShareCookiePrefixes(t *testing.T) {
 		t.Errorf("relock: %v", resp.Cookies())
 	}
 
-	tok := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/share", map[string]any{"password": "open sesame"}, 201)).Token
+	tok := decode[shareJSON](t, e.expect("POST", "/api/folders/"+itoa(f.reading.ID)+"/share", map[string]any{"password": "open sesame kiwi"}, 201)).Token
 	sh, _ := e.st.ShareByToken(tok)
-	resp = overHTTPS(t, e, "POST", "/s/"+tok+"/unlock", "", `{"password":"open sesame"}`)
+	resp = overHTTPS(t, e, "POST", "/s/"+tok+"/unlock", "", `{"password":"open sesame kiwi"}`)
 	u := cookieNamed(resp, "__Secure-pinned_share_"+itoa(sh.ID))
 	if resp.StatusCode != 204 || u == nil || !u.Secure || u.Path != "/s/" {
 		t.Fatalf("share unlock over https: %d %v", resp.StatusCode, resp.Cookies())

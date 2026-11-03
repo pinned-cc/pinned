@@ -21,7 +21,8 @@ import (
 var commonList string
 
 // CommonListNotice is the SecLists copyright and MIT permission notice the list
-// ships under, carried in the binary and printed by pinned -licenses.
+// and the breached filter ship under, carried in the binary and printed by
+// pinned -licenses.
 //
 //go:embed common-passwords.LICENSE
 var CommonListNotice string
@@ -77,12 +78,16 @@ func HostWords(hosts ...string) []string {
 }
 
 // CommonPassword reports whether pw is too easy to guess: one of the
-// embedded common passwords, compared without case, or made only of
-// context words (the app's own words and the extra ones given, such as
+// embedded common passwords or of the 1000000 breached passwords in the
+// breached filter (BreachedPassword), compared without case, or made only
+// of context words (the app's own words and the extra ones given, such as
 // HostWords) with digits and symbols.
 func CommonPassword(pw string, extra ...string) bool {
 	lower := strings.ToLower(pw)
 	if _, ok := commonSet()[strings.TrimSpace(lower)]; ok {
+		return true
+	}
+	if BreachedPassword(pw) {
 		return true
 	}
 	words := append([]string{}, contextWords...)
