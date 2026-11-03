@@ -66,8 +66,9 @@ func main() {
 
 // thirdPartyNotices is every licence notice a third party part of the binary
 // asks to travel with it: the common and breached password lists (SecLists,
-// MIT) and the Geist fonts (SIL Open Font License, also served as
-// /static/fonts/OFL.txt).
+// MIT), the Geist fonts (SIL Open Font License, also served as
+// /static/fonts/OFL.txt), and the Go modules and Go itself
+// (THIRD_PARTY_NOTICES, see tools/notices).
 func thirdPartyNotices() string {
 	fonts, err := fs.ReadFile(pinned.Web, "web/fonts/OFL.txt")
 	if err != nil {
@@ -75,7 +76,8 @@ func thirdPartyNotices() string {
 	}
 	return "Pinned is under the GNU Affero General Public License, version 3 only (LICENSE). It holds these third party parts:\n\n" +
 		"== Common and breached passwords (internal/auth/common-passwords.txt, internal/auth/breached) ==\n\n" + auth.CommonListNotice +
-		"\n== Geist and Geist Mono fonts (web/fonts) ==\n\n" + string(fonts)
+		"\n== Geist and Geist Mono fonts (web/fonts) ==\n\n" + string(fonts) +
+		"\n" + string(pinned.ThirdPartyNotices)
 }
 
 // stampWriter starts every log line with the time in UTC as RFC 3339, so

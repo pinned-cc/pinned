@@ -319,6 +319,9 @@ func TestThirdPartyNotices(t *testing.T) {
 		"xato-net-10-million-passwords-100000.txt",
 		"SIL Open Font License",
 		"Copyright (c) 2023 Vercel",
+		"== Go (the Go toolchain, runtime and standard library) ==",
+		"Copyright 2009 The Go Authors.",
+		"== modernc.org/sqlite ",
 	} {
 		if !strings.Contains(n, want) {
 			t.Errorf("notices lack %q", want)
