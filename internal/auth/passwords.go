@@ -43,17 +43,32 @@ var contextWords = []string{"pinned", "bookmarks", "bookmark", "password", "pass
 // hostStopWords are parts of host names too general to refuse.
 var hostStopWords = map[string]bool{"www": true, "local": true, "localhost": true, "home": true, "lan": true, "com": true, "net": true, "org": true}
 
+// maxHostLen and maxHostWords bound what a request's Host header can add,
+// so a long made up header cannot make the check slow: a DNS name is at
+// most 253 characters, and a few words are all a real host gives.
+const (
+	maxHostLen   = 255
+	maxHostWords = 8
+)
+
 // HostWords returns the parts of host names (pinned.example.com:8080 gives
-// pinned and example) to pass to CommonPassword as context words.
+// pinned and example) to pass to CommonPassword as context words. A host
+// longer than a DNS name is skipped, and at most maxHostWords are returned.
 func HostWords(hosts ...string) []string {
 	var out []string
 	for _, h := range hosts {
+		if len(h) > maxHostLen {
+			continue
+		}
 		h = strings.ToLower(h)
 		if i := strings.LastIndex(h, ":"); i >= 0 && !strings.Contains(h[i:], "]") {
 			h = h[:i]
 		}
 		for _, part := range strings.FieldsFunc(h, func(r rune) bool { return r == '.' || r == '-' || r == '_' }) {
 			if w := lettersOnly(part); len(w) >= 4 && !hostStopWords[w] {
+				if len(out) == maxHostWords {
+					return out
+				}
 				out = append(out, w)
 			}
 		}

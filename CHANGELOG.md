@@ -20,6 +20,10 @@ Not released yet.
 
 ### Fixes
 
+- Behind a reverse proxy, `X-Forwarded-Proto` is now believed only from `TRUSTED_PROXIES`, or from the same machine (loopback) when that is empty. Before, any private address counted, and behind Docker's published ports every client arrives from one. If your HTTPS proxy runs in another container or on another machine, set `TRUSTED_PROXIES` to its address or network, or `BASE_URL` to the `https://` address, so the login cookie keeps its Secure flag.
+- A very long made up `Host` header could keep the password check busy for minutes. Host names longer than a DNS name now add nothing to it, and request headers are capped at 64 KB.
+- The login page showed odd waits for a made up `wait` value in its address. It now takes only a whole number of seconds up to a day, and otherwise shows the plain message.
+- For screen readers, the hidden page headings, the share page footer and the share search on the phone now sit inside landmarks.
 - A site with a broken favicon.ico could stop the server, and it stopped again at every start until the bookmark was removed by hand. A broken icon now leaves the letter mark and the server keeps running.
 - A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again. Only lasting failures count: an error page, a broken icon, a certificate that is not trusted, a redirect loop, a domain that does not exist. A network outage at start, a DNS server that does not answer, a refused or reset connection or a timeout does not.
 - In the browser extension's options, an address typed with another scheme, such as `ftp://example.com`, was turned into `https://ftp//example.com`. It is now refused with the message to enter an address starting with http or https.

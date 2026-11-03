@@ -78,8 +78,9 @@ function bootLogin() {
   const code = byId('login-code'), twoStep = code && !code.hidden;
   /* error=1 with wait: that wrong try started the wait, so it says both */
   const wrong = twoStep ? 'Wrong password or code.' : 'Wrong password.';
+  const w = waitText(p.get('wait'));
   if (p.get('error')) err.textContent = p.get('error') === 'wait' ? tooMany(p.get('wait') || 30)
-    : p.get('wait') ? `${wrong} Wait ${waitText(p.get('wait'))} before the next try.` : twoStep ? wrong + ' A code works once: wait for the next one.' : wrong;
+    : w ? `${wrong} Wait ${w} before the next try.` : twoStep ? wrong + ' A code works once: wait for the next one.' : wrong;
   /* the form posts to /login; the server redirects back with error=1, or error=wait with the seconds left in wait */
   /* with a second factor, Enter in the password moves on to the code instead of sending the form without it */
   f.addEventListener('submit', e => { if (twoStep && !f.elements.code.value.trim()) { e.preventDefault(); f.elements.code.focus(); return; } f.querySelector('button').disabled = true; });

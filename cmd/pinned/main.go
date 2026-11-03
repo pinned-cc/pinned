@@ -381,6 +381,7 @@ func run() error {
 		Addr:              ":" + port,
 		Handler:           srv,
 		ReadHeaderTimeout: 10 * time.Second,
+		MaxHeaderBytes:    64 << 10,
 		ReadTimeout:       60 * time.Second,
 		WriteTimeout:      120 * time.Second,
 		IdleTimeout:       120 * time.Second,

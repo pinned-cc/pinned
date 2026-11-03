@@ -105,3 +105,22 @@ func TestCommonPasswordCostIsLinear(t *testing.T) {
 		t.Error("joined context words no longer refused")
 	}
 }
+
+// A long made up Host header adds nothing, and a real one at most
+// maxHostWords words, so the check stays fast (audit F-98).
+func TestHostWordsBounded(t *testing.T) {
+	long := strings.Repeat("abcd.", 2000) + "example"
+	if got := HostWords(long); len(got) != 0 {
+		t.Errorf("long host gave %d words", len(got))
+	}
+	many := strings.Repeat("wordy.", 40) + "com"
+	if got := HostWords(many[:240]); len(got) > maxHostWords {
+		t.Errorf("got %d words, want at most %d", len(got), maxHostWords)
+	}
+	pw := strings.Repeat("x", 4096)
+	start := time.Now()
+	CommonPassword(pw, HostWords(long, many[:240])...)
+	if d := time.Since(start); d > 200*time.Millisecond {
+		t.Errorf("check took %v", d)
+	}
+}

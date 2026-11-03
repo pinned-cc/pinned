@@ -713,6 +713,26 @@ async function desktop(browser, engine) {
     await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
   });
 
+  /* audit F-96: every heading, the share footer and the search sit inside a landmark (axe rule region) */
+  const outsideLandmarks = p => p.evaluate(() => { const lm = 'main,header,footer,nav,aside,[role=search],[role=dialog],[role=banner],[role=contentinfo],[role=main],[role=navigation],[role=region],[role=complementary],[role=status]';
+    return [...document.querySelectorAll('h1,h2,h3,.share-foot,input[type=search],label.ps,label.search')].filter(el => !el.closest(lm) && !el.closest('[hidden],[aria-hidden=true]')).map(el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : el.className ? '.' + String(el.className).split(' ')[0] : '')); });
+  await check('landmarks: headings, the share footer and the search sit inside a landmark, app, save and share at 1440 and 390', async () => {
+    const f = (await apiIn(page, 'POST', '/api/folders', { name: `ui-test landmark ${stamp}`, parent_id: null })).data;
+    await apiIn(page, 'POST', '/api/bookmarks', { title: 'ui-test landmark link', url: `https://ui-test.example/${stamp}/lm`, folder_id: f.id });
+    const sh = (await apiIn(page, 'POST', `/api/folders/${f.id}/share`, {})).data;
+    for (const w of [1440, 390]) {
+      const c = await browser.newContext({ viewport: { width: w, height: w > 700 ? 900 : 844 }, storageState: await page.context().storageState() }), p = await c.newPage();
+      await p.goto(BASE + '/'); await p.waitForSelector(w > 700 ? '#side .si' : '#pmain');
+      let bad = await outsideLandmarks(p); assert(bad.length === 0, `${w} app: outside landmarks: ${bad.join(', ')}`);
+      await p.goto(BASE + '/save?url=' + encodeURIComponent('https://ui-test.example/lm-save') + '&title=lm'); await p.waitForSelector('#sheet');
+      bad = await outsideLandmarks(p); assert(bad.length === 0, `${w} save: outside landmarks: ${bad.join(', ')}`);
+      await p.goto(sh.url); await visible(p.locator('#sbody article', { hasText: 'ui-test landmark link' }));
+      bad = await outsideLandmarks(p); assert(bad.length === 0, `${w} share: outside landmarks: ${bad.join(', ')}`);
+      await c.close();
+    }
+    await apiIn(page, 'DELETE', `/api/folders/${f.id}`);
+  });
+
   await check('save page in a popup sized window: the panel is the window, Save draws the tick, a short fade, then Saved in place', async () => {
     /* dark: the graphite gradient is the dark panel's; in light the panel is plain paper */
     const c = await browser.newContext({ viewport: { width: 392, height: 544 }, locale: 'en-US', colorScheme: 'dark' }); await c.addCookies(await ctx.cookies());
@@ -2046,7 +2066,7 @@ async function flowFixes(browser, engine) {
 
   await check('login page: a wait says the time the server sent; the wrong try that starts it says both', async () => {
     const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }), lp = await c.newPage();
-    for (const [q, want] of [['error=1&wait=30', 'Wrong password. Wait 30 seconds before the next try.'], ['error=wait&wait=75', 'Too many tries. Wait 75 seconds, then try again.'], ['error=wait&wait=600', 'Too many tries. Wait 10 minutes, then try again.'], ['error=wait', 'Too many tries. Wait 30 seconds, then try again.']]) {
+    for (const [q, want] of [['error=1&wait=30', 'Wrong password. Wait 30 seconds before the next try.'], ['error=wait&wait=75', 'Too many tries. Wait 75 seconds, then try again.'], ['error=wait&wait=600', 'Too many tries. Wait 10 minutes, then try again.'], ['error=1&wait=1e9', 'Wrong password.'], ['error=1&wait=-5', 'Wrong password.'], ['error=wait&wait=Infinity', 'Too many tries. Wait a little, then try again.'], ['error=wait&wait=99999999', 'Too many tries. Wait a little, then try again.'], ['error=wait&wait=12abc', 'Too many tries. Wait a little, then try again.'], ['error=wait', 'Too many tries. Wait 30 seconds, then try again.']]) {
       await lp.goto(`${BASE}/login?${q}`); const got = (await lp.textContent('#login-err')).trim(); assert(got === want, q + ': ' + got); }
     await c.close();
   });

@@ -413,18 +413,16 @@ func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// cgnat is 100.64.0.0/10, where Tailscale addresses live.
-var cgnat = netip.MustParsePrefix("100.64.0.0/10")
-
 // isHTTPS reports whether the visitor reached the app over HTTPS. It
 // decides the Secure flag and __Host- prefix of cookies, HSTS, and the
 // scheme of links built from the request. It is true when:
 //
 //   - this connection is TLS;
 //   - X-Forwarded-Proto says https and comes from a trusted proxy:
-//     TRUSTED_PROXIES when set, otherwise any loopback, private or
-//     100.64.0.0/10 address, where a reverse proxy in front of a home
-//     server sits; from anywhere else the header is ignored;
+//     TRUSTED_PROXIES when set, otherwise loopback only, where a proxy on
+//     the same machine sits; from anywhere else the header is ignored,
+//     since behind Docker's published ports every client arrives from a
+//     private address and could send it itself;
 //   - no trusted X-Forwarded-Proto came and BASE_URL starts with https
 //     and names the host of the request, which covers proxies that send
 //     no header, such as tailscale serve.
@@ -449,7 +447,7 @@ func (s *Server) protoTrusted(r *http.Request) bool {
 	if len(s.cfg.TrustedProxies) > 0 {
 		return s.trusted(a)
 	}
-	return a.IsLoopback() || a.IsPrivate() || cgnat.Contains(a)
+	return a.IsLoopback()
 }
 
 // checkPassword compares the app password under the login limiter. It
