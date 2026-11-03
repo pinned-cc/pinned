@@ -385,7 +385,7 @@ func TestSVGEmbeddedPicturesBounded(t *testing.T) {
 	if err == nil && len(ic.Data) > maxSVGOut {
 		t.Errorf("stored %d bytes", len(ic.Data))
 	}
-	if d := time.Since(start); d > 3*time.Second {
+	if d := time.Since(start); d > 3*time.Second && !raceOn { // the race detector makes it about 15 times slower
 		t.Errorf("worst allowed SVG took %v", d)
 	}
 }

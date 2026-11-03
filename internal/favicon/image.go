@@ -86,6 +86,10 @@ func process(data []byte) (Icon, error) {
 // processSVG checks an SVG, writes it again and checks what it wrote, so
 // the stored file is always one the check accepts.
 func processSVG(data []byte) (Icon, error) {
+	// over the stored cap already as sent: refused before any picture in it is decoded
+	if len(data) > maxSVGOut {
+		return Icon{}, errTooLarge
+	}
 	if err := checkSVG(data); err != nil {
 		return Icon{}, err
 	}
