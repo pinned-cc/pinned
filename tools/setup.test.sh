@@ -13,6 +13,8 @@ bad() { printf 'FAIL: %s\n' "$*" >&2; fail=1; }
 mkdir -p "$T/bin" "$T/nodocker"
 cat > "$T/bin/docker" <<'S'
 #!/bin/sh
+# ps -a answers with the folder of an existing install when OTHER_INSTALL is set
+if [ "$1" = ps ] && [ -n "${OTHER_INSTALL:-}" ]; then printf '%s\n' "$OTHER_INSTALL"; fi
 exit 0
 S
 # curl: logs its arguments; -o writes a stand-in installer; the health check answers
@@ -73,6 +75,12 @@ grep -q '"0.0.0.0:9095:8080"' "$T/bind-__/compose.yml" && grep -q '"\[::\]:9095:
 grep -q container_name "$T/default/compose.yml" && bad "compose.yml sets a fixed container_name"
 run loop6 PINNED_BIND=::1
 grep -q WARNING "$T/loop6.out" && bad "PINNED_BIND=::1 warns"
+
+# A second install in a folder with the same name as an existing one is refused, its own folder is not.
+run samename OTHER_INSTALL=/root/samename || true
+grep -q 'has the same folder name' "$T/samename.out" || bad "a second install with the same folder name was not refused: $(tail -2 "$T/samename.out")"
+run again OTHER_INSTALL="$T/again"
+grep -q 'has the same folder name' "$T/again.out" && bad "a re-run in its own folder was refused"
 
 # Every curl call has a time limit.
 for f in "$T"/*.curl; do

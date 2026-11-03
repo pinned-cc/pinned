@@ -356,3 +356,30 @@ func TestDataDirNotWritableNamesUserAndChown(t *testing.T) {
 		t.Errorf("other error: %v", err)
 	}
 }
+
+// Headers over the cap get 431 before any handler runs (audit F-133).
+func TestHeaderCap(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := newHTTPServer("", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }))
+	go srv.Serve(ln)
+	defer srv.Close()
+	get := func(host string) int {
+		req, _ := http.NewRequest("GET", "http://"+ln.Addr().String()+"/", nil)
+		req.Host = host
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	if c := get("pinned.example"); c != 204 {
+		t.Errorf("normal request: %d", c)
+	}
+	if c := get(strings.Repeat("a", 80<<10)); c != 431 {
+		t.Errorf("80 KB Host: %d, want 431", c)
+	}
+}

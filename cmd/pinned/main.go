@@ -380,15 +380,7 @@ func run() error {
 		EasyPassword:   easyKept,
 	}, st, web, icons, secret)
 
-	httpServer := &http.Server{
-		Addr:              ":" + port,
-		Handler:           srv,
-		ReadHeaderTimeout: 10 * time.Second,
-		MaxHeaderBytes:    64 << 10,
-		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      120 * time.Second,
-		IdleTimeout:       120 * time.Second,
-	}
+	httpServer := newHTTPServer(":"+port, srv)
 	errc := make(chan error, 1)
 	go func() { errc <- httpServer.ListenAndServe() }()
 	log.Printf("pinned %s listening on :%s, data in %s", version, port, dataDir)
@@ -405,4 +397,21 @@ func run() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return httpServer.Shutdown(shutdownCtx)
+}
+
+// maxHeaderBytes caps the request line and headers, so a long made up Host
+// header cannot make the password check slow (audit F-98).
+const maxHeaderBytes = 64 << 10
+
+// newHTTPServer is the server with its timeouts and header cap.
+func newHTTPServer(addr string, h http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           h,
+		ReadHeaderTimeout: 10 * time.Second,
+		MaxHeaderBytes:    maxHeaderBytes,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      120 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 }

@@ -114,6 +114,11 @@ printf '%s' "$APP_PASSWORD" > app_password
 # the container runs as uid 1000: it needs to write the data folder and read the password file
 chown 1000:1000 data app_password 2>/dev/null || sudo chown 1000:1000 data app_password
 
+# Compose names a project after its folder, so a second install in a folder of the same name (~/pinned for a
+# user and /root/pinned for root) would replace the first one's container. Refuse that.
+PROJECT="$(basename "$DIR" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9_-')"
+OTHER="$($DOCKER ps -a --filter "label=com.docker.compose.project=$PROJECT" --format '{{.Label "com.docker.compose.project.working_dir"}}' 2>/dev/null | grep -v -x -F "$DIR" | head -n 1 || true)"
+[ -z "$OTHER" ] || die "another install in $OTHER has the same folder name ($PROJECT) and would be replaced; set PINNED_DIR to a folder with another name"
 $DOCKER compose pull
 # recreate, so a new password or address from a re-run applies now and not at the next restart
 $DOCKER compose up -d --force-recreate

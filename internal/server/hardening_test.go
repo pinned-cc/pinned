@@ -5,10 +5,12 @@ import (
 	cryptotls "crypto/tls"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -861,5 +863,36 @@ func TestDeviceCookieOnlyFromPasswordAndEndsWithIt(t *testing.T) {
 	e.server.cfg.Password = "a new password"
 	if _, ok := e.server.deviceID(r); ok {
 		t.Error("device cookie survived a password change")
+	}
+}
+
+// An https header from an untrusted private address is ignored and logged
+// once, so a proxy in another container that needs TRUSTED_PROXIES shows up
+// in the log (audit 4, F-110 and F-132).
+func TestUntrustedProtoIsLoggedOnce(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer log.SetOutput(os.Stderr)
+	proxyWarn = sync.Once{}
+	s := New(Config{}, nil, testWeb, &fakeQueue{}, nil)
+	for i := 0; i < 3; i++ {
+		r := httptest.NewRequest("GET", "/", nil)
+		r.RemoteAddr = "172.17.0.1:5000"
+		r.Header.Set("X-Forwarded-Proto", "https")
+		if s.isHTTPS(r) {
+			t.Fatal("untrusted header believed")
+		}
+	}
+	if n := strings.Count(buf.String(), "X-Forwarded-Proto from 172.17.0.1 is ignored"); n != 1 {
+		t.Errorf("logged %d times: %q", n, buf.String())
+	}
+	buf.Reset()
+	proxyWarn = sync.Once{}
+	r := httptest.NewRequest("GET", "/", nil)
+	r.RemoteAddr = "203.0.113.9:5000"
+	r.Header.Set("X-Forwarded-Proto", "https")
+	s.isHTTPS(r)
+	if buf.Len() != 0 {
+		t.Errorf("a public client's header was logged: %q", buf.String())
 	}
 }

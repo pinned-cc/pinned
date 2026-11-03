@@ -20,10 +20,7 @@ Not released yet.
 
 ### Fixes
 
-- The server install script with `PINNED_BIND=::` published Pinned on IPv6 only, so it answered on no IPv4 address and the script said it did not start. It now publishes `0.0.0.0` and `[::]` both. The script also no longer gives the container a fixed name, so a second install in another folder does not clash with the first. Both found by running the script on a fresh Ubuntu 26.04 server.
-- Behind a reverse proxy, `X-Forwarded-Proto` is now believed only from `TRUSTED_PROXIES`, or from the same machine (loopback) when that is empty. Before, any private address counted, and behind Docker's published ports every client arrives from one. If your HTTPS proxy runs in another container or on another machine, set `TRUSTED_PROXIES` to its address or network, or `BASE_URL` to the `https://` address, so the login cookie keeps its Secure flag.
-- A very long made up `Host` header could keep the password check busy for minutes. Host names longer than a DNS name now add nothing to it, and request headers are capped at 64 KB.
-- The login page showed odd waits for a made up `wait` value in its address. It now takes only a whole number of seconds up to a day, and otherwise shows the plain message.
+- The server install script gave the container a fixed name, so a second install in another folder clashed with the first. The name is gone, and a second install in a folder with the same name as the first is now refused instead of replacing it. Found by running the script on a fresh Ubuntu 26.04 server.
 - For screen readers, the hidden page headings, the share page footer and the share search on the phone now sit inside landmarks.
 - A site with a broken favicon.ico could stop the server, and it stopped again at every start until the bookmark was removed by hand. A broken icon now leaves the letter mark and the server keeps running.
 - A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again. Only lasting failures count: an error page, a broken icon, a certificate that is not trusted, a redirect loop, a domain that does not exist. A network outage at start, a DNS server that does not answer, a refused or reset connection or a timeout does not.
@@ -67,7 +64,7 @@ Not released yet.
 
 - Over HTTPS the login cookie is named `__Host-pinned_session`. You stay logged in: the old cookie moves to the new name on your next visit. Plain http on your network works as before.
 - New setting `HSTS`, off by default. `HSTS=true` sends `Strict-Transport-Security` on HTTPS answers. Switch it on only when Pinned has its own host name on the public internet and the proxy does not already send it, since it applies to every port of that host name.
-- `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback, private and `100.64.0.0/10` addresses. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie behind `tailscale serve` is Secure too.
+- `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback only; 0.1.10 believed it from anyone. In Docker a proxy on the host or in another container does not arrive from loopback, so if your proxy does HTTPS, set `TRUSTED_PROXIES` to its address or network, or `BASE_URL` to the `https://` address; otherwise the login cookie loses its Secure flag. Pinned logs a line the first time it ignores the header from a private address. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie keeps its Secure flag behind `tailscale serve`.
 - The database gets a new table for failed icons. 0.1.10 does not start on it any more; to go back, use the copy saved before the upgrade.
 - The bookmarks the app loads are sent gzipped when the browser accepts it: in a test with 100000 links, 31 MB became 2.4 MB.
 - Pages load faster on the second visit: the scripts, styles and fonts carry a validator, so the browser checks them and downloads nothing when they have not changed.

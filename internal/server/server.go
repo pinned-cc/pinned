@@ -430,12 +430,37 @@ func (s *Server) isHTTPS(r *http.Request) bool {
 	if r.TLS != nil {
 		return true
 	}
-	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" && s.protoTrusted(r) {
-		first, _, _ := strings.Cut(proto, ",")
-		return strings.EqualFold(strings.TrimSpace(first), "https")
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+		if s.protoTrusted(r) {
+			first, _, _ := strings.Cut(proto, ",")
+			return strings.EqualFold(strings.TrimSpace(first), "https")
+		}
+		s.warnUntrustedProto(r)
 	}
 	return s.baseHost != "" && strings.EqualFold(r.Host, s.baseHost)
 }
+
+// proxyWarn makes warnUntrustedProto log once per run.
+var proxyWarn sync.Once
+
+// warnUntrustedProto logs once when X-Forwarded-Proto comes from a private
+// address that is not trusted: most likely a reverse proxy in another
+// container, or on the Docker host, whose HTTPS Pinned then does not see.
+// Without the log the only sign is a login cookie without its Secure flag.
+func (s *Server) warnUntrustedProto(r *http.Request) {
+	ap, err := netip.ParseAddrPort(r.RemoteAddr)
+	if err != nil {
+		return
+	}
+	if a := ap.Addr().Unmap(); a.IsPrivate() || a.IsLoopback() || cgnat.Contains(a) {
+		proxyWarn.Do(func() {
+			log.Printf("X-Forwarded-Proto from %s is ignored: it is not in TRUSTED_PROXIES. If a reverse proxy does HTTPS for Pinned, set TRUSTED_PROXIES to its address or network, or BASE_URL to the https address", a)
+		})
+	}
+}
+
+// cgnat is 100.64.0.0/10, where Tailscale addresses live.
+var cgnat = netip.MustParsePrefix("100.64.0.0/10")
 
 // protoTrusted reports whether X-Forwarded-Proto of r may be believed.
 func (s *Server) protoTrusted(r *http.Request) bool {
