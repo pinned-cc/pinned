@@ -1980,7 +1980,7 @@ async function oneSearch(browser, engine) {
     assert(desk.font.startsWith('16px'), 'desktop text is ' + desk.font); assert(desk.kcap, 'no / hint on the desktop');
     await page.setViewportSize({ width: 600, height: 900 }); await visible(page.locator('#papp'));
     const p = await field(); same(desk, p, '600 mouse'); assert(p.kcap, 'no / hint at 600 with a mouse'); assert(p.width !== desk.width, 'the same width');
-    const ph = await page.evaluate(() => { const t = document.getElementById('qt'); return getComputedStyle(t, '::before').color === getComputedStyle(t.closest('.search')).color && getComputedStyle(t, '::before').content.includes('Search'); });
+    const ph = await page.evaluate(() => { const t = document.getElementById('qt'); return getComputedStyle(t, '::before').color === getComputedStyle(t.closest('.search')).color && (getComputedStyle(t, '::before').content.includes('Search') || (getComputedStyle(t, '::before').content === 'attr(data-ph)' && t.dataset.ph.includes('Search'))); }); /* Firefox reports content as attr(data-ph) */
     assert(ph, 'the phone placeholder is not in the field\'s weak ink');
     await page.keyboard.press('/'); await visible(page.locator('#pal.open')); await page.keyboard.press('Escape'); await gone(page.locator('#pal'));
     await page.setViewportSize({ width: 1440, height: 900 }); await visible(page.locator('#side .si'));
