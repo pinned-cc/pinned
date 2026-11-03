@@ -278,7 +278,7 @@ func (p *Pool) Configure(off bool, hosts Hosts) {
 	p.off, p.hosts = off, hosts
 }
 
-// NewPool checks the stored SVG icons (see recheckSVG) and, once per data
+// NewPool rewrites the stored SVG icons (see rewriteStoredSVG) and, once per data
 // folder, re-encodes the stored raster icons (see reencodeStored), then
 // starts the workers. Icons are written to dir. The workers stop, and fetches in
 // flight are cancelled, when ctx ends; Wait waits for them.
@@ -289,7 +289,7 @@ func NewPool(ctx context.Context, dir string, st Store) *Pool {
 		jobs:  make(chan int64, queueLength),
 		ctx:   ctx,
 	}
-	p.recheckSVG()
+	p.rewriteStoredSVG()
 	p.reencodeStored()
 	p.wg.Add(workers)
 	for i := 0; i < workers; i++ {
@@ -298,28 +298,26 @@ func NewPool(ctx context.Context, dir string, st Store) *Pool {
 	return p
 }
 
-// recheckSVG runs every stored SVG icon through the current check once at
-// start, before anything is served or fetched, because versions before
-// 0.1.11 stored SVG icons with a looser check or none. A file that fails is
-// taken off its bookmarks and deleted, so they show their letter; the fetch
-// at start then tries them again under the current rules. It reads only
-// the SVG files, which are few and small, so start stays quick.
-func (p *Pool) recheckSVG() {
+// rewriteStoredSVG runs every stored SVG icon a bookmark uses through the
+// current check and rewrite at each start, before anything is served or
+// fetched, because versions before 0.1.11 stored the bytes a site sent. A
+// file that fails is taken off its bookmarks and deleted, so they show their
+// letter; the fetch at start then tries them again under the current rules.
+// A file that passes is stored as the rewritten SVG and its bookmarks point
+// to that; the old file stays, unserved, like the raster files in
+// reencodeStored. A file that is already a rewrite is left as it is, since
+// a rewrite of a rewrite gives the same bytes, and a file no bookmark uses
+// is not served and is skipped. It reads only the SVG files, which are few
+// and small, so start stays quick.
+func (p *Pool) rewriteStoredSVG() {
 	names, err := filepath.Glob(filepath.Join(p.dir, "*.svg"))
 	if err != nil {
 		return
 	}
 	for _, path := range names {
-		if svgStoredOK(path) {
-			continue
+		if p.store.IconInUse(filepath.Base(path)) {
+			p.storeAgain(path, "svg")
 		}
-		name := filepath.Base(path)
-		if err := p.store.DropIcon(name); err != nil {
-			log.Printf("favicon: recheck %s: %v", name, err)
-			continue
-		}
-		log.Printf("favicon: dropped stored icon %s: it fails the SVG check", name)
-		remove(path)
 	}
 }
 
@@ -347,7 +345,7 @@ func (p *Pool) reencodeStored() {
 	}
 	done := true
 	for _, path := range names {
-		if !p.reencodeOne(path) {
+		if !p.storeAgain(path, "png") {
 			done = false
 		}
 	}
@@ -358,9 +356,11 @@ func (p *Pool) reencodeStored() {
 	}
 }
 
-// reencodeOne re-encodes one stored raster icon. It reports false when the
-// work could not be finished and should be tried again.
-func (p *Pool) reencodeOne(path string) bool {
+// storeAgain runs one stored icon through Process and stores the result the
+// way a fresh fetch would, expecting ext ("png" for raster icons, "svg").
+// It reports false when the work could not be finished and should be tried
+// again.
+func (p *Pool) storeAgain(path, ext string) bool {
 	name := filepath.Base(path)
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -371,14 +371,17 @@ func (p *Pool) reencodeOne(path string) bool {
 		return false
 	}
 	icon, err := Process(data)
-	if err != nil || icon.Ext != "png" {
+	if err != nil || icon.Ext != ext {
 		if err := p.store.DropIcon(name); err != nil {
 			log.Printf("favicon: re-encode %s: %v", name, err)
 			return false
 		}
-		log.Printf("favicon: dropped stored icon %s: it does not decode", name)
+		log.Printf("favicon: dropped stored icon %s: it does not pass the check", name)
 		remove(path)
 		return true
+	}
+	if bytes.Equal(icon.Data, data) && filepath.Ext(name) == "."+ext {
+		return true // already stored as it would be now
 	}
 	// The same naming as a fresh fetch: the bookmark id part is kept, the
 	// hash and the extension follow the new file.
@@ -387,7 +390,7 @@ func (p *Pool) reencodeOne(path string) bool {
 		prefix = prefix[:i]
 	}
 	sum := sha256.Sum256(icon.Data)
-	newName := fmt.Sprintf("%s-%s.png", prefix, hex.EncodeToString(sum[:4]))
+	newName := fmt.Sprintf("%s-%s.%s", prefix, hex.EncodeToString(sum[:4]), icon.Ext)
 	if err := writeFile(filepath.Join(p.dir, newName), icon.Data); err != nil {
 		log.Printf("favicon: re-encode %s: %v", name, err)
 		return false

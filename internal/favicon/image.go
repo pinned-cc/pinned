@@ -42,7 +42,8 @@ func checkSize(w, h int) error {
 
 // Process checks what data is and turns it into an Icon. PNG, JPEG and GIF
 // files are decoded and stored as a new PNG; ICO files as a PNG of their
-// largest frame. SVG is kept as it is, only when checkSVG accepts it. WebP
+// largest frame. SVG is taken only when checkSVG accepts it, and stored as
+// the new file rewriteSVG writes from it. WebP
 // is not taken: the standard library has no decoder for it. Raster images are
 // measured with DecodeConfig first and refused above 4096 by 4096 pixels or
 // 16 million pixels in total. A decoder that panics on a broken file (the
@@ -75,12 +76,25 @@ func process(data []byte) (Icon, error) {
 		}
 		return asPNG(largest(frames))
 	case looksLikeSVG(data):
-		if err := checkSVG(data); err != nil {
-			return Icon{}, err
-		}
-		return Icon{Ext: "svg", Data: data}, nil
+		return processSVG(data)
 	}
 	return Icon{}, errUnknownFormat
+}
+
+// processSVG checks an SVG, writes it again and checks what it wrote, so
+// the stored file is always one the check accepts.
+func processSVG(data []byte) (Icon, error) {
+	if err := checkSVG(data); err != nil {
+		return Icon{}, err
+	}
+	out, err := rewriteSVG(data)
+	if err != nil {
+		return Icon{}, err
+	}
+	if err := checkSVG(out); err != nil {
+		return Icon{}, err
+	}
+	return Icon{Ext: "svg", Data: out}, nil
 }
 
 // reencode measures and decodes a raster image and stores what it shows as

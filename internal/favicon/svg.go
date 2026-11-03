@@ -2,10 +2,10 @@ package favicon
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/xml"
 	"errors"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -45,54 +45,62 @@ var editorNS = map[string]bool{
 	"http://schemas.microsoft.com/visio/2003/SVGExtensions/": true,
 }
 
-// svgElements are the drawing elements an icon may use, in lower case.
+// svgElements are the drawing elements an icon may use, keyed in lower
+// case, each with the spelling browsers know it by.
 // There is no script, foreignObject, a, animation (set, animate and the
 // rest), feImage, iframe or anything else that runs, links or loads.
 var svgElements = set(`svg g defs title desc metadata symbol use switch
-	path rect circle ellipse line polyline polygon text tspan textpath
-	lineargradient radialgradient stop pattern clippath mask marker image style
-	filter feblend fecolormatrix fecomponenttransfer fefunca fefuncb fefuncg
-	fefuncr fecomposite feconvolvematrix fediffuselighting fedisplacementmap
-	fedistantlight fedropshadow feflood fegaussianblur femerge femergenode
-	femorphology feoffset fepointlight fespecularlighting fespotlight fetile
-	feturbulence`)
+	path rect circle ellipse line polyline polygon text tspan textPath
+	linearGradient radialGradient stop pattern clipPath mask marker image style
+	filter feBlend feColorMatrix feComponentTransfer feFuncA feFuncB feFuncG
+	feFuncR feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap
+	feDistantLight feDropShadow feFlood feGaussianBlur feMerge feMergeNode
+	feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile
+	feTurbulence`)
 
 // svgAttrs are the presentation, geometry and filter attributes an icon may
-// use, in lower case. href is checked apart; data-* and aria-* are allowed.
-var svgAttrs = set(`id class style lang version baseprofile x y x1 y1 x2 y2
-	cx cy r rx ry fx fy fr d points width height viewbox preserveaspectratio
+// use, keyed in lower case, each with the spelling browsers know it by.
+// href is checked apart; data-* and aria-* are allowed.
+var svgAttrs = set(`id class style lang version baseProfile x y x1 y1 x2 y2
+	cx cy r rx ry fx fy fr d points width height viewBox preserveAspectRatio
 	transform transform-origin transform-box fill fill-opacity fill-rule stroke
 	stroke-width stroke-linecap stroke-linejoin stroke-miterlimit
 	stroke-dasharray stroke-dashoffset stroke-opacity opacity color display
 	visibility overflow clip clip-path clip-rule mask filter offset stop-color
-	stop-opacity gradientunits gradienttransform spreadmethod clippathunits
-	maskunits maskcontentunits patternunits patterncontentunits
-	patterntransform filterunits primitiveunits in in2 result stddeviation dx
+	stop-opacity gradientUnits gradientTransform spreadMethod clipPathUnits
+	maskUnits maskContentUnits patternUnits patternContentUnits
+	patternTransform filterUnits primitiveUnits in in2 result stdDeviation dx
 	dy flood-color flood-opacity lighting-color operator k1 k2 k3 k4 values
-	type mode tablevalues slope intercept amplitude exponent offset
-	basefrequency numoctaves seed stitchtiles scale xchannelselector
-	ychannelselector radius order kernelmatrix divisor bias targetx targety
-	edgemode preservealpha surfacescale diffuseconstant specularconstant
-	specularexponent azimuth elevation z pointsatx pointsaty pointsatz
-	limitingconeangle kernelunitlength color-interpolation
+	type mode tableValues slope intercept amplitude exponent offset
+	baseFrequency numOctaves seed stitchTiles scale xChannelSelector
+	yChannelSelector radius order kernelMatrix divisor bias targetX targetY
+	edgeMode preserveAlpha surfaceScale diffuseConstant specularConstant
+	specularExponent azimuth elevation z pointsAtX pointsAtY pointsAtZ
+	limitingConeAngle kernelUnitLength color-interpolation
 	color-interpolation-filters color-rendering shape-rendering text-rendering
 	image-rendering font-family font-size font-size-adjust font-weight
 	font-style font-variant font-stretch text-anchor text-decoration
 	dominant-baseline alignment-baseline baseline-shift letter-spacing
-	word-spacing writing-mode direction unicode-bidi textlength lengthadjust
-	rotate startoffset method spacing side marker-start marker-mid marker-end
-	markerwidth markerheight markerunits refx refy orient pathlength
+	word-spacing writing-mode direction unicode-bidi textLength lengthAdjust
+	rotate startOffset method spacing side marker-start marker-mid marker-end
+	markerWidth markerHeight markerUnits refX refY orient pathLength
 	vector-effect paint-order mix-blend-mode isolation enable-background
 	solid-color solid-opacity focusable role tabindex xmlns
-	requiredfeatures requiredextensions systemlanguage`)
+	requiredFeatures requiredExtensions systemLanguage`)
 
 // inertAttrs only name or label things.
 var inertAttrs = set(`id class lang role focusable tabindex`)
 
-func set(words string) map[string]bool {
-	m := map[string]bool{}
+// nameSet maps each name in lower case to its spelling.
+type nameSet map[string]string
+
+// has reports whether name, in lower case, is in the set.
+func (n nameSet) has(name string) bool { return n[name] != "" }
+
+func set(words string) nameSet {
+	m := nameSet{}
 	for _, w := range strings.Fields(words) {
-		m[w] = true
+		m[strings.ToLower(w)] = w
 	}
 	return m
 }
@@ -155,7 +163,7 @@ func checkSVG(data []byte) error {
 				root = true
 			}
 			editor := editorNS[t.Name.Space]
-			if !editor && (t.Name.Space != "" && t.Name.Space != svgNS || !svgElements[name]) {
+			if !editor && (t.Name.Space != "" && t.Name.Space != svgNS || !svgElements.has(name)) {
 				return errUnsafeSVG
 			}
 			if name == "style" && !editor {
@@ -213,9 +221,9 @@ func safeAttr(element string, a xml.Attr) bool {
 		return false
 	case name == "href":
 		return safeHref(element, a.Value)
-	case inertAttrs[name], strings.HasPrefix(name, "data-"), strings.HasPrefix(name, "aria-"):
+	case inertAttrs.has(name), strings.HasPrefix(name, "data-"), strings.HasPrefix(name, "aria-"):
 		return true // names and labels; nothing reads them as style or address
-	case svgAttrs[name]:
+	case svgAttrs.has(name):
 		return safeCSS(a.Value)
 	}
 	return false
@@ -290,7 +298,7 @@ func safeCSS(s string) bool {
 			for j < len(v) && cssName(v[j]) {
 				j++
 			}
-			if !cssAtRules[string(v[i+1:j])] {
+			if !cssAtRules.has(string(v[i+1 : j])) {
 				return false
 			}
 		case '(':
@@ -310,7 +318,7 @@ func safeCSS(s string) bool {
 					if !strings.HasPrefix(ref, "#") && !rasterData(ref) {
 						return false
 					}
-				case cssFunctions[fn]:
+				case cssFunctions.has(fn):
 				default:
 					return false
 				}
@@ -329,7 +337,7 @@ func safeCSS(s string) bool {
 			for j > 0 && cssName(v[j-1]) {
 				j--
 			}
-			if j > 0 && v[j-1] == '@' && cssAtRules[string(v[j:end])] || j < end && cssBlockWords[string(v[j:end])] {
+			if j > 0 && v[j-1] == '@' && cssAtRules.has(string(v[j:end])) || j < end && cssBlockWords.has(string(v[j:end])) {
 				continue
 			}
 			return false
@@ -437,13 +445,228 @@ func squash(s string) string {
 	return strings.ToLower(b.String())
 }
 
-// svgStoredOK reports whether the stored icon file at path passes the
-// current check. A file that cannot be read counts as passing: it is not
-// served either way, and a read error must not drop icons.
-func svgStoredOK(path string) bool {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return true
+// textElements are the elements whose text is kept: what is drawn or read
+// out (text, tspan, textPath, title, desc) and the style sheet. Text
+// anywhere else draws nothing and is dropped.
+var textElements = set(`text tspan textPath title desc style`)
+
+// rewriteSVG writes a new SVG from data, which checkSVG has accepted, so
+// what is stored and served is never the bytes a site sent. It keeps only
+// the elements and attributes on the allow lists, spelled the way browsers
+// know them, all in the SVG namespace with one xmlns on the root and no
+// prefixes. It leaves out the XML declaration, DOCTYPE, comments,
+// processing instructions, metadata, the elements and attributes of
+// drawing programs with everything inside them, every other namespace
+// declaration, xml:base, xlink:title, data-* attributes and text outside
+// the elements in textElements. Entities and CDATA come out as plain text,
+// escaped again. href (or xlink:href, written as href) keeps only an #id in
+// the file; on image, an embedded PNG, JPEG or GIF is decoded and written
+// again as a new PNG, and an image whose picture cannot be read that way
+// is left out. Attributes are kept only when safeAttr accepts them and a
+// style sheet only when safeCSS does, so the rewrite holds on its own too.
+// A second rewrite gives the same bytes.
+func rewriteSVG(data []byte) ([]byte, error) {
+	d := xml.NewDecoder(bytes.NewReader(bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))))
+	d.Strict = true
+	d.Entity = xml.HTMLEntity
+	var out bytes.Buffer
+	type frame struct {
+		name string // spelling written
+		text bool   // its text is kept
+		open bool   // the start tag is closed with ">", so it has content
+		mark int    // where the element starts in out
+		// parentOpen is the parent's open before this element began.
+		parentOpen bool
+		sheet      *strings.Builder // the text of a style element, checked at its end
 	}
-	return checkSVG(data) == nil
+	var stack []frame
+	skip := 0     // depth inside an element that is left out with all it holds
+	done := false // the root has closed; anything after it is left out
+	closeStart := func() {
+		if n := len(stack); n > 0 && !stack[n-1].open {
+			out.WriteByte('>')
+			stack[n-1].open = true
+		}
+	}
+	for {
+		tok, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, errUnknownFormat
+		}
+		// Comments, processing instructions and directives are left out.
+		switch t := tok.(type) {
+		case xml.StartElement:
+			if skip > 0 {
+				skip++
+				continue
+			}
+			if done {
+				skip = 1
+				continue
+			}
+			if n := len(stack); n > 0 && stack[n-1].sheet != nil {
+				skip = 1 // nothing may split a style sheet
+				continue
+			}
+			lower := strings.ToLower(t.Name.Local)
+			if editorNS[t.Name.Space] || t.Name.Space != "" && t.Name.Space != svgNS || !svgElements.has(lower) || lower == "metadata" {
+				if len(stack) == 0 {
+					return nil, errUnknownFormat
+				}
+				skip = 1
+				continue
+			}
+			attrs, ok := rewriteAttrs(lower, t.Attr)
+			if !ok {
+				skip = 1 // an image whose picture cannot be kept
+				continue
+			}
+			name := svgElements[lower]
+			f := frame{name: name, text: textElements.has(lower), mark: out.Len()}
+			if n := len(stack); n > 0 {
+				f.parentOpen = stack[n-1].open
+			}
+			closeStart()
+			if lower == "style" {
+				f.sheet = &strings.Builder{}
+			}
+			out.WriteByte('<')
+			out.WriteString(name)
+			if len(stack) == 0 {
+				out.WriteString(` xmlns="` + svgNS + `"`)
+			}
+			for _, a := range attrs {
+				out.WriteByte(' ')
+				out.WriteString(a.Name.Local)
+				out.WriteString(`="`)
+				escape(&out, a.Value)
+				out.WriteByte('"')
+			}
+			stack = append(stack, f)
+		case xml.EndElement:
+			if skip > 0 {
+				skip--
+				continue
+			}
+			if len(stack) == 0 {
+				return nil, errUnknownFormat
+			}
+			f := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			if f.sheet != nil && !safeCSS(f.sheet.String()) {
+				out.Truncate(f.mark) // the style sheet is left out whole
+				if n := len(stack); n > 0 {
+					stack[n-1].open = f.parentOpen
+				}
+				continue
+			}
+			if f.open {
+				out.WriteString("</" + f.name + ">")
+			} else {
+				out.WriteString("/>")
+			}
+			done = len(stack) == 0
+		case xml.CharData:
+			if skip > 0 || len(stack) == 0 || !stack[len(stack)-1].text || len(t) == 0 {
+				continue
+			}
+			if sh := stack[len(stack)-1].sheet; sh != nil {
+				sh.Write(t)
+			}
+			closeStart()
+			escape(&out, string(t))
+		}
+	}
+	if out.Len() == 0 || len(stack) != 0 {
+		return nil, errUnknownFormat
+	}
+	return out.Bytes(), nil
+}
+
+// rewriteAttrs returns the attributes of element (lower case) that are
+// kept, each once, spelled as browsers know them. ok is false when element
+// is an image with an embedded picture that cannot be written again.
+func rewriteAttrs(element string, in []xml.Attr) (attrs []xml.Attr, ok bool) {
+	seen := map[string]bool{}
+	add := func(name, value string) {
+		if !seen[name] {
+			seen[name] = true
+			attrs = append(attrs, xml.Attr{Name: xml.Name{Local: name}, Value: value})
+		}
+	}
+	// A plain href wins over xlink:href, as in browsers.
+	var href *string
+	for _, a := range in {
+		if strings.ToLower(a.Name.Local) != "href" || a.Name.Space != "" && a.Name.Space != xlinkNS || !safeAttr(element, a) {
+			continue
+		}
+		if href == nil || a.Name.Space == "" {
+			v := a.Value
+			href = &v
+		}
+	}
+	for _, a := range in {
+		lower := strings.ToLower(a.Name.Local)
+		switch {
+		case !safeAttr(element, a):
+		case a.Name.Space == xmlNS:
+			add("xml:"+lower, a.Value) // space or lang; xml needs no declaration
+		case a.Name.Space != "", lower == "xmlns", lower == "href", strings.HasPrefix(lower, "data-"):
+			// Namespace declarations, xlink:title and drawing programs'
+			// attributes are left out; href is written below.
+		case strings.HasPrefix(lower, "aria-"):
+			add(lower, a.Value)
+		case svgAttrs.has(lower):
+			add(svgAttrs[lower], a.Value)
+		}
+	}
+	if href != nil {
+		v := strings.TrimSpace(*href)
+		switch {
+		case strings.HasPrefix(v, "#"):
+			add("href", v)
+		case element == "image":
+			png, err := embeddedPNG(v)
+			if err != nil {
+				return nil, false
+			}
+			add("href", png)
+		}
+	}
+	return attrs, true
+}
+
+// embeddedPNG decodes a base64 data: address of a PNG, JPEG or GIF image,
+// checks and decodes the picture the way a fetched icon is, and returns a
+// data: address of a new PNG of it. WebP and addresses not in base64 are
+// refused.
+func embeddedPNG(v string) (string, error) {
+	head, body, found := strings.Cut(v, ",")
+	if !found || !rasterData(squash(head+",")) || !strings.HasSuffix(squash(head), ";base64") {
+		return "", errUnsafeSVG
+	}
+	body = strings.Map(func(r rune) rune {
+		if r <= ' ' || r == 0x7f {
+			return -1 // white space; base64 is case sensitive, so no squash
+		}
+		return r
+	}, body)
+	raw, err := base64.StdEncoding.DecodeString(body)
+	if err != nil || looksLikeSVG(raw) {
+		return "", errUnsafeSVG
+	}
+	icon, err := Process(raw)
+	if err != nil || icon.Ext != "png" {
+		return "", errUnsafeSVG
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(icon.Data), nil
+}
+
+// escape writes s escaped for XML text or a double quoted attribute: &, <,
+// >, both quotes, tab and line breaks as character references.
+func escape(out *bytes.Buffer, s string) {
+	_ = xml.EscapeText(out, []byte(s))
 }

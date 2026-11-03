@@ -53,9 +53,9 @@ func TestProcessReencodesRaster(t *testing.T) {
 	}
 }
 
-// SVG icons stored by an earlier version are checked once when the pool
-// starts: one that fails is taken off its bookmark and deleted, one that
-// passes stays as it is.
+// SVG icons stored by an earlier version are checked and rewritten when the
+// pool starts: one that fails is taken off its bookmark and deleted, one
+// that passes is stored as its rewrite and the bookmark points to that.
 func TestPoolDropsStoredUnsafeSVG(t *testing.T) {
 	dir := t.TempDir()
 	st := newTestStore(t)
@@ -68,7 +68,7 @@ func TestPoolDropsStoredUnsafeSVG(t *testing.T) {
 		t.Fatal(err)
 	}
 	badSVG := `<svg xmlns="http://www.w3.org/2000/svg" xmlns:h="http://www.w3.org/1999/xhtml"><h:meta http-equiv="refresh" content="0; url=https://evil.example/"/></svg>`
-	goodSVG := realIcons[0]
+	goodSVG := realIcons[3] // an Inkscape file with comments and notes
 	for _, f := range []struct {
 		id        int64
 		key, name string
@@ -92,11 +92,31 @@ func TestPoolDropsStoredUnsafeSVG(t *testing.T) {
 	if b, _ := st.Bookmark(bad.ID); b.Icon != nil {
 		t.Errorf("bookmark still points to %s", *b.Icon)
 	}
-	if data, err := os.ReadFile(filepath.Join(dir, "2-bbbbbbbb.svg")); err != nil || string(data) != goodSVG {
-		t.Errorf("good icon changed: %v", err)
+	b, _ := st.Bookmark(good.ID)
+	if b.Icon == nil || *b.Icon == "2-bbbbbbbb.svg" || !strings.HasPrefix(*b.Icon, "2-") || filepath.Ext(*b.Icon) != ".svg" {
+		t.Fatalf("good bookmark not moved to the rewritten icon: %+v", b.Icon)
 	}
-	if b, _ := st.Bookmark(good.ID); b.Icon == nil || *b.Icon != "2-bbbbbbbb.svg" {
-		t.Errorf("good bookmark lost its icon: %+v", b.Icon)
+	rewritten := *b.Icon
+	want, err := Process([]byte(goodSVG))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(filepath.Join(dir, rewritten)); err != nil || !bytes.Equal(data, want.Data) {
+		t.Errorf("stored icon is not the rewrite: %v", err)
+	}
+	if data, err := os.ReadFile(filepath.Join(dir, "2-bbbbbbbb.svg")); err != nil || string(data) != goodSVG || st.IconInUse("2-bbbbbbbb.svg") {
+		t.Errorf("old file not kept unnamed as it was: %v", err)
+	}
+
+	// A later start finds the rewrite already in place and changes nothing.
+	before, _ := filepath.Glob(filepath.Join(dir, "*"))
+	ctx, cancel = context.WithCancel(context.Background())
+	p = NewPool(ctx, dir, st)
+	cancel()
+	p.Wait()
+	after, _ := filepath.Glob(filepath.Join(dir, "*"))
+	if b, _ := st.Bookmark(good.ID); b.Icon == nil || *b.Icon != rewritten || len(after) != len(before) {
+		t.Errorf("second start changed the icons: %v, %v -> %v", b.Icon, before, after)
 	}
 }
 

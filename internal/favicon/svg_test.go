@@ -1,6 +1,13 @@
 package favicon
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/xml"
+	"image/color"
+	"image/png"
+	"io"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -19,8 +26,188 @@ func TestSVGAcceptsPlainIcons(t *testing.T) {
 	good = append(good, realIcons...)
 	for _, s := range good {
 		icon, err := Process([]byte(s))
-		if err != nil || icon.Ext != "svg" || string(icon.Data) != s {
+		if err != nil || icon.Ext != "svg" {
 			t.Errorf("refused %q: %v", s, err)
+			continue
+		}
+		checkRewrite(t, s, icon.Data)
+	}
+}
+
+// checkRewrite fails unless out, the stored form of in, is a whole SVG
+// document in the SVG namespace that the check accepts, keeps every path's
+// d, and comes out the same when it is rewritten again.
+func checkRewrite(t *testing.T, in string, out []byte) {
+	t.Helper()
+	if !strings.HasPrefix(string(out), `<svg xmlns="http://www.w3.org/2000/svg"`) {
+		t.Errorf("%q: rewrite does not start with the svg root: %q", in, out)
+	}
+	if err := checkSVG(out); err != nil {
+		t.Errorf("%q: rewrite fails the check: %v: %q", in, err, out)
+	}
+	again, err := rewriteSVG(out)
+	if err != nil || !bytes.Equal(again, out) {
+		t.Errorf("%q: second rewrite differs: %v\n%q\n%q", in, err, out, again)
+	}
+	d := xml.NewDecoder(bytes.NewReader(out))
+	d.Strict = true
+	var paths []string
+	for {
+		tok, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Errorf("%q: rewrite does not parse: %v", in, err)
+			return
+		}
+		if se, ok := tok.(xml.StartElement); ok {
+			if se.Name.Space != svgNS {
+				t.Errorf("%q: element %v outside the svg namespace", in, se.Name)
+			}
+			if se.Name.Local == "path" {
+				for _, a := range se.Attr {
+					if a.Name.Local == "d" {
+						paths = append(paths, a.Value)
+					}
+				}
+			}
+		}
+	}
+	for _, p := range pathData(in) {
+		if !slices.Contains(paths, p) {
+			t.Errorf("%q: path %q lost in %q", in, p, out)
+		}
+	}
+}
+
+// pathData returns the d of every path in s.
+func pathData(s string) []string {
+	var out []string
+	d := xml.NewDecoder(strings.NewReader(strings.TrimPrefix(s, "\xef\xbb\xbf")))
+	d.Strict = true
+	d.Entity = xml.HTMLEntity
+	for {
+		tok, err := d.Token()
+		if err != nil {
+			return out
+		}
+		if se, ok := tok.(xml.StartElement); ok && strings.EqualFold(se.Name.Local, "path") {
+			for _, a := range se.Attr {
+				if a.Name.Local == "d" {
+					out = append(out, a.Value)
+				}
+			}
+		}
+	}
+}
+
+// What is stored is written from the parsed tree: comments, the XML
+// declaration, DOCTYPE, CDATA, entities, drawing programs' notes, data-*
+// attributes, other namespace declarations and prefixes are gone, names
+// have the spelling browsers know, and href points only into the file.
+func TestSVGStoredFormIsRewritten(t *testing.T) {
+	for _, s := range realIcons {
+		icon, err := Process([]byte(s))
+		if err != nil {
+			t.Fatalf("refused %q: %v", s, err)
+		}
+		out := string(icon.Data)
+		for _, gone := range []string{"<!", "<?", "CDATA", "-->", "&copy;", "inkscape", "sodipodi", "rdf", "xmlns:", "xlink", "data-name", "metadata", "Generator"} {
+			if strings.Contains(out, gone) {
+				t.Errorf("%q kept in %q", gone, out)
+			}
+		}
+	}
+	const open = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`
+	const root = `<svg xmlns="http://www.w3.org/2000/svg"`
+	cases := map[string]string{
+		`<svg xmlns="http://www.w3.org/2000/svg" VIEWBOX="0 0 1 1"><LINEARGRADIENT id="g"/></svg>`:          root + ` viewBox="0 0 1 1"><linearGradient id="g"/></svg>`,
+		`<s:svg xmlns:s="http://www.w3.org/2000/svg"><s:rect width="1"/></s:svg>`:                           root + `><rect width="1"/></svg>`,
+		open + `<use xlink:href=" #a " href="#b"/><use xlink:href="#c" xlink:title="t"/></svg>`:             root + `><use href="#b"/><use href="#c"/></svg>`,
+		open + `<text>a &amp; &lt;b&gt; &copy; "q"</text><g>stray text</g></svg>`:                           root + `><text>a &amp; &lt;b&gt; © &#34;q&#34;</text><g/></svg>`,
+		open + `<style><![CDATA[a>b{fill:red}]]></style><rect style="fill:&quot;x&quot;"/></svg>`:           root + `><style>a&gt;b{fill:red}</style><rect style="fill:&#34;x&#34;"/></svg>`,
+		open + `<rect width="1&#10;2"/></svg>`:                                                              root + `><rect width="1&#xA;2"/></svg>`,
+		open + `<image href="data:image/webp;base64,UklGRg=="/><rect/></svg>`:                               root + `><rect/></svg>`,
+		`<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" xml:lang="en"><text> a </text></svg>`: root + ` xml:space="preserve" xml:lang="en"><text> a </text></svg>`,
+	}
+	for in, want := range cases {
+		icon, err := Process([]byte(in))
+		if err != nil {
+			t.Errorf("refused %q: %v", in, err)
+			continue
+		}
+		if string(icon.Data) != want {
+			t.Errorf("%q\n got %q\nwant %q", in, icon.Data, want)
+		}
+		checkRewrite(t, in, icon.Data)
+	}
+}
+
+// An embedded picture is decoded and written again as a new PNG, so what a
+// site hid in it is gone; the picture still shows.
+func TestSVGEmbeddedPictureReencoded(t *testing.T) {
+	img := square(4, color.White, color.RGBA{0, 128, 0, 255})
+	payload := []byte("<script>alert(1)</script>")
+	raw := append(pngBytes(img), payload...)
+	in := `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><image width="4" height="4" xlink:href="data:image/png;base64,` + base64.StdEncoding.EncodeToString(raw) + `"/></svg>`
+	icon, err := Process([]byte(in))
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkRewrite(t, in, icon.Data)
+	_, b64, ok := strings.Cut(string(icon.Data), `href="data:image/png;base64,`)
+	if !ok {
+		t.Fatalf("picture lost: %q", icon.Data)
+	}
+	b64, _, _ = strings.Cut(b64, `"`)
+	data, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil || bytes.Contains(data, payload) {
+		t.Fatalf("picture not re-encoded: %v", err)
+	}
+	if out, err := png.Decode(bytes.NewReader(data)); err != nil || out.Bounds().Dx() != 4 {
+		t.Errorf("picture does not decode: %v", err)
+	}
+}
+
+// The rewrite holds on its own, without the check before it: what could
+// run, link or load never reaches its output, or it refuses the file.
+func TestSVGRewriteDropsHostile(t *testing.T) {
+	const open = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`
+	hostile := []string{
+		open + `<script>alert(1)</script><rect/></svg>`,
+		`<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><rect/></svg>`,
+		open + `<rect onclick="alert(1)"/></svg>`,
+		open + `<foreignObject><div xmlns="http://www.w3.org/1999/xhtml">x</div></foreignObject><rect/></svg>`,
+		open + `<image href="https://evil.example/p.png"/><rect/></svg>`,
+		open + `<use href="https://evil.example/a.svg#x"/><rect/></svg>`,
+		open + `<a xlink:href="javascript:alert(1)"><rect/></a></svg>`,
+		open + `<use xlink:href="javascript:alert(1)"/><rect/></svg>`,
+		open + `<style><![CDATA[rect{fill:url(https://evil.example/x.svg#a)}]]></style><rect/></svg>`,
+		open + `<style>@import url(https://evil.example/a.css);</style><rect/></svg>`,
+		open + `<rect style="fill:url(https://evil.example/x.svg#a)"/></svg>`,
+		open + `<rect fill="url(https://evil.example/x.svg#a)"/></svg>`,
+		`<!DOCTYPE svg [<!ENTITY x "evil.example">]>` + open + `<text>&x;</text></svg>`,
+		`<!DOCTYPE svg [<!ENTITY a "aaaaaaaaaa"><!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">]>` + open + `<text>&b;</text></svg>`,
+		`<svg xmlns="http://www.w3.org/2000/svg" xml:base="https://evil.example/"><use href="#a"/></svg>`,
+		`<?xml-stylesheet href="https://evil.example/a.css"?>` + open + `<rect/></svg>`,
+		open + `<set attributeName="href" to="javascript:alert(1)"/><animate attributeName="href" values="https://evil.example/"/><rect/></svg>`,
+		open + `<h:meta xmlns:h="http://www.w3.org/1999/xhtml" http-equiv="refresh" content="0; url=https://evil.example/"/><rect/></svg>`,
+		`<svg xmlns="http://www.w3.org/2000/svg" xmlns:i="http://www.inkscape.org/namespaces/inkscape"><i:x><script>alert(1)</script></i:x><rect i:onload="alert(1)"/></svg>`,
+		open + `<style>rect{fill:red}<g/>svg{background:url(https://evil.example/)}</style><rect/></svg>`,
+		open + `<rect/></svg><svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`,
+		open + `<!-- <script>alert(1)</script> --><rect/></svg>`,
+	}
+	markers := []string{"script", "onload", "onclick", "foreignObject", "evil.example", "javascript", "CDATA", "xml:base", "ENTITY", "aaaaaaaaaa", "<!", "<?", "@import", "<set", "animate", "meta", "https:"}
+	for _, s := range hostile {
+		out, err := rewriteSVG([]byte(s))
+		if err != nil {
+			continue // refused whole
+		}
+		for _, m := range markers {
+			if strings.Contains(string(out), m) {
+				t.Errorf("%q: %q kept in %q", s, m, out)
+			}
 		}
 	}
 }
