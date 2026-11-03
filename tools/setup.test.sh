@@ -41,11 +41,20 @@ exit 0
 S
 chmod +x "$T/bin/"*
 for f in curl chown ip sleep; do cp "$T/bin/$f" "$T/nodocker/$f"; done
+# the system tools without docker, so the no Docker case holds where docker is installed (CI runners have it)
+mkdir -p "$T/sys"
+for d in /usr/bin /bin /usr/sbin /sbin; do
+  for f in "$d"/*; do
+    n="$(basename "$f")"
+    case "$n" in docker*) continue ;; esac
+    [ -e "$T/sys/$n" ] || ln -s "$f" "$T/sys/$n" 2>/dev/null || true
+  done
+done
 
 run() { # run <name> [VAR=value ...]: output in $T/<name>.out, compose file in $T/<name>/compose.yml
   name="$1"; shift
   CURL_LOG="$T/$name.curl"; : > "$CURL_LOG"
-  env PATH="${STUBPATH:-$T/bin}:/usr/bin:/bin:/usr/sbin:/sbin" HOME="$T" PINNED_DIR="$T/$name" CURL_LOG="$CURL_LOG" \
+  env PATH="${STUBPATH:-$T/bin}:${SYSPATH:-/usr/bin:/bin:/usr/sbin:/sbin}" HOME="$T" PINNED_DIR="$T/$name" CURL_LOG="$CURL_LOG" \
     APP_PASSWORD='stand-in for the test' "$@" sh "$SCRIPT" > "$T/$name.out" 2>&1
 }
 
@@ -97,7 +106,7 @@ done
 
 # Without Docker: the installer comes from the pinned commit, with retries, and one that does not
 # match the checksum is never run.
-STUBPATH="$T/nodocker" run nodocker || true
+STUBPATH="$T/nodocker" SYSPATH="$T/sys" run nodocker || true
 grep -q 'docker/docker-install/[0-9a-f]\{40\}/install.sh' "$T/nodocker.curl" || bad "installer not pinned to a commit: $(cat "$T/nodocker.curl")"
 grep -q -- '--retry' "$T/nodocker.curl" || bad "installer download without retries"
 grep -q 'did not match its checksum' "$T/nodocker.out" || bad "a changed installer was not refused: $(cat "$T/nodocker.out")"
