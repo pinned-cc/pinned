@@ -25,6 +25,12 @@ case "$BIND" in
   *:*) PUBLISH="[$BIND]:" ;;
   *) PUBLISH="$BIND:" ;;
 esac
+# the compose port lines. Docker publishes :: on IPv6 only, so every address means both 0.0.0.0 and ::
+case "$BIND" in
+  ::|'[::]') PORTS="      - \"0.0.0.0:$PORT:8080\"
+      - \"[::]:$PORT:8080\"" ;;
+  *) PORTS="      - \"$PUBLISH$PORT:8080\"" ;;
+esac
 case "$BIND" in 127.*|::1|'[::1]') LOOPBACK=1 ;; *) LOOPBACK="" ;; esac
 # Docker's installer, pinned to one commit of github.com/docker/docker-install and checked by its sha256.
 # It installs the current Docker Engine from Docker's own package repository.
@@ -82,10 +88,9 @@ cat > compose.yml <<YAML
 services:
   pinned:
     image: $IMAGE
-    container_name: pinned
     restart: unless-stopped
     ports:
-      - "$PUBLISH$PORT:8080"
+$PORTS
     environment:
       APP_PASSWORD_FILE: /run/secrets/app_password
       TZ: \${TZ:-UTC}

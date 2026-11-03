@@ -20,6 +20,7 @@ Not released yet.
 
 ### Fixes
 
+- The server install script with `PINNED_BIND=::` published Pinned on IPv6 only, so it answered on no IPv4 address and the script said it did not start. It now publishes `0.0.0.0` and `[::]` both. The script also no longer gives the container a fixed name, so a second install in another folder does not clash with the first. Both found by running the script on a fresh Ubuntu 26.04 server.
 - Behind a reverse proxy, `X-Forwarded-Proto` is now believed only from `TRUSTED_PROXIES`, or from the same machine (loopback) when that is empty. Before, any private address counted, and behind Docker's published ports every client arrives from one. If your HTTPS proxy runs in another container or on another machine, set `TRUSTED_PROXIES` to its address or network, or `BASE_URL` to the `https://` address, so the login cookie keeps its Secure flag.
 - A very long made up `Host` header could keep the password check busy for minutes. Host names longer than a DNS name now add nothing to it, and request headers are capped at 64 KB.
 - The login page showed odd waits for a made up `wait` value in its address. It now takes only a whole number of seconds up to a day, and otherwise shows the plain message.

@@ -65,6 +65,12 @@ done
 grep -q '"\[2001:db8::5\]:9095:8080"' "$T/bind-2001_db8__5/compose.yml" || bad "IPv6 bind not in brackets"
 grep -q 'http://203.0.113.5:9095' "$T/bind-0_0_0_0.out" || bad "public address not taken from the route: $(grep address "$T/bind-0_0_0_0.out")"
 grep -q 'ifconfig.me' "$T/bind-0_0_0_0.curl" && bad "asked ifconfig.me although the route named the address"
+# :: alone is IPv6 only in Docker, so it publishes 0.0.0.0 and [::] both, and the check on 127.0.0.1 answers
+# (found on a real server, 2026-11-03).
+grep -q '"0.0.0.0:9095:8080"' "$T/bind-__/compose.yml" && grep -q '"\[::\]:9095:8080"' "$T/bind-__/compose.yml" \
+  || bad "PINNED_BIND=:: does not publish both 0.0.0.0 and [::]: $(grep 8080 "$T/bind-__/compose.yml")"
+# no fixed container name, so a second install in another folder does not clash with the first
+grep -q container_name "$T/default/compose.yml" && bad "compose.yml sets a fixed container_name"
 run loop6 PINNED_BIND=::1
 grep -q WARNING "$T/loop6.out" && bad "PINNED_BIND=::1 warns"
 

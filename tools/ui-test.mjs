@@ -750,7 +750,10 @@ async function desktop(browser, engine) {
     assert(await sp.evaluate(() => getComputedStyle(document.querySelector('#sheet .tick-draw path')).animationDuration) === '0.2s', 'the tick does not draw over 200 ms');
     await until(sp, () => window.__sv.leaving, null, 'the sheet fading out');
     const held = await sp.evaluate(() => window.__sv.leaving - window.__sv.saved); assert(held > 480 && held < 700, 'the hold before the fade is not about 520 ms: ' + Math.round(held)); assert(!(await sp.locator('#sheet .tack').count()), 'the pin is back on the favicon');
-    await visible(sp.locator('#sheet .done-state'), 8000);
+    /* the save window closes itself after the fade; Chromium and WebKit refuse a window the page did not open and
+       show Saved in place, Firefox under Playwright lets it close, as a real popup from the bookmarklet does */
+    await Promise.race([sp.waitForEvent('close', { timeout: 8000 }).catch(() => {}), sp.locator('#sheet .done-state').waitFor({ timeout: 8000 }).catch(() => {})]);
+    assert(sp.isClosed() || await sp.locator('#sheet .done-state').count() === 1, 'neither closed nor Saved in place');
     const b = (await apiIn(page, 'GET', '/api/state')).data.bookmarks.find(x => x.url === u && !x.deleted_at);
     assert(b, 'not saved'); await apiIn(page, 'DELETE', `/api/bookmarks/${b.id}?permanent=1`);
     await c.close();
