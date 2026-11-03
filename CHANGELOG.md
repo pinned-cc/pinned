@@ -62,6 +62,7 @@ Not released yet.
 
 ### Changes
 
+- A fetched icon is kept only when it stays small: an SVG may embed at most 8 pictures of at most 1024 px, its rewritten file at most 1 MB, and a picture stored as PNG at most 2 MB. A larger icon leaves the letter mark.
 - Over HTTPS the login cookie is named `__Host-pinned_session`. You stay logged in: the old cookie moves to the new name on your next visit. Plain http on your network works as before.
 - New setting `HSTS`, off by default. `HSTS=true` sends `Strict-Transport-Security` on HTTPS answers. Switch it on only when Pinned has its own host name on the public internet and the proxy does not already send it, since it applies to every port of that host name.
 - `X-Forwarded-Proto` is believed only from `TRUSTED_PROXIES`, or when that is empty from loopback only; 0.1.10 believed it from anyone. In Docker a proxy on the host or in another container does not arrive from loopback, so if your proxy does HTTPS, set `TRUSTED_PROXIES` to its address or network, or `BASE_URL` to the `https://` address; otherwise the login cookie loses its Secure flag. Pinned logs a line the first time it ignores the header from a private address. When `BASE_URL` starts with `https://`, a request for that host without the header counts as HTTPS, so the cookie keeps its Secure flag behind `tailscale serve`.

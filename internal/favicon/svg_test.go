@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
+	"image"
 	"image/color"
 	"image/png"
 	"io"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSVGAcceptsPlainIcons(t *testing.T) {
@@ -340,4 +342,50 @@ var realIcons = []string{
 		`<ellipse cx="32" cy="40" rx="10" ry="4"/><line x1="0" y1="0" x2="64" y2="64" stroke="currentColor" stroke-linecap="round"/><polyline points="1 2 3 4" fill="none"/>` +
 		`<text x="32" y="36" font-family="Helvetica, Arial" font-size="20" text-anchor="middle">P</text>` +
 		`<image width="8" height="8" xlink:href="data:image/jpeg;base64,/9j/4AAQ"/></g></svg>`,
+}
+
+// An SVG may embed only a few small pictures, and its rewrite stays small,
+// so one saved link cannot store megabytes or slow every start (audit 4,
+// F-150: a 2 MB favicon was stored as 12.9 MB and decoded at every start).
+func TestSVGEmbeddedPicturesBounded(t *testing.T) {
+	pic := func(side int, noise bool) string {
+		img := image.NewNRGBA(image.Rect(0, 0, side, side))
+		for i := range img.Pix {
+			if noise {
+				img.Pix[i] = byte(i*7919 + i/3)
+			} else {
+				img.Pix[i] = 200
+			}
+		}
+		var b bytes.Buffer
+		png.Encode(&b, img)
+		return base64.StdEncoding.EncodeToString(b.Bytes())
+	}
+	svg := func(n int, data string) []byte {
+		var b strings.Builder
+		b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">`)
+		for i := 0; i < n; i++ {
+			b.WriteString(`<image width="64" height="64" href="data:image/png;base64,` + data + `"/>`)
+		}
+		b.WriteString(`</svg>`)
+		return []byte(b.String())
+	}
+	if _, err := processSVG(svg(1, pic(64, false))); err != nil {
+		t.Fatalf("one small picture refused: %v", err)
+	}
+	// a too large picture is refused or dropped, never stored
+	if ic, err := processSVG(svg(1, pic(2000, true))); err == nil && (bytes.Contains(ic.Data, []byte("data:image")) || len(ic.Data) > 4096) {
+		t.Errorf("a 2000 px embedded picture was kept: %d bytes", len(ic.Data))
+	}
+	if _, err := processSVG(svg(maxEmbedded+1, pic(16, false))); err == nil {
+		t.Errorf("%d embedded pictures were kept", maxEmbedded+1)
+	}
+	start := time.Now()
+	ic, err := processSVG(svg(maxEmbedded, pic(maxEmbeddedSide, true)))
+	if err == nil && len(ic.Data) > maxSVGOut {
+		t.Errorf("stored %d bytes", len(ic.Data))
+	}
+	if d := time.Since(start); d > 3*time.Second {
+		t.Errorf("worst allowed SVG took %v", d)
+	}
 }

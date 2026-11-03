@@ -29,6 +29,8 @@ type Icon struct {
 const (
 	maxSide   = 4096
 	maxPixels = 16_000_000
+	// maxStored caps the PNG an icon is stored as
+	maxStored = 2 << 20
 )
 
 var errTooLarge = errors.New("image is too large")
@@ -91,6 +93,9 @@ func processSVG(data []byte) (Icon, error) {
 	if err != nil {
 		return Icon{}, err
 	}
+	if len(out) > maxSVGOut {
+		return Icon{}, errTooLarge
+	}
 	if err := checkSVG(out); err != nil {
 		return Icon{}, err
 	}
@@ -116,6 +121,11 @@ func asPNG(img image.Image) (Icon, error) {
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
 		return Icon{}, err
+	}
+	// a re-encoded picture can be far larger than the file fetched; an icon
+	// over maxStored is not kept (audit 4, F-150)
+	if buf.Len() > maxStored {
+		return Icon{}, errTooLarge
 	}
 	return Icon{Ext: "png", Data: buf.Bytes(), Tile: EdgeColor(img)}, nil
 }

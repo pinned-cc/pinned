@@ -5,11 +5,23 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
+	"image"
+	_ "image/gif" // DecodeConfig of an embedded GIF
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"strings"
 )
 
 var errUnsafeSVG = errors.New("svg holds something outside the drawing allow list")
+
+// Limits on what an SVG icon may embed and how large the rewritten file may
+// be, so one saved link cannot store megabytes or slow every start.
+const (
+	maxEmbedded     = 8
+	maxEmbeddedSide = 1024
+	maxSVGOut       = 1 << 20
+)
 
 // looksLikeSVG reports whether data starts like an XML document, after an
 // optional byte order mark and white space, so only those are parsed.
@@ -466,6 +478,11 @@ var textElements = set(`text tspan textPath title desc style`)
 // style sheet only when safeCSS does, so the rewrite holds on its own too.
 // A second rewrite gives the same bytes.
 func rewriteSVG(data []byte) ([]byte, error) {
+	// a page of embedded pictures is not an icon: each is decoded and
+	// written again, so their number is bounded (audit 4, F-150)
+	if bytes.Count(bytes.ToLower(data), []byte("data:image")) > maxEmbedded {
+		return nil, errUnsafeSVG
+	}
 	d := xml.NewDecoder(bytes.NewReader(bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))))
 	d.Strict = true
 	d.Entity = xml.HTMLEntity
@@ -656,6 +673,11 @@ func embeddedPNG(v string) (string, error) {
 	}, body)
 	raw, err := base64.StdEncoding.DecodeString(body)
 	if err != nil || looksLikeSVG(raw) {
+		return "", errUnsafeSVG
+	}
+	// an icon's embedded picture is small; a large one would be stored as a
+	// much larger PNG and decoded again at every start (audit 4, F-150)
+	if c, _, err := image.DecodeConfig(bytes.NewReader(raw)); err != nil || c.Width > maxEmbeddedSide || c.Height > maxEmbeddedSide {
 		return "", errUnsafeSVG
 	}
 	icon, err := Process(raw)

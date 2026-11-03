@@ -83,6 +83,8 @@ fi
 
 mkdir -p "$DIR/data"
 cd "$DIR"
+# the folder as Compose records it, so a relative PINNED_DIR, a trailing slash or a dot segment compare right
+DIR="$(pwd)"
 
 cat > compose.yml <<YAML
 services:

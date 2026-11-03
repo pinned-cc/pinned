@@ -82,6 +82,12 @@ grep -q 'has the same folder name' "$T/samename.out" || bad "a second install wi
 run again OTHER_INSTALL="$T/again"
 grep -q 'has the same folder name' "$T/again.out" && bad "a re-run in its own folder was refused"
 
+# The re-run check compares the folder as Compose records it: relative, trailing slash and dot segment forms pass.
+mkdir -p "$T/rel"
+( cd "$T" && env PATH="$T/bin:/usr/bin:/bin:/usr/sbin:/sbin" HOME="$T" PINNED_DIR=rel/./ CURL_LOG="$T/rel.curl" OTHER_INSTALL="$T/rel" \
+    APP_PASSWORD='stand-in for the test' sh "$SCRIPT" > "$T/rel.out" 2>&1 ) || true
+grep -q 'has the same folder name' "$T/rel.out" && bad "a re-run with PINNED_DIR=rel/./ was refused"
+
 # Every curl call has a time limit.
 for f in "$T"/*.curl; do
   while IFS= read -r line; do
