@@ -487,6 +487,7 @@ func rewriteSVG(data []byte) ([]byte, error) {
 	d.Strict = true
 	d.Entity = xml.HTMLEntity
 	var out bytes.Buffer
+	pictures := 0 // embedded pictures decoded so far
 	type frame struct {
 		name string // spelling written
 		text bool   // its text is kept
@@ -536,7 +537,10 @@ func rewriteSVG(data []byte) ([]byte, error) {
 				skip = 1
 				continue
 			}
-			attrs, ok := rewriteAttrs(lower, t.Attr)
+			attrs, ok := rewriteAttrs(lower, t.Attr, &pictures)
+			if pictures > maxEmbedded {
+				return nil, errUnsafeSVG // counted as decoded, whatever the spelling in the file
+			}
 			if !ok {
 				skip = 1 // an image whose picture cannot be kept
 				continue
@@ -606,7 +610,7 @@ func rewriteSVG(data []byte) ([]byte, error) {
 // rewriteAttrs returns the attributes of element (lower case) that are
 // kept, each once, spelled as browsers know them. ok is false when element
 // is an image with an embedded picture that cannot be written again.
-func rewriteAttrs(element string, in []xml.Attr) (attrs []xml.Attr, ok bool) {
+func rewriteAttrs(element string, in []xml.Attr, pictures *int) (attrs []xml.Attr, ok bool) {
 	seen := map[string]bool{}
 	add := func(name, value string) {
 		if !seen[name] {
@@ -646,6 +650,9 @@ func rewriteAttrs(element string, in []xml.Attr) (attrs []xml.Attr, ok bool) {
 		case strings.HasPrefix(v, "#"):
 			add("href", v)
 		case element == "image":
+			if *pictures++; *pictures > maxEmbedded {
+				return nil, false
+			}
 			png, err := embeddedPNG(v)
 			if err != nil {
 				return nil, false

@@ -380,6 +380,11 @@ func TestSVGEmbeddedPicturesBounded(t *testing.T) {
 	if _, err := processSVG(svg(maxEmbedded+1, pic(16, false))); err == nil {
 		t.Errorf("%d embedded pictures were kept", maxEmbedded+1)
 	}
+	// spelled so the raw text count misses them (audit 4, F-160)
+	hidden := bytes.ReplaceAll(svg(maxEmbedded+1, pic(16, false)), []byte("data:image"), []byte("data&#58;image"))
+	if _, err := processSVG(hidden); err == nil {
+		t.Errorf("%d embedded pictures written data&#58;image were kept", maxEmbedded+1)
+	}
 	start := time.Now()
 	ic, err := processSVG(svg(maxEmbedded, pic(maxEmbeddedSide, true)))
 	if err == nil && len(ic.Data) > maxSVGOut {
