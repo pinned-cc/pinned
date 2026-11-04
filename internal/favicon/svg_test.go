@@ -394,3 +394,51 @@ func TestSVGEmbeddedPicturesBounded(t *testing.T) {
 		t.Errorf("worst allowed SVG took %v", d)
 	}
 }
+
+// Pictures in a style url() are only checked, never decoded, so the rewrite
+// does not count them as it goes. Written with a character reference they
+// pass the raw count of the file as sent, and the rewrite writes them back
+// plainly. More than maxEmbedded of them are refused at once, so the stored
+// file is never one the next start drops and fetches again (spec S23.21,
+// re-check 04.11 point 1); up to maxEmbedded are stored, and a rewrite of
+// the stored file gives the same bytes.
+func TestSVGStyleURLPicturesStoredOnceOrRefused(t *testing.T) {
+	const pic = "url(data&#58;image/png;base64,iVBORw0KGgo=)"
+	inAttr := func(n int) []byte {
+		var b strings.Builder
+		b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">`)
+		for i := 0; i < n; i++ {
+			b.WriteString(`<rect width="16" height="16" style="fill:` + pic + `"/>`)
+		}
+		b.WriteString(`</svg>`)
+		return []byte(b.String())
+	}
+	inSheet := func(n int) []byte {
+		var b strings.Builder
+		b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><style>`)
+		for i := 0; i < n; i++ {
+			b.WriteString(".a" + string(rune('a'+i)) + "{fill:" + pic + "}")
+		}
+		b.WriteString(`</style><rect class="aa" width="16" height="16"/></svg>`)
+		return []byte(b.String())
+	}
+	for name, svg := range map[string]func(int) []byte{"style attribute": inAttr, "style element": inSheet} {
+		if ic, err := processSVG(svg(maxEmbedded + 1)); err == nil {
+			t.Errorf("%s: %d pictures written data&#58;image were stored (%d of them plain in the file)", name, maxEmbedded+1, bytes.Count(ic.Data, []byte("data:image")))
+		}
+		ic, err := processSVG(svg(maxEmbedded))
+		if err != nil {
+			t.Fatalf("%s: %d pictures refused: %v", name, maxEmbedded, err)
+		}
+		if n := bytes.Count(ic.Data, []byte("data:image")); n != maxEmbedded {
+			t.Fatalf("%s: stored file holds %d pictures, want %d", name, n, maxEmbedded)
+		}
+		again, err := processSVG(ic.Data)
+		if err != nil {
+			t.Fatalf("%s: the stored file fails the check at the next start: %v", name, err)
+		}
+		if !bytes.Equal(again.Data, ic.Data) {
+			t.Errorf("%s: a rewrite of the stored file gives other bytes:\n%s\n%s", name, ic.Data, again.Data)
+		}
+	}
+}

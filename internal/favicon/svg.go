@@ -604,6 +604,12 @@ func rewriteSVG(data []byte) ([]byte, error) {
 	if out.Len() == 0 || len(stack) != 0 {
 		return nil, errUnknownFormat
 	}
+	// Pictures in a style url() are not counted above, and one written
+	// data&#58;image comes out plain. The stored file must pass the count
+	// at the top again, or the next start drops it and fetches it again.
+	if bytes.Count(bytes.ToLower(out.Bytes()), []byte("data:image")) > maxEmbedded {
+		return nil, errUnsafeSVG
+	}
 	return out.Bytes(), nil
 }
 
