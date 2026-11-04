@@ -2411,7 +2411,7 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
   console.log(`\n${engine}`);
   let browser;
   /* a browser that does not start is a failure of the run, and the other engines still run */
-  try { browser = await pw[engine].launch({ timeout: 60000 }); }
+  try { browser = await pw[engine].launch({ timeout: 60000, ...(engine === 'firefox' && process.env.PW_FIREFOX_CHANNEL ? { channel: process.env.PW_FIREFOX_CHANNEL } : {}) }); }
   catch (e) { failures++; console.log(`  FAIL  ${engine} did not start\n        ${String(e.message || e).split('\n')[0]}`); continue; }
   try { await desktop(browser, engine); await flowFixes(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); await release0112(browser, engine); } finally { await browser.close(); }
 }
