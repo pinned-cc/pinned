@@ -308,8 +308,16 @@ func (s *Store) migrate(path string) (copied bool, err error) {
 // bookmark is deleted or merged. Before it writes, it copies the database
 // as an upgrade does, unless copied says that is done or not needed. If the
 // copy fails, nothing is changed and the start goes on. Only values change,
-// so 0.1.11 still opens the database.
+// so 0.1.11 still opens the database. A pass that fails anywhere is rolled
+// back and logged, and the start goes on; it runs again at the next start.
 func (s *Store) rekey(path string, copied bool) error {
+	if err := s.rekeyPass(path, copied); err != nil {
+		log.Printf("database: bookmark keys from an older version were left as they are, to be set at the next start: %v", err)
+	}
+	return nil
+}
+
+func (s *Store) rekeyPass(path string, copied bool) error {
 	type change struct {
 		id       int64
 		old, key string
@@ -339,8 +347,7 @@ func (s *Store) rekey(path string, copied bool) error {
 	if !copied {
 		dst, err := backupBeforeMigrate(s.db, path, len(migrations))
 		if err != nil {
-			log.Printf("database: %d bookmark keys are from an older version and were left as they are: the copy of the database before changing them failed: %v", len(changes), err)
-			return nil
+			return fmt.Errorf("the copy of the database before changing %d keys failed: %w", len(changes), err)
 		}
 		where = dst
 	}

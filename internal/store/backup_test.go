@@ -434,3 +434,51 @@ func TestRekeyWithoutCopyChangesNothing(t *testing.T) {
 		t.Errorf("key %q after a start that can copy, want http://h/a", b.URLKey)
 	}
 }
+
+// TestRekeyFailedWriteChangesNothing: when the write fails after the copy,
+// the pass is rolled back, the store opens with the data as it was, and the
+// next start sets the keys (re-review 04.11).
+func TestRekeyFailedWriteChangesNothing(t *testing.T) {
+	path, ids := staleKeys(t, [][2]string{{"http://h/a #x", "http://h/a "}, {"http://h/b #y", "http://h/b "}})
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	// staleKeys ran no pass on its own rows; put them back and block the write.
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE bookmarks SET url_key = url_key || ' ' WHERE id IN (?, ?);
+		CREATE TRIGGER no_rekey BEFORE UPDATE OF url_key ON bookmarks BEGIN SELECT RAISE(ABORT, 'forced write failure'); END;`, ids[0], ids[1]); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	s, err = Open(path)
+	if err != nil {
+		t.Fatalf("a failed key pass stopped the start: %v", err)
+	}
+	for _, id := range ids {
+		if b, err := s.Bookmark(id); err != nil || !strings.HasSuffix(b.URLKey, " ") {
+			t.Errorf("bookmark %d: key %q (%v), want the old key kept", id, b.URLKey, err)
+		}
+	}
+	if n, _ := s.CountLive(); n != 2 {
+		t.Errorf("%d bookmarks, want 2", n)
+	}
+	if _, err := s.db.Exec(`DROP TRIGGER no_rekey`); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	s, err = Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	for _, id := range ids {
+		if b, _ := s.Bookmark(id); strings.HasSuffix(b.URLKey, " ") {
+			t.Errorf("bookmark %d: key %q after the next start, want it set", id, b.URLKey)
+		}
+	}
+}
