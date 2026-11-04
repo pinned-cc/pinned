@@ -36,7 +36,8 @@ ext.contextMenus.onClicked.addListener(function (info, tab) {
 
 async function saveToInbox(url, title) {
   var cfg = await Pinned.config();
-  if (!cfg.address || !cfg.token) { ext.runtime.openOptionsPage(); return; }
+  /* no address yet, or a public http address the user has not gone ahead with: nothing is sent, the options page says why */
+  if (!cfg.address || !cfg.token || Pinned.plainUnconfirmed(cfg)) { ext.runtime.openOptionsPage(); return; }
   if (!/^https?:\/\//i.test(url || '')) { badge('!', '#ff9a9a'); return; }
   try {
     await Pinned.api(cfg, 'POST', '/api/bookmarks', { title: title, url: url, folder_id: null });

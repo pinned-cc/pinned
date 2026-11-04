@@ -792,7 +792,7 @@ S23.1.3 Cases.
 - Save, first click, public http address: no permission request, nothing stored; the status shows the warning. The permission request has to start inside a click (options.js:41-44), so it starts on the second click, which is a click too.
 - Save, second click: as today: the browser asks for that host, the address and token are stored, "Saved <address>.".
 - The address field changed between the clicks: the next click warns again.
-- An address saved before 0.1.12 with `http://` for a public host: it keeps working in the popup and the right click save, with no new warning, until Test or Save is used again. The extension has no step that reads a stored address again and warns. Not changed in 0.1.12 (see S23.1.7).
+- An address saved before 0.1.12 with `http://` for a public host: the popup, the right click save and the options page warn before the token is sent again (S23.1.8).
 - Own network and https addresses, and addresses without a scheme: one click, as in 0.1.11.
 - An `http://` name on the own network that has a dot now warns: split DNS such as `http://nas.example.home:9095` resolving to 192.168.x, or a Tailscale MagicDNS name such as `http://nas.tailnet.ts.net`, which travels inside WireGuard. Accepted, since one more click goes ahead; it is why the words say "may cross" (S23.1.5). An IPv4 mapped IPv6 address (`http://[::ffff:10.0.0.5]`) warns too; accepted.
 - A warning shown by Test does not arm Save, and the other way round: the second click of the same button confirms. Once confirmed, the address is confirmed for both.
@@ -818,7 +818,24 @@ S23.1.5 Wording. WORDING: needs his OK. The warning reuses the words of the exis
 
 S23.1.6 After an address without a scheme gets the existing message "... or type http://... to connect anyway", typing `http://` and clicking Test asks once more. That is intended: the second click is the confirmation.
 
-S23.1.7 Not in 0.1.12: a warning in the popup for an address stored before 0.1.12.
+S23.1.7 The first draft left the popup and the right click save out of 0.1.12. Release audit 5, F-170 (low, user impact possible), and the fix brief of 04.11: the warning applies whenever the extension would send the token to a public http address, however and whenever it was stored. S23.1.8 does that.
+
+S23.1.8 A stored address (F-170). What changes.
+- extras/extension/shared.js: `config()` also reads `plainOK`, the one public http address the user has gone ahead with; `Pinned.plainUnconfirmed(cfg)` is true when `cfg.address` is `http:` for a host `localHost` refuses and `plainOK` is not that address. An address typed with `http://` for the own network, an https address and an address without a stored token are never held.
+- extras/extension/options.js: a Save that goes ahead on its second click stores `plainOK` with the address; a Save of any other address stores `plainOK` empty. When the options page opens on a stored address that is held, the status shows the warning at once and Save is armed for that address, so one click on Save confirms it, as the second click does; Test still asks twice.
+- extras/extension/popup.js: when the stored address is held, the popup sends nothing (no /api/folders, no /api/check, no save) and shows a notice with two buttons, Continue and Open settings. Continue stores `plainOK` and goes on as today; Open settings opens the options page.
+- extras/extension/background.js: the right click save, when the address is held, sends nothing and opens the options page, as it does today without an address or token.
+Why: popup.js and background.js read the stored config and send the token with no check (F-170: popup.js:113, 151, 162; background.js:38-42). A 0.1.11 user who saved `http://<public host>` kept sending the token in clear at every popup open and save.
+Cases.
+- A setting stored by 0.1.11, `{address: "http://bookmarks.example.com", token}` with no `plainOK`: the popup shows the notice and sends nothing; the right click save opens the options page and sends nothing; the options page shows the warning; Continue in the popup or Save in the options then goes ahead, and from then on the popup and the right click save work as before.
+- Stored by 0.1.12 after the two clicks: `plainOK` is set, nothing more is asked.
+- The address changed in the options (Save of another address): `plainOK` is cleared; a later return to the public http address asks again.
+- Own network (`http://10.0.0.5:9095`, `http://nas`), https, no address: unchanged.
+- Chromium and Firefox: the same files. Phone: no extension.
+WORDING: needs his OK.
+- Popup notice, title: "Plain http to <host>" (the host and port of the address); text: "On plain http your token may cross the internet unencrypted. Use https, or click Continue to connect anyway."; buttons "Continue" and "Open settings".
+- Options page, opened on a held address: "On plain http your token may cross the internet unencrypted. Use https, or click Save to keep using this address."
+Test. tools/extension.test.mjs, with a setting stored the 0.1.11 way: the popup makes no request and shows the notice; Continue stores `plainOK` and then the popup asks for /api/folders with the token; the right click save makes no request and opens the options page, and with `plainOK` set it posts as before; the options page shows the open warning, one Save click stores the address with `plainOK`, a Save of an own network address clears it. Own network and https settings: the popup asks for /api/folders at once. These fail before the change.
 
 ### 23.2 Audit record: the V3.5.1 evidence names the routes outside csrf() (no code)
 

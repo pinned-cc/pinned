@@ -22,11 +22,7 @@
      and go ahead on a second click of the same button; once gone ahead, the address counts for both until it changes.
      Decided on the cleaned address, so the address Save writes back into the field is the same address. */
   var armed = null, confirmed = '';
-  function plainPublic(c) {
-    if (c.length !== 1) return '';
-    var u = new URL(c[0]);
-    return u.protocol === 'http:' && !Pinned.localHost(u.hostname) ? c[0] : '';
-  }
+  function plainPublic(c) { return c.length === 1 && Pinned.plainPublic(c[0]) ? c[0] : ''; }
   function holdForPlain(cfg, button) {
     var a = plainPublic(cfg.candidates);
     if (a !== confirmed) confirmed = '';
@@ -40,7 +36,15 @@
   /* a refused token or another server answer, said with the address that answered */
   function reachedButText(e) { return 'Reached ' + e.address + ', but ' + e.message.charAt(0).toLowerCase() + e.message.slice(1) + (/[.!?]$/.test(e.message) ? '' : '.'); }
 
-  Pinned.config().then(function (c) { saved = c; addr.value = c.address; tok.value = c.token; if (!c.address) addr.focus(); });
+  /* opened on a stored address the user has not gone ahead with (saved by 0.1.11, or the right click save sent it here):
+     the warning shows at once and Save is armed, so one click on Save goes ahead */
+  Pinned.config().then(function (c) {
+    saved = c; addr.value = c.address; tok.value = c.token; if (!c.address) addr.focus();
+    if (Pinned.plainUnconfirmed(c)) {
+      armed = { address: Pinned.cleanAddress(c.address), button: 'save' };
+      show('bad', 'On plain http your token may cross the internet unencrypted. Use https, or click Save to keep using this address.');
+    }
+  });
 
   testBtn.addEventListener('click', async function () {
     var cfg = read(); if (!cfg || holdForPlain(cfg, 'test')) return;
@@ -79,7 +83,7 @@
         }
       }
       addr.value = address;
-      var next = { address: address, token: cfg.token };
+      var next = { address: address, token: cfg.token, plainOK: Pinned.plainPublic(address) && confirmed === address ? address : '' };
       if (old !== address) next.recent = []; /* folder ids belong to one server */
       await ext.storage.local.set(next);
       saved = Object.assign({}, saved, next);

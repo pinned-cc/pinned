@@ -73,9 +73,16 @@ var Pinned = (function () {
   }
 
   async function config() {
-    var c = await ext.storage.local.get(['address', 'token', 'recent']);
-    return { address: c.address || '', token: c.token || '', recent: Array.isArray(c.recent) ? c.recent : [] };
+    var c = await ext.storage.local.get(['address', 'token', 'recent', 'plainOK']);
+    return { address: c.address || '', token: c.token || '', recent: Array.isArray(c.recent) ? c.recent : [], plainOK: c.plainOK || '' };
   }
+  /* a stored address on plain http for a host outside the own network, which the user has not gone ahead with: nothing
+     sends the token there until they do, however and whenever it was stored (an address saved by 0.1.11 has no plainOK) */
+  function plainPublic(address) {
+    var u; try { u = new URL(address); } catch (e) { return false; }
+    return u.protocol === 'http:' && !localHost(u.hostname);
+  }
+  function plainUnconfirmed(cfg) { return !!cfg.address && !!cfg.token && plainPublic(cfg.address) && cfg.plainOK !== cfg.address; }
 
   async function api(cfg, method, path, body) {
     var opt = { method: method, headers: { Authorization: 'Bearer ' + cfg.token }, credentials: 'omit', cache: 'no-store' };
@@ -146,5 +153,5 @@ var Pinned = (function () {
     return s;
   }
 
-  return { cleanAddress: cleanAddress, addressCandidates: addressCandidates, localHost: localHost, probe: probe, originPattern: originPattern, config: config, api: api, remember: remember, folderIndex: folderIndex, h: h, icon: icon };
+  return { cleanAddress: cleanAddress, addressCandidates: addressCandidates, localHost: localHost, plainPublic: plainPublic, plainUnconfirmed: plainUnconfirmed, probe: probe, originPattern: originPattern, config: config, api: api, remember: remember, folderIndex: folderIndex, h: h, icon: icon };
 })();

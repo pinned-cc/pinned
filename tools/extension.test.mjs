@@ -137,9 +137,9 @@ test('originPattern asks for the host only, every port', () => {
 
 test('config fills what is missing and ignores a recent list that is not a list', async () => {
   let { Pinned } = load(['shared.js'], stubBrowser().browser);
-  assert.deepEqual(plain(await Pinned.config()), { address: '', token: '', recent: [] });
+  assert.deepEqual(plain(await Pinned.config()), { address: '', token: '', recent: [], plainOK: '' });
   ({ Pinned } = load(['shared.js'], stubBrowser({ address: 'https://a.example', token: 'tk_1', recent: 'x' }).browser));
-  assert.deepEqual(plain(await Pinned.config()), { address: 'https://a.example', token: 'tk_1', recent: [] });
+  assert.deepEqual(plain(await Pinned.config()), { address: 'https://a.example', token: 'tk_1', recent: [], plainOK: '' });
 });
 
 test('remember keeps the three most recent folders, newest first, without repeats', async () => {
@@ -449,11 +449,76 @@ test('options: own network, https and addresses without a scheme go ahead on the
   }
 });
 
-test('options: an address saved before with http:// for a public host is used until Test or Save; Test then warns once', async () => {
-  const o = optionsWithFetch({ address: 'http://bookmarks.example.com', token: 'tk_old' }); await settle();
+// S23.1.8 (F-170): a public http address stored the 0.1.11 way, without plainOK, is held everywhere the token would go.
+const OLD = { address: 'http://bookmarks.example.com', token: 'tk_old' };
+const OPEN_WARN = 'On plain http your token may cross the internet unencrypted. Use https, or click Save to keep using this address.';
+const POPUP_WARN = 'On plain http your token may cross the internet unencrypted. Use https, or click Continue to connect anyway.';
+
+test('options: opened on a public http address stored before, it warns at once; one Save stores it with plainOK; Test still asks twice', async () => {
+  const o = optionsWithFetch(OLD); await settle();
   assert.equal(o.els.address.value, 'http://bookmarks.example.com');
-  await o.click(); assert.equal(o.statusText(), TEST_WARN); assert.equal(o.net.seen.length, 0);
-  await o.click(); assert.match(o.statusText(), /^Connected/);
+  assert.equal(o.statusText(), OPEN_WARN); assert.equal(o.net.seen.length, 0);
+  await o.submit();
+  assert.match(o.statusText(), /^Saved http:\/\/bookmarks\.example\.com\./);
+  assert.equal(o.rec.store.plainOK, 'http://bookmarks.example.com');
+  const t = optionsWithFetch(OLD); await settle();
+  await t.click(); assert.equal(t.statusText(), TEST_WARN); assert.equal(t.net.seen.length, 0);
+  await t.click(); assert.match(t.statusText(), /^Connected/);
+  // a Save of another address clears it, and a confirmed address opens without a warning
+  const c = optionsWithFetch({ ...OLD, plainOK: OLD.address }); await settle();
+  assert.equal(c.statusText(), '');
+  c.els.address.value = 'http://10.0.0.5:9095'; await c.submit();
+  assert.equal(c.rec.store.plainOK, '');
+});
+
+test('background: a public http address stored before is not sent to; the options page opens; once gone ahead it posts', async () => {
+  const net = fakeFetch();
+  const { browser, listeners, rec } = stubBrowser(OLD);
+  load(['shared.js', 'background.js'], browser, { fetch: net.f });
+  await click(listeners, rec, { menuItemId: 'pinned-page', pageUrl: 'https://a.example/' }, { title: 'A' });
+  assert.equal(rec.optionsOpened, 1); assert.equal(net.seen.length, 0);
+  rec.store.plainOK = OLD.address;
+  await click(listeners, rec, { menuItemId: 'pinned-page', pageUrl: 'https://a.example/' }, { title: 'A' });
+  assert.deepEqual(plain(net.seen.map(r => [r.url, r.auth])), [['http://bookmarks.example.com/api/bookmarks', 'Bearer tk_old']]);
+});
+
+// The popup in a stand-in DOM: nodes keep their attributes, children and click handlers; the text of the page can be read.
+function popupPage(stored, answers = {}) {
+  const { browser, rec } = stubBrowser(stored);
+  browser.tabs = { async query() { return [{ url: 'https://a.example/page', title: 'A page' }]; } };
+  const seen = [];
+  const fetch = async (url, opt) => {
+    seen.push({ url, method: opt.method, auth: opt.headers.Authorization });
+    const path = new URL(url).pathname, a = answers[path] || [200, path === '/api/folders' ? [] : {}];
+    return new Response(JSON.stringify(a[1]), { status: a[0], headers: { 'Content-Type': 'application/json' } });
+  };
+  const node = tag => ({ tag, attrs: {}, children: [], text: '', handlers: {}, style: { setProperty() {} },
+    classList: { add() {}, toggle() {} }, value: '', focus() {}, select() {}, setSelectionRange() {},
+    set textContent(t) { this.text = t; this.children = []; }, get textContent() { return this.text + this.children.map(c => c.textContent || '').join(''); },
+    setAttribute(k, v) { this.attrs[k] = v; }, appendChild(c) { this.children.push(c); }, replaceChildren(...c) { this.children = c; },
+    addEventListener(k, f) { this.handlers[k] = f; }, querySelector() { return null; } });
+  const pop = node('main');
+  const document = { getElementById: () => pop, createElement: node, createElementNS: (ns, t) => node(t), createTextNode: t => ({ textContent: t }),
+    addEventListener() {}, activeElement: null };
+  const all = (n = pop) => [n, ...(n.children || []).flatMap(c => all(c))];
+  const button = label => all().find(n => n.tag === 'button' && n.textContent === label);
+  load(['shared.js', 'popup.js'], browser, { document, fetch, window: { close() {} }, matchMedia: () => ({ matches: false }), setTimeout, clearTimeout });
+  return { rec, seen, pop, all, button, text: () => pop.textContent };
+}
+
+test('popup: a public http address stored before sends nothing until Continue, which stores plainOK and then connects', async () => {
+  const p = popupPage(OLD); await settle();
+  assert.equal(p.seen.length, 0, 'the token was sent before Continue');
+  assert.match(p.text(), /^Plain http to bookmarks\.example\.com/);
+  assert.ok(p.text().includes(POPUP_WARN));
+  assert.ok(p.button('Open settings'));
+  await p.button('Continue').handlers.click(); await settle();
+  assert.equal(p.rec.store.plainOK, OLD.address);
+  assert.deepEqual(plain(p.seen.slice(0, 2).map(r => [r.url, r.auth])), [['http://bookmarks.example.com/api/folders', 'Bearer tk_old'], ['http://bookmarks.example.com/api/check?url=https%3A%2F%2Fa.example%2Fpage', 'Bearer tk_old']]);
+  for (const ok of [{ address: 'http://10.0.0.5:9095', token: 't' }, { address: 'https://bookmarks.example.com', token: 't' }, { ...OLD, plainOK: OLD.address }]) {
+    const q = popupPage(ok); await settle();
+    assert.equal(q.seen[0] && new URL(q.seen[0].url).pathname, '/api/folders', ok.address);
+  }
 });
 
 // The extension carries the version of the release it ships in, the newest

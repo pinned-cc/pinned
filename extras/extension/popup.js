@@ -10,12 +10,13 @@
   function hostOf(u) { try { return new URL(u).host; } catch (e) { return u; } }
 
   /* one line and a button, for setup and for errors that stop the popup */
-  function notice(title, text, button) {
+  function notice(title, text, button, other) {
     pop.classList.add('in');
     pop.replaceChildren(h('div', { class: 'setup' },
       h('div', { class: 'sv-top' }, h('h1', { text: title }), h('button', { type: 'button', class: 'ib', 'aria-label': 'Close', onclick: close }, icon('close'))),
       text ? h('p', { text: text }) : null,
-      button ? h('div', { class: 'sv-acts' }, h('button', { type: 'button', class: 'save', onclick: button.run }, button.label)) : null));
+      button ? h('div', { class: 'sv-acts' }, other ? h('button', { type: 'button', class: 'tbtn', onclick: other.run }, other.label) : null,
+        h('button', { type: 'button', class: 'save', onclick: button.run }, button.label)) : null));
   }
   /* Enter runs the one button of a notice */
   document.addEventListener('keydown', function (e) { var b = !S && e.key === 'Enter' && pop.querySelector('.setup .save'); if (b) { e.preventDefault(); b.click(); } });
@@ -143,6 +144,13 @@
   async function boot() {
     cfg = await Pinned.config();
     if (!cfg.address || !cfg.token) { notice('Set your address and token first', null, { label: 'Open settings', run: openOptions }); return; }
+    /* a public http address the user has not gone ahead with: nothing is sent until Continue (spec S23.1.8) */
+    if (Pinned.plainUnconfirmed(cfg)) {
+      notice('Plain http to ' + hostOf(cfg.address), 'On plain http your token may cross the internet unencrypted. Use https, or click Continue to connect anyway.',
+        { label: 'Continue', run: async function () { await ext.storage.local.set({ plainOK: cfg.address }); pop.replaceChildren(h('div', { class: 'loading', 'aria-busy': 'true' })); boot(); } },
+        { label: 'Open settings', run: openOptions });
+      return;
+    }
     var tabs = await ext.tabs.query({ active: true, currentWindow: true });
     var tab = tabs && tabs[0];
     if (!tab || !/^https?:\/\//i.test(tab.url || '')) { notice('This page cannot be saved', 'Only pages with an http or https address can be saved.', null); return; }
