@@ -2,6 +2,23 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.12
+
+### Fixes
+
+- In the browser extension's options, an address typed with `http://` for a server outside your own network now says, on Test and on Save, that your token may cross the internet unencrypted, and goes ahead only when you click again. Before, it said Connected.
+- An address with a space before its `#`, such as `http://nas/a #top`, is now the same bookmark as `http://nas/a`.
+- How to save: Show the Save code is easier to tap.
+- On a small phone the Add sheet shows the folder the link goes to.
+- On the phone, the Settings gear shows when the server cannot be reached at the first load.
+- A page that does not exist says so in the app's look, instead of a plain line of text.
+- Small text, such as counts, times, hosts and the version line, is at least 12 px.
+- In the lock dialog the note no longer overlaps the Repeat password field.
+- Screen readers read each folder in the sidebar by the name and count it shows.
+- What's new marks the version you run.
+- An SVG icon with more than eight pictures in its style is now refused when it is fetched. Before, it was stored, removed at the next start and fetched again at every start.
+- The image's build record no longer names the account that pushed the release. The software bill of materials stays. Each release on GitHub now carries the software bill of materials of both platforms and a signed build provenance, which `gh attestation verify` checks.
+
 ## 0.1.11, 2026-11-03
 
 ### New
@@ -21,15 +38,15 @@ Everything that changes for people who run the app goes here. Versions follow se
 - The server install script gave the container a fixed name, so a second install in another folder clashed with the first. The name is gone, and a second install in a folder with the same name as the first is now refused instead of replacing it. Found by running the script on a fresh Ubuntu 26.04 server.
 - For screen readers, the hidden page headings, the share page footer and the share search on the phone now sit inside landmarks.
 - A site with a broken favicon.ico could stop the server, and it stopped again at every start until the bookmark was removed by hand. A broken icon now leaves the letter mark and the server keeps running.
-- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address, Refetch icon or the next version try again. Only lasting failures count: an error page, a broken icon, a certificate that is not trusted, a redirect loop, a domain that does not exist. A network outage at start, a DNS server that does not answer, a refused or reset connection or a timeout does not.
-- In the browser extension's options, an address typed with another scheme, such as `ftp://example.com`, was turned into `https://ftp//example.com`. It is now refused with the message to enter an address starting with http or https.
+- A link whose icon fails three times is no longer fetched again at every start. Saving it again, changing its address or the next version try again. Only lasting failures count: an error page, a broken icon, a certificate that is not trusted, a redirect loop, a domain that does not exist. A network outage at start, a DNS server that does not answer, a refused or reset connection or a timeout does not.
+- In the browser extension's options, an address typed with another scheme, such as `ftp://example.com`, was turned into `https://ftp//example.com`. It is now refused with the message to enter an address, such as `10.0.0.5:9095` or `https://bookmarks.example.com`.
 - An import file whose folders nest more than 256 deep could stop the server. It is now refused with a message.
 - Someone guessing passwords from many addresses could make every login wait, yours included. A browser that logs in with the password now keeps a signed device cookie, is counted on its own and is no longer held by that limit. Changing the app password ends these cookies. Other browsers keep the limit as before.
 - A large import no longer makes saves and logins fail while it runs: the file is saved in short steps, so saving and logging in from other browsers go on meanwhile, and it is much faster than before. A view with more than 240 links, such as All bookmarks after a large import, shows the first 240 with the count and Show all. Show all draws the rest in steps as you scroll. Before, All bookmarks held the page for about 2 seconds at 10000 links and froze it at 100000.
 - On the keyboard, Tab moves through every sheet again (it stayed on the first button), and on the desktop Tab goes on past the search field to the rest of the page. Escape in the search leaves the focus in the search field. Enter in the search field opens the search.
 - Deleting a bookmark from Trash for good now asks first, like Empty trash.
 - Login, How to save, the save page and shared folders follow light and dark like the app. They were always dark.
-- Folder colours in light mode, the picked folder in the folder pickers, search hits and the light switch are easier to read, the share page footer too. Touch targets on How to save, the folder share button and the card buttons are at least 44 px.
+- Folder colours in light mode, the picked folder in the folder pickers, search hits and the light switch are easier to read, the share page footer too. On touch screens, the touch targets on How to save, the folder share button and the card buttons are at least 44 px, apart from Show the Save code (44 px from 0.1.12) and the Copy buttons in the help on How to save, which are 36 px.
 - What's new can be reached again at window widths between 720 and 999 px.
 - Opening a shared folder with a password no longer shows an error in the browser console.
 - A shared folder moved into a locked folder keeps no share link. Before, its link stayed alive and could not be seen or revoked while the parent was locked.
