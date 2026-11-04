@@ -931,7 +931,7 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .hs-copy:active{transform:scale(.98)}
 .hs-dl{background:var(--surface-up);color:var(--ink)}
 .hs-code{margin-top:var(--s-14);color:var(--ink-weak);font-size:var(--t-meta)}
-.hs-code summary{cursor:pointer;width:max-content}
+.hs-code summary{cursor:pointer;width:max-content;position:relative}.hs-code summary::after{content:"";position:absolute;left:0;right:0;bottom:calc(var(--s-4) * -1);height:var(--tap)}
 .hs-code code{display:block;margin-top:var(--s-4);padding:var(--s-6) var(--s-7);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);font:400 var(--t-label)/var(--lh-18) var(--mono);word-break:break-all}
 /* the drawings: a few lines of the real screen, the one to tap in the accent */
 .hs-step{display:flex;flex-direction:column}
