@@ -895,21 +895,19 @@ S23.5.5 Wording: none.
 
 ### 23.6 Phone: the Add sheet shows the Folder row on a small screen
 
-S23.6.1 What changes. On the phone (below 720 px), the save sheet may grow taller than 60 percent of the visible height, the limit every phone sheet has (`.sheet{max-height:calc(var(--vvh,100dvh) * .6)}`, app.css:632). For the save sheet only, the limit becomes the visible height less the top safe area and 12 px, `max-height:calc(var(--vvh,100dvh) - env(safe-area-inset-top) - 12px)`, written as a rule on `.layer:not(.page-sheet) .sheet:has(form[data-save])` inside the phone media query, the way app.css:1389 already picks a sheet with `:has`. Review 04.11: not the `.sheet.tall` value (app.css:583), which is a share of the layout viewport, not of the visible height; with the keyboard up (`bottom: var(--kb)`, app.css:636) that value would put the sheet's top above the visible screen by about the keyboard's height, hiding the grab, the favicon and Close. The sheet still takes only the height of its content.
+S23.6.1 What changes. On the phone (below 720 px) every sheet is bound to 60 percent of the visible height (`.sheet{max-height:calc(var(--vvh,100dvh) * .6)}`, app.css:632). The save sheet keeps that bound and may grow past it only as far as the end of the Folder row, and never past the visible height less the top safe area and 12 px. In app.css, in the phone query at app.css:636, on the same line: `.layer:not(.page-sheet) .sheet:has(form[data-save]){max-height:min(max(calc(var(--vvh,100dvh) * .6),var(--sv-need,0px)),calc(var(--vvh,100dvh) - env(safe-area-inset-top) - 12px))}`. `--sv-need` is set on the sheet by web/js/sheets.js fitSave: the sheet's height with its body shown down to the bottom of `.sv-folder`, measured after each draw and again by a ResizeObserver on the form when it changes size (the Already saved line, the picker, the address field). The sheet still takes only the height of its content.
 
-S23.6.2 Why. widths 04.11 Problem 2: at 360 by 780 with an already saved address, the sheet starts at about y 312 and the Folder row is cut to a sliver of about 7 px at the bottom of the scroll area, so the folder the link goes to is out of sight above Save to Inbox and Save anyway. 390 and wider show the folder chips.
+S23.6.2 Why. widths 04.11 Problem 2: at 360 by 780 with an already saved address the Folder row is cut to a sliver of about 7 px. A bound of the visible height for the whole sheet (the first form of this item) also made the sheet taller at 390 to 440 wherever its content was taller than 60 percent, which changes the approved look.
 
-S23.6.3 Cases.
-- 390x844, 430x932 and 440x956: the content fits under 60 percent, so the sheet's height does not change.
-- 360x780, and any phone whose content is taller than 60 percent: the sheet grows to its content, up to the new bound.
-- The keyboard up: the sheet sits on the keyboard (app.css:636) and `--vvh` is the visible height (web/js/phone.js:7). With a long content the sheet may now reach the top of the visible area instead of 60 percent of it, while typing in Title or URL. LOOK: needs his OK (the sheet reads taller while typing on small phones). Alternative if he prefers: a bound of 75 percent of the visible height (`* .75`), if the scan shows that it holds the whole Folder row at 360x780.
-- The Already saved line and the folder picker open: the sheet grows with them up to the bound, then the body scrolls (app.css:637), as now.
-- The /save page (a `page-sheet`, app.css:990-995) and the desktop dialog (from 720 px, app.css:648-649): not affected (the rule excludes `page-sheet` and sits in the phone query).
-- Other phone sheets (Move, Share, tokens, Signed in, lock): not affected.
-- Light and dark: no colour changes.
-- Chromium and WebKit: both support `:has` (already used at app.css:1389).
+S23.6.3 Cases (measured, 0.1.11 against 0.1.12, Chromium and WebKit the same within 1 px; already saved address, seed of 7 folders):
+- Folder row whole at 60 percent: height unchanged (430x932 553 px, 440x956 553 px; the plain Add sheet at 390x844 506 px as in 0.1.11).
+- Folder row cut at 60 percent: the sheet grows to the end of the row, no further: 360x780 468 to 550, 360x640 384 to 550, 375x667 400 to 550, 390x844 506 to 550, 390x700 420 to 550.
+- Keyboard up (`--vvh` and `--kb` from web/js/phone.js:7): the bound is the visible height; the sheet's top stays on screen (12 px or more) and Save stays in view at every size; where the visible height is too short for the Folder row, the body scrolls as before.
+- The /save page (`page-sheet`), the desktop dialog (720 px and up) and every other sheet: not affected.
+- Light and dark: no colour change. Chromium and WebKit: both support `:has` and `min()`/`max()`.
+LOOK: needs his OK for the sizes where the sheet now grows.
 
-S23.6.4 Test. The ten width scan, add-sheet screen with an already saved address: at 360x780 the Folder label and the whole chip row are inside the sheet's visible body above the foot, in Chromium and WebKit, light and dark; at 390, 430 and 440 the sheet's height matches 0.1.11 within 1 px; desktop widths unchanged. A ui-test check at 360x780 with the already saved address, with a keyboard stand-in that does not exist yet and is named in the test: `--vvh` and `--kb` set on `document.documentElement` to a keyboard height (780 minus 336, and 336); the sheet's top is at or below 0 of the visible area and Save is visible. (At 390x844 the content fits under 60 percent and the new rule does nothing, so a check there proves nothing.)
+S23.6.4 Test. tools/ui-test.mjs, check S23.6: at 360x780, 390x844 and 440x956 with an already saved address, the Folder row is whole inside the body and the sheet is no taller than the larger of 60 percent and `--sv-need`; with the keyboard stand-in (`--vvh` and `--kb` set to a 336 px keyboard) the sheet's top, Close and Save are in view. The ten width scan: add-sheet heights match 0.1.11 wherever the Folder row was whole.
 
 S23.6.5 Wording: none.
 
