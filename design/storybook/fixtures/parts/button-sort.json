@@ -1,0 +1,77 @@
+{
+ "id": "button-sort",
+ "group": "Buttons",
+ "title": "Sort",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"sortc btn\" data-a=\"sort\" aria-haspopup=\"menu\" aria-label=\"Sort, Newest\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-sort\"></use></svg><span class=\"sortc-t\">Newest</span><svg class=\"i sortc-ch\" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "tbwrap"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "tb",
+    "role": "toolbar",
+    "aria-label": "All bookmarks"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 1112.484375,
+  "y": 272,
+  "width": 114.875,
+  "height": 36,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

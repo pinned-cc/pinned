@@ -1,0 +1,68 @@
+{
+ "id": "settings-row",
+ "group": "Settings rows",
+ "title": "One settings row",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<a class=\"sr\" href=\"/bookmarklet\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-all\"></use></svg></span><span class=\"sr-t\"><span>How to save</span><span class=\"sr-s\">Bookmarklet and extension</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></a>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp nobar",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "pset"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 0px;"
+ },
+ "box": {
+  "x": 18,
+  "y": 144,
+  "width": 354,
+  "height": 56,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

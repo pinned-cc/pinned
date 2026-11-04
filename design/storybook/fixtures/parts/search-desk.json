@@ -1,0 +1,70 @@
+{
+ "id": "search-desk",
+ "group": "Fields",
+ "title": "Search, desktop",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<label class=\"search\" for=\"q\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-search\"></use></svg><span class=\"vh\">Search</span><input id=\"q\" type=\"search\" autocomplete=\"off\" spellcheck=\"false\" enterkeyhint=\"search\" placeholder=\"Search bookmarks or press ⌘K\" value=\"\" style=\"\"><span class=\"kcap\" aria-hidden=\"true\">/</span></label>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "head",
+    "id": "head"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 24,
+  "width": 520,
+  "height": 48,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

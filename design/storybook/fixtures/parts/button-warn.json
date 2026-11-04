@@ -1,0 +1,77 @@
+{
+ "id": "button-warn",
+ "group": "Buttons",
+ "title": "A warning button",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"btn warn\" data-a=\"empty-trash\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg>Empty trash</button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "tbwrap"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "tb",
+    "role": "toolbar",
+    "aria-label": "Trash"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 1200.28125,
+  "y": 272,
+  "width": 127.71875,
+  "height": 36,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

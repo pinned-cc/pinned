@@ -1,0 +1,69 @@
+{
+ "id": "dock",
+ "group": "Cards",
+ "title": "Pinned dock",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<nav class=\"dock\" aria-label=\"Pinned\" data-dock=\"\"><a class=\"dk\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Field notes on slow software\" data-id=\"1\" data-open=\"1\" draggable=\"false\">\n      <span class=\"dk-ic\" data-l=\"F\">F</span>\n      <span class=\"dk-l\">Field notes on slow software</span></a><a class=\"dk\" href=\"https://example.com/design/grids\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Grid systems in practice\" data-id=\"4\" data-open=\"4\" draggable=\"false\">\n      <span class=\"dk-ic\" data-l=\"G\">G</span>\n      <span class=\"dk-l\">Grid systems in practice</span></a><a class=\"dk\" href=\"https://kitchen.example.com/bread\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Bread with a long rise\" data-id=\"8\" data-open=\"8\" draggable=\"false\">\n      <span class=\"dk-ic\" data-l=\"B\">B</span>\n      <span class=\"dk-l\">Bread with a long rise</span></a><a class=\"dk\" href=\"https://rail.example.org/night-trains\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Night trains of Europe\" data-id=\"10\" data-open=\"10\" draggable=\"false\">\n      <span class=\"dk-ic\" data-l=\"N\">N</span>\n      <span class=\"dk-l\">Night trains of Europe</span></a><a class=\"dk\" href=\"https://tools.example.dev/regex\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Regex tester\" data-id=\"14\" data-open=\"14\" draggable=\"false\">\n      <span class=\"dk-ic\" data-l=\"R\">R</span>\n      <span class=\"dk-l\">Regex tester</span></a><a class=\"dk\" href=\"https://work.example.com/release\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Release checklist\" data-id=\"12\" data-open=\"12\" draggable=\"false\">\n      <span class=\"dk-ic\" data-l=\"R\">R</span>\n      <span class=\"dk-l\">Release checklist</span></a></nav>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "dockwrap"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 116,
+  "width": 928,
+  "height": 98,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

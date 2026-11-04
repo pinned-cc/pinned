@@ -1,0 +1,1306 @@
+{
+  "shadow": {
+    "$description": "Shadows and rings, two modes. Layers that use a colour token alias it.",
+    "dark": {
+      "focus": {
+        "ring": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.372549,
+                  0.827451,
+                  0.603922
+                ],
+                "hex": "#5fd39a",
+                "alpha": 0.7
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 2,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.372549,
+                  0.827451,
+                  0.603922
+                ],
+                "hex": "#5fd39a",
+                "alpha": 0.12
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 6,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The focus ring of the search and the bulb.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--focus-glow",
+              "source": [
+                "web/app.css:47",
+                "web/app.css:1554"
+              ],
+              "css": "0 0 0 2px rgba(95,211,154,.7),0 0 0 6px rgba(95,211,154,.12)"
+            }
+          }
+        },
+        "field": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.372549,
+                  0.827451,
+                  0.603922
+                ],
+                "hex": "#5fd39a",
+                "alpha": 0.22
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 3,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The focus glow of a field.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--focus-field",
+              "source": [
+                "web/app.css:48",
+                "web/app.css:1555"
+              ],
+              "css": "0 0 0 3px rgba(95,211,154,.22)"
+            }
+          }
+        }
+      },
+      "edge": {
+        "top-light": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  1,
+                  1,
+                  1
+                ],
+                "hex": "#ffffff",
+                "alpha": 0.06
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              },
+              "inset": true
+            }
+          ],
+          "$description": "The lit top edge of sheets.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--edge-top",
+              "source": [
+                "web/app.css:52",
+                "web/app.css:1557"
+              ],
+              "css": "inset 0 1px 0 rgba(255,255,255,.06)"
+            }
+          }
+        }
+      },
+      "elevation": {
+        "hover": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.55
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 10,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 24,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -8,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.25
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 2,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 6,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "A card under the pointer.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-hover",
+              "source": [
+                "web/app.css:53",
+                "web/app.css:1558"
+              ],
+              "css": "0 10px 24px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.25)"
+            }
+          }
+        },
+        "lift": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.75
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 16,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 32,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -10,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.35
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 2,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 8,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "A card lifted by a hold or carried by a drag.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-lift",
+              "source": [
+                "web/app.css:54",
+                "web/app.css:1559"
+              ],
+              "css": "0 16px 32px -10px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.35)"
+            }
+          }
+        },
+        "float": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.45
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 8,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 24,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The phone search and plus over the grid.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-float",
+              "source": [
+                "web/app.css:55",
+                "web/app.css:1560"
+              ],
+              "css": "0 8px 24px rgba(0,0,0,.45)"
+            }
+          }
+        },
+        "glass": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": "{color.dark.edge.strong}",
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 1,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.6
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 8,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 32,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -10,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.4
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 2,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 4,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "Panels over a blur: sheets, the palette, menus.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-glass",
+              "source": [
+                "web/app.css:56",
+                "web/app.css:1561"
+              ],
+              "css": "0 0 0 1px var(--line-2),0 8px 32px -10px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.4)"
+            }
+          }
+        },
+        "card": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.18
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 2,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "A card resting on the ground.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-shadow",
+              "source": [
+                "web/app.css:67",
+                "web/app.css:1564"
+              ],
+              "css": "0 1px 2px rgba(0,0,0,.18)"
+            }
+          }
+        }
+      },
+      "save": {
+        "edge": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  1,
+                  1,
+                  1
+                ],
+                "hex": "#ffffff",
+                "alpha": 0.11
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              },
+              "inset": true
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  1,
+                  1,
+                  1
+                ],
+                "hex": "#ffffff",
+                "alpha": 0.04
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 1,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0,
+                  0,
+                  0
+                ],
+                "hex": "#000000",
+                "alpha": 0.55
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": -16,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 48,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The lit edge and shadow of the save panel.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--save-edge",
+              "source": [
+                "web/app.css:82",
+                "web/app.css:1568"
+              ],
+              "css": "inset 0 1px 0 rgba(255,255,255,.11),0 0 0 1px rgba(255,255,255,.04),0 -16px 48px rgba(0,0,0,.55)"
+            }
+          }
+        }
+      }
+    },
+    "light": {
+      "focus": {
+        "ring": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.086275,
+                  0.478431,
+                  0.290196
+                ],
+                "hex": "#167a4a"
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 2,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.086275,
+                  0.478431,
+                  0.290196
+                ],
+                "hex": "#167a4a",
+                "alpha": 0.12
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 6,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The focus ring of the search and the bulb.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--focus-glow",
+              "source": [
+                "web/app.css:47",
+                "web/app.css:1554"
+              ],
+              "css": "0 0 0 2px #167a4a,0 0 0 6px rgba(22,122,74,.12)"
+            }
+          }
+        },
+        "field": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.086275,
+                  0.478431,
+                  0.290196
+                ],
+                "hex": "#167a4a",
+                "alpha": 0.16
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 3,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The focus glow of a field.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--focus-field",
+              "source": [
+                "web/app.css:48",
+                "web/app.css:1555"
+              ],
+              "css": "0 0 0 3px rgba(22,122,74,.16)"
+            }
+          }
+        }
+      },
+      "edge": {
+        "top-light": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  1,
+                  1,
+                  1
+                ],
+                "hex": "#ffffff",
+                "alpha": 0.6
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              },
+              "inset": true
+            }
+          ],
+          "$description": "The lit top edge of sheets.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--edge-top",
+              "source": [
+                "web/app.css:52",
+                "web/app.css:1557"
+              ],
+              "css": "inset 0 1px 0 rgba(255,255,255,.6)"
+            }
+          }
+        }
+      },
+      "elevation": {
+        "hover": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.08
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 2,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.26
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 12,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 26,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -12,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "A card under the pointer.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-hover",
+              "source": [
+                "web/app.css:53",
+                "web/app.css:1558"
+              ],
+              "css": "0 1px 2px rgba(27,26,23,.08),0 12px 26px -12px rgba(27,26,23,.26)"
+            }
+          }
+        },
+        "lift": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.1
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 2,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.3
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 16,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 32,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -12,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.3
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 40,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 72,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -28,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "A card lifted by a hold or carried by a drag.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-lift",
+              "source": [
+                "web/app.css:54",
+                "web/app.css:1559"
+              ],
+              "css": "0 1px 2px rgba(27,26,23,.10),0 16px 32px -12px rgba(27,26,23,.30),0 40px 72px -28px rgba(27,26,23,.30)"
+            }
+          }
+        },
+        "float": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.1
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 2,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.26
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 10,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 24,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -8,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The phone search and plus over the grid.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-float",
+              "source": [
+                "web/app.css:55",
+                "web/app.css:1560"
+              ],
+              "css": "0 1px 2px rgba(27,26,23,.10),0 10px 24px -8px rgba(27,26,23,.26)"
+            }
+          }
+        },
+        "glass": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.06
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 1,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.26
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 10,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 24,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -8,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.22
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 28,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 56,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -20,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "Panels over a blur: sheets, the palette, menus.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--shadow-glass",
+              "source": [
+                "web/app.css:56",
+                "web/app.css:1561"
+              ],
+              "css": "0 0 0 1px rgba(27,26,23,.06),0 10px 24px -8px rgba(27,26,23,.26),0 28px 56px -20px rgba(27,26,23,.22)"
+            }
+          }
+        },
+        "card": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.06
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 2,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "A card resting on the ground.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-shadow",
+              "source": [
+                "web/app.css:67",
+                "web/app.css:1564"
+              ],
+              "css": "0 1px 2px rgba(27,26,23,.06)"
+            }
+          }
+        }
+      },
+      "save": {
+        "edge": {
+          "$type": "shadow",
+          "$value": [
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  1,
+                  1,
+                  1
+                ],
+                "hex": "#ffffff",
+                "alpha": 0.6
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 1,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 0,
+                "unit": "px"
+              },
+              "inset": true
+            },
+            {
+              "color": "{color.light.edge.default}",
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 1,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.06
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 0,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 0,
+                "unit": "px"
+              },
+              "spread": {
+                "value": 1,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.26
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 10,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 24,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -8,
+                "unit": "px"
+              }
+            },
+            {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.105882,
+                  0.101961,
+                  0.090196
+                ],
+                "hex": "#1b1a17",
+                "alpha": 0.22
+              },
+              "offsetX": {
+                "value": 0,
+                "unit": "px"
+              },
+              "offsetY": {
+                "value": 28,
+                "unit": "px"
+              },
+              "blur": {
+                "value": 56,
+                "unit": "px"
+              },
+              "spread": {
+                "value": -20,
+                "unit": "px"
+              }
+            }
+          ],
+          "$description": "The lit edge and shadow of the save panel.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--save-edge",
+              "source": [
+                "web/app.css:82",
+                "web/app.css:1568"
+              ],
+              "css": "var(--edge-top),0 0 0 1px var(--line),var(--shadow-glass)"
+            }
+          }
+        }
+      }
+    }
+  }
+}

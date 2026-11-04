@@ -1,0 +1,81 @@
+{
+ "id": "gallery-card-phone",
+ "group": "Cards",
+ "title": "Dashboard card, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<article class=\"gk\" data-id=\"1\"><a class=\"g-in\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\" aria-label=\"Field notes on slow software, example.com, in Reading, opened 1m ago\"><span class=\"fav\" data-l=\"F\">F</span><span class=\"gk-time\"><time datetime=\"2026-11-04T10:17:51.000Z\">1m ago</time></span>\n  <span class=\"gk-title\">Field notes on slow software</span><span class=\"trunc-start gk-host\"><bdi dir=\"ltr\">example.com</bdi></span>\n  <span class=\"gk-foot\"><span class=\"gc-chip hue-cyan\"><span class=\"dot\"></span><span class=\"gc-cn\">Reading</span></span></span></a></article>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "gal gal-p"
+   }
+  },
+  {
+   "tag": "section",
+   "attrs": {
+    "class": "gs",
+    "aria-labelledby": "gs-0"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "gb"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 18,
+  "y": 352,
+  "width": 171,
+  "height": 154,
+  "position": "relative",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

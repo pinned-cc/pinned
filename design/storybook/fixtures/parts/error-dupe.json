@@ -1,0 +1,67 @@
+{
+ "id": "error-dupe",
+ "group": "Empty and error states",
+ "title": "Already saved, in the add sheet",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<p class=\"dupe\" role=\"status\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-warn\"></use></svg><span class=\"dupe-t\"><span class=\"d1\"><span class=\"d0\">Already saved in&nbsp;</span><span class=\"trunc-start\"><bdi dir=\"ltr\">Inbox</bdi></span><span class=\"d0\">.</span></span><span class=\"d2\">Save anyway moves it here.</span></span></p>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "layer open",
+    "id": "layer"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "sheet",
+    "id": "sheet",
+    "role": "dialog",
+    "aria-modal": "true",
+    "aria-label": "Save"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "sh-body"
+   }
+  },
+  {
+   "tag": "form",
+   "attrs": {
+    "data-save": "",
+    "id": "svf"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 544,
+  "y": 423,
+  "width": 352,
+  "height": 36,
+  "position": "static",
+  "margin": [
+   10,
+   2,
+   0,
+   2
+  ]
+ }
+}

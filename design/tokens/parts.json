@@ -1,0 +1,5927 @@
+{
+  "part": {
+    "$description": "Values written straight into one rule of web/app.css, named after the rule (selector, then property). Each lists its lines.",
+    "font-size": {
+      "vh-input-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 16,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".vh input",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:185"
+            ]
+          }
+        }
+      },
+      "dk-ic-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 20,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dk-ic",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:261"
+            ],
+            "css": "600 20px/1 var(--sans)"
+          }
+        }
+      },
+      "fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 16,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".fav",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:320"
+            ],
+            "css": "600 16px/1 var(--sans)"
+          }
+        }
+      },
+      "pal-it-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pal-it .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:445"
+            ]
+          }
+        }
+      },
+      "ft-faces-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 9,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ft-faces .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:484"
+            ]
+          }
+        }
+      },
+      "at-row-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".at-row .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:593"
+            ]
+          }
+        }
+      },
+      "sv-top-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 19,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sv-top .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:675"
+            ]
+          }
+        }
+      },
+      "prc-ic-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 17,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".prc-ic",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:798"
+            ],
+            "css": "600 17px/1 var(--sans)"
+          }
+        }
+      },
+      "pt-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 15,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:850"
+            ]
+          }
+        }
+      },
+      "pt-row-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt.row .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:868"
+            ]
+          }
+        }
+      },
+      "pv-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:942"
+            ],
+            "css": "500 12px/1 var(--sans)"
+          }
+        }
+      },
+      "hs-fix-in-code-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 0.95,
+          "unit": "em"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in code",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:974"
+            ],
+            "css": "400 .95em/1 var(--mono)"
+          }
+        }
+      },
+      "rel-code-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 0.92,
+          "unit": "em"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".rel code",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1217"
+            ],
+            "css": "400 .92em/1 var(--mono)"
+          }
+        }
+      },
+      "gk-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 22,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gk .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1295"
+            ]
+          }
+        }
+      },
+      "gal-p-gk-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 19,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":is(.gal-p .gk,body.phone>.gk.ghost) .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1304"
+            ]
+          }
+        }
+      },
+      "gc-row-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 10,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gc-row .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1314"
+            ]
+          }
+        }
+      },
+      "gal-p-gc-row-fav-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":is(.gal-p .gc-row,body.phone>.gc-row.ghost) .fav",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1326"
+            ]
+          }
+        }
+      },
+      "ios-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 13,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ],
+            "css": "400 13px/1.2 var(--sans)"
+          }
+        }
+      },
+      "ios-apps-span-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 10,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps > span",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1507"
+            ]
+          }
+        }
+      },
+      "ios-field-mono-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-field.mono",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1529"
+            ]
+          }
+        }
+      },
+      "ios-cap-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 11,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-cap",
+            "property": "font-size",
+            "mode": "both",
+            "source": [
+              "web/app.css:1532"
+            ]
+          }
+        }
+      },
+      "brand-t-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 22,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".brand-t",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1589"
+            ],
+            "css": "400 22px/1 var(--serif)"
+          }
+        }
+      },
+      "tb-dash-h2-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 30,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".tb.dash h2",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1590"
+            ],
+            "css": "400 30px/1.05 var(--serif)"
+          }
+        }
+      },
+      "gal-h-size": {
+        "$type": "dimension",
+        "$value": {
+          "value": 20,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gal-h",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1591"
+            ],
+            "css": "400 20px/1.2 var(--serif)"
+          }
+        }
+      }
+    },
+    "color": {
+      "mark-hit-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a",
+          "alpha": 0.18
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": "mark.hit",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:224"
+            ],
+            "css": "rgba(95,211,154,.18)"
+          }
+        }
+      },
+      "kcap-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.04
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".kcap",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:233"
+            ],
+            "css": "rgba(255,255,255,.04)"
+          }
+        }
+      },
+      "btn-hover-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.05
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".btn:hover",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:279"
+            ],
+            "css": "rgba(255,255,255,.05)"
+          }
+        }
+      },
+      "btn-pressed-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.08
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".btn[aria-pressed=\"true\"],.btn[aria-expanded=\"true\"]",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:281"
+            ],
+            "css": "rgba(255,255,255,.08)"
+          }
+        }
+      },
+      "notice-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            0.603922,
+            0.603922
+          ],
+          "hex": "#ff9a9a",
+          "alpha": 0.07
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".notice",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:307"
+            ],
+            "css": "rgba(255,154,154,.07)"
+          }
+        }
+      },
+      "notice-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            0.603922,
+            0.603922
+          ],
+          "hex": "#ff9a9a",
+          "alpha": 0.2
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".notice",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:307"
+            ],
+            "css": "1px solid rgba(255,154,154,.2)"
+          }
+        }
+      },
+      "ab-hover-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.08
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ab:hover",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:344"
+            ],
+            "css": "rgba(255,255,255,.08)"
+          }
+        }
+      },
+      "chk-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.32
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".chk",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:347"
+            ],
+            "css": "1.5px solid rgba(255,255,255,.32)"
+          }
+        }
+      },
+      "chk-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.039216,
+            0.039216,
+            0.043137
+          ],
+          "hex": "#0a0a0b",
+          "alpha": 0.35
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".chk",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:347"
+            ],
+            "css": "rgba(10,10,11,.35)"
+          }
+        }
+      },
+      "empty-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.16
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".empty",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:359"
+            ],
+            "css": "1.5px dashed rgba(255,255,255,.16)"
+          }
+        }
+      },
+      "sk-b-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.06
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sk .b",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:362"
+            ],
+            "css": "rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "is-list-tile-hover-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.03
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".is-list .tile:hover",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:372"
+            ],
+            "css": "rgba(255,255,255,.03)"
+          }
+        }
+      },
+      "menu-button-hover-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.07
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".menu button:hover,.menu button:focus-visible,.menu button[aria-selected=\"true\"]",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:404"
+            ],
+            "css": "rgba(255,255,255,.07)"
+          }
+        }
+      },
+      "pal-scrim-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.039216,
+            0.039216,
+            0.043137
+          ],
+          "hex": "#0a0a0b",
+          "alpha": 0.35
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pal-scrim",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:423"
+            ],
+            "css": "rgba(10,10,11,.35)"
+          }
+        }
+      },
+      "pal-scrim-bg-2": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.039216,
+            0.039216,
+            0.043137
+          ],
+          "hex": "#0a0a0b",
+          "alpha": 0.8
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pal-scrim",
+            "property": "background",
+            "media": [
+              "@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px)))"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:424"
+            ],
+            "css": "rgba(10,10,11,.8)"
+          }
+        }
+      },
+      "pal-it-selected-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a",
+          "alpha": 0.14
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pal-it[aria-selected=\"true\"]",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:444"
+            ],
+            "css": "rgba(95,211,154,.14)"
+          }
+        }
+      },
+      "sheet-fpick-fmini-v-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.07451,
+            0.07451,
+            0.086275
+          ],
+          "hex": "#131316",
+          "alpha": 0.85
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sheet .fpick .fmini .v",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:512"
+            ],
+            "css": "rgba(19,19,22,.85)"
+          }
+        }
+      },
+      "addtile-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.14
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".addtile,.pt-add",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:518"
+            ],
+            "css": "1px dashed rgba(255,255,255,.14)"
+          }
+        }
+      },
+      "addtile-hover-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.28
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".addtile:hover,.pt-add:active",
+            "property": "border-color",
+            "mode": "both",
+            "source": [
+              "web/app.css:522"
+            ],
+            "css": "rgba(255,255,255,.28)"
+          }
+        }
+      },
+      "empty-merge-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.14
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".empty.merge,.pempty.merge",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:529"
+            ],
+            "css": "1px dashed rgba(255,255,255,.14)"
+          }
+        }
+      },
+      "em-a-hover-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a",
+          "alpha": 0.1
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".em-a:hover",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:534"
+            ],
+            "css": "rgba(95,211,154,.10)"
+          }
+        }
+      },
+      "sh-switch-sw-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.14
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sh-switch .sw",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:546"
+            ],
+            "css": "rgba(255,255,255,.14)"
+          }
+        }
+      },
+      "seg-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.07451,
+            0.07451,
+            0.086275
+          ],
+          "hex": "#131316",
+          "alpha": 0.85
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".seg",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:557"
+            ],
+            "css": "rgba(19,19,22,.85)"
+          }
+        }
+      },
+      "at-chk-svg-i-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.32
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".at-chk svg.i",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:598"
+            ],
+            "css": "1.5px solid rgba(255,255,255,.32)"
+          }
+        }
+      },
+      "marquee-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a",
+          "alpha": 0.1
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".marquee",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:604"
+            ],
+            "css": "rgba(95,211,154,.1)"
+          }
+        }
+      },
+      "placeholder-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.16
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".placeholder",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:609"
+            ],
+            "css": "1.5px dashed rgba(255,255,255,.16)"
+          }
+        }
+      },
+      "dk-placeholder-dk-ic-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.16
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dk.placeholder .dk-ic",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:613"
+            ],
+            "css": "1.5px dashed rgba(255,255,255,.16)"
+          }
+        }
+      },
+      "scrim-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.039216,
+            0.039216,
+            0.043137
+          ],
+          "hex": "#0a0a0b",
+          "alpha": 0.35
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".scrim",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:628"
+            ],
+            "css": "rgba(10,10,11,.35)"
+          }
+        }
+      },
+      "sheet-fld-in-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.07451,
+            0.07451,
+            0.086275
+          ],
+          "hex": "#131316",
+          "alpha": 0.85
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sheet .fld-in,.sheet .ps",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:645"
+            ],
+            "css": "rgba(19,19,22,.85)"
+          }
+        }
+      },
+      "grab-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.2
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".grab",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:654"
+            ],
+            "css": "rgba(255,255,255,.2)"
+          }
+        }
+      },
+      "sh-rows-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.035
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sh-rows",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:663"
+            ],
+            "css": "rgba(255,255,255,.035)"
+          }
+        }
+      },
+      "pbottom-padd-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.082353,
+            0.082353,
+            0.094118
+          ],
+          "hex": "#151518",
+          "alpha": 0.72
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pbottom .padd",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:771"
+            ],
+            "css": "rgba(21,21,24,.72)"
+          }
+        }
+      },
+      "pbottom-padd-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.1
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pbottom .padd",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:772"
+            ],
+            "css": "1px solid rgba(255,255,255,.10)"
+          }
+        }
+      },
+      "prc-pin-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.039216,
+            0.039216,
+            0.043137
+          ],
+          "hex": "#0a0a0b"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".prc-pin",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:789"
+            ],
+            "css": "#0a0a0b"
+          }
+        }
+      },
+      "sv-ph-ph-in-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.08
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sv-ph .ph-in",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:792"
+            ],
+            "css": "rgba(255,255,255,.08)"
+          }
+        }
+      },
+      "pbulk-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.094118,
+            0.094118,
+            0.105882
+          ],
+          "hex": "#18181b",
+          "alpha": 0.92
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pbulk",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:813"
+            ],
+            "css": "rgba(24,24,27,.92)"
+          }
+        }
+      },
+      "pbulk-bg-2": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.094118,
+            0.094118,
+            0.105882
+          ],
+          "hex": "#18181b"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pbulk.pbulk",
+            "property": "background",
+            "media": [
+              "@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px)))"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:827"
+            ],
+            "css": "#18181b"
+          }
+        }
+      },
+      "pt-sk-b-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.06
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt.sk .b",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:862"
+            ],
+            "css": "rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "pempty-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.16
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pempty",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:880"
+            ],
+            "css": "1.5px dashed rgba(255,255,255,.16)"
+          }
+        }
+      },
+      "pnotice-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            0.603922,
+            0.603922
+          ],
+          "hex": "#ff9a9a",
+          "alpha": 0.07
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pnotice",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:881"
+            ],
+            "css": "rgba(255,154,154,.07)"
+          }
+        }
+      },
+      "pnotice-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            0.603922,
+            0.603922
+          ],
+          "hex": "#ff9a9a",
+          "alpha": 0.2
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pnotice",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:881"
+            ],
+            "css": "1px solid rgba(255,154,154,.2)"
+          }
+        }
+      },
+      "pv-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.109804,
+            0.109804,
+            0.121569
+          ],
+          "hex": "#1c1c1f"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:942"
+            ],
+            "css": "#1c1c1f"
+          }
+        }
+      },
+      "pv-hot-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a",
+          "alpha": 0.08
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv .hot",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:943"
+            ],
+            "css": "rgba(95,211,154,.08)"
+          }
+        }
+      },
+      "pv-row-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.04
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-row",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:945"
+            ],
+            "css": "rgba(255,255,255,.04)"
+          }
+        }
+      },
+      "pv-field-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.05
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-field",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:946"
+            ],
+            "css": "rgba(255,255,255,.05)"
+          }
+        }
+      },
+      "pv-fav-i-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.08
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-fav i,.pv-app i",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:950"
+            ],
+            "css": "rgba(255,255,255,.08)"
+          }
+        }
+      },
+      "pv-dots-i-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.14
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-dots i",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:954"
+            ],
+            "css": "rgba(255,255,255,.14)"
+          }
+        }
+      },
+      "pv-mark-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.04
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-mark",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:955"
+            ],
+            "css": "rgba(255,255,255,.04)"
+          }
+        }
+      },
+      "share-bottom-ps-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.082353,
+            0.082353,
+            0.094118
+          ],
+          "hex": "#151518",
+          "alpha": 0.72
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".share-bottom .ps",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1070"
+            ],
+            "css": "rgba(21,21,24,.72)"
+          }
+        }
+      },
+      "share-bottom-ps-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.1
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".share-bottom .ps",
+            "property": "border",
+            "mode": "both",
+            "source": [
+              "web/app.css:1070"
+            ],
+            "css": "1px solid rgba(255,255,255,.10)"
+          }
+        }
+      },
+      "pbottom-padd-bg-2": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.082353,
+            0.082353,
+            0.094118
+          ],
+          "hex": "#151518",
+          "alpha": 0.7
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pbottom .padd,.pbulk,.share-bottom .ps",
+            "property": "background",
+            "media": [
+              "@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px)))"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:1093"
+            ],
+            "css": "rgba(21,21,24,.70)"
+          }
+        }
+      },
+      "sheet-fld-in-bg-2": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.07451,
+            0.07451,
+            0.086275
+          ],
+          "hex": "#131316",
+          "alpha": 0.85
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sheet .fld-in,.sheet .ps,.sheet .seg",
+            "property": "background",
+            "media": [
+              "@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px)))"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:1095"
+            ],
+            "css": "rgba(19,19,22,.85)"
+          }
+        }
+      },
+      "pc-f-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.07
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pc-f",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1246"
+            ],
+            "css": "rgba(255,255,255,.07)"
+          }
+        }
+      },
+      "pc-l-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.12
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pc-l",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1247"
+            ],
+            "css": "rgba(255,255,255,.12)"
+          }
+        }
+      },
+      "pc-l-s-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.06
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pc-l.s",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1248"
+            ],
+            "css": "rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "ftile-fnew-border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.14
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ftile.fnew",
+            "property": "border-color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1397"
+            ],
+            "css": "rgba(255,255,255,.14)"
+          }
+        }
+      },
+      "pv-bg-2": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.025
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1466"
+            ],
+            "css": "rgba(255,255,255,.025)"
+          }
+        }
+      },
+      "bm-page-ink-weak-dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.788235,
+            0.788235,
+            0.807843
+          ],
+          "hex": "#c9c9ce"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root:not([data-theme=\"light\"]) .bm-page",
+            "property": "--ink-weak",
+            "mode": "dark",
+            "source": [
+              "web/app.css:1494"
+            ]
+          }
+        }
+      },
+      "bm-page-lead-text-dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.705882,
+            0.705882,
+            0.72549
+          ],
+          "hex": "#b4b4b9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root:not([data-theme=\"light\"]) .bm-page .lead",
+            "property": "color",
+            "mode": "dark",
+            "source": [
+              "web/app.css:1495"
+            ],
+            "css": "#b4b4b9"
+          }
+        }
+      },
+      "hs-fix-tt-span-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.643137,
+            0.643137,
+            0.662745
+          ],
+          "hex": "#a4a4a9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-tt span,.hs-keys span",
+            "property": "color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1496"
+            ],
+            "css": "#a4a4a9"
+          }
+        }
+      },
+      "ios-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.082353,
+            0.082353,
+            0.090196
+          ],
+          "hex": "#151517"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ],
+            "css": "#151517"
+          }
+        }
+      },
+      "ios-site-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.137255,
+            0.137255,
+            0.152941
+          ],
+          "hex": "#232327"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-site",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1502"
+            ],
+            "css": "#232327"
+          }
+        }
+      },
+      "ios-site-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.643137,
+            0.643137,
+            0.662745
+          ],
+          "hex": "#a4a4a9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-site",
+            "property": "color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1502"
+            ],
+            "css": "#a4a4a9"
+          }
+        }
+      },
+      "ios-x-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.14902,
+            0.14902,
+            0.164706
+          ],
+          "hex": "#26262a"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-x",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1504"
+            ],
+            "css": "#26262a"
+          }
+        }
+      },
+      "ios-x-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.643137,
+            0.643137,
+            0.662745
+          ],
+          "hex": "#a4a4a9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-x",
+            "property": "color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1504"
+            ],
+            "css": "#a4a4a9"
+          }
+        }
+      },
+      "ios-apps-span-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.643137,
+            0.643137,
+            0.662745
+          ],
+          "hex": "#a4a4a9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps > span",
+            "property": "color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1507"
+            ],
+            "css": "#a4a4a9"
+          }
+        }
+      },
+      "ios-apps-i-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.137255,
+            0.137255,
+            0.152941
+          ],
+          "hex": "#232327"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps i",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1508"
+            ],
+            "css": "#232327"
+          }
+        }
+      },
+      "ios-group-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.121569,
+            0.121569,
+            0.133333
+          ],
+          "hex": "#1f1f22"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-group",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1509"
+            ],
+            "css": "#1f1f22"
+          }
+        }
+      },
+      "ios-row-svg-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.643137,
+            0.643137,
+            0.662745
+          ],
+          "hex": "#a4a4a9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-row svg",
+            "property": "color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1512"
+            ],
+            "css": "#a4a4a9"
+          }
+        }
+      },
+      "ios-hot-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a",
+          "alpha": 0.09
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios .hot",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1515"
+            ],
+            "css": "rgba(95,211,154,.09)"
+          }
+        }
+      },
+      "ios-fav-bg": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.137255,
+            0.137255,
+            0.152941
+          ],
+          "hex": "#232327"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-fav",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1523"
+            ],
+            "css": "#232327"
+          }
+        }
+      },
+      "ios-cap-text": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.643137,
+            0.643137,
+            0.662745
+          ],
+          "hex": "#a4a4a9"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-cap",
+            "property": "color",
+            "mode": "both",
+            "source": [
+              "web/app.css:1532"
+            ],
+            "css": "#a4a4a9"
+          }
+        }
+      },
+      "pal-scrim-bg-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.956863,
+            0.945098,
+            0.917647
+          ],
+          "hex": "#f4f1ea",
+          "alpha": 0.55
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .pal-scrim,:root[data-theme=\"light\"] .scrim",
+            "property": "background",
+            "mode": "light",
+            "source": [
+              "web/app.css:1570"
+            ],
+            "css": "rgba(244,241,234,.55)"
+          }
+        }
+      },
+      "si-current-bg-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.105882,
+            0.101961,
+            0.090196
+          ],
+          "hex": "#1b1a17",
+          "alpha": 0.06
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .si[aria-current=\"true\"]",
+            "property": "background",
+            "mode": "light",
+            "source": [
+              "web/app.css:1571"
+            ],
+            "css": "rgba(27,26,23,.06)"
+          }
+        }
+      },
+      "pbottom-padd-bg-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.980392,
+            0.972549,
+            0.952941
+          ],
+          "hex": "#faf8f3",
+          "alpha": 0.82
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .pbottom .padd,:root[data-theme=\"light\"] .pbulk,:root[data-theme=\"light\"] .share-bottom .ps",
+            "property": "background",
+            "mode": "light",
+            "source": [
+              "web/app.css:1572"
+            ],
+            "css": "rgba(250,248,243,.82)"
+          }
+        }
+      },
+      "sheet-fld-in-bg-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.7
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .sheet .fld-in,:root[data-theme=\"light\"] .sheet .ps,:root[data-theme=\"light\"] .sheet .seg,:root[data-theme=\"light\"] .sheet .fpick .fmini:not(.fill) .v",
+            "property": "background",
+            "mode": "light",
+            "source": [
+              "web/app.css:1575"
+            ],
+            "css": "rgba(255,255,255,.7)"
+          }
+        }
+      },
+      "chk-border-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.105882,
+            0.101961,
+            0.090196
+          ],
+          "hex": "#1b1a17",
+          "alpha": 0.3
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .chk",
+            "property": "border-color",
+            "mode": "light",
+            "source": [
+              "web/app.css:1579"
+            ],
+            "css": "rgba(27,26,23,.3)"
+          }
+        }
+      },
+      "chk-bg-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.980392,
+            0.972549,
+            0.952941
+          ],
+          "hex": "#faf8f3",
+          "alpha": 0.7
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .chk",
+            "property": "background",
+            "mode": "light",
+            "source": [
+              "web/app.css:1579"
+            ],
+            "css": "rgba(250,248,243,.7)"
+          }
+        }
+      },
+      "ios-ink-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.941176,
+            0.941176,
+            0.941176
+          ],
+          "hex": "#f0f0f0"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .ios",
+            "property": "--ink",
+            "mode": "light",
+            "source": [
+              "web/app.css:1581"
+            ]
+          }
+        }
+      },
+      "ios-accent-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.372549,
+            0.827451,
+            0.603922
+          ],
+          "hex": "#5fd39a"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .ios",
+            "property": "--accent",
+            "mode": "light",
+            "source": [
+              "web/app.css:1581"
+            ]
+          }
+        }
+      },
+      "ios-line-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            1,
+            1,
+            1
+          ],
+          "hex": "#ffffff",
+          "alpha": 0.055
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .ios",
+            "property": "--line",
+            "mode": "light",
+            "source": [
+              "web/app.css:1581"
+            ]
+          }
+        }
+      },
+      "pal-scrim-bg-3": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.058824,
+            0.058824,
+            0.066667
+          ],
+          "hex": "#0f0f11",
+          "alpha": 0.6
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pal-scrim,.scrim",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:1587"
+            ],
+            "css": "rgba(15,15,17,.6)"
+          }
+        }
+      },
+      "bulb-bulb-glass-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.984314,
+            0.905882,
+            0.690196
+          ],
+          "hex": "#fbe7b0"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .bulb",
+            "property": "--bulb-glass",
+            "mode": "light",
+            "source": [
+              "web/app.css:1600"
+            ]
+          }
+        }
+      },
+      "bulb-bulb-rim-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.639216,
+            0.517647,
+            0.227451
+          ],
+          "hex": "#a3843a"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .bulb",
+            "property": "--bulb-rim",
+            "mode": "light",
+            "source": [
+              "web/app.css:1600"
+            ]
+          }
+        }
+      },
+      "bulb-bulb-fil-light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.690196,
+            0.478431,
+            0.070588
+          ],
+          "hex": "#b07a12"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .bulb",
+            "property": "--bulb-fil",
+            "mode": "light",
+            "source": [
+              "web/app.css:1600"
+            ]
+          }
+        }
+      }
+    },
+    "radius": {
+      "mark-hit-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": "mark.hit",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:224"
+            ]
+          }
+        }
+      },
+      "tile-ghost-t-strip-radius": {
+        "$value": "0 0 calc(var(--r-l) - 1px) calc(var(--r-l) - 1px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".tile.ghost>.t-strip",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:499"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "sh-switch-sw-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 13,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sh-switch .sw",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:546"
+            ]
+          }
+        }
+      },
+      "seg-button-radius": {
+        "$value": "calc(var(--r-xl) - 3px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".seg button",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:558"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "marquee-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 2,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".marquee",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:604"
+            ]
+          }
+        }
+      },
+      "dk-placeholder-dk-ic-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 18,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dk.placeholder .dk-ic",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:613"
+            ]
+          }
+        }
+      },
+      "sheet-radius": {
+        "$value": "var(--r-sheet) var(--r-sheet) 0 0",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sheet",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:633"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "grab-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".grab",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:654"
+            ]
+          }
+        }
+      },
+      "pt-in-radius": {
+        "$value": "calc(var(--r-xl) - 1px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt-in",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:848"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-keys-kbd-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-keys kbd",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:924"
+            ]
+          }
+        }
+      },
+      "pv-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:942"
+            ]
+          }
+        }
+      },
+      "pv-row-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-row",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:945"
+            ]
+          }
+        }
+      },
+      "pv-field-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-field",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:946"
+            ]
+          }
+        }
+      },
+      "pv-fav-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 9,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-fav,.pv-app",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:949"
+            ]
+          }
+        }
+      },
+      "pv-fav-i-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 9,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-fav i,.pv-app i",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:950"
+            ]
+          }
+        }
+      },
+      "pv-mark-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 7,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-mark",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:955"
+            ]
+          }
+        }
+      },
+      "hs-fix-in-code-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in code",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:974"
+            ]
+          }
+        }
+      },
+      "rel-code-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".rel code",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1217"
+            ]
+          }
+        }
+      },
+      "vsw-p-radius": {
+        "$value": "calc(var(--r-l) + 3px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".vsw.p",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1226"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pc-l-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pc-l",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1247"
+            ]
+          }
+        }
+      },
+      "gk-g-in-radius": {
+        "$value": "calc(var(--r-2xl) - 1px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gk>.g-in",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1293"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "gal-p-gk-g-in-radius": {
+        "$value": "calc(var(--r-xl) - 1px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":is(.gal-p .gk,body.phone>.gk.ghost)>.g-in",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1303"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "gc-row-fav-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gc-row .fav",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1314"
+            ]
+          }
+        }
+      },
+      "gc-chip-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 11,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gc-chip",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1318"
+            ]
+          }
+        }
+      },
+      "vsw-radius": {
+        "$value": "calc(var(--r-l) + 3px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".vsw",
+            "property": "border-radius",
+            "media": [
+              "@media (min-width:720px) and (pointer:coarse)"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:1455"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-radius-2": {
+        "$type": "dimension",
+        "$value": {
+          "value": 14,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1466"
+            ]
+          }
+        }
+      },
+      "ios-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 22,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ]
+          }
+        }
+      },
+      "ios-site-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-site",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1502"
+            ]
+          }
+        }
+      },
+      "ios-apps-i-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps i",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1508"
+            ]
+          }
+        }
+      },
+      "ios-group-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-group",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1509"
+            ]
+          }
+        }
+      },
+      "ios-fav-radius": {
+        "$type": "dimension",
+        "$value": {
+          "value": 10,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-fav",
+            "property": "border-radius",
+            "mode": "both",
+            "source": [
+              "web/app.css:1523"
+            ]
+          }
+        }
+      }
+    },
+    "shadow": {
+      "kcap-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.35
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": -2,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".kcap",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:233"
+            ],
+            "css": "inset 0 -2px 0 rgba(0,0,0,.35)"
+          }
+        }
+      },
+      "dk-ic-shadow": {
+        "$value": "inset 0 0 0 1px var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dk-ic",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:261"
+            ],
+            "css": "inset 0 0 0 1px var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "fav-shadow": {
+        "$value": "inset 0 0 0 1px var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".fav",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:320"
+            ],
+            "css": "inset 0 0 0 1px var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "acts-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.25
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 4,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 12,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".acts",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:339"
+            ],
+            "css": "0 4px 12px rgba(0,0,0,.25)"
+          }
+        }
+      },
+      "menu-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.45
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 12,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 32,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".menu",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:401"
+            ],
+            "css": "0 12px 32px rgba(0,0,0,.45)"
+          }
+        }
+      },
+      "pal-panel-shadow": {
+        "$value": "0 0 0 1px var(--line-2),0 32px 80px -16px rgba(0,0,0,.75)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pal-panel",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:426"
+            ],
+            "css": "0 0 0 1px var(--line-2),0 32px 80px -16px rgba(0,0,0,.75)",
+            "raw": true
+          }
+        }
+      },
+      "ft-faces-fav-shadow": {
+        "$value": "0 0 0 2px var(--surface)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ft-faces .fav",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:484"
+            ],
+            "css": "0 0 0 2px var(--surface)",
+            "raw": true
+          }
+        }
+      },
+      "ftile-drop-on-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0.372549,
+                0.827451,
+                0.603922
+              ],
+              "hex": "#5fd39a",
+              "alpha": 0.45
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 0,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 2,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ftile.drop-on",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:487"
+            ],
+            "css": "0 0 0 2px rgba(95,211,154,.45)"
+          }
+        }
+      },
+      "si-drop-on-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0.372549,
+                0.827451,
+                0.603922
+              ],
+              "hex": "#5fd39a",
+              "alpha": 0.55
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 0,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 2,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".si.drop-on,.ptab.drop-on",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:488"
+            ],
+            "css": "inset 0 0 0 2px rgba(95,211,154,.55)"
+          }
+        }
+      },
+      "si-trash-drop-on-shadow": {
+        "$value": "inset 0 0 0 2px color-mix(in srgb,var(--bin) 60%,transparent)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".si.trash.drop-on",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:490"
+            ],
+            "css": "inset 0 0 0 2px color-mix(in srgb,var(--bin) 60%,transparent)",
+            "raw": true
+          }
+        }
+      },
+      "ftrash-drop-on-shadow": {
+        "$value": "0 0 0 2px color-mix(in srgb,var(--bin) 40%,transparent)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ftrash.drop-on",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:491"
+            ],
+            "css": "0 0 0 2px color-mix(in srgb,var(--bin) 40%,transparent)",
+            "raw": true
+          }
+        }
+      },
+      "drag-n-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.4
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 2,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 6,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".drag-n",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:500"
+            ],
+            "css": "0 2px 6px rgba(0,0,0,.4)"
+          }
+        }
+      },
+      "sh-switch-knob-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.4
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 3,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sh-switch .knob",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:547"
+            ],
+            "css": "0 1px 3px rgba(0,0,0,.4)"
+          }
+        }
+      },
+      "seg-button-checked-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.3
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 2,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".seg button[aria-checked=\"true\"]",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:559"
+            ],
+            "css": "0 1px 2px rgba(0,0,0,.3)"
+          }
+        }
+      },
+      "toast-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.6
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 12,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 32,
+              "unit": "px"
+            },
+            "spread": {
+              "value": -8,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".toast",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:619"
+            ],
+            "css": "0 12px 32px -8px rgba(0,0,0,.6)"
+          }
+        }
+      },
+      "sheet-shadow": {
+        "$value": "var(--edge-top),0 -16px 48px rgba(0,0,0,.55)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sheet",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:633"
+            ],
+            "css": "var(--edge-top),0 -16px 48px rgba(0,0,0,.55)",
+            "raw": true
+          }
+        }
+      },
+      "layer-sheet-shadow": {
+        "$value": "var(--edge-top),0 0 0 1px var(--line),0 24px 64px rgba(0,0,0,.6)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".layer:not(.page-sheet) .sheet",
+            "property": "box-shadow",
+            "media": [
+              "@media (min-width:720px)"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:650"
+            ],
+            "css": "var(--edge-top),0 0 0 1px var(--line),0 24px 64px rgba(0,0,0,.6)",
+            "raw": true
+          }
+        }
+      },
+      "ptab-ind-shadow": {
+        "$value": "0 1px 0 rgba(255,255,255,.06) inset,0 0 0 1px var(--line-2),0 6px 16px -8px rgba(0,0,0,.8)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ptab-ind",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:736"
+            ],
+            "css": "0 1px 0 rgba(255,255,255,.06) inset,0 0 0 1px var(--line-2),0 6px 16px -8px rgba(0,0,0,.8)",
+            "raw": true
+          }
+        }
+      },
+      "prc-ic-shadow": {
+        "$value": "inset 0 0 0 1px var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".prc-ic",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:798"
+            ],
+            "css": "inset 0 0 0 1px var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "padd-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.6
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 6,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 16,
+              "unit": "px"
+            },
+            "spread": {
+              "value": -6,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".padd",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:810"
+            ],
+            "css": "0 6px 16px -6px rgba(0,0,0,.6)"
+          }
+        }
+      },
+      "pbulk-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.6
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 12,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 32,
+              "unit": "px"
+            },
+            "spread": {
+              "value": -8,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pbulk",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:813"
+            ],
+            "css": "0 12px 32px -8px rgba(0,0,0,.6)"
+          }
+        }
+      },
+      "tile-ghost-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.5
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 12,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 32,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".tile.ghost,.pt.ghost",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:859"
+            ],
+            "css": "0 12px 32px rgba(0,0,0,.5)"
+          }
+        }
+      },
+      "hs-tabs-button-selected-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.3
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 2,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-tabs button[aria-selected=\"true\"]",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:913"
+            ],
+            "css": "0 1px 2px rgba(0,0,0,.3)"
+          }
+        }
+      },
+      "hs-step-shadow": {
+        "$value": "inset 0 0 0 1px var(--card-rim)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-step",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:916"
+            ],
+            "css": "inset 0 0 0 1px var(--card-rim)",
+            "raw": true
+          }
+        }
+      },
+      "hs-keys-kbd-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.35
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": -1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-keys kbd",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:924"
+            ],
+            "css": "inset 0 -1px 0 rgba(0,0,0,.35)"
+          }
+        }
+      },
+      "pv-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                1,
+                1
+              ],
+              "hex": "#ffffff",
+              "alpha": 0.06
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 0,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 1,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:942"
+            ],
+            "css": "inset 0 0 0 1px rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "pv-hot-shadow": {
+        "$value": "inset 0 0 0 1.5px var(--accent)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv .hot",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:943"
+            ],
+            "css": "inset 0 0 0 1.5px var(--accent)",
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-shadow": {
+        "$value": "inset 0 0 0 1px var(--card-rim)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:958"
+            ],
+            "css": "inset 0 0 0 1px var(--card-rim)",
+            "raw": true
+          }
+        }
+      },
+      "layer-page-sheet-sheet-shadow": {
+        "$value": "var(--edge-top),0 0 0 1px var(--line),0 24px 64px rgba(0,0,0,.6)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".layer.page-sheet .sheet",
+            "property": "box-shadow",
+            "media": [
+              "@media (min-width:721px)"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:991"
+            ],
+            "css": "var(--edge-top),0 0 0 1px var(--line),0 24px 64px rgba(0,0,0,.6)",
+            "raw": true
+          }
+        }
+      },
+      "save-page-layer-sheet-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                1,
+                1
+              ],
+              "hex": "#ffffff",
+              "alpha": 0.06
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".save-page .layer .sheet",
+            "property": "box-shadow",
+            "media": [
+              "@media (max-width:720px)"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:1012"
+            ],
+            "css": "inset 0 1px 0 rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "pile-miss-pc-ok-shadow": {
+        "$value": "0 0 0 3px var(--screen),inset 0 0 0 1px var(--line-2)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pile.miss .pc-ok",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1063"
+            ],
+            "css": "0 0 0 3px var(--screen),inset 0 0 0 1px var(--line-2)",
+            "raw": true
+          }
+        }
+      },
+      "pc-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0,
+                0,
+                0
+              ],
+              "hex": "#000000",
+              "alpha": 0.7
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 6,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 16,
+              "unit": "px"
+            },
+            "spread": {
+              "value": -10,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pc",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1241"
+            ],
+            "css": "0 6px 16px -10px rgba(0,0,0,.7)"
+          }
+        }
+      },
+      "pc-ok-shadow": {
+        "$value": "0 0 0 3px var(--screen)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pc-ok",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1250"
+            ],
+            "css": "0 0 0 3px var(--screen)",
+            "raw": true
+          }
+        }
+      },
+      "fgrid-ftile-ft-faces-fav-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0.054902,
+                0.054902,
+                0.066667
+              ],
+              "hex": "#0e0e11",
+              "alpha": 0.7
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 0,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 2,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".fgrid>.ftile .ft-faces .fav",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1354"
+            ],
+            "css": "0 0 0 2px rgba(14,14,17,.7)"
+          }
+        }
+      },
+      "tip-shadow": {
+        "$value": "0 0 0 1px var(--line-2),0 8px 20px -6px rgba(0,0,0,.6)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".tip",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1426"
+            ],
+            "css": "0 0 0 1px var(--line-2),0 8px 20px -6px rgba(0,0,0,.6)",
+            "raw": true
+          }
+        }
+      },
+      "pv-shadow-2": {
+        "$value": "inset 0 0 0 1px var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1466"
+            ],
+            "css": "inset 0 0 0 1px var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "pv-row-shadow": {
+        "$value": "inset 0 -1px 0 var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-row,.pv-field",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1468"
+            ],
+            "css": "inset 0 -1px 0 var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "pv-row-hot-shadow": {
+        "$value": "inset 0 -1px 0 var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-row.hot,.pv-field.hot",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1471"
+            ],
+            "css": "inset 0 -1px 0 var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "pv-fav-hot-i-shadow": {
+        "$value": "0 0 0 1.5px var(--accent)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-fav.hot i,.pv-app.hot i",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1474"
+            ],
+            "css": "0 0 0 1.5px var(--accent)",
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-shadow-2": {
+        "$value": "inset 0 1px 0 var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1476"
+            ],
+            "css": "inset 0 1px 0 var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-last-of-type-shadow": {
+        "$value": "inset 0 1px 0 var(--line),inset 0 -1px 0 var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix:last-of-type",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1478"
+            ],
+            "css": "inset 0 1px 0 var(--line),inset 0 -1px 0 var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "ios-shadow": {
+        "$value": "inset 0 0 0 1px var(--line)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ],
+            "css": "inset 0 0 0 1px var(--line)",
+            "raw": true
+          }
+        }
+      },
+      "ios-row-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                1,
+                1
+              ],
+              "hex": "#ffffff",
+              "alpha": 0.06
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": -1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-row",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1510"
+            ],
+            "css": "inset 0 -1px 0 rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "ios-field-shadow": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                1,
+                1
+              ],
+              "hex": "#ffffff",
+              "alpha": 0.06
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": -1,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 0,
+              "unit": "px"
+            },
+            "inset": true
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-field",
+            "property": "box-shadow",
+            "mode": "both",
+            "source": [
+              "web/app.css:1526"
+            ],
+            "css": "inset 0 -1px 0 rgba(255,255,255,.06)"
+          }
+        }
+      },
+      "ptab-ind-shadow-light": {
+        "$value": "0 0 0 1px var(--line-2),var(--card-shadow)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .ptab-ind",
+            "property": "box-shadow",
+            "mode": "light",
+            "source": [
+              "web/app.css:1574"
+            ],
+            "css": "0 0 0 1px var(--line-2),var(--card-shadow)",
+            "raw": true
+          }
+        }
+      },
+      "fgrid-ftile-ft-faces-fav-shadow-light": {
+        "$type": "shadow",
+        "$value": [
+          {
+            "color": {
+              "colorSpace": "srgb",
+              "components": [
+                0.980392,
+                0.972549,
+                0.952941
+              ],
+              "hex": "#faf8f3",
+              "alpha": 0.9
+            },
+            "offsetX": {
+              "value": 0,
+              "unit": "px"
+            },
+            "offsetY": {
+              "value": 0,
+              "unit": "px"
+            },
+            "blur": {
+              "value": 0,
+              "unit": "px"
+            },
+            "spread": {
+              "value": 2,
+              "unit": "px"
+            }
+          }
+        ],
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .fgrid>.ftile .ft-faces .fav",
+            "property": "box-shadow",
+            "mode": "light",
+            "source": [
+              "web/app.css:1578"
+            ],
+            "css": "0 0 0 2px rgba(250,248,243,.9)"
+          }
+        }
+      },
+      "bulb-svg-filter-light": {
+        "$value": "drop-shadow(0 0 4px rgba(255,200,80,.35))",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ":root[data-theme=\"light\"] .bulb svg",
+            "property": "filter",
+            "mode": "light",
+            "source": [
+              "web/app.css:1601"
+            ],
+            "css": "drop-shadow(0 0 4px rgba(255,200,80,.35))",
+            "raw": true
+          }
+        }
+      }
+    },
+    "space": {
+      "si-c-padding": {
+        "$value": "0 7px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".si-c",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:241"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "dk-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 7,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dk",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:260"
+            ]
+          }
+        }
+      },
+      "vsw-padding": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".vsw",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:272"
+            ]
+          }
+        }
+      },
+      "btn-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 7,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".btn",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:277"
+            ]
+          }
+        }
+      },
+      "t-edit-padding": {
+        "$value": "0 5px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".t-edit",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:329"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ab-txt-padding": {
+        "$value": "0 9px 0 7px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ab.txt",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:346"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ab-txt-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ab.txt",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:346"
+            ]
+          }
+        }
+      },
+      "lazy-padding-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".lazy",
+            "property": "padding-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:389"
+            ]
+          }
+        }
+      },
+      "lazy-padding-bottom": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".lazy",
+            "property": "padding-bottom",
+            "mode": "both",
+            "source": [
+              "web/app.css:389"
+            ]
+          }
+        }
+      },
+      "grid-lazy-padding-left": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".grid.lazy",
+            "property": "padding-left",
+            "mode": "both",
+            "source": [
+              "web/app.css:390"
+            ]
+          }
+        }
+      },
+      "grid-lazy-padding-right": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".grid.lazy",
+            "property": "padding-right",
+            "mode": "both",
+            "source": [
+              "web/app.css:390"
+            ]
+          }
+        }
+      },
+      "grid-lazy-cont-margin-top": {
+        "$value": "calc(var(--s-8) - 6px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".grid.lazy.cont",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:391"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pgrid-lazy-padding-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pgrid.lazy",
+            "property": "padding-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:396"
+            ]
+          }
+        }
+      },
+      "pgrid-lazy-padding-bottom": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pgrid.lazy",
+            "property": "padding-bottom",
+            "mode": "both",
+            "source": [
+              "web/app.css:396"
+            ]
+          }
+        }
+      },
+      "pgrid-lazy-cont-margin-top": {
+        "$value": "calc(var(--s-6) - 6px)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pgrid.lazy.cont",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:397"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ft-more-margin-left": {
+        "$type": "dimension",
+        "$value": {
+          "value": 11,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ft-more",
+            "property": "margin-left",
+            "mode": "both",
+            "source": [
+              "web/app.css:486"
+            ]
+          }
+        }
+      },
+      "drag-n-padding": {
+        "$value": "0 7px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".drag-n",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:500"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "seg-padding": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".seg",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:557"
+            ]
+          }
+        }
+      },
+      "tk-tt-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".tk-tt",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:572"
+            ]
+          }
+        }
+      },
+      "at-chk-svg-i-padding": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".at-chk svg.i",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:598"
+            ]
+          }
+        }
+      },
+      "sh-head-fh-ic-margin": {
+        "$value": "0 1px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sh-head .fh-ic",
+            "property": "margin",
+            "mode": "both",
+            "source": [
+              "web/app.css:660"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "fld-in-padding": {
+        "$value": "13px var(--s-7)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".fld-in",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:679"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "textarea-fld-in-padding": {
+        "$value": "13px var(--s-7)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": "textarea.fld-in",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:682"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "dupe-svg-i-margin-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 1,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dupe svg.i",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:685"
+            ]
+          }
+        }
+      },
+      "papp-padding-bottom": {
+        "$value": "calc(88px + env(safe-area-inset-bottom))",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".papp",
+            "property": "padding-bottom",
+            "mode": "both",
+            "source": [
+              "web/app.css:716"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "precent-ptbar-tabs-margin-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 34,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".precent+.ptbar.tabs",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:733"
+            ]
+          }
+        }
+      },
+      "ptab-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 7,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ptab",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:737"
+            ]
+          }
+        }
+      },
+      "ptab-n-padding": {
+        "$value": "0 7px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ptab-n",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:739"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pset-sum-margin-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pset-sum",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:748"
+            ]
+          }
+        }
+      },
+      "prc-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".prc",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:797"
+            ]
+          }
+        }
+      },
+      "ps-padding": {
+        "$value": "0 var(--s-1) 0 15px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ps",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:804"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "bb-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 7,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".bb",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:837"
+            ]
+          }
+        }
+      },
+      "pt-main-padding": {
+        "$value": "9px var(--s-6) 0",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt-main",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:849"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pt-title-margin-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt-title",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:851"
+            ]
+          }
+        }
+      },
+      "pt-host-margin-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 1,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt .host",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:852"
+            ]
+          }
+        }
+      },
+      "pt-sk-b-f-margin": {
+        "$value": "9px var(--s-6) 0",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pt.sk .b.f",
+            "property": "margin",
+            "mode": "both",
+            "source": [
+              "web/app.css:877"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-step-padding": {
+        "$value": "var(--s-8) var(--s-8) var(--s-8) 52px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-step",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:916"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "bm-page-hs-t-padding-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 2,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".bm-page .hs-t",
+            "property": "padding-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:919"
+            ]
+          }
+        }
+      },
+      "hs-keys-kbd-padding": {
+        "$value": "4px 7px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-keys kbd",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:924"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-padding": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:942"
+            ]
+          }
+        }
+      },
+      "pv-sheet-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-sheet,.pv-edit",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:944"
+            ]
+          }
+        }
+      },
+      "pv-row-padding": {
+        "$value": "8px 10px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-row",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:945"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-field-padding": {
+        "$value": "9px 10px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-field",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:946"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-favs-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-favs,.pv-share",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:948"
+            ]
+          }
+        }
+      },
+      "pv-fav-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-fav,.pv-app",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:949"
+            ]
+          }
+        }
+      },
+      "pv-fav-padding": {
+        "$value": "8px 4px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-fav,.pv-app",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:949"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-bar-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 6,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-bar",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:952"
+            ]
+          }
+        }
+      },
+      "pv-dots-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-dots",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:953"
+            ]
+          }
+        }
+      },
+      "pv-dots-margin-right": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-dots",
+            "property": "margin-right",
+            "mode": "both",
+            "source": [
+              "web/app.css:953"
+            ]
+          }
+        }
+      },
+      "pv-mark-padding": {
+        "$value": "6px 9px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-mark",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:955"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-in-padding": {
+        "$value": "0 var(--s-8) var(--s-8) 52px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:968"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-in-code-padding": {
+        "$value": "1px 4px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in code",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:974"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "share-page-share-foot-padding-bottom": {
+        "$value": "calc(92px + env(safe-area-inset-bottom))",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": "body.share-page .share-foot",
+            "property": "padding-bottom",
+            "media": [
+              "@media (max-width:719px)"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:1073"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "rel-code-padding": {
+        "$value": "1px 4px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".rel code",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1217"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "calm-p-pc-l-margin-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 11,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".calm.p .pc-l",
+            "property": "margin-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:1255"
+            ]
+          }
+        }
+      },
+      "gc-chip-padding": {
+        "$value": "0 9px 0 var(--s-4)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gc-chip",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1318"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-step-padding-2": {
+        "$value": "0 0 0 40px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-step",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1464"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-step-before-padding-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 3,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-step::before",
+            "property": "padding-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:1465"
+            ]
+          }
+        }
+      },
+      "pv-padding-2": {
+        "$value": "4px 12px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1466"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-row-padding-2": {
+        "$value": "11px 0",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-row,.pv-field",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1468"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-favs-padding": {
+        "$value": "10px 12px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-favs,.pv-share,.pv-bar",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1473"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "pv-mark-padding-2": {
+        "$value": "6px 4px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv-mark",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1475"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-in-padding-2": {
+        "$value": "0 0 var(--s-9) 40px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1481"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "hs-fix-in-padding-left": {
+        "$type": "dimension",
+        "$value": {
+          "value": 40,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in",
+            "property": "padding-left",
+            "media": [
+              "@media (max-width:719px)"
+            ],
+            "mode": "both",
+            "source": [
+              "web/app.css:1482"
+            ]
+          }
+        }
+      },
+      "hs-fix-summary-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix summary",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1483"
+            ]
+          }
+        }
+      },
+      "hs-tabs-padding": {
+        "$type": "dimension",
+        "$value": {
+          "value": 4,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-tabs",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1486"
+            ]
+          }
+        }
+      },
+      "ios-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ]
+          }
+        }
+      },
+      "ios-padding": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ]
+          }
+        }
+      },
+      "ios-head-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 10,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-head",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1501"
+            ]
+          }
+        }
+      },
+      "ios-head-padding": {
+        "$value": "2px 2px 4px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-head",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1501"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ios-apps-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1506"
+            ]
+          }
+        }
+      },
+      "ios-apps-padding": {
+        "$value": "2px 2px 6px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1506"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ios-apps-span-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-apps > span",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1507"
+            ]
+          }
+        }
+      },
+      "ios-row-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 10,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-row",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1510"
+            ]
+          }
+        }
+      },
+      "ios-row-padding": {
+        "$value": "0 12px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-row",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1510"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ios-bar-padding": {
+        "$value": "2px 4px 6px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-bar",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1517"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ios-form-gap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-form",
+            "property": "gap",
+            "mode": "both",
+            "source": [
+              "web/app.css:1522"
+            ]
+          }
+        }
+      },
+      "ios-form-padding": {
+        "$value": "10px 12px",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-form",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1522"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ios-field-padding": {
+        "$value": "9px 0",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-field",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1526"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "ios-caret-margin-left": {
+        "$type": "dimension",
+        "$value": {
+          "value": 1,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-caret",
+            "property": "margin-left",
+            "mode": "both",
+            "source": [
+              "web/app.css:1530"
+            ]
+          }
+        }
+      },
+      "ios-cap-padding": {
+        "$value": "6px 12px 0",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios-cap",
+            "property": "padding",
+            "mode": "both",
+            "source": [
+              "web/app.css:1532"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "dockwrap-padding-top": {
+        "$type": "dimension",
+        "$value": {
+          "value": 20,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": "#dockwrap",
+            "property": "padding-top",
+            "mode": "both",
+            "source": [
+              "web/app.css:1594"
+            ]
+          }
+        }
+      }
+    },
+    "line-height": {
+      "dk-ic-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".dk-ic",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:261"
+            ],
+            "css": "600 20px/1 var(--sans)"
+          }
+        }
+      },
+      "fav-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".fav",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:320"
+            ],
+            "css": "600 16px/1 var(--sans)"
+          }
+        }
+      },
+      "at-title-line-height": {
+        "$type": "number",
+        "$value": 1.25,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".at-title",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:586"
+            ],
+            "css": "600 var(--t-heading)/1.25 var(--sans)"
+          }
+        }
+      },
+      "at-h-line-height": {
+        "$type": "dimension",
+        "$value": {
+          "value": 15,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".at-h",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:596"
+            ],
+            "css": "400 var(--t-label)/15px var(--mono)"
+          }
+        }
+      },
+      "prc-ic-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".prc-ic",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:798"
+            ],
+            "css": "600 17px/1 var(--sans)"
+          }
+        }
+      },
+      "bm-page-p-line-height": {
+        "$type": "number",
+        "$value": 1.5,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".bm-page p,.bm-page li",
+            "property": "line-height",
+            "mode": "both",
+            "source": [
+              "web/app.css:902"
+            ]
+          }
+        }
+      },
+      "hs-step-before-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-step::before",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:917"
+            ],
+            "css": "600 var(--t-label)/1 var(--sans)"
+          }
+        }
+      },
+      "bm-page-hs-t-line-height": {
+        "$type": "number",
+        "$value": 1.4,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".bm-page .hs-t",
+            "property": "line-height",
+            "mode": "both",
+            "source": [
+              "web/app.css:919"
+            ]
+          }
+        }
+      },
+      "hs-keys-kbd-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-keys kbd",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:924"
+            ],
+            "css": "500 var(--t-label)/1 var(--sans)"
+          }
+        }
+      },
+      "hs-copy-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-copy",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:925"
+            ],
+            "css": "600 var(--t-body)/1 var(--sans)"
+          }
+        }
+      },
+      "pv-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".pv",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:942"
+            ],
+            "css": "500 12px/1 var(--sans)"
+          }
+        }
+      },
+      "hs-fix-tt-line-height": {
+        "$type": "number",
+        "$value": 1.35,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-tt",
+            "property": "line-height",
+            "mode": "both",
+            "source": [
+              "web/app.css:963"
+            ]
+          }
+        }
+      },
+      "hs-fix-in-line-height": {
+        "$type": "number",
+        "$value": 1.5,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in",
+            "property": "line-height",
+            "mode": "both",
+            "source": [
+              "web/app.css:968"
+            ]
+          }
+        }
+      },
+      "hs-fix-in-code-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-fix-in code",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:974"
+            ],
+            "css": "400 .95em/1 var(--mono)"
+          }
+        }
+      },
+      "rel-code-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".rel code",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1217"
+            ],
+            "css": "400 .92em/1 var(--mono)"
+          }
+        }
+      },
+      "calm-t-line-height": {
+        "$type": "dimension",
+        "$value": {
+          "value": 22,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".calm-t",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1269"
+            ],
+            "css": "400 var(--t-control)/22px var(--sans)"
+          }
+        }
+      },
+      "hs-step-before-line-height-2": {
+        "$type": "number",
+        "$value": 1.4,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".hs-step::before",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1465"
+            ],
+            "css": "500 var(--t-control)/1.4 var(--sans)"
+          }
+        }
+      },
+      "ios-line-height": {
+        "$type": "number",
+        "$value": 1.2,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".ios",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1499"
+            ],
+            "css": "400 13px/1.2 var(--sans)"
+          }
+        }
+      },
+      "brand-t-line-height": {
+        "$type": "number",
+        "$value": 1,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".brand-t",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1589"
+            ],
+            "css": "400 22px/1 var(--serif)"
+          }
+        }
+      },
+      "tb-dash-h2-line-height": {
+        "$type": "number",
+        "$value": 1.05,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".tb.dash h2",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1590"
+            ],
+            "css": "400 30px/1.05 var(--serif)"
+          }
+        }
+      },
+      "gal-h-line-height": {
+        "$type": "number",
+        "$value": 1.2,
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".gal-h",
+            "property": "font",
+            "mode": "both",
+            "source": [
+              "web/app.css:1591"
+            ],
+            "css": "400 20px/1.2 var(--serif)"
+          }
+        }
+      }
+    },
+    "gradient": {
+      "sv-ph-after-bg": {
+        "$value": "linear-gradient(100deg,transparent 40%,rgba(255,255,255,.08) 50%,transparent 60%)",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".sv-ph::after",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:793"
+            ],
+            "raw": true
+          }
+        }
+      },
+      "papp-after-bg": {
+        "$value": "linear-gradient(to top,var(--ground-base) calc(100% - 44px),rgba(14,14,17,0))",
+        "$extensions": {
+          "cc.pinned": {
+            "selector": ".papp::after",
+            "property": "background",
+            "mode": "both",
+            "source": [
+              "web/app.css:833"
+            ],
+            "raw": true
+          }
+        }
+      }
+    }
+  }
+}

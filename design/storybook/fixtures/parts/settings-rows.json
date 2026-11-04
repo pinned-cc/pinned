@@ -1,0 +1,62 @@
+{
+ "id": "settings-rows",
+ "group": "Settings rows",
+ "title": "Settings rows",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"pset\">\n    <div class=\"pset-head\"><svg class=\"pset-mark\" aria-hidden=\"true\"><use href=\"#app-mark\"></use></svg><div><div class=\"pset-name\">Pinned <span class=\"pset-ver\">0.1.11</span></div><div class=\"pset-sum\">18 bookmarks in 10 folders, 1 in the Trash</div></div></div>\n    <div class=\"pset-lbl\">Save</div>\n    <a class=\"sr\" href=\"/bookmarklet\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-all\"></use></svg></span><span class=\"sr-t\"><span>How to save</span><span class=\"sr-s\">Bookmarklet and extension</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></a><button type=\"button\" class=\"sr\" data-a=\"tokens\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-key\"></use></svg></span><span class=\"sr-t\"><span>API tokens</span><span class=\"sr-s\">No tokens yet</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></button>\n    <div class=\"pset-lbl\">Data</div>\n    <button type=\"button\" class=\"sr\" data-a=\"import\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-import\"></use></svg></span><span class=\"sr-t\"><span>Import</span><span class=\"sr-s\">A bookmarks file from any browser</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></button><a class=\"sr\" href=\"/api/export\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-export\"></use></svg></span><span class=\"sr-t\"><span>Export</span><span class=\"sr-s\">bookmarks.html, written nightly too</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></a>\n    <div class=\"pset-lbl\">About</div>\n    <button type=\"button\" class=\"sr\" data-a=\"releases\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-clock\"></use></svg></span><span class=\"sr-t\"><span>What's new</span><span class=\"sr-s\">Pinned 0.1.11</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></button><a class=\"sr\" href=\"https://github.com/pinned-cc/pinned\" target=\"_blank\" rel=\"noopener\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-open\"></use></svg></span><span class=\"sr-t\"><span>Source</span><span class=\"sr-s\">Open source, AGPL-3.0</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-open\"></use></svg></span></a>\n    <div class=\"pset-lbl\"></div>\n    <button type=\"button\" class=\"sr\" data-a=\"sessions\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg></span><span class=\"sr-t\"><span>Signed in</span><span class=\"sr-s\">Your browsers, sign out others</span></span><span class=\"sr-ch\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></button><button type=\"button\" class=\"sr warn hue-bin\" data-a=\"logout\"><span class=\"sr-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-logout\"></use></svg></span><span class=\"sr-t\"><span>Log out</span></span></button>\n  </div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp nobar",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 0px;"
+ },
+ "box": {
+  "x": 0,
+  "y": 14,
+  "width": 390,
+  "height": 742,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

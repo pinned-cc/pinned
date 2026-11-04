@@ -1,0 +1,63 @@
+{
+ "id": "selection-bar-phone",
+ "group": "Buttons",
+ "title": "Selection bar, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"pbulk\" role=\"toolbar\" aria-label=\"Selection\"><span class=\"pn\"><button type=\"button\" class=\"pall\" data-a=\"sel-all\"><span class=\"n num\">1<span class=\"vh\"> selected</span></span><span class=\"pall-t\"><span class=\"vh\">, select </span>All</span></button></span><button type=\"button\" class=\"bb\" data-a=\"bulk-move\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-move\"></use></svg>Move</button><button type=\"button\" class=\"bb\" data-a=\"bulk-copy\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-link\"></use></svg>Copy</button><button type=\"button\" class=\"bb\" data-a=\"bulk-share\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-share\"></use></svg>Share</button><button type=\"button\" class=\"bb warn\" data-a=\"bulk-trash\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg>Trash</button><button type=\"button\" class=\"bb\" data-a=\"sel-more\" aria-haspopup=\"menu\" aria-label=\"More actions\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-more\"></use></svg>More</button></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp selecting",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "pbottom",
+    "id": "pbottom"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "pbulkwrap"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 66px;"
+ },
+ "box": {
+  "x": 16,
+  "y": 762,
+  "width": 358,
+  "height": 66,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,289 @@
+{
+  "radius": {
+    "$description": "Corner radius by role.",
+    "xs": {
+      "$type": "dimension",
+      "$value": {
+        "value": 6,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-xs",
+          "source": [
+            "web/app.css:137"
+          ]
+        }
+      }
+    },
+    "s": {
+      "$type": "dimension",
+      "$value": {
+        "value": 8,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-s",
+          "source": [
+            "web/app.css:138"
+          ]
+        }
+      }
+    },
+    "m": {
+      "$type": "dimension",
+      "$value": {
+        "value": 10,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-m",
+          "source": [
+            "web/app.css:139"
+          ]
+        }
+      }
+    },
+    "l": {
+      "$type": "dimension",
+      "$value": {
+        "value": 12,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-l",
+          "source": [
+            "web/app.css:140"
+          ]
+        }
+      }
+    },
+    "xl": {
+      "$type": "dimension",
+      "$value": {
+        "value": 14,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-xl",
+          "source": [
+            "web/app.css:141"
+          ]
+        }
+      }
+    },
+    "2xl": {
+      "$type": "dimension",
+      "$value": {
+        "value": 16,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-2xl",
+          "source": [
+            "web/app.css:142"
+          ]
+        }
+      }
+    },
+    "icon-s": {
+      "$type": "dimension",
+      "$value": {
+        "value": 7,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-icon-s",
+          "source": [
+            "web/app.css:143"
+          ]
+        }
+      }
+    },
+    "icon-m": {
+      "$type": "dimension",
+      "$value": {
+        "value": 9,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-icon-m",
+          "source": [
+            "web/app.css:144"
+          ]
+        }
+      }
+    },
+    "icon-l": {
+      "$type": "dimension",
+      "$value": {
+        "value": 15,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-icon-l",
+          "source": [
+            "web/app.css:145"
+          ]
+        }
+      }
+    },
+    "pill-s": {
+      "$type": "dimension",
+      "$value": {
+        "value": 18,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-pill-s",
+          "source": [
+            "web/app.css:146"
+          ]
+        }
+      }
+    },
+    "pill-m": {
+      "$type": "dimension",
+      "$value": {
+        "value": 20,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-pill-m",
+          "source": [
+            "web/app.css:147"
+          ]
+        }
+      }
+    },
+    "pill": {
+      "$type": "dimension",
+      "$value": {
+        "value": 22,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-pill",
+          "source": [
+            "web/app.css:148"
+          ]
+        }
+      }
+    },
+    "pill-l": {
+      "$type": "dimension",
+      "$value": {
+        "value": 24,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-pill-l",
+          "source": [
+            "web/app.css:149"
+          ]
+        }
+      }
+    },
+    "pill-xl": {
+      "$type": "dimension",
+      "$value": {
+        "value": 26,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-pill-xl",
+          "source": [
+            "web/app.css:150"
+          ]
+        }
+      }
+    },
+    "panel-s": {
+      "$type": "dimension",
+      "$value": {
+        "value": 22,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-panel-s",
+          "source": [
+            "web/app.css:151"
+          ]
+        }
+      }
+    },
+    "panel": {
+      "$type": "dimension",
+      "$value": {
+        "value": 24,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-panel",
+          "source": [
+            "web/app.css:152"
+          ]
+        }
+      }
+    },
+    "sheet": {
+      "$type": "dimension",
+      "$value": {
+        "value": 26,
+        "unit": "px"
+      },
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--r-sheet",
+          "source": [
+            "web/app.css:153"
+          ]
+        }
+      }
+    },
+    "round": {
+      "$value": "50%",
+      "$description": "A circle: ticks, the plus, avatars of a folder. A percentage, which DTCG dimensions do not take.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:335",
+            "web/app.css:347",
+            "web/app.css:537",
+            "web/app.css:547",
+            "web/app.css:598",
+            "web/app.css:705",
+            "web/app.css:771",
+            "web/app.css:789",
+            "web/app.css:810",
+            "web/app.css:854",
+            "web/app.css:917",
+            "web/app.css:954",
+            "web/app.css:961",
+            "web/app.css:1250",
+            "web/app.css:1319",
+            "web/app.css:1416",
+            "web/app.css:1460",
+            "web/app.css:1504"
+          ],
+          "raw": true
+        }
+      }
+    }
+  }
+}

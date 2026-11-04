@@ -1,0 +1,54 @@
+{
+ "id": "button-login",
+ "group": "Buttons",
+ "title": "Log in",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "login",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"submit\" class=\"save\">Log in</button>",
+ "chain": [
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "lone"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "lone-box"
+   }
+  },
+  {
+   "tag": "form",
+   "attrs": {
+    "id": "login"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "login"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 540,
+  "y": 546.1875,
+  "width": 360,
+  "height": 52,
+  "position": "static",
+  "margin": [
+   16,
+   0,
+   0,
+   0
+  ]
+ }
+}

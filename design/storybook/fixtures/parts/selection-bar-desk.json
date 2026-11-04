@@ -1,0 +1,70 @@
+{
+ "id": "selection-bar-desk",
+ "group": "Buttons",
+ "title": "Selection bar, desktop",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div id=\"dbulk\"><div class=\"tb bulk\" role=\"toolbar\" aria-label=\"Selection\"><span class=\"n num\">1 <span>selected</span></span><span class=\"sp\"></span>\n      <button type=\"button\" class=\"btn lbl\" data-a=\"sel-all\" data-fit=\"2\" aria-label=\"Select all\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-select\"></use></svg><span class=\"t\">Select all</span></button>\n      <button type=\"button\" class=\"btn lbl\" data-a=\"bulk-move\" data-fit=\"4\" aria-label=\"Move\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-move\"></use></svg><span class=\"t\">Move</span></button><button type=\"button\" class=\"btn lbl\" data-a=\"bulk-copy\" data-fit=\"3\" aria-label=\"Copy\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-link\"></use></svg><span class=\"t\">Copy</span></button><button type=\"button\" class=\"btn lbl\" data-a=\"bulk-share\" data-fit=\"1\" aria-label=\"Share\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-share\"></use></svg><span class=\"t\">Share</span></button><button type=\"button\" class=\"btn warn lbl\" data-a=\"bulk-trash\" data-fit=\"9\" aria-label=\"Trash\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg><span class=\"t\">Trash</span></button>\n             <button type=\"button\" class=\"btn lbl\" data-a=\"sel-more\" data-fit=\"8\" aria-haspopup=\"menu\" aria-label=\"More actions\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-more\"></use></svg><span class=\"t\">More</span></button></div></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen selecting",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "head",
+    "id": "head"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 24,
+  "width": 928,
+  "height": 48,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

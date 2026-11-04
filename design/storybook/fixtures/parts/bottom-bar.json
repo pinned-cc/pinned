@@ -1,0 +1,50 @@
+{
+ "id": "bottom-bar",
+ "group": "Fields",
+ "title": "Search and plus, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"pbottom\" id=\"pbottom\">\n      <div class=\"psrow\" id=\"psrow\"><button type=\"button\" class=\"search ps-trigger\" id=\"qs\" data-a=\"palette\" aria-label=\"Search bookmarks\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-search\"></use></svg><span class=\"sf-t\" id=\"qt\" data-ph=\"Search bookmarks\"></span><span class=\"kcap\" aria-hidden=\"true\">/</span></button>\n        <button type=\"button\" class=\"padd\" data-a=\"add\" aria-label=\"Add\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg></button></div>\n      <div id=\"pbulkwrap\"></div></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 16,
+  "y": 780,
+  "width": 358,
+  "height": 48,
+  "position": "fixed",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

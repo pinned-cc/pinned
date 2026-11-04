@@ -1,0 +1,43 @@
+{
+ "id": "tabs-howto",
+ "group": "Tabs",
+ "title": "How to save tabs",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "bookmarklet",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"seg hs-tabs\" role=\"tablist\" aria-label=\"Device\" style=\"--tab: 1;\">\n    <button type=\"button\" role=\"tab\" id=\"t-iphone\" aria-controls=\"p-iphone\" aria-selected=\"false\" tabindex=\"-1\">iPhone</button>\n    <button type=\"button\" role=\"tab\" id=\"t-mac\" aria-controls=\"p-mac\" aria-selected=\"true\" tabindex=\"0\">Computer</button>\n    <button type=\"button\" role=\"tab\" id=\"t-android\" aria-controls=\"p-android\" aria-selected=\"false\" tabindex=\"-1\">Android</button>\n    <button type=\"button\" role=\"tab\" id=\"t-ext\" aria-controls=\"p-ext\" aria-selected=\"false\" tabindex=\"-1\">Extension</button>\n  </div>",
+ "chain": [
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "bm-page"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "bookmarklet",
+  "data-base": "http://127.0.0.1:18431"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 456,
+  "y": 187.390625,
+  "width": 528,
+  "height": 48,
+  "position": "relative",
+  "margin": [
+   0,
+   0,
+   24,
+   0
+  ]
+ }
+}

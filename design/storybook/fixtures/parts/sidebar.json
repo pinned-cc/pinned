@@ -1,0 +1,50 @@
+{
+ "id": "sidebar",
+ "group": "Folder tiles",
+ "title": "Sidebar",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<aside class=\"side\" id=\"side\" aria-label=\"Folders\"><div class=\"brand\" aria-hidden=\"true\"><span class=\"brand-t\">Pinned</span><svg class=\"brand-mark\"><use href=\"#app-mark\"></use></svg></div>\n    <div class=\"nav\"><button type=\"button\" class=\"si dash\" data-view=\"dashboard\" aria-current=\"true\">\n  <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-grid\"></use></svg></span><span class=\"si-n\">Dashboard</span></button><button type=\"button\" class=\"si all\" data-view=\"all\" aria-current=\"false\">\n  <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-all\"></use></svg></span><span class=\"si-n\">All bookmarks</span><span class=\"si-c\">18</span></button><button type=\"button\" class=\"si inbox\" data-view=\"inbox\" aria-current=\"false\">\n  <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-inbox\"></use></svg></span><span class=\"si-n\">Inbox</span><span class=\"si-c\">2</span></button></div>\n    <div class=\"side-lbl\"><span class=\"side-lt\">Folders</span><button type=\"button\" class=\"side-add nf-plus\" data-a=\"new-folder\" aria-label=\"New folder\"><span class=\"nf-c\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg></span></button></div><div class=\"side-tree\"><div class=\"fstack\" data-parent=\"\" role=\"group\" aria-label=\"Folders\"><button type=\"button\" class=\"si sf hue-cyan\" data-view=\"1\" data-fid=\"1\" aria-current=\"false\" aria-label=\"Reading, 3\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Reading</span><span class=\"si-c\">3</span></button><button type=\"button\" class=\"si sf hue-coral\" data-view=\"2\" data-fid=\"2\" aria-current=\"false\" aria-label=\"Design, 2\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Design</span><span class=\"si-c\">2</span></button><button type=\"button\" class=\"si sf hue-lilac\" data-view=\"3\" data-fid=\"3\" aria-current=\"false\" aria-label=\"Recipes, 2\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Recipes</span><span class=\"si-c\">2</span></button><button type=\"button\" class=\"si sf hue-lime\" data-view=\"4\" data-fid=\"4\" aria-current=\"false\" aria-label=\"Travel, 2\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Travel</span><svg class=\"i lk\" aria-hidden=\"true\"><use href=\"#i-link\"></use></svg><span class=\"si-c\">2</span></button><button type=\"button\" class=\"si sf hue-mint\" data-view=\"5\" data-fid=\"5\" aria-current=\"false\" aria-label=\"Work, 2\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Work</span><span class=\"si-c\">2</span></button><button type=\"button\" class=\"si sf hue-rose\" data-view=\"6\" data-fid=\"6\" aria-current=\"false\" aria-label=\"Tools, 3\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Tools</span><span class=\"si-c\">3</span></button><button type=\"button\" class=\"si sf hue-cyan\" data-view=\"7\" data-fid=\"7\" aria-current=\"false\" aria-label=\"Type, 1\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Type</span><span class=\"si-c\">1</span></button><button type=\"button\" class=\"si sf hue-coral\" data-view=\"8\" data-fid=\"8\" aria-current=\"false\" aria-label=\"Colour, 1\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Colour</span><span class=\"si-c\">1</span></button><button type=\"button\" class=\"si sf hue-lilac locked\" data-view=\"9\" data-fid=\"9\" aria-current=\"false\" aria-label=\"Private, 0\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Private</span><span class=\"si-c si-lock\" aria-label=\"locked\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg></span></button><button type=\"button\" class=\"si sf hue-lime\" data-view=\"10\" data-fid=\"10\" aria-current=\"false\" aria-label=\"Empty for now, 0\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Empty for now</span><span class=\"si-c\">0</span></button></div></div>\n    <div class=\"side-foot\"><button type=\"button\" class=\"si trash\" data-view=\"trash\" aria-current=\"false\">\n  <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg></span><span class=\"si-n\">Trash</span><span class=\"si-c\">1</span></button><button type=\"button\" class=\"si foot-tog\" data-a=\"foot\" aria-expanded=\"false\" aria-controls=\"footacts\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-more\"></use></svg></span><span class=\"si-n\">More</span><span class=\"foot-chev\" aria-hidden=\"true\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></span></button>\n      <div class=\"foot-acts\" id=\"footacts\"><div class=\"foot-in\"><button type=\"button\" class=\"si\" data-a=\"import\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-import\"></use></svg></span><span class=\"si-n\">Import</span></button>\n      <a class=\"si\" href=\"/api/export\" download=\"\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-export\"></use></svg></span><span class=\"si-n\">Export</span></a><button type=\"button\" class=\"si\" data-a=\"tokens\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-key\"></use></svg></span><span class=\"si-n\">API tokens</span></button><button type=\"button\" class=\"si\" data-a=\"sessions\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg></span><span class=\"si-n\">Signed in</span></button>\n      <a class=\"si\" href=\"/bookmarklet\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-all\"></use></svg></span><span class=\"si-n\">How to save</span></a><button type=\"button\" class=\"si\" data-a=\"logout\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-logout\"></use></svg></span><span class=\"si-n\">Log out</span></button>\n      <a class=\"si\" href=\"https://github.com/pinned-cc/pinned\" target=\"_blank\" rel=\"noopener\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-open\"></use></svg></span><span class=\"si-n\">Source</span></a><button type=\"button\" class=\"si rail-only\" data-a=\"releases\"><span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-clock\"></use></svg></span><span class=\"si-n\">What's new</span></button><button type=\"button\" class=\"app-ver\" data-a=\"releases\">Pinned 0.1.11<span class=\"app-new\">What's new</span></button></div></div></div></aside>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 0,
+  "y": 0,
+  "width": 288,
+  "height": 900,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

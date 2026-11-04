@@ -1,0 +1,77 @@
+{
+ "id": "add-tile",
+ "group": "Empty and error states",
+ "title": "The dashed add tile at the end of a list",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"addtile\" data-a=\"add-new\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg><span>Add bookmark</span></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "body",
+    "id": "body"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "grid",
+    "data-container": "2"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 872,
+  "y": 364,
+  "width": 220,
+  "height": 132,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

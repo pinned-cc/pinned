@@ -1,0 +1,44 @@
+{
+ "id": "dialog-phone",
+ "group": "Dialogs",
+ "title": "Password dialog, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": 14,
+ "hover": 16,
+ "html": "<div class=\"sheet\" id=\"sheet\" role=\"dialog\" aria-modal=\"true\" tabindex=\"-1\" aria-label=\"Unlock Private\"><div class=\"grab\" aria-hidden=\"true\"></div><div class=\"sh-body\"><div class=\"sh-head hue-lilac\"><svg class=\"i fh-ic\" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg><span class=\"tt\"><span class=\"t\">Private</span></span><button type=\"button\" class=\"ib sh-x\" data-a=\"close\" aria-label=\"Close\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-close\"></use></svg></button></div><form data-lock=\"\"><label class=\"fld\"><span class=\"sh-lbl\">Password</span><input class=\"fld-in\" type=\"password\" name=\"pw\" autocomplete=\"current-password\" enterkeyhint=\"go\" data-autofocus=\"\" value=\"\" style=\"\"></label><div class=\"sv-acts\"><button type=\"submit\" class=\"save\">Unlock</button></div></form></div></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "layer dialog open",
+    "id": "layer"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 16,
+  "y": 306,
+  "width": 358,
+  "height": 232,
+  "position": "fixed",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

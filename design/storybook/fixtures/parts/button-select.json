@@ -1,0 +1,77 @@
+{
+ "id": "button-select",
+ "group": "Buttons",
+ "title": "Select, a quiet button",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"btn lbl sel\" data-a=\"select\" aria-pressed=\"false\" aria-label=\"Select\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-select\"></use></svg><span class=\"t\"><span>Select</span><span>Done</span></span></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "tbwrap"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "tb dash",
+    "role": "toolbar",
+    "aria-label": "Dashboard"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 1235.359375,
+  "y": 240,
+  "width": 92.640625,
+  "height": 36,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,62 @@
+{
+ "id": "empty-folder-phone",
+ "group": "Empty and error states",
+ "title": "Empty folder, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"pempty merge\"><span>Nothing here yet.</span><span class=\"em-acts\">\n  <button type=\"button\" class=\"em-a\" data-a=\"add-new\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg>Add bookmark</button><button type=\"button\" class=\"em-a\" data-a=\"add-to\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-move\"></use></svg>Add existing</button></span></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 18,
+  "y": 243,
+  "width": 354,
+  "height": 180,
+  "position": "static",
+  "margin": [
+   28,
+   18,
+   0,
+   18
+  ]
+ }
+}

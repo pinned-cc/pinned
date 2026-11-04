@@ -1,0 +1,76 @@
+{
+ "id": "card-trash",
+ "group": "Cards",
+ "title": "A card in Trash, Restore and Delete",
+ "device": "desk",
+ "note": "The pointer rests on the card.",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": 3,
+ "html": "<article class=\"tile\" data-id=\"20\">\n    <div class=\"t-main\"><span class=\"fav\" data-l=\"A\">A</span>\n      <button type=\"button\" class=\"t-title\" data-a=\"tile-menu\" aria-haspopup=\"menu\">An old link in Trash</button>\n      <p class=\"t-host\"><span class=\"trunc-start\"><bdi dir=\"ltr\">example.com</bdi></span></p></div>\n    <div class=\"t-strip hue-mint\"><span class=\"dot\"></span><span class=\"path\">Work</span><time datetime=\"2026-11-04\">Today</time></div>\n    <div class=\"acts\" role=\"group\" aria-label=\"Actions for An old link in Trash\">\n      <button type=\"button\" class=\"ab txt\" data-a=\"restore\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-restore\"></use></svg>Restore</button>\n      <button type=\"button\" class=\"ab del\" data-a=\"purge\" aria-label=\"Delete An old link in Trash now\" title=\"Delete now\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg></button></div>\n    <button type=\"button\" class=\"chk\" data-a=\"pick\" role=\"checkbox\" aria-checked=\"false\" aria-label=\"Select An old link in Trash\" tabindex=\"-1\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-check\"></use></svg></button></article>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "body",
+    "id": "body"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "grid"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 364,
+  "width": 220,
+  "height": 132,
+  "position": "relative",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,70 @@
+{
+ "id": "folder-tile-phone",
+ "group": "Folder tiles",
+ "title": "Folder tile, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"ftile hue-cyan\" data-view=\"1\" data-ftile=\"1\" aria-label=\"Reading, 3\"><span class=\"chk\" aria-hidden=\"true\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-check\"></use></svg></span>\n  <span class=\"ft-n\"><svg class=\"i fi\" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg><span class=\"ft-t\">Reading</span></span><span class=\"ft-c num\"><span class=\"ft-faces\"><span class=\"fav\" data-l=\"F\">F</span><span class=\"fav\" data-l=\"A\">A</span><span class=\"fav\" data-l=\"W\">W</span></span></span></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "fgrid fgrid-p fscreen",
+    "role": "group",
+    "aria-label": "Folders"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 201,
+  "y": 313,
+  "width": 171,
+  "height": 120,
+  "position": "relative",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

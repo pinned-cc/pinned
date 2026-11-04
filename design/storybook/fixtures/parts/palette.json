@@ -1,0 +1,44 @@
+{
+ "id": "palette",
+ "group": "Sheets",
+ "title": "Search palette, desktop",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": 6,
+ "hover": 39,
+ "html": "<div class=\"pal-panel glass\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Search bookmarks\" style=\"--vvh: 900px; --vvt: 0px; --kb: 0px;\">\n    <div class=\"pal-row\"><label class=\"pal-f\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-search\"></use></svg><span class=\"vh\">Search bookmarks</span>\n      <input id=\"pq\" type=\"search\" autocomplete=\"off\" spellcheck=\"false\" placeholder=\"Search bookmarks\" enterkeyhint=\"go\" role=\"combobox\" aria-expanded=\"true\" aria-controls=\"pal-list\" aria-autocomplete=\"list\" aria-activedescendant=\"pal-0\" value=\"re\" style=\"\">\n      <span class=\"kcap\" aria-hidden=\"true\">esc</span></label><button type=\"button\" class=\"pal-cancel\" data-pal=\"close\">Cancel</button></div>\n    <div class=\"pal-scroll\"><div id=\"pal-rec\" hidden=\"\"><div class=\"pal-lbl\">Recent</div><nav class=\"precent pal-recent\" aria-label=\"Recent\"><a class=\"prc pal-rc\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\" aria-label=\"Field notes on slow software\">\n      <span class=\"prc-ic\" data-l=\"F\">F</span>\n      <span class=\"prc-l\">Field notes on slow software</span></a><a class=\"prc pal-rc\" href=\"https://tools.example.dev/regex\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"14\" draggable=\"false\" aria-label=\"Regex tester\">\n      <span class=\"prc-ic\" data-l=\"R\">R</span>\n      <span class=\"prc-l\">Regex tester</span></a><a class=\"prc pal-rc\" href=\"https://design.example.org/spacing\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"5\" draggable=\"false\" aria-label=\"Spacing scales compared\">\n      <span class=\"prc-ic\" data-l=\"S\">S</span>\n      <span class=\"prc-l\">Spacing scales compared</span></a><a class=\"prc pal-rc\" href=\"https://kitchen.example.com/lentils\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"9\" draggable=\"false\" aria-label=\"Lentil soup for a cold week\">\n      <span class=\"prc-ic\" data-l=\"L\">L</span>\n      <span class=\"prc-l\">Lentil soup for a cold week</span></a><a class=\"prc pal-rc\" href=\"https://example.net/packing\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"11\" draggable=\"false\" aria-label=\"Packing list, five days\">\n      <span class=\"prc-ic\" data-l=\"P\">P</span>\n      <span class=\"prc-l\">Packing list, five days</span></a><a class=\"prc pal-rc\" href=\"https://tools.example.dev/json\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"15\" draggable=\"false\" aria-label=\"JSON viewer\">\n      <span class=\"prc-ic\" data-l=\"J\">J</span>\n      <span class=\"prc-l\">JSON viewer</span></a><a class=\"prc pal-rc\" href=\"https://letters.example.net/48\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"3\" draggable=\"false\" aria-label=\"Weekly letter, issue 48\">\n      <span class=\"prc-ic\" data-l=\"W\">W</span>\n      <span class=\"prc-l\">Weekly letter, issue 48</span></a></nav></div><div class=\"pal-list\" id=\"pal-list\" role=\"listbox\" aria-label=\"Bookmarks\"><div class=\"pal-grp\"><div class=\"pal-lbl pal-g\"><span>Reading</span><span class=\"num\">2</span></div><a class=\"pal-it\" role=\"option\" id=\"pal-0\" aria-selected=\"true\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"0\" data-open=\"1\">\n          <span class=\"fav\" data-l=\"F\">F</span><span class=\"pal-t\">Field notes on slow softwa<mark class=\"hit\">re</mark></span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">example.com</bdi></span><span class=\"pal-p\">Reading</span></a><a class=\"pal-it\" role=\"option\" id=\"pal-1\" aria-selected=\"false\" href=\"https://example.org/essays/rivers\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"1\" data-open=\"2\">\n          <span class=\"fav\" data-l=\"A\">A</span><span class=\"pal-t\">A long <mark class=\"hit\">re</mark>ad about rivers and the towns they make</span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">example.org</bdi></span><span class=\"pal-p\">Reading</span></a></div><div class=\"pal-grp\"><div class=\"pal-lbl pal-g\"><span>Colour</span><span class=\"num\">1</span></div><a class=\"pal-it\" role=\"option\" id=\"pal-2\" aria-selected=\"false\" href=\"https://colour.example.net/oklch\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"2\" data-open=\"7\">\n          <span class=\"fav\" data-l=\"R\">R</span><span class=\"pal-t\"><mark class=\"hit\">Re</mark>ading OKLCH</span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">colour.example.net</bdi></span><span class=\"pal-p\">Colour</span></a></div><div class=\"pal-grp\"><div class=\"pal-lbl pal-g\"><span>Design</span><span class=\"num\">1</span></div><a class=\"pal-it\" role=\"option\" id=\"pal-3\" aria-selected=\"false\" href=\"https://design.example.org/spacing\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"3\" data-open=\"5\">\n          <span class=\"fav\" data-l=\"S\">S</span><span class=\"pal-t\">Spacing scales compa<mark class=\"hit\">re</mark>d</span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">design.example.org</bdi></span><span class=\"pal-p\">Design</span></a></div><div class=\"pal-grp\"><div class=\"pal-lbl pal-g\"><span>Recipes</span><span class=\"num\">1</span></div><a class=\"pal-it\" role=\"option\" id=\"pal-4\" aria-selected=\"false\" href=\"https://kitchen.example.com/bread\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"4\" data-open=\"8\">\n          <span class=\"fav\" data-l=\"B\">B</span><span class=\"pal-t\">B<mark class=\"hit\">re</mark>ad with a long rise</span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">kitchen.example.com</bdi></span><span class=\"pal-p\">Recipes</span></a></div><div class=\"pal-grp\"><div class=\"pal-lbl pal-g\"><span>Tools</span><span class=\"num\">1</span></div><a class=\"pal-it\" role=\"option\" id=\"pal-5\" aria-selected=\"false\" href=\"https://tools.example.dev/regex\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"5\" data-open=\"14\">\n          <span class=\"fav\" data-l=\"R\">R</span><span class=\"pal-t\"><mark class=\"hit\">Re</mark>gex tester</span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">tools.example.dev</bdi></span><span class=\"pal-p\">Tools</span></a></div><div class=\"pal-grp\"><div class=\"pal-lbl pal-g\"><span>Work</span><span class=\"num\">1</span></div><a class=\"pal-it\" role=\"option\" id=\"pal-6\" aria-selected=\"false\" href=\"https://work.example.com/release\" target=\"_blank\" rel=\"noopener noreferrer\" tabindex=\"-1\" data-pi=\"6\" data-open=\"12\">\n          <span class=\"fav\" data-l=\"R\">R</span><span class=\"pal-t\"><mark class=\"hit\">Re</mark>lease checklist</span><span class=\"trunc-start pal-h\"><bdi dir=\"ltr\">work.example.com</bdi></span><span class=\"pal-p\">Work</span></a></div></div></div></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "pal open",
+    "id": "pal"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk pal-on"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 162,
+  "width": 640,
+  "height": 564,
+  "position": "absolute",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

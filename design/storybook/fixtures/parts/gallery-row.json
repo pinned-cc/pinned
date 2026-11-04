@@ -1,0 +1,95 @@
+{
+ "id": "gallery-row",
+ "group": "Cards",
+ "title": "Dashboard list row",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<article class=\"gc-row\" data-id=\"1\"><a class=\"g-in\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\" aria-label=\"Field notes on slow software, example.com, in Reading, opened Just now\"><span class=\"fav\" data-l=\"F\">F</span><span class=\"gc-tt\"><span class=\"gc-t\">Field notes on slow software</span><span class=\"trunc-start gc-host\"><bdi dir=\"ltr\">example.com</bdi></span></span>\n    <span class=\"gc-chip hue-cyan\"><span class=\"dot\"></span><span class=\"gc-cn\">Reading</span></span><span class=\"gc-time\"><time datetime=\"2026-11-04T10:17:51.000Z\">Just now</time></span></a></article>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "body",
+    "id": "body"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "gal is-list"
+   }
+  },
+  {
+   "tag": "section",
+   "attrs": {
+    "class": "gs",
+    "aria-labelledby": "gs-0"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "gl"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "gl-col"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 392,
+  "y": 364,
+  "width": 464,
+  "height": 36,
+  "position": "relative",
+  "margin": [
+   0,
+   -8,
+   0,
+   -8
+  ]
+ }
+}

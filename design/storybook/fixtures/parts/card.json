@@ -1,0 +1,76 @@
+{
+ "id": "card",
+ "group": "Cards",
+ "title": "Bookmark card",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<article class=\"tile\" data-id=\"2\">\n    <div class=\"t-main\"><span class=\"fav\" data-l=\"A\">A</span>\n      <a class=\"t-title\" href=\"https://example.org/essays/rivers\" target=\"_blank\" rel=\"noopener noreferrer\" draggable=\"false\" data-open=\"2\">A long read about rivers and the towns they make</a>\n      <p class=\"t-host\"><span class=\"trunc-start\"><bdi dir=\"ltr\">example.org</bdi></span></p></div>\n    <div class=\"t-strip hue-cyan\"><span class=\"dot\"></span><span class=\"path\">Reading</span><time datetime=\"2026-11-04\">Today</time></div>\n    <div class=\"acts\" role=\"group\" aria-label=\"Actions for A long read about rivers and the towns they make\">\n      <button type=\"button\" class=\"ab\" data-a=\"share\" aria-label=\"Share A long read about rivers and the towns they make\" title=\"Share\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-share\"></use></svg></button>\n      <button type=\"button\" class=\"ab\" data-a=\"open\" aria-label=\"Open A long read about rivers and the towns they make\" title=\"Open\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-open\"></use></svg></button>\n      <button type=\"button\" class=\"ab del\" data-a=\"trash\" aria-label=\"Move A long read about rivers and the towns they make to Trash\" title=\"Trash\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg></button>\n      <button type=\"button\" class=\"ab\" data-a=\"more\" aria-label=\"More for A long read about rivers and the towns they make\" aria-haspopup=\"menu\" title=\"More\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-more\"></use></svg></button></div>\n    <button type=\"button\" class=\"chk\" data-a=\"pick\" role=\"checkbox\" aria-checked=\"false\" aria-label=\"Select A long read about rivers and the towns they make\" tabindex=\"-1\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-check\"></use></svg></button></article>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "body",
+    "id": "body"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "grid"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 364,
+  "width": 220,
+  "height": 132,
+  "position": "relative",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

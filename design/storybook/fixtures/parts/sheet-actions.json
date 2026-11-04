@@ -1,0 +1,44 @@
+{
+ "id": "sheet-actions",
+ "group": "Sheets",
+ "title": "Action sheet, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"sheet\" id=\"sheet\" role=\"dialog\" aria-modal=\"true\" tabindex=\"-1\" aria-label=\"Actions\"><div class=\"grab\" aria-hidden=\"true\"></div><div class=\"sh-body\"><div class=\"sh-head hue-cyan\"><svg class=\"i fh-ic\" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg><span class=\"tt\"><span class=\"t\">Reading</span></span></div><div class=\"sh-rows\"><button type=\"button\" class=\"sh-row\" data-row=\"0\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-link\"></use></svg>Share</button><button type=\"button\" class=\"sh-row\" data-row=\"1\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg>Add bookmarks</button><button type=\"button\" class=\"sh-row\" data-row=\"2\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder-plus\"></use></svg>New folder inside</button><button type=\"button\" class=\"sh-row\" data-row=\"3\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-edit\"></use></svg>Rename</button><button type=\"button\" class=\"sh-row\" data-row=\"4\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-move\"></use></svg>Move to</button><button type=\"button\" class=\"sh-row\" data-row=\"5\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-clock\"></use></svg>Hide from Recent</button><button type=\"button\" class=\"sh-row\" data-row=\"6\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg>Lock with a password</button></div><div class=\"sh-rows\"><button type=\"button\" class=\"sh-row warn\" data-row=\"8\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg>Delete</button></div></div></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "layer open",
+    "id": "layer"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 0,
+  "y": 337.609375,
+  "width": 390,
+  "height": 506.390625,
+  "position": "fixed",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

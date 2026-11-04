@@ -1,0 +1,62 @@
+{
+ "id": "trash-row",
+ "group": "Folder tiles",
+ "title": "Trash row",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"ftrash p\" data-view=\"trash\" aria-label=\"Trash, 1\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg><span class=\"ftrash-n\">Trash</span><span class=\"ftrash-c num\">1</span><svg class=\"i ftrash-ch\" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 18,
+  "y": 704,
+  "width": 354,
+  "height": 52,
+  "position": "static",
+  "margin": [
+   12,
+   18,
+   0,
+   18
+  ]
+ }
+}

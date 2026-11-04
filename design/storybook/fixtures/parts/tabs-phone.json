@@ -1,0 +1,56 @@
+{
+ "id": "tabs-phone",
+ "group": "Tabs",
+ "title": "Start tabs, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<header class=\"ptbar home tabs\"><div class=\"ptabs\" role=\"tablist\" aria-label=\"Start\"><span class=\"ptab-ind\" aria-hidden=\"true\" style=\"transform: translateX(0px); width: 99px;\"></span><button type=\"button\" class=\"ptab\" role=\"tab\" aria-selected=\"true\" data-a=\"tab\" data-tab=\"dashboard\">Dashboard</button><button type=\"button\" class=\"ptab\" role=\"tab\" aria-selected=\"false\" data-a=\"tab\" data-tab=\"inbox\">Inbox<span class=\"ptab-n num\">2</span></button><button type=\"button\" class=\"ptab\" role=\"tab\" aria-selected=\"false\" data-a=\"tab\" data-tab=\"folders\">Folders<span class=\"ptab-n num\">10</span></button></div><span class=\"ptb-sp\"></span></header>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 0,
+  "y": 199,
+  "width": 390,
+  "height": 48,
+  "position": "static",
+  "margin": [
+   34,
+   0,
+   0,
+   0
+  ]
+ }
+}

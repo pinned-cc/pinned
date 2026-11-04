@@ -1,0 +1,44 @@
+{
+ "id": "toast",
+ "group": "Toasts",
+ "title": "Toast with an action",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"toast in\"><span class=\"tx\">Moved to Trash</span><button type=\"button\">Undo</button></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "toasts",
+    "id": "toasts"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 621.8359375,
+  "y": 832,
+  "width": 196.328125,
+  "height": 44,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

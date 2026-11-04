@@ -1,0 +1,70 @@
+{
+ "id": "empty-folder",
+ "group": "Empty and error states",
+ "title": "Empty folder",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"empty merge\"><span>Nothing here yet.</span><span class=\"em-acts\">\n  <button type=\"button\" class=\"em-a\" data-a=\"add-new\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg>Add bookmark</button><button type=\"button\" class=\"em-a\" data-a=\"add-to\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-move\"></use></svg>Add existing</button></span></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "body",
+    "id": "body"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 400,
+  "y": 364,
+  "width": 928,
+  "height": 180,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,36 @@
+{
+ "id": "menu-desk",
+ "group": "Menus",
+ "title": "Menu, desktop",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"menu\" role=\"menu\" style=\"left: 1047.36px; top: 314px;\"><button type=\"button\" role=\"menuitemradio\" aria-checked=\"true\" data-mi=\"0\">Newest<span class=\"ck\"><svg class=\"i s16\" aria-hidden=\"true\"><use href=\"#i-check\"></use></svg></span></button><button type=\"button\" role=\"menuitemradio\" aria-checked=\"false\" data-mi=\"1\">A to Z</button><button type=\"button\" role=\"menuitemradio\" aria-checked=\"false\" data-mi=\"2\">Last opened</button><button type=\"button\" role=\"menuitemradio\" aria-checked=\"false\" data-mi=\"3\">Your order</button></div>",
+ "chain": [],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 1047.359375,
+  "y": 314,
+  "width": 180,
+  "height": 146,
+  "position": "fixed",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "pinned-design",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tokens": "style-dictionary build --config ./style-dictionary.config.js",
+    "check:tokens": "npm run tokens && node scripts/check-tokens.mjs",
+    "storybook": "npm run tokens && storybook dev -c storybook/.storybook -p 6007 --host 127.0.0.1",
+    "build-storybook": "npm run tokens && storybook build -c storybook/.storybook -o storybook-static && node scripts/postbuild.mjs storybook-static",
+    "capture": "scripts/with-real-app.sh \"$PINNED_BIN\" 18431 scripts/capture.mjs && node scripts/make-stories.mjs",
+    "shoot": "node scripts/shoot.mjs 6107",
+    "proof": "npm run check:tokens && npm run build-storybook && npm run shoot"
+  },
+  "devDependencies": {
+    "@storybook/html-vite": "9.1.21",
+    "mermaid": "12.2.0",
+    "storybook": "9.1.21",
+    "style-dictionary": "5.7.1",
+    "vite": "7.3.7"
+  }
+}

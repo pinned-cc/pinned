@@ -1,0 +1,44 @@
+{
+ "id": "toast-phone",
+ "group": "Toasts",
+ "title": "Toast, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"toast in\"><span class=\"tx\">Moved to Trash</span><button type=\"button\">Undo</button></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "toasts",
+    "id": "toasts"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 96.8359375,
+  "y": 724,
+  "width": 196.328125,
+  "height": 44,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "id": "field-login",
+ "group": "Fields",
+ "title": "Password field on the ground",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "login",
+ "focus": 2,
+ "hover": -1,
+ "html": "<label class=\"fld first\"><span class=\"sh-lbl\">Password</span>\n      <input class=\"fld-in\" type=\"password\" name=\"password\" autocomplete=\"current-password\" required=\"\" autofocus=\"\" enterkeyhint=\"go\" value=\"\" style=\"\"></label>",
+ "chain": [
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "lone"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "lone-box"
+   }
+  },
+  {
+   "tag": "form",
+   "attrs": {
+    "id": "login"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "login"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 540,
+  "y": 434.1875,
+  "width": 360,
+  "height": 70,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

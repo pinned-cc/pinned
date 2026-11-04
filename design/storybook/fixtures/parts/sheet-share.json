@@ -1,0 +1,44 @@
+{
+ "id": "sheet-share",
+ "group": "Sheets",
+ "title": "Share sheet, desktop",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"sheet\" id=\"sheet\" role=\"dialog\" aria-modal=\"true\" tabindex=\"-1\" aria-label=\"Share Travel\"><div class=\"grab\" aria-hidden=\"true\"></div><div class=\"sh-body\"><div class=\"at-head\"><h2 class=\"at-title\">Share Travel</h2><button type=\"button\" class=\"ib weak\" data-a=\"close\" aria-label=\"Close\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-close\"></use></svg></button></div>\n    <div class=\"sh-rows\"><button type=\"button\" class=\"sh-row sh-switch\" role=\"switch\" aria-checked=\"true\" data-a=\"share-toggle\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-link\"></use></svg><span class=\"sw-l\">Share with a link</span><span class=\"sw\" aria-hidden=\"true\"><span class=\"knob\"></span></span></button></div><div class=\"share-sec\"><span class=\"sh-lbl\">Link</span><div class=\"share-link\"><input class=\"fld-in\" id=\"share-url\" readonly=\"\" value=\"http://127.0.0.1:18431/s/#qn2VLmY77l2JaYyyfDQ1c1aKP3e6BS5o\" aria-label=\"Link\" style=\"\"><button type=\"button\" class=\"tbtn\" data-a=\"share-copy\">Copy</button></div></div>\n    <div class=\"share-sec\"><div class=\"sh-rows\"><button type=\"button\" class=\"sh-row sh-switch\" role=\"switch\" aria-checked=\"false\" data-a=\"share-lock\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg><span class=\"sw-l\">Lock with a password</span><span class=\"sw\" aria-hidden=\"true\"><span class=\"knob\"></span></span></button></div></div>\n    <div class=\"share-sec\"><span class=\"sh-lbl\" id=\"exp-l\">Expires</span><div class=\"seg\" role=\"radiogroup\" aria-labelledby=\"exp-l\"><button type=\"button\" role=\"radio\" aria-checked=\"true\" data-a=\"share-exp\" data-exp=\"never\">Never</button><button type=\"button\" role=\"radio\" aria-checked=\"false\" data-a=\"share-exp\" data-exp=\"1\">1 day</button><button type=\"button\" role=\"radio\" aria-checked=\"false\" data-a=\"share-exp\" data-exp=\"7\">7 days</button><button type=\"button\" role=\"radio\" aria-checked=\"false\" data-a=\"share-exp\" data-exp=\"30\">30 days</button></div></div>\n    <p class=\"share-meta share-opens\">Not opened yet</p></div></div>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "layer open",
+    "id": "layer"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 524,
+  "y": 232,
+  "width": 392,
+  "height": 436,
+  "position": "fixed",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

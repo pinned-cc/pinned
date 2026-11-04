@@ -1,0 +1,44 @@
+{
+  "blur": {
+    "$description": "Backdrop filters.",
+    "sidebar": {
+      "$value": "blur(24px) saturate(1.4)",
+      "$description": "The sidebar backdrop filter. A CSS filter, kept as written.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--blur-side",
+          "source": [
+            "web/app.css:74"
+          ],
+          "raw": true
+        }
+      }
+    },
+    "menu": {
+      "$value": "blur(24px) saturate(1.6)",
+      "$description": "The menu backdrop filter. A CSS filter, kept as written.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--blur-menu",
+          "source": [
+            "web/app.css:75"
+          ],
+          "raw": true
+        }
+      }
+    },
+    "panel": {
+      "$value": "blur(32px) saturate(1.6)",
+      "$description": "Sheets and the palette, backdrop filter. A CSS filter, kept as written.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--blur-panel",
+          "source": [
+            "web/app.css:76"
+          ],
+          "raw": true
+        }
+      }
+    }
+  }
+}

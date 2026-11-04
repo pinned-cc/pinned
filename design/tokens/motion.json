@@ -1,0 +1,548 @@
+{
+  "easing": {
+    "$description": "Durations and easings. The five easings with a custom property, then every other value the stylesheet writes out.",
+    "out": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.23,
+        1,
+        0.32,
+        1
+      ],
+      "$description": "The default ease out of every transition.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--ease-out",
+          "source": [
+            "web/app.css:23"
+          ]
+        }
+      }
+    },
+    "drawer": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.32,
+        0.72,
+        0,
+        1
+      ],
+      "$description": "A sheet sliding up.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--ease-drawer",
+          "source": [
+            "web/app.css:24"
+          ]
+        }
+      }
+    },
+    "soft": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.16,
+        1,
+        0.3,
+        1
+      ],
+      "$description": "The save panel: a long ease out that lands softly.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--ease-soft",
+          "source": [
+            "web/app.css:26"
+          ]
+        }
+      }
+    },
+    "glide": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.22,
+        1,
+        0.36,
+        1
+      ],
+      "$description": "The save panel: a calm glide for its light and form.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--ease-glide",
+          "source": [
+            "web/app.css:27"
+          ]
+        }
+      }
+    },
+    "draw": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.65,
+        0,
+        0.35,
+        1
+      ],
+      "$description": "The save tick drawing its stroke.",
+      "$extensions": {
+        "cc.pinned": {
+          "var": "--ease-draw",
+          "source": [
+            "web/app.css:28"
+          ]
+        }
+      }
+    },
+    "howto-slide": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.2,
+        0.8,
+        0.2,
+        1
+      ],
+      "$description": "The How to save pill and copy button.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:927",
+            "web/app.css:1487"
+          ],
+          "css": "cubic-bezier(.2,.8,.2,1)"
+        }
+      }
+    },
+    "css-ease": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.25,
+        0.1,
+        0.25,
+        1
+      ],
+      "$description": "The CSS keyword ease.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:927",
+            "web/app.css:966",
+            "web/app.css:1040",
+            "web/app.css:1103",
+            "web/app.css:1108",
+            "web/app.css:1121",
+            "web/app.css:1126",
+            "web/app.css:1131",
+            "web/app.css:1360",
+            "web/app.css:1488"
+          ],
+          "css": "ease"
+        }
+      }
+    },
+    "linear": {
+      "$type": "cubicBezier",
+      "$value": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "$description": "The CSS keyword linear.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1032",
+            "web/app.css:1124",
+            "web/app.css:1132",
+            "web/app.css:1158",
+            "web/app.css:1177"
+          ],
+          "css": "linear"
+        }
+      }
+    },
+    "in-out": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.42,
+        0,
+        0.58,
+        1
+      ],
+      "$description": "The CSS keyword ease-in-out: the skeleton pulse.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1130"
+          ],
+          "css": "ease-in-out"
+        }
+      }
+    },
+    "shake": {
+      "$type": "cubicBezier",
+      "$value": [
+        0.36,
+        0.07,
+        0.19,
+        0.97
+      ],
+      "$description": "A wrong password shaking its field.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1168"
+          ],
+          "css": "cubic-bezier(.36,.07,.19,.97)"
+        }
+      }
+    },
+    "blink-step": {
+      "$value": "steps(1)",
+      "$description": "One step, the drawn caret blinking. A CSS timing function DTCG has no type for.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1530"
+          ],
+          "raw": true
+        }
+      }
+    }
+  },
+  "duration": {
+    "none": {
+      "$type": "duration",
+      "$value": {
+        "value": 0,
+        "unit": "ms"
+      },
+      "$description": "No time: the delay of a visibility switch, a zero fallback.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:204",
+            "web/app.css:1032",
+            "web/app.css:1033",
+            "web/app.css:1111",
+            "web/app.css:1112",
+            "web/app.css:1113",
+            "web/app.css:1114",
+            "web/app.css:1132",
+            "web/app.css:1133",
+            "web/app.css:1177",
+            "web/app.css:1178",
+            "web/app.css:1259",
+            "web/app.css:1260",
+            "web/app.css:1261",
+            "web/app.css:1262"
+          ]
+        }
+      }
+    },
+    "reduced": {
+      "$type": "duration",
+      "$value": {
+        "value": 80,
+        "unit": "ms"
+      },
+      "$description": "The palette fade with reduced motion.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1158"
+          ]
+        }
+      }
+    },
+    "press": {
+      "$type": "duration",
+      "$value": {
+        "value": 120,
+        "unit": "ms"
+      },
+      "$description": "A press, the palette and dialogs going out, phone cards.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1105",
+            "web/app.css:1118",
+            "web/app.css:1131",
+            "web/app.css:1136",
+            "web/app.css:1137",
+            "web/app.css:1177"
+          ]
+        }
+      }
+    },
+    "morph": {
+      "$type": "duration",
+      "$value": {
+        "value": 150,
+        "unit": "ms"
+      },
+      "$description": "The grid and list view transition.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1155"
+          ]
+        }
+      }
+    },
+    "quick": {
+      "$type": "duration",
+      "$value": {
+        "value": 160,
+        "unit": "ms"
+      },
+      "$description": "Hover, switches, fields, small fades.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:493",
+            "web/app.css:1038",
+            "web/app.css:1103",
+            "web/app.css:1113",
+            "web/app.css:1115",
+            "web/app.css:1116",
+            "web/app.css:1121",
+            "web/app.css:1123",
+            "web/app.css:1126",
+            "web/app.css:1129",
+            "web/app.css:1360",
+            "web/app.css:1371",
+            "web/app.css:1597"
+          ]
+        }
+      }
+    },
+    "enter": {
+      "$type": "duration",
+      "$value": {
+        "value": 180,
+        "unit": "ms"
+      },
+      "$description": "The palette, dialogs and the scrim coming in.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1119",
+            "web/app.css:1134",
+            "web/app.css:1178"
+          ]
+        }
+      }
+    },
+    "fade": {
+      "$type": "duration",
+      "$value": {
+        "value": 200,
+        "unit": "ms"
+      },
+      "$description": "Toasts, tab colour, the How to save tabs and copy.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:737",
+            "web/app.css:739",
+            "web/app.css:927",
+            "web/app.css:966",
+            "web/app.css:1035",
+            "web/app.css:1040",
+            "web/app.css:1111",
+            "web/app.css:1112",
+            "web/app.css:1132",
+            "web/app.css:1133",
+            "web/app.css:1138",
+            "web/app.css:1488"
+          ]
+        }
+      }
+    },
+    "settle": {
+      "$type": "duration",
+      "$value": {
+        "value": 240,
+        "unit": "ms"
+      },
+      "$description": "The selection bar glide, a card leaving, a toast arriving.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:833",
+            "web/app.css:1032",
+            "web/app.css:1033",
+            "web/app.css:1103",
+            "web/app.css:1111",
+            "web/app.css:1112",
+            "web/app.css:1114",
+            "web/app.css:1128",
+            "web/app.css:1131",
+            "web/app.css:1139"
+          ]
+        }
+      }
+    },
+    "glass": {
+      "$type": "duration",
+      "$value": {
+        "value": 250,
+        "unit": "ms"
+      },
+      "$description": "Glass surfaces changing fill, the How to save copy button.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:927",
+            "web/app.css:1108",
+            "web/app.css:1121"
+          ]
+        }
+      }
+    },
+    "fold": {
+      "$type": "duration",
+      "$value": {
+        "value": 260,
+        "unit": "ms"
+      },
+      "$description": "The sidebar actions folding open.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:202",
+            "web/app.css:204",
+            "web/app.css:206"
+          ]
+        }
+      }
+    },
+    "drawer": {
+      "$type": "duration",
+      "$value": {
+        "value": 280,
+        "unit": "ms"
+      },
+      "$description": "A sheet sliding, the tick popping in.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1132",
+            "web/app.css:1133",
+            "web/app.css:1143"
+          ]
+        }
+      }
+    },
+    "slide": {
+      "$type": "duration",
+      "$value": {
+        "value": 320,
+        "unit": "ms"
+      },
+      "$description": "The phone tab indicator, the field shake, the How to save pill.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:736",
+            "web/app.css:1168",
+            "web/app.css:1487"
+          ]
+        }
+      }
+    },
+    "pile": {
+      "$type": "duration",
+      "$value": {
+        "value": 400,
+        "unit": "ms"
+      },
+      "$description": "The All sorted pile settling.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1259",
+            "web/app.css:1260",
+            "web/app.css:1261",
+            "web/app.css:1262"
+          ]
+        }
+      }
+    },
+    "save-in": {
+      "$type": "duration",
+      "$value": {
+        "value": 420,
+        "unit": "ms"
+      },
+      "$description": "The save panel coming in.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1032",
+            "web/app.css:1033"
+          ]
+        }
+      }
+    },
+    "save-light": {
+      "$type": "duration",
+      "$value": {
+        "value": 600,
+        "unit": "ms"
+      },
+      "$description": "The save panel corner light.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1037"
+          ]
+        }
+      }
+    },
+    "caret-blink": {
+      "$type": "duration",
+      "$value": {
+        "value": 1000,
+        "unit": "ms"
+      },
+      "$description": "The drawn caret in How to save.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1530"
+          ]
+        }
+      }
+    },
+    "skeleton-pulse": {
+      "$type": "duration",
+      "$value": {
+        "value": 1100,
+        "unit": "ms"
+      },
+      "$description": "Loading cards pulsing.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1130"
+          ]
+        }
+      }
+    },
+    "skeleton-sweep": {
+      "$type": "duration",
+      "$value": {
+        "value": 1600,
+        "unit": "ms"
+      },
+      "$description": "The favicon placeholder sweep.",
+      "$extensions": {
+        "cc.pinned": {
+          "source": [
+            "web/app.css:1124"
+          ]
+        }
+      }
+    }
+  }
+}

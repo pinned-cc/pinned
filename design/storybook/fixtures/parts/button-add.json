@@ -1,0 +1,77 @@
+{
+ "id": "button-add",
+ "group": "Buttons",
+ "title": "Add, the primary toolbar button",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"add\" data-a=\"add\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg>Add</button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "screen",
+    "id": "screen"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "class": "content",
+    "id": "content"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "col"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "tbwrap"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "tb dash",
+    "role": "toolbar",
+    "aria-label": "Dashboard"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 1066.046875,
+  "y": 240,
+  "width": 75.3125,
+  "height": 36,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

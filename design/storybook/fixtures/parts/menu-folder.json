@@ -1,0 +1,36 @@
+{
+ "id": "menu-folder",
+ "group": "Menus",
+ "title": "Folder actions menu, desktop",
+ "device": "desk",
+ "note": "",
+ "viewport": {
+  "width": 1440,
+  "height": 900
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<div class=\"menu\" role=\"menu\" style=\"left: 1139px; top: 314px;\"><button type=\"button\" role=\"menuitem\" data-mi=\"0\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-link\"></use></svg>Share</button><button type=\"button\" role=\"menuitem\" data-mi=\"1\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg>Add bookmarks</button><button type=\"button\" role=\"menuitem\" data-mi=\"2\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder-plus\"></use></svg>New folder inside</button><button type=\"button\" role=\"menuitem\" data-mi=\"3\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-edit\"></use></svg>Rename</button><button type=\"button\" role=\"menuitem\" data-mi=\"4\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-move\"></use></svg>Move to</button><button type=\"button\" role=\"menuitem\" data-mi=\"5\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-clock\"></use></svg>Hide from Recent</button><button type=\"button\" role=\"menuitem\" data-mi=\"6\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg>Lock with a password</button><hr><button type=\"button\" role=\"menuitem\" data-mi=\"8\" class=\"warn\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg>Delete</button></div>",
+ "chain": [],
+ "body": {
+  "data-page": "app",
+  "class": "desk"
+ },
+ "htmlAttrs": {
+  "style": ""
+ },
+ "box": {
+  "x": 1139,
+  "y": 314,
+  "width": 189.453125,
+  "height": 291,
+  "position": "fixed",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

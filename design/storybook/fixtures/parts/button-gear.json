@@ -1,0 +1,62 @@
+{
+ "id": "button-gear",
+ "group": "Buttons",
+ "title": "Settings, an icon button",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"ib gear\" data-view=\"settings\" aria-label=\"Settings\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-gear\"></use></svg></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "phead"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 334,
+  "y": 12,
+  "width": 44,
+  "height": 44,
+  "position": "static",
+  "margin": [
+   0,
+   -6,
+   0,
+   0
+  ]
+ }
+}

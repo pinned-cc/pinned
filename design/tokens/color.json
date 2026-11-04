@@ -1,0 +1,2497 @@
+{
+  "color": {
+    "$description": "Colour, two modes: dark is :root (the default), light is :root[data-theme=\"light\"]. From web/app.css at Pinned 0.1.11.",
+    "dark": {
+      "ground": {
+        "app": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.058824,
+              0.058824,
+              0.066667
+            ],
+            "hex": "#0f0f11"
+          },
+          "$description": "The one flat colour behind the whole app, sidebar included (html, body::before).",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ground-base",
+              "source": [
+                "web/app.css:58",
+                "web/app.css:1538"
+              ]
+            }
+          }
+        },
+        "page": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.039216,
+              0.039216,
+              0.043137
+            ],
+            "hex": "#0a0a0b"
+          },
+          "$description": "The ground of the save page; the text of the chosen How to save tab.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ground",
+              "source": [
+                "web/app.css:7",
+                "web/app.css:1538"
+              ]
+            }
+          }
+        },
+        "screen": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.062745,
+              0.062745,
+              0.070588
+            ],
+            "hex": "#101012"
+          },
+          "$description": "The ring around the tick badge of the All sorted pile.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--screen",
+              "source": [
+                "web/app.css:8",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        }
+      },
+      "surface": {
+        "base": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.086275,
+              0.086275,
+              0.094118
+            ],
+            "hex": "#161618"
+          },
+          "$description": "Cards, the search, fields, list rows while moving.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--surface",
+              "source": [
+                "web/app.css:9",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "raised": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.113725,
+              0.113725,
+              0.12549
+            ],
+            "hex": "#1d1d20"
+          },
+          "$description": "Menus, the palette, toasts, the chosen segment, the kbd keys.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--surface-up",
+              "source": [
+                "web/app.css:10",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "sheet": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.098039,
+              0.098039,
+              0.109804
+            ],
+            "hex": "#19191c"
+          },
+          "$description": "Sheets and dialogs where they are solid.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--sheet",
+              "source": [
+                "web/app.css:11",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "recess": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.066667,
+              0.066667,
+              0.07451
+            ],
+            "hex": "#111113"
+          },
+          "$description": "The back card of the All sorted pile.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--recess",
+              "source": [
+                "web/app.css:12",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "folder": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.07451,
+              0.07451,
+              0.082353
+            ],
+            "hex": "#131315"
+          },
+          "$description": "Folder tiles and the folder chips.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--fold",
+              "source": [
+                "web/app.css:13",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "favicon-blank": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.164706,
+              0.164706,
+              0.180392
+            ],
+            "hex": "#2a2a2e"
+          },
+          "$description": "The tile behind a letter, a favicon without colour of its own, a favicon that fails.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--tile-blank",
+              "source": [
+                "web/app.css:43",
+                "web/app.css:1552"
+              ]
+            }
+          }
+        }
+      },
+      "edge": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.055
+          },
+          "$description": "Hairlines and the rim of cards and fields.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--line",
+              "source": [
+                "web/app.css:14",
+                "web/app.css:1540"
+              ]
+            }
+          }
+        },
+        "strong": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.1
+          },
+          "$description": "Buttons, menus, the selection bar, scrollbars.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--line-2",
+              "source": [
+                "web/app.css:15",
+                "web/app.css:1540"
+              ]
+            }
+          }
+        }
+      },
+      "text": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.941176,
+              0.941176,
+              0.941176
+            ],
+            "hex": "#f0f0f0"
+          },
+          "$description": "Default text.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ink",
+              "source": [
+                "web/app.css:16",
+                "web/app.css:1541"
+              ]
+            }
+          }
+        },
+        "weak": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.603922,
+              0.603922,
+              0.623529
+            ],
+            "hex": "#9a9a9f"
+          },
+          "$description": "Secondary text: counts, hosts, labels, placeholders.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ink-weak",
+              "source": [
+                "web/app.css:17",
+                "web/app.css:1541"
+              ]
+            }
+          }
+        },
+        "faint": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.388235,
+              0.388235,
+              0.403922
+            ],
+            "hex": "#636367"
+          },
+          "$description": "The faintest text, the key names of How to save.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ink-faint",
+              "source": [
+                "web/app.css:18",
+                "web/app.css:1541"
+              ]
+            }
+          }
+        }
+      },
+      "accent": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.372549,
+              0.827451,
+              0.603922
+            ],
+            "hex": "#5fd39a"
+          },
+          "$description": "The one accent: the plus, Save, the picked tick, focus outlines.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--accent",
+              "source": [
+                "web/app.css:19",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        },
+        "on-accent": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.015686,
+              0.082353,
+              0.047059
+            ],
+            "hex": "#04150c"
+          },
+          "$description": "Text and icons on the accent.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--accent-ink",
+              "source": [
+                "web/app.css:20",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        },
+        "text": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.709804,
+              0.937255,
+              0.815686
+            ],
+            "hex": "#b5efd0"
+          },
+          "$description": "The accent as text: text buttons, links, toast actions.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--accent-soft",
+              "source": [
+                "web/app.css:21",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        }
+      },
+      "danger": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              0.603922,
+              0.603922
+            ],
+            "hex": "#ff9a9a"
+          },
+          "$description": "Delete, warnings, field errors.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--danger",
+              "source": [
+                "web/app.css:22",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        }
+      },
+      "hue": {
+        "cyan": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.498039,
+                0.811765,
+                0.909804
+              ],
+              "hex": "#7fcfe8"
+            },
+            "$description": "Folder hue cyan: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--cyan",
+                "source": [
+                  "web/app.css:32",
+                  "web/app.css:1543"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.705882,
+                0.901961,
+                0.960784
+              ],
+              "hex": "#b4e6f5"
+            },
+            "$description": "Folder hue cyan: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--cyan-p",
+                "source": [
+                  "web/app.css:32",
+                  "web/app.css:1543"
+                ]
+              }
+            }
+          }
+        },
+        "coral": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                0.619608,
+                0.54902
+              ],
+              "hex": "#ff9e8c"
+            },
+            "$description": "Folder hue coral: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--coral",
+                "source": [
+                  "web/app.css:33",
+                  "web/app.css:1544"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                0.784314,
+                0.741176
+              ],
+              "hex": "#ffc8bd"
+            },
+            "$description": "Folder hue coral: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--coral-p",
+                "source": [
+                  "web/app.css:33",
+                  "web/app.css:1544"
+                ]
+              }
+            }
+          }
+        },
+        "lilac": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.717647,
+                0.639216,
+                1
+              ],
+              "hex": "#b7a3ff"
+            },
+            "$description": "Folder hue lilac: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lilac",
+                "source": [
+                  "web/app.css:34",
+                  "web/app.css:1545"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.847059,
+                0.8,
+                1
+              ],
+              "hex": "#d8ccff"
+            },
+            "$description": "Folder hue lilac: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lilac-p",
+                "source": [
+                  "web/app.css:34",
+                  "web/app.css:1545"
+                ]
+              }
+            }
+          }
+        },
+        "lime": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.74902,
+                0.878431,
+                0.478431
+              ],
+              "hex": "#bfe07a"
+            },
+            "$description": "Folder hue lime: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lime",
+                "source": [
+                  "web/app.css:35",
+                  "web/app.css:1546"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.862745,
+                0.945098,
+                0.678431
+              ],
+              "hex": "#dcf1ad"
+            },
+            "$description": "Folder hue lime: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lime-p",
+                "source": [
+                  "web/app.css:35",
+                  "web/app.css:1546"
+                ]
+              }
+            }
+          }
+        },
+        "mint": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.498039,
+                0.862745,
+                0.698039
+              ],
+              "hex": "#7fdcb2"
+            },
+            "$description": "Folder hue mint: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--mint",
+                "source": [
+                  "web/app.css:36",
+                  "web/app.css:1547"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.701961,
+                0.937255,
+                0.823529
+              ],
+              "hex": "#b3efd2"
+            },
+            "$description": "Folder hue mint: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--mint-p",
+                "source": [
+                  "web/app.css:36",
+                  "web/app.css:1547"
+                ]
+              }
+            }
+          }
+        },
+        "rose": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.952941,
+                0.611765,
+                0.776471
+              ],
+              "hex": "#f39cc6"
+            },
+            "$description": "Folder hue rose: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--rose",
+                "source": [
+                  "web/app.css:37",
+                  "web/app.css:1548"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.976471,
+                0.780392,
+                0.87451
+              ],
+              "hex": "#f9c7df"
+            },
+            "$description": "Folder hue rose: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--rose-p",
+                "source": [
+                  "web/app.css:37",
+                  "web/app.css:1548"
+                ]
+              }
+            }
+          }
+        },
+        "ink": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.941176,
+                0.941176,
+                0.941176
+              ],
+              "hex": "#f0f0f0"
+            },
+            "$description": "The ink hue of All bookmarks and the Dashboard.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--ink-h",
+                "source": [
+                  "web/app.css:38",
+                  "web/app.css:1541"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.941176,
+                0.941176,
+                0.941176
+              ],
+              "hex": "#f0f0f0"
+            },
+            "$description": "The ink hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--ink-hp",
+                "source": [
+                  "web/app.css:38",
+                  "web/app.css:1541"
+                ]
+              }
+            }
+          }
+        },
+        "inbox": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.560784,
+                0.847059,
+                0.705882
+              ],
+              "hex": "#8fd8b4"
+            },
+            "$description": "The Inbox hue.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--tray",
+                "source": [
+                  "web/app.css:39",
+                  "web/app.css:1549"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.768627,
+                0.937255,
+                0.85098
+              ],
+              "hex": "#c4efd9"
+            },
+            "$description": "The Inbox hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--tray-p",
+                "source": [
+                  "web/app.css:39",
+                  "web/app.css:1549"
+                ]
+              }
+            }
+          }
+        },
+        "trash": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                0.603922,
+                0.603922
+              ],
+              "hex": "#ff9a9a"
+            },
+            "$description": "The Trash hue.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--bin",
+                "source": [
+                  "web/app.css:40",
+                  "web/app.css:1550"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                1,
+                0.776471,
+                0.776471
+              ],
+              "hex": "#ffc6c6"
+            },
+            "$description": "The Trash hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--bin-p",
+                "source": [
+                  "web/app.css:40",
+                  "web/app.css:1550"
+                ]
+              }
+            }
+          }
+        },
+        "plain": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.603922,
+                0.603922,
+                0.623529
+              ],
+              "hex": "#9a9a9f"
+            },
+            "$description": "A folder without a hue.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--plain",
+                "source": [
+                  "web/app.css:41",
+                  "web/app.css:1551"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.839216,
+                0.839216,
+                0.854902
+              ],
+              "hex": "#d6d6da"
+            },
+            "$description": "A folder without a hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--plain-p",
+                "source": [
+                  "web/app.css:41",
+                  "web/app.css:1551"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "state": {
+        "hover": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.04
+          },
+          "$description": "The veil under a row or item on hover.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--hover",
+              "source": [
+                "web/app.css:45",
+                "web/app.css:1553"
+              ]
+            }
+          }
+        },
+        "press": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.06
+          },
+          "$description": "The veil under a pressed control.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--press",
+              "source": [
+                "web/app.css:46",
+                "web/app.css:1553"
+              ]
+            }
+          }
+        },
+        "picked-edge": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.372549,
+              0.827451,
+              0.603922
+            ],
+            "hex": "#5fd39a",
+            "alpha": 0.65
+          },
+          "$description": "The edge of a picked card or folder.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--picked-edge",
+              "source": [
+                "web/app.css:49",
+                "web/app.css:1556"
+              ]
+            }
+          }
+        },
+        "picked-fill": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.372549,
+              0.827451,
+              0.603922
+            ],
+            "hex": "#5fd39a",
+            "alpha": 0.08
+          },
+          "$description": "The fill of a picked list row.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--picked-fill",
+              "source": [
+                "web/app.css:50",
+                "web/app.css:1556"
+              ]
+            }
+          }
+        }
+      },
+      "glass": {
+        "card": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.04
+          },
+          "$description": "Grid cards on the ground: a clear tint.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-tint",
+              "source": [
+                "web/app.css:62",
+                "web/app.css:1562"
+              ]
+            }
+          }
+        },
+        "folder": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.034
+          },
+          "$description": "Folder tiles on the ground: a clear tint.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--fold-tint",
+              "source": [
+                "web/app.css:63",
+                "web/app.css:1562"
+              ]
+            }
+          }
+        },
+        "strip": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.012
+          },
+          "$description": "The strip at the foot of a card.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--strip-tint",
+              "source": [
+                "web/app.css:64",
+                "web/app.css:1562"
+              ]
+            }
+          }
+        },
+        "rim": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.055
+          },
+          "$description": "The rim of a tinted card.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-rim",
+              "source": [
+                "web/app.css:65",
+                "web/app.css:1563"
+              ]
+            }
+          }
+        },
+        "rim-hover": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.09
+          },
+          "$description": "The rim of a tinted card on hover.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-rim-hover",
+              "source": [
+                "web/app.css:66",
+                "web/app.css:1563"
+              ]
+            }
+          }
+        },
+        "sidebar": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0,
+              0,
+              0
+            ],
+            "hex": "#000000",
+            "alpha": 0
+          },
+          "$description": "The sidebar fill over its blur.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-side",
+              "source": [
+                "web/app.css:68"
+              ]
+            }
+          }
+        },
+        "menu": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.094118,
+              0.094118,
+              0.105882
+            ],
+            "hex": "#18181b",
+            "alpha": 0.86
+          },
+          "$description": "Menus over their blur.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-menu",
+              "source": [
+                "web/app.css:69",
+                "web/app.css:1565"
+              ]
+            }
+          }
+        },
+        "panel": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.094118,
+              0.094118,
+              0.105882
+            ],
+            "hex": "#18181b",
+            "alpha": 0.72
+          },
+          "$description": "The palette over its blur.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-panel",
+              "source": [
+                "web/app.css:70",
+                "web/app.css:1565"
+              ]
+            }
+          }
+        },
+        "sheet": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.094118,
+              0.094118,
+              0.105882
+            ],
+            "hex": "#18181b",
+            "alpha": 0.86
+          },
+          "$description": "Sheets and dialogs over their blur, desktop.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-sheet",
+              "source": [
+                "web/app.css:71",
+                "web/app.css:1566"
+              ]
+            }
+          }
+        },
+        "sheet-phone": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.094118,
+              0.094118,
+              0.105882
+            ],
+            "hex": "#18181b",
+            "alpha": 0.94
+          },
+          "$description": "Sheets over their blur, phone.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-sheet-phone",
+              "source": [
+                "web/app.css:72",
+                "web/app.css:1566"
+              ]
+            }
+          }
+        },
+        "action-sheet": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.094118,
+              0.094118,
+              0.105882
+            ],
+            "hex": "#18181b",
+            "alpha": 0.9
+          },
+          "$description": "A sheet of action rows over busy cards.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-rows",
+              "source": [
+                "web/app.css:73",
+                "web/app.css:1566"
+              ]
+            }
+          }
+        }
+      },
+      "save": {
+        "field": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.054902,
+              0.054902,
+              0.062745
+            ],
+            "hex": "#0e0e10",
+            "alpha": 0.6
+          },
+          "$description": "Fields on the save page.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--save-field",
+              "source": [
+                "web/app.css:83",
+                "web/app.css:1568"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "light": {
+      "ground": {
+        "app": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.956863,
+              0.945098,
+              0.917647
+            ],
+            "hex": "#f4f1ea"
+          },
+          "$description": "The one flat colour behind the whole app, sidebar included (html, body::before).",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ground-base",
+              "source": [
+                "web/app.css:58",
+                "web/app.css:1538"
+              ]
+            }
+          }
+        },
+        "page": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.956863,
+              0.945098,
+              0.917647
+            ],
+            "hex": "#f4f1ea"
+          },
+          "$description": "The ground of the save page; the text of the chosen How to save tab.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ground",
+              "source": [
+                "web/app.css:7",
+                "web/app.css:1538"
+              ]
+            }
+          }
+        },
+        "screen": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.956863,
+              0.945098,
+              0.917647
+            ],
+            "hex": "#f4f1ea"
+          },
+          "$description": "The ring around the tick badge of the All sorted pile.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--screen",
+              "source": [
+                "web/app.css:8",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        }
+      },
+      "surface": {
+        "base": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3"
+          },
+          "$description": "Cards, the search, fields, list rows while moving.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--surface",
+              "source": [
+                "web/app.css:9",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "raised": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.992157,
+              0.988235,
+              0.972549
+            ],
+            "hex": "#fdfcf8"
+          },
+          "$description": "Menus, the palette, toasts, the chosen segment, the kbd keys.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--surface-up",
+              "source": [
+                "web/app.css:10",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "sheet": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3"
+          },
+          "$description": "Sheets and dialogs where they are solid.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--sheet",
+              "source": [
+                "web/app.css:11",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "recess": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.921569,
+              0.905882,
+              0.866667
+            ],
+            "hex": "#ebe7dd"
+          },
+          "$description": "The back card of the All sorted pile.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--recess",
+              "source": [
+                "web/app.css:12",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "folder": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.968627,
+              0.956863,
+              0.933333
+            ],
+            "hex": "#f7f4ee"
+          },
+          "$description": "Folder tiles and the folder chips.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--fold",
+              "source": [
+                "web/app.css:13",
+                "web/app.css:1539"
+              ]
+            }
+          }
+        },
+        "favicon-blank": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.921569,
+              0.905882,
+              0.866667
+            ],
+            "hex": "#ebe7dd"
+          },
+          "$description": "The tile behind a letter, a favicon without colour of its own, a favicon that fails.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--tile-blank",
+              "source": [
+                "web/app.css:43",
+                "web/app.css:1552"
+              ]
+            }
+          }
+        }
+      },
+      "edge": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17",
+            "alpha": 0.1
+          },
+          "$description": "Hairlines and the rim of cards and fields.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--line",
+              "source": [
+                "web/app.css:14",
+                "web/app.css:1540"
+              ]
+            }
+          }
+        },
+        "strong": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17",
+            "alpha": 0.16
+          },
+          "$description": "Buttons, menus, the selection bar, scrollbars.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--line-2",
+              "source": [
+                "web/app.css:15",
+                "web/app.css:1540"
+              ]
+            }
+          }
+        }
+      },
+      "text": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17"
+          },
+          "$description": "Default text.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ink",
+              "source": [
+                "web/app.css:16",
+                "web/app.css:1541"
+              ]
+            }
+          }
+        },
+        "weak": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.419608,
+              0.403922,
+              0.368627
+            ],
+            "hex": "#6b675e"
+          },
+          "$description": "Secondary text: counts, hosts, labels, placeholders.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ink-weak",
+              "source": [
+                "web/app.css:17",
+                "web/app.css:1541"
+              ]
+            }
+          }
+        },
+        "faint": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.580392,
+              0.560784,
+              0.517647
+            ],
+            "hex": "#948f84"
+          },
+          "$description": "The faintest text, the key names of How to save.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--ink-faint",
+              "source": [
+                "web/app.css:18",
+                "web/app.css:1541"
+              ]
+            }
+          }
+        }
+      },
+      "accent": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17"
+          },
+          "$description": "The one accent: the plus, Save, the picked tick, focus outlines.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--accent",
+              "source": [
+                "web/app.css:19",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        },
+        "on-accent": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.956863,
+              0.945098,
+              0.917647
+            ],
+            "hex": "#f4f1ea"
+          },
+          "$description": "Text and icons on the accent.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--accent-ink",
+              "source": [
+                "web/app.css:20",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        },
+        "text": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.086275,
+              0.478431,
+              0.290196
+            ],
+            "hex": "#167a4a"
+          },
+          "$description": "The accent as text: text buttons, links, toast actions.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--accent-soft",
+              "source": [
+                "web/app.css:21",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        }
+      },
+      "danger": {
+        "default": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.705882,
+              0.137255,
+              0.094118
+            ],
+            "hex": "#b42318"
+          },
+          "$description": "Delete, warnings, field errors.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--danger",
+              "source": [
+                "web/app.css:22",
+                "web/app.css:1542"
+              ]
+            }
+          }
+        }
+      },
+      "hue": {
+        "cyan": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.184314,
+                0.490196,
+                0.576471
+              ],
+              "hex": "#2f7d93"
+            },
+            "$description": "Folder hue cyan: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--cyan",
+                "source": [
+                  "web/app.css:32",
+                  "web/app.css:1543"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.156863,
+                0.411765,
+                0.486275
+              ],
+              "hex": "#28697c"
+            },
+            "$description": "Folder hue cyan: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--cyan-p",
+                "source": [
+                  "web/app.css:32",
+                  "web/app.css:1543"
+                ]
+              }
+            }
+          }
+        },
+        "coral": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.752941,
+                0.341176,
+                0.235294
+              ],
+              "hex": "#c0573c"
+            },
+            "$description": "Folder hue coral: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--coral",
+                "source": [
+                  "web/app.css:33",
+                  "web/app.css:1544"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.615686,
+                0.278431,
+                0.192157
+              ],
+              "hex": "#9d4731"
+            },
+            "$description": "Folder hue coral: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--coral-p",
+                "source": [
+                  "web/app.css:33",
+                  "web/app.css:1544"
+                ]
+              }
+            }
+          }
+        },
+        "lilac": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.415686,
+                0.345098,
+                0.690196
+              ],
+              "hex": "#6a58b0"
+            },
+            "$description": "Folder hue lilac: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lilac",
+                "source": [
+                  "web/app.css:34",
+                  "web/app.css:1545"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.392157,
+                0.321569,
+                0.67451
+              ],
+              "hex": "#6452ac"
+            },
+            "$description": "Folder hue lilac: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lilac-p",
+                "source": [
+                  "web/app.css:34",
+                  "web/app.css:1545"
+                ]
+              }
+            }
+          }
+        },
+        "lime": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.415686,
+                0.541176,
+                0.141176
+              ],
+              "hex": "#6a8a24"
+            },
+            "$description": "Folder hue lime: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lime",
+                "source": [
+                  "web/app.css:35",
+                  "web/app.css:1546"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.317647,
+                0.415686,
+                0.109804
+              ],
+              "hex": "#516a1c"
+            },
+            "$description": "Folder hue lime: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--lime-p",
+                "source": [
+                  "web/app.css:35",
+                  "web/app.css:1546"
+                ]
+              }
+            }
+          }
+        },
+        "mint": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.086275,
+                0.478431,
+                0.290196
+              ],
+              "hex": "#167a4a"
+            },
+            "$description": "Folder hue mint: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--mint",
+                "source": [
+                  "web/app.css:36",
+                  "web/app.css:1547"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.078431,
+                0.427451,
+                0.258824
+              ],
+              "hex": "#146d42"
+            },
+            "$description": "Folder hue mint: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--mint-p",
+                "source": [
+                  "web/app.css:36",
+                  "web/app.css:1547"
+                ]
+              }
+            }
+          }
+        },
+        "rose": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.694118,
+                0.301961,
+                0.478431
+              ],
+              "hex": "#b14d7a"
+            },
+            "$description": "Folder hue rose: the folder icon and dot.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--rose",
+                "source": [
+                  "web/app.css:37",
+                  "web/app.css:1548"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.603922,
+                0.262745,
+                0.415686
+              ],
+              "hex": "#9a436a"
+            },
+            "$description": "Folder hue rose: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--rose-p",
+                "source": [
+                  "web/app.css:37",
+                  "web/app.css:1548"
+                ]
+              }
+            }
+          }
+        },
+        "ink": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.105882,
+                0.101961,
+                0.090196
+              ],
+              "hex": "#1b1a17"
+            },
+            "$description": "The ink hue of All bookmarks and the Dashboard.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--ink-h",
+                "source": [
+                  "web/app.css:38",
+                  "web/app.css:1541"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.105882,
+                0.101961,
+                0.090196
+              ],
+              "hex": "#1b1a17"
+            },
+            "$description": "The ink hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--ink-hp",
+                "source": [
+                  "web/app.css:38",
+                  "web/app.css:1541"
+                ]
+              }
+            }
+          }
+        },
+        "inbox": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.086275,
+                0.478431,
+                0.290196
+              ],
+              "hex": "#167a4a"
+            },
+            "$description": "The Inbox hue.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--tray",
+                "source": [
+                  "web/app.css:39",
+                  "web/app.css:1549"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.078431,
+                0.427451,
+                0.258824
+              ],
+              "hex": "#146d42"
+            },
+            "$description": "The Inbox hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--tray-p",
+                "source": [
+                  "web/app.css:39",
+                  "web/app.css:1549"
+                ]
+              }
+            }
+          }
+        },
+        "trash": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.705882,
+                0.137255,
+                0.094118
+              ],
+              "hex": "#b42318"
+            },
+            "$description": "The Trash hue.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--bin",
+                "source": [
+                  "web/app.css:40",
+                  "web/app.css:1550"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.705882,
+                0.137255,
+                0.094118
+              ],
+              "hex": "#b42318"
+            },
+            "$description": "The Trash hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--bin-p",
+                "source": [
+                  "web/app.css:40",
+                  "web/app.css:1550"
+                ]
+              }
+            }
+          }
+        },
+        "plain": {
+          "base": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.419608,
+                0.403922,
+                0.368627
+              ],
+              "hex": "#6b675e"
+            },
+            "$description": "A folder without a hue.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--plain",
+                "source": [
+                  "web/app.css:41",
+                  "web/app.css:1551"
+                ]
+              }
+            }
+          },
+          "text": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.105882,
+                0.101961,
+                0.090196
+              ],
+              "hex": "#1b1a17"
+            },
+            "$description": "A folder without a hue: text on its tint.",
+            "$extensions": {
+              "cc.pinned": {
+                "var": "--plain-p",
+                "source": [
+                  "web/app.css:41",
+                  "web/app.css:1551"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "state": {
+        "hover": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17",
+            "alpha": 0.045
+          },
+          "$description": "The veil under a row or item on hover.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--hover",
+              "source": [
+                "web/app.css:45",
+                "web/app.css:1553"
+              ]
+            }
+          }
+        },
+        "press": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17",
+            "alpha": 0.07
+          },
+          "$description": "The veil under a pressed control.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--press",
+              "source": [
+                "web/app.css:46",
+                "web/app.css:1553"
+              ]
+            }
+          }
+        },
+        "picked-edge": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.086275,
+              0.478431,
+              0.290196
+            ],
+            "hex": "#167a4a",
+            "alpha": 0.7
+          },
+          "$description": "The edge of a picked card or folder.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--picked-edge",
+              "source": [
+                "web/app.css:49",
+                "web/app.css:1556"
+              ]
+            }
+          }
+        },
+        "picked-fill": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.086275,
+              0.478431,
+              0.290196
+            ],
+            "hex": "#167a4a",
+            "alpha": 0.07
+          },
+          "$description": "The fill of a picked list row.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--picked-fill",
+              "source": [
+                "web/app.css:50",
+                "web/app.css:1556"
+              ]
+            }
+          }
+        }
+      },
+      "glass": {
+        "card": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3"
+          },
+          "$description": "Grid cards on the ground: a clear tint.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-tint",
+              "source": [
+                "web/app.css:62",
+                "web/app.css:1562"
+              ]
+            }
+          }
+        },
+        "folder": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3"
+          },
+          "$description": "Folder tiles on the ground: a clear tint.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--fold-tint",
+              "source": [
+                "web/app.css:63",
+                "web/app.css:1562"
+              ]
+            }
+          }
+        },
+        "strip": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0,
+              0,
+              0
+            ],
+            "hex": "#000000",
+            "alpha": 0
+          },
+          "$description": "The strip at the foot of a card.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--strip-tint",
+              "source": [
+                "web/app.css:64",
+                "web/app.css:1562"
+              ]
+            }
+          }
+        },
+        "rim": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17",
+            "alpha": 0.09
+          },
+          "$description": "The rim of a tinted card.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-rim",
+              "source": [
+                "web/app.css:65",
+                "web/app.css:1563"
+              ]
+            }
+          }
+        },
+        "rim-hover": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.105882,
+              0.101961,
+              0.090196
+            ],
+            "hex": "#1b1a17",
+            "alpha": 0.15
+          },
+          "$description": "The rim of a tinted card on hover.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--card-rim-hover",
+              "source": [
+                "web/app.css:66",
+                "web/app.css:1563"
+              ]
+            }
+          }
+        },
+        "sidebar": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0,
+              0,
+              0
+            ],
+            "hex": "#000000",
+            "alpha": 0
+          },
+          "$description": "The sidebar fill over its blur.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-side",
+              "source": [
+                "web/app.css:68"
+              ]
+            }
+          }
+        },
+        "menu": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3",
+            "alpha": 0.94
+          },
+          "$description": "Menus over their blur.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-menu",
+              "source": [
+                "web/app.css:69",
+                "web/app.css:1565"
+              ]
+            }
+          }
+        },
+        "panel": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3",
+            "alpha": 0.9
+          },
+          "$description": "The palette over its blur.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-panel",
+              "source": [
+                "web/app.css:70",
+                "web/app.css:1565"
+              ]
+            }
+          }
+        },
+        "sheet": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3",
+            "alpha": 0.95
+          },
+          "$description": "Sheets and dialogs over their blur, desktop.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-sheet",
+              "source": [
+                "web/app.css:71",
+                "web/app.css:1566"
+              ]
+            }
+          }
+        },
+        "sheet-phone": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3",
+            "alpha": 0.98
+          },
+          "$description": "Sheets over their blur, phone.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-sheet-phone",
+              "source": [
+                "web/app.css:72",
+                "web/app.css:1566"
+              ]
+            }
+          }
+        },
+        "action-sheet": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.980392,
+              0.972549,
+              0.952941
+            ],
+            "hex": "#faf8f3",
+            "alpha": 0.95
+          },
+          "$description": "A sheet of action rows over busy cards.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--glass-rows",
+              "source": [
+                "web/app.css:73",
+                "web/app.css:1566"
+              ]
+            }
+          }
+        }
+      },
+      "save": {
+        "field": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              1,
+              1,
+              1
+            ],
+            "hex": "#ffffff",
+            "alpha": 0.7
+          },
+          "$description": "Fields on the save page.",
+          "$extensions": {
+            "cc.pinned": {
+              "var": "--save-field",
+              "source": [
+                "web/app.css:83",
+                "web/app.css:1568"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

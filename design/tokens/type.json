@@ -1,0 +1,734 @@
+{
+  "font": {
+    "$description": "Type: families, the size scale by role, line heights, weights and tracking.",
+    "family": {
+      "sans": {
+        "$type": "fontFamily",
+        "$value": [
+          "Geist",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "sans-serif"
+        ],
+        "$description": "Geist, every text but code, hosts and headlines.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--sans",
+            "source": [
+              "web/app.css:29"
+            ]
+          }
+        }
+      },
+      "mono": {
+        "$type": "fontFamily",
+        "$value": [
+          "Geist Mono",
+          "ui-monospace",
+          "SF Mono",
+          "Menlo",
+          "Consolas",
+          "monospace"
+        ],
+        "$description": "Geist Mono: hosts, tokens, code.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--mono",
+            "source": [
+              "web/app.css:30"
+            ]
+          }
+        }
+      },
+      "serif": {
+        "$type": "fontFamily",
+        "$value": [
+          "Iowan Old Style",
+          "Palatino Linotype",
+          "Palatino",
+          "Book Antiqua",
+          "Georgia",
+          "serif"
+        ],
+        "$description": "The serif of pinned.cc: the brand, the Dashboard title and heads.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--serif",
+            "source": [
+              "web/app.css:31"
+            ]
+          }
+        }
+      }
+    },
+    "size": {
+      "micro": {
+        "$type": "dimension",
+        "$value": {
+          "value": 11,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-micro",
+            "source": [
+              "web/app.css:86"
+            ]
+          }
+        }
+      },
+      "small": {
+        "$type": "dimension",
+        "$value": {
+          "value": 11.5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-small",
+            "source": [
+              "web/app.css:87"
+            ]
+          }
+        }
+      },
+      "label": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-label",
+            "source": [
+              "web/app.css:88"
+            ]
+          }
+        }
+      },
+      "tag": {
+        "$type": "dimension",
+        "$value": {
+          "value": 12.5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-tag",
+            "source": [
+              "web/app.css:89"
+            ]
+          }
+        }
+      },
+      "meta": {
+        "$type": "dimension",
+        "$value": {
+          "value": 13,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-meta",
+            "source": [
+              "web/app.css:90"
+            ]
+          }
+        }
+      },
+      "ui": {
+        "$type": "dimension",
+        "$value": {
+          "value": 13.5,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-ui",
+            "source": [
+              "web/app.css:91"
+            ]
+          }
+        }
+      },
+      "body": {
+        "$type": "dimension",
+        "$value": {
+          "value": 14,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-body",
+            "source": [
+              "web/app.css:92"
+            ]
+          }
+        }
+      },
+      "control": {
+        "$type": "dimension",
+        "$value": {
+          "value": 15,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-control",
+            "source": [
+              "web/app.css:93"
+            ]
+          }
+        }
+      },
+      "input": {
+        "$type": "dimension",
+        "$value": {
+          "value": 16,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-input",
+            "source": [
+              "web/app.css:94"
+            ]
+          }
+        }
+      },
+      "heading": {
+        "$type": "dimension",
+        "$value": {
+          "value": 17,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-heading",
+            "source": [
+              "web/app.css:95"
+            ]
+          }
+        }
+      },
+      "heading-large": {
+        "$type": "dimension",
+        "$value": {
+          "value": 18,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-heading-l",
+            "source": [
+              "web/app.css:96"
+            ]
+          }
+        }
+      },
+      "title": {
+        "$type": "dimension",
+        "$value": {
+          "value": 20,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-title",
+            "source": [
+              "web/app.css:97"
+            ]
+          }
+        }
+      },
+      "page": {
+        "$type": "dimension",
+        "$value": {
+          "value": 22,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-page",
+            "source": [
+              "web/app.css:98"
+            ]
+          }
+        }
+      },
+      "page-large": {
+        "$type": "dimension",
+        "$value": {
+          "value": 24,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-page-l",
+            "source": [
+              "web/app.css:99"
+            ]
+          }
+        }
+      },
+      "display": {
+        "$type": "dimension",
+        "$value": {
+          "value": 26,
+          "unit": "px"
+        },
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--t-display",
+            "source": [
+              "web/app.css:100"
+            ]
+          }
+        }
+      }
+    },
+    "line-height": {
+      "none": {
+        "$type": "number",
+        "$value": 1,
+        "$description": "One line controls.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-none",
+            "source": [
+              "web/app.css:102"
+            ]
+          }
+        }
+      },
+      "tight": {
+        "$type": "number",
+        "$value": 1.2,
+        "$description": "Headings.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-tight",
+            "source": [
+              "web/app.css:103"
+            ]
+          }
+        }
+      },
+      "snug": {
+        "$type": "number",
+        "$value": 1.3,
+        "$description": "Toasts, empty boxes.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-snug",
+            "source": [
+              "web/app.css:104"
+            ]
+          }
+        }
+      },
+      "running": {
+        "$type": "number",
+        "$value": 1.45,
+        "$description": "Running text, the body default.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-body",
+            "source": [
+              "web/app.css:105"
+            ]
+          }
+        }
+      },
+      "caption": {
+        "$type": "dimension",
+        "$value": {
+          "value": 14,
+          "unit": "px"
+        },
+        "$description": "Hosts, dock and recent labels, the version line.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-14",
+            "source": [
+              "web/app.css:106"
+            ]
+          }
+        }
+      },
+      "label": {
+        "$type": "dimension",
+        "$value": {
+          "value": 16,
+          "unit": "px"
+        },
+        "$description": "Group labels, small notes.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-16",
+            "source": [
+              "web/app.css:107"
+            ]
+          }
+        }
+      },
+      "card-title": {
+        "$type": "dimension",
+        "$value": {
+          "value": 17,
+          "unit": "px"
+        },
+        "$description": "The desktop card title.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-17",
+            "source": [
+              "web/app.css:108"
+            ]
+          }
+        }
+      },
+      "meta": {
+        "$type": "dimension",
+        "$value": {
+          "value": 18,
+          "unit": "px"
+        },
+        "$description": "Meta lines, field errors, day heads.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-18",
+            "source": [
+              "web/app.css:109"
+            ]
+          }
+        }
+      },
+      "card-title-phone": {
+        "$type": "dimension",
+        "$value": {
+          "value": 19,
+          "unit": "px"
+        },
+        "$description": "Phone card and folder titles.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-19",
+            "source": [
+              "web/app.css:110"
+            ]
+          }
+        }
+      },
+      "field": {
+        "$type": "dimension",
+        "$value": {
+          "value": 20,
+          "unit": "px"
+        },
+        "$description": "Fields, sheet text, release notes.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-20",
+            "source": [
+              "web/app.css:111"
+            ]
+          }
+        }
+      },
+      "calm-heading": {
+        "$type": "dimension",
+        "$value": {
+          "value": 24,
+          "unit": "px"
+        },
+        "$description": "The calm empty state heading.",
+        "$extensions": {
+          "cc.pinned": {
+            "var": "--lh-24",
+            "source": [
+              "web/app.css:112"
+            ]
+          }
+        }
+      }
+    },
+    "weight": {
+      "regular": {
+        "$type": "fontWeight",
+        "$value": 400,
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:176",
+              "web/app.css:197",
+              "web/app.css:226",
+              "web/app.css:270",
+              "web/app.css:291",
+              "web/app.css:330",
+              "web/app.css:334",
+              "web/app.css:431",
+              "web/app.css:439",
+              "web/app.css:447",
+              "web/app.css:448",
+              "web/app.css:482",
+              "web/app.css:505",
+              "web/app.css:553",
+              "web/app.css:560",
+              "web/app.css:568",
+              "web/app.css:574",
+              "web/app.css:596",
+              "web/app.css:662",
+              "web/app.css:672",
+              "web/app.css:679",
+              "web/app.css:682",
+              "web/app.css:691",
+              "web/app.css:708",
+              "web/app.css:720",
+              "web/app.css:747",
+              "web/app.css:748",
+              "web/app.css:756",
+              "web/app.css:800",
+              "web/app.css:806",
+              "web/app.css:836",
+              "web/app.css:844",
+              "web/app.css:853",
+              "web/app.css:935",
+              "web/app.css:947",
+              "web/app.css:974",
+              "web/app.css:975",
+              "web/app.css:981",
+              "web/app.css:1050",
+              "web/app.css:1071",
+              "web/app.css:1196",
+              "web/app.css:1211",
+              "web/app.css:1212",
+              "web/app.css:1214",
+              "web/app.css:1217",
+              "web/app.css:1269",
+              "web/app.css:1283",
+              "web/app.css:1297",
+              "web/app.css:1300",
+              "web/app.css:1317",
+              "web/app.css:1321",
+              "web/app.css:1406",
+              "web/app.css:1499",
+              "web/app.css:1589",
+              "web/app.css:1590",
+              "web/app.css:1591",
+              "web/app.css:1592"
+            ]
+          }
+        }
+      },
+      "medium": {
+        "$type": "fontWeight",
+        "$value": 500,
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:232",
+              "web/app.css:236",
+              "web/app.css:241",
+              "web/app.css:263",
+              "web/app.css:277",
+              "web/app.css:307",
+              "web/app.css:313",
+              "web/app.css:346",
+              "web/app.css:359",
+              "web/app.css:387",
+              "web/app.css:402",
+              "web/app.css:442",
+              "web/app.css:446",
+              "web/app.css:449",
+              "web/app.css:458",
+              "web/app.css:486",
+              "web/app.css:503",
+              "web/app.css:519",
+              "web/app.css:529",
+              "web/app.css:555",
+              "web/app.css:558",
+              "web/app.css:561",
+              "web/app.css:573",
+              "web/app.css:590",
+              "web/app.css:595",
+              "web/app.css:600",
+              "web/app.css:619",
+              "web/app.css:665",
+              "web/app.css:671",
+              "web/app.css:683",
+              "web/app.css:684",
+              "web/app.css:695",
+              "web/app.css:739",
+              "web/app.css:749",
+              "web/app.css:750",
+              "web/app.css:782",
+              "web/app.css:818",
+              "web/app.css:821",
+              "web/app.css:837",
+              "web/app.css:843",
+              "web/app.css:880",
+              "web/app.css:881",
+              "web/app.css:904",
+              "web/app.css:905",
+              "web/app.css:907",
+              "web/app.css:924",
+              "web/app.css:942",
+              "web/app.css:983",
+              "web/app.css:1210",
+              "web/app.css:1213",
+              "web/app.css:1219",
+              "web/app.css:1273",
+              "web/app.css:1316",
+              "web/app.css:1318",
+              "web/app.css:1380",
+              "web/app.css:1398",
+              "web/app.css:1402",
+              "web/app.css:1427",
+              "web/app.css:1465",
+              "web/app.css:1503"
+            ]
+          }
+        }
+      },
+      "semibold": {
+        "$type": "fontWeight",
+        "$value": 600,
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:195",
+              "web/app.css:261",
+              "web/app.css:269",
+              "web/app.css:287",
+              "web/app.css:290",
+              "web/app.css:320",
+              "web/app.css:323",
+              "web/app.css:329",
+              "web/app.css:476",
+              "web/app.css:500",
+              "web/app.css:532",
+              "web/app.css:580",
+              "web/app.css:586",
+              "web/app.css:623",
+              "web/app.css:658",
+              "web/app.css:697",
+              "web/app.css:707",
+              "web/app.css:719",
+              "web/app.css:729",
+              "web/app.css:737",
+              "web/app.css:746",
+              "web/app.css:798",
+              "web/app.css:817",
+              "web/app.css:851",
+              "web/app.css:894",
+              "web/app.css:899",
+              "web/app.css:901",
+              "web/app.css:917",
+              "web/app.css:920",
+              "web/app.css:925",
+              "web/app.css:964",
+              "web/app.css:973",
+              "web/app.css:1049",
+              "web/app.css:1075",
+              "web/app.css:1208",
+              "web/app.css:1268",
+              "web/app.css:1279",
+              "web/app.css:1281",
+              "web/app.css:1296",
+              "web/app.css:1375",
+              "web/app.css:1379",
+              "web/app.css:1491",
+              "web/app.css:1518"
+            ]
+          }
+        }
+      }
+    },
+    "tracking": {
+      "slight": {
+        "$type": "dimension",
+        "$value": {
+          "value": -0.005,
+          "unit": "em"
+        },
+        "$description": "The brand and the calm heading.",
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:195",
+              "web/app.css:1268"
+            ]
+          }
+        }
+      },
+      "tight": {
+        "$type": "dimension",
+        "$value": {
+          "value": -0.01,
+          "unit": "em"
+        },
+        "$description": "Titles, hosts, mono text.",
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:269",
+              "web/app.css:330",
+              "web/app.css:447",
+              "web/app.css:553",
+              "web/app.css:568",
+              "web/app.css:586",
+              "web/app.css:596",
+              "web/app.css:672",
+              "web/app.css:682",
+              "web/app.css:719",
+              "web/app.css:894",
+              "web/app.css:899",
+              "web/app.css:1049",
+              "web/app.css:1075",
+              "web/app.css:1297",
+              "web/app.css:1317",
+              "web/app.css:1589",
+              "web/app.css:1591"
+            ]
+          }
+        }
+      },
+      "tighter": {
+        "$type": "dimension",
+        "$value": {
+          "value": -0.02,
+          "unit": "em"
+        },
+        "$description": "The large phone and Dashboard titles.",
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:729",
+              "web/app.css:1590",
+              "web/app.css:1592"
+            ]
+          }
+        }
+      },
+      "caps": {
+        "$type": "dimension",
+        "$value": {
+          "value": 0.02,
+          "unit": "em"
+        },
+        "$description": "Upper case captions in the iPhone drawings.",
+        "$extensions": {
+          "cc.pinned": {
+            "source": [
+              "web/app.css:1532"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+ "id": "button-plus",
+ "group": "Buttons",
+ "title": "The floating plus",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<button type=\"button\" class=\"padd\" data-a=\"add\" aria-label=\"Add\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-plus\"></use></svg></button>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "pbottom",
+    "id": "pbottom"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "psrow",
+    "id": "psrow"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 326,
+  "y": 780,
+  "width": 48,
+  "height": 48,
+  "position": "static",
+  "margin": [
+   0,
+   0,
+   0,
+   0
+  ]
+ }
+}

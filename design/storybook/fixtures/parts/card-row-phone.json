@@ -1,0 +1,69 @@
+{
+ "id": "card-row-phone",
+ "group": "Cards",
+ "title": "Bookmark list row, phone",
+ "device": "phone",
+ "note": "",
+ "viewport": {
+  "width": 390,
+  "height": 844
+ },
+ "sprite": "app",
+ "focus": -1,
+ "hover": -1,
+ "html": "<article class=\"pt row\" data-id=\"2\"><a class=\"pt-in\" href=\"https://example.org/essays/rivers\" target=\"_blank\" rel=\"noopener noreferrer\" draggable=\"false\" data-open=\"2\" aria-label=\"A long read about rivers and the towns they make, example.org\"><span class=\"pt-main\"><span class=\"fav\" data-l=\"A\">A</span><span class=\"pt-title\">A long read about rivers and the towns they make</span><span class=\"trunc-start host\"><bdi dir=\"ltr\">example.org</bdi></span></span>\n    <span class=\"pt-strip hue-cyan\"><span class=\"dot\"></span><time datetime=\"2026-11-04\">Today</time></span></a></article>",
+ "chain": [
+  {
+   "tag": "div",
+   "attrs": {
+    "id": "app"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "papp",
+    "id": "papp"
+   }
+  },
+  {
+   "tag": "main",
+   "attrs": {
+    "id": "pmain"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "bd"
+   }
+  },
+  {
+   "tag": "div",
+   "attrs": {
+    "class": "pgrid is-list",
+    "data-container": "1"
+   }
+  }
+ ],
+ "body": {
+  "data-page": "app",
+  "class": "phone"
+ },
+ "htmlAttrs": {
+  "style": "--vvh: 844px; --vvt: 0px; --kb: 0px; --pb: 48px;"
+ },
+ "box": {
+  "x": 12,
+  "y": 329,
+  "width": 366,
+  "height": 56,
+  "position": "relative",
+  "margin": [
+   0,
+   -6,
+   0,
+   -6
+  ]
+ }
+}
