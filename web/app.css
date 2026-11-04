@@ -633,7 +633,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
   background:var(--sheet);border-radius:var(--r-sheet) var(--r-sheet) 0 0;box-shadow:var(--edge-top),0 -16px 48px rgba(0,0,0,.55);
   padding:var(--s-4) var(--gut) calc(var(--s-9) + env(safe-area-inset-bottom));transform:translateY(100%);visibility:hidden}
 /* on the phone the sheet sits on the keyboard when one is up */
-@media (max-width:719px){.layer:not(.dialog) .sheet{bottom:var(--kb,0px)}}
+@media (max-width:719px){.layer:not(.dialog) .sheet{bottom:var(--kb,0px)}.layer:not(.page-sheet) .sheet:has(form[data-save]){max-height:calc(var(--vvh,100dvh) - env(safe-area-inset-top) - 12px)}}
 .sh-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-y;margin:0 calc(var(--gut) * -1);padding:0 var(--gut)}
 .sh-body::-webkit-scrollbar{display:none}
 .sheet .grab{flex:none}
