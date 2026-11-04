@@ -17,7 +17,7 @@ export const hostLine = (host, cls = '', mark, query) => truncStart(mark ? hl(ho
 export const favHTML = (b, size = 40) => {
   if (!b) return `<span class="fav">${ic('all')}</span>`;
   const src = iconSrc(b), l = esc(b.letter || (b.title || '?').trim().charAt(0).toUpperCase() || '?');
-  return `<span class="fav" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`;
+  return `<span class="fav" aria-hidden="true" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`;
 };
 export const contAttr = c => c === undefined ? '' : ` data-container="${c === null ? 'inbox' : c}"`;
 /* the view's own controls sit on the view, never in a sheet: Sort shows the order in use and opens a short menu of
@@ -54,7 +54,7 @@ export const searchPh = () => COARSE.matches ? 'Search bookmarks' : innerWidth >
 export function syncSearch() {
   const q = byId('q'), t = byId('qt'), ph = searchPh();
   if (q) { q.placeholder = ph; if (q.value !== ui.q) q.value = ui.q; }
-  if (t) { t.dataset.ph = ph; t.textContent = ui.q; }
+  if (t) { t.dataset.ph = ph; t.textContent = ui.q; t.parentElement.setAttribute('aria-label', ui.q ? 'Search bookmarks, ' + ui.q : 'Search bookmarks'); } /* the spoken name holds the query it shows */
 }
 export const sideItem = (v, cls, icon) => `<button type="button" class="si ${cls}" data-view="${v}" aria-current="${ui.view === v}">
   <span class="si-ic">${ic(icon)}</span><span class="si-n">${viewName(v)}</span>${v === 'dashboard' ? '' : `<span class="si-c">${data.has ? count(v) : ''}</span>`}</button>`;
@@ -62,8 +62,8 @@ export const sideAction = (name, icon, a) => `<button type="button" class="si" d
 export function deskTree() {
   const sel = ui.view, path = typeof sel === 'number' ? new Set(chain(sel).map(f => f.id)) : new Set();
   /* folders use the same row as All bookmarks, Inbox and Trash: the icon box carries the folder hue */
-  const row = (f, sub) => `<button type="button" class="si sf ${hueClass(f.id)}${sub ? ' sub' : ''}${isLocked(f) ? ' locked' : ''}" data-view="${f.id}" data-fid="${f.id}" aria-current="${f.id === sel}" aria-label="${esc(f.name)}, ${count(f.id)}">
-    <span class="si-ic">${ic('folder')}</span><span class="si-n">${esc(f.name)}</span>${f.share ? ic('link', 'lk') : ''}${f.locked && !isLocked(f) ? ic('lock', 'lk') : ''}${isLocked(f) ? `<span class="si-c si-lock" aria-label="locked">${ic('lock')}</span>` : `<span class="si-c">${count(f.id)}</span>`}</button>`;
+  const row = (f, sub) => `<button type="button" class="si sf ${hueClass(f.id)}${sub ? ' sub' : ''}${isLocked(f) ? ' locked' : ''}" data-view="${f.id}" data-fid="${f.id}" aria-current="${f.id === sel}" aria-label="${esc(f.name)} ${isLocked(f) ? 'locked' : count(f.id)}">
+    <span class="si-ic">${ic('folder')}</span><span class="si-n">${esc(f.name)}</span> ${f.share ? ic('link', 'lk') : ''}${f.locked && !isLocked(f) ? ic('lock', 'lk') : ''}${isLocked(f) ? `<span class="si-c si-lock" aria-label="locked">${ic('lock')}</span>` : `<span class="si-c">${count(f.id)}</span>`}</button>`;
   const level = (pid, sub) => kids(pid).map(f => row(f, sub) + (path.has(f.id) && kids(f.id).length
     ? `<div class="subs" data-parent="${f.id}" role="group" aria-label="${esc(f.name)} folders">${level(f.id, true)}</div>` : '')).join('');
   return `<div class="fstack" data-parent="" role="group" aria-label="Folders">${level(null, false)}</div>`;
@@ -204,8 +204,8 @@ export function renderDesk() {
 export const showFolders = () => typeof ui.view === 'number';
 /* on the Folders screen a tile carries the selection tick; it shows while selecting */
 export const ftileHTML = f => { const shut = isLocked(f), pk = foldersSel() && !shut, on = pk && ui.picked.has(f.id);
-  return `<button type="button" class="ftile ${hueClass(f.id)}${shut ? ' locked' : ''}${on ? ' picked' : ''}" data-view="${f.id}" data-ftile="${f.id}"${pk && ui.selecting ? ` aria-pressed="${on}"` : ''} aria-label="${esc(f.name)}, ${shut ? 'locked' : count(f.id)}">${pk ? `<span class="chk" aria-hidden="true">${ic('check')}</span>` : ''}
-  <span class="ft-n">${ic('folder', 'fi')}<span class="ft-t">${esc(f.name)}</span>${f.share ? ic('link', 'lk') : ''}${f.locked && !shut ? ic('lock', 'lk') : ''}</span><span class="ft-c num">${shut ? ic('lock', 'ft-lock') : ftFaces(f.id)}</span></button>`; };
+  return `<button type="button" class="ftile ${hueClass(f.id)}${shut ? ' locked' : ''}${on ? ' picked' : ''}" data-view="${f.id}" data-ftile="${f.id}"${pk && ui.selecting ? ` aria-pressed="${on}"` : ''}>${pk ? `<span class="chk" aria-hidden="true">${ic('check')}</span>` : ''}
+  <span class="ft-n">${ic('folder', 'fi')}<span class="ft-t">${esc(f.name)}</span>${f.share ? ic('link', 'lk') : ''}${f.locked && !shut ? ic('lock', 'lk') : ''}</span><span class="ft-c num" aria-hidden="true">${shut ? ic('lock', 'ft-lock') : ftFaces(f.id)}</span><span class="vh">, ${shut ? 'locked' : count(f.id)}</span></button>`; };
 /* the folder's count as a short row of its newest favicons, then +n for the rest; null is every bookmark */
 export function ftFaces(id) {
   const s = id == null ? null : descSet(id), L = live().filter(b => !s || (fid(b) != null && s.has(b.folder_id))).sort((a, b) => b.created_at - a.created_at);
@@ -223,10 +223,10 @@ export function folderSection(phone) {
    row at the foot, always there with its count */
 export function foldersScreen(phone) {
   const L = sortedTop(), n = count('all'), nt = count('trash');
-  const all = `<button type="button" class="ftile fplace" data-view="all" aria-label="All bookmarks, ${n}"><span class="ft-n">${ic('all', 'fi')}<span class="ft-t">All bookmarks</span></span><span class="ft-c num">${ftFaces(null)}</span></button>`;
+  const all = `<button type="button" class="ftile fplace" data-view="all"><span class="ft-n">${ic('all', 'fi')}<span class="ft-t">All bookmarks</span></span><span class="ft-c num" aria-hidden="true">${ftFaces(null)}</span><span class="vh">, ${n}</span></button>`;
   const nf = L.length ? '' : `<button type="button" class="ftile fnew" data-a="new-folder">${ic('plus', 'fi')}<span>New folder</span></button>`;
   return `<div class="fgrid${phone ? ' fgrid-p' : ''} fscreen" role="group" aria-label="Folders">${all}${L.map(ftileHTML).join('')}${nf}</div>
-    <button type="button" class="ftrash${phone ? ' p' : ''}" data-view="trash" aria-label="Trash, ${nt}">${ic('trash')}<span class="ftrash-n">Trash</span><span class="ftrash-c num">${nt}</span>${ic('chev', 'ftrash-ch')}</button>`;
+    <button type="button" class="ftrash${phone ? ' p' : ''}" data-view="trash">${ic('trash')}<span class="ftrash-n">Trash</span><span class="ftrash-c num" aria-hidden="true">${nt}</span><span class="vh">, ${nt}</span>${ic('chev', 'ftrash-ch')}</button>`;
 }
 /* a folder with subfolders and no links of its own shows the small add tile */
 export const onlySubs = () => typeof ui.view === 'number' && !ui.selecting && kids(ui.view).length > 0 && !listFor().length && canAddTo();
@@ -261,13 +261,13 @@ export const nfMini = () => fmini({ id: 'new', name: 'New folder', hue: 'plain' 
 /* a div, not a form: it sits inside the save form */
 export const nfForm = () => `<div class="nf" data-nf><input class="fld-in" name="nf-name" placeholder="Folder name" aria-label="Folder name" autocomplete="off" enterkeyhint="done"><button type="button" class="tbtn" data-a="nf-create">Create</button></div>`;
 /* the card's link, a checkbox while selecting; Select and Done swap only this shell and keep what is inside */
-export const ptShell = (b, inner) => { const label = `${esc(b.title)}, ${esc(hostOf(b))}`; return ui.selecting
-    ? `<button type="button" class="pt-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}" aria-label="Select ${esc(b.title)}">${inner}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
-    : b.deleted_at ? `<button type="button" class="pt-in" data-a="tile-acts" aria-label="${label}">${inner}</button>`
-    : `<a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" draggable="false" data-open="${b.id}" aria-label="${label}">${inner}</a>`; };
+export const ptShell = (b, inner) => ui.selecting
+    ? `<button type="button" class="pt-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}"><span class="vh">Select </span>${inner}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
+    : b.deleted_at ? `<button type="button" class="pt-in" data-a="tile-acts">${inner}</button>`
+    : `<a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" draggable="false" data-open="${b.id}">${inner}</a>`;
 export function phoneTile(b, ts) {
-  const inner = `<span class="pt-main">${favHTML(b, 36)}<span class="pt-title">${hl(b.title)}</span>${hostLine(hostOf(b), 'host', true)}</span>
-    <span class="pt-strip hue-${hue(fid(b))}"><span class="dot"></span>${ts ? `<time datetime="${isoDate(ts)}">${fmtDate(ts)}</time>` : ''}</span>`;
+  const inner = `<span class="pt-main">${favHTML(b, 36)}<span class="pt-title">${hl(b.title)}</span><span class="vh">, </span>${hostLine(hostOf(b), 'host', true)}</span>
+    <span class="pt-strip hue-${hue(fid(b))}" aria-hidden="true"><span class="dot"></span>${ts ? `<time datetime="${isoDate(ts)}">${fmtDate(ts)}</time>` : ''}</span>`;
   return `<article class="pt${ui.layout === 'list' ? ' row' : ''}${ui.picked.has(b.id) ? ' picked' : ''}" data-id="${b.id}">` + ptShell(b, inner) + `</article>`;
 }
 export const pskel = () => `<div class="pt sk" aria-hidden="true"><div class="b f"></div><div class="b l1"></div><div class="b l2"></div></div>`;
@@ -309,7 +309,7 @@ export function settingsScreen() {
   const link = (href, icon, label, sub, ext) => `<a class="sr" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${chip(icon)}${body(label, sub)}<span class="sr-ch">${ic(ext ? 'open' : 'chev')}</span></a>`;
   const tokens = ui.tokenCount == null ? '' : ui.tokenCount === 0 ? 'No tokens yet' : ui.tokenCount === 1 ? '1 token' : `${ui.tokenCount} tokens`;
   return `<div class="pset">
-    <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}</div></div></div>
+    <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${data.has ? `${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}` : '&nbsp;'}</div></div></div>
     <div class="pset-lbl">Save</div>
     ${link('/bookmarklet', 'all', 'How to save', 'Bookmarklet and extension')}${row('tokens', 'key', 'API tokens', tokens)}
     <div class="pset-lbl">Data</div>
@@ -336,15 +336,16 @@ export function phoneBody() {
 }
 let phoneLot = null;
 export function phoneRecents() {
-  if (!data.has) return '';
   const head = PHONE_TABS.includes(ui.view) ? `<div class="phead"><h1 class="phead-t">Pinned</h1><button type="button" class="bulb" data-theme-toggle aria-label="${document.documentElement.dataset.theme === 'light' ? 'Dark mode' : 'Light mode'}">${ic('bulb')}</button><button type="button" class="ib gear" data-view="settings" aria-label="Settings">${ic('gear')}</button></div>` : '';
+  /* the head shows before the data, so Settings can be reached when the server cannot; the pinned row waits for it */
+  if (!data.has) return head;
   /* the pinned links, marked with a pin: the phone's dock; the recently opened ones live on the Dashboard */
   const all = pinned();
   if (!all.length) return head;
   return head + `<div class="pglbl prc-lbl"><span>Pinned</span></div><nav class="precent" aria-label="Recent" data-dock>` + all.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
-    return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-id="${b.id}" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}${b.pinned ? ', pinned' : ''}">
-      <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
-      <span class="prc-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
+    return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-id="${b.id}" data-open="${b.id}" draggable="false">
+      <span class="prc-ic" aria-hidden="true" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
+      <span class="prc-l">${esc(b.title)}</span>${b.pinned ? '<span class="vh">, pinned</span>' : ''}</a>`; }).join('') + `</nav>`;
 }
 export function phoneBulk() { const n = ui.picked.size, dis = n ? '' : 'disabled';
   /* the count and All are one control: a tap on it selects every card; the bar keeps the desktop's actions in the desktop's order */

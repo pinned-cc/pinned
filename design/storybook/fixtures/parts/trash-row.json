@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<button type=\"button\" class=\"ftrash p\" data-view=\"trash\" aria-label=\"Trash, 1\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg><span class=\"ftrash-n\">Trash</span><span class=\"ftrash-c num\">1</span><svg class=\"i ftrash-ch\" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></button>",
+ "html": "<button type=\"button\" class=\"ftrash p\" data-view=\"trash\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-trash\"></use></svg><span class=\"ftrash-n\">Trash</span><span class=\"ftrash-c num\" aria-hidden=\"true\">1</span><span class=\"vh\">, 1</span><svg class=\"i ftrash-ch\" aria-hidden=\"true\"><use href=\"#i-chev\"></use></svg></button>",
  "chain": [
   {
    "tag": "div",

@@ -2,14 +2,14 @@ flowchart TD
   classDef works fill:#ffffff,stroke:#b8babe,color:#3a3e44;
   classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
-  S1["1. Folder actions, Lock with a password: Password,<br/>Repeat password and the note that it cannot be<br/>recovered.<br/><i>works</i>"]:::works
-  S2["2. Fewer than 4 characters, or two that differ,<br/>are named under the fields.<br/><i>works</i>"]:::works
+  S1["1. Folder actions, Lock with a password: Password,<br/>Repeat password, a Close button, and 6 px below<br/>the second field the note 'Use at least 8<br/>characters. Links in this folder stay out of<br/>sight everywhere until you unlock it. The<br/>password cannot be recovered.'<br/><i>works</i>"]:::works
+  S2["2. Fewer than 8 characters, two that differ, or<br/>one too easy to guess are named under the<br/>fields: 'Use at least 8 characters.', 'The<br/>passwords do not match.', 'This password is too<br/>easy to guess. Choose another one.'<br/><i>works</i>"]:::works
   S3["3. Lock goes back to the Dashboard with 'Folder<br/>locked'; the sidebar shows the name with a lock<br/>and no count.<br/><i>works</i>"]:::works
   S4["4. A locked folder is gone from search, Recent and<br/>the counts.<br/><i>works</i>"]:::works
   S5["5. A click on it opens Unlock; a wrong password<br/>says 'Wrong password'; the right one opens it<br/>for 10 minutes.<br/><i>works</i>"]:::works
-  S6["6. The lock dialogs have no close button; only<br/>Escape or a tap outside closes them.<br/><i>friction</i>"]:::friction
+  S6["6. The lock, unlock and remove lock dialogs have a<br/>Close button in the head, 44 by 44; Escape and<br/>a tap outside close them too.<br/><i>works</i>"]:::works
   S7["7. Unlocked, the folder actions offer Relock now<br/>and Remove lock, which asks the app password.<br/><i>works</i>"]:::works
-  S8["8. On the phone the lock dialog note sits tight<br/>under the second field.<br/><i>friction</i>"]:::friction
+  S8["8. On the phone the lock dialog note sits 6 px<br/>below the Repeat password field, as on the<br/>desktop.<br/><i>works</i>"]:::works
   S1 --> S2
   S2 --> S3
   S3 --> S4

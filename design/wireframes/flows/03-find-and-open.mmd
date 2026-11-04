@@ -12,7 +12,7 @@ flowchart TD
   S8["8. The Dashboard keeps the pinned row and Recently<br/>opened, else Recently saved.<br/><i>works</i>"]:::works
   S9["9. On the phone the search pill opens the same<br/>search as a sheet.<br/><i>works</i>"]:::works
   S10["10. Links in a locked folder never show in search.<br/><i>works</i>"]:::works
-  S11["11. After a very large import, All bookmarks draws<br/>every card at once: 10000 links hold the page<br/>for 1.4 s, 100000 links freeze it for more than<br/>2 minutes. The README promises imports of<br/>470000 links.<br/><i>broken</i>"]:::broken
+  S11["11. After a very large import, All bookmarks draws<br/>the first 240 cards with 'Show all 100000' in<br/>under a second; Show all and scrolling keep<br/>every frame short, and the search finds any<br/>link.<br/><i>works</i>"]:::works
   S1 --> S2
   S2 --> S3
   S3 --> S4

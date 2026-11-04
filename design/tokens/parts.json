@@ -211,24 +211,6 @@
           }
         }
       },
-      "rel-code-size": {
-        "$type": "dimension",
-        "$value": {
-          "value": 0.92,
-          "unit": "em"
-        },
-        "$extensions": {
-          "cc.pinned": {
-            "selector": ".rel code",
-            "property": "font",
-            "mode": "both",
-            "source": [
-              "web/app.css:1217"
-            ],
-            "css": "400 .92em/1 var(--mono)"
-          }
-        }
-      },
       "gk-fav-size": {
         "$type": "dimension",
         "$value": {
@@ -5795,7 +5777,7 @@
             "source": [
               "web/app.css:1217"
             ],
-            "css": "400 .92em/1 var(--mono)"
+            "css": "400 var(--t-label)/1 var(--mono)"
           }
         }
       },

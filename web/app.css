@@ -82,9 +82,9 @@
   --save-edge:inset 0 1px 0 rgba(255,255,255,.11),0 0 0 1px rgba(255,255,255,.04),0 -16px 48px rgba(0,0,0,.55);
   --save-field:rgba(14,14,16,.6);
 
-  /* type: sizes by role. 11.5, 12.5 and 13.5 sit between steps; see the style guide before merging them */
-  --t-micro:11px;
-  --t-small:11.5px;
+  /* type: sizes by role, 12 px at least for text to read. 12.5 and 13.5 sit between steps; see the style guide before merging them */
+  --t-micro:12px;
+  --t-small:12px;
   --t-label:12px;
   --t-tag:12.5px;
   --t-meta:13px;
@@ -633,7 +633,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
   background:var(--sheet);border-radius:var(--r-sheet) var(--r-sheet) 0 0;box-shadow:var(--edge-top),0 -16px 48px rgba(0,0,0,.55);
   padding:var(--s-4) var(--gut) calc(var(--s-9) + env(safe-area-inset-bottom));transform:translateY(100%);visibility:hidden}
 /* on the phone the sheet sits on the keyboard when one is up */
-@media (max-width:719px){.layer:not(.dialog) .sheet{bottom:var(--kb,0px)}}
+@media (max-width:719px){.layer:not(.dialog) .sheet{bottom:var(--kb,0px)}.layer:not(.page-sheet) .sheet:has(form[data-save]){max-height:min(max(calc(var(--vvh,100dvh) * .6),var(--sv-need,0px)),calc(var(--vvh,100dvh) - env(safe-area-inset-top) - 12px))}}
 .sh-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-y;margin:0 calc(var(--gut) * -1);padding:0 var(--gut)}
 .sh-body::-webkit-scrollbar{display:none}
 .sheet .grab{flex:none}
@@ -659,7 +659,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .sh-head .host{display:block;margin-top:var(--s-1)}
 .sh-head .fh-ic{width:var(--icon-m);height:var(--icon-m);color:var(--h);flex:none;margin:0 1px}
 .sh-head .sh-x{margin:calc(var(--s-5) * -1) calc(var(--s-5) * -1) calc(var(--s-5) * -1) 0;color:var(--ink-weak)}
-.sh-text{margin:calc(var(--s-3) * -1) var(--s-1) var(--s-9);font:400 var(--t-body)/var(--lh-20) var(--sans);color:var(--ink-weak)}
+.sh-text{margin:calc(var(--s-3) * -1) var(--s-1) var(--s-9);font:400 var(--t-body)/var(--lh-20) var(--sans);color:var(--ink-weak)}.fld + .sh-text{margin-top:var(--s-3)}
 .sh-rows{border-radius:var(--r-2xl);background:rgba(255,255,255,.035);border:1px solid var(--line);overflow:hidden}
 .sh-rows+.sh-rows{margin-top:var(--s-5)}
 .sh-row{display:flex;align-items:center;gap:var(--s-7);width:100%;height:52px;padding:0 var(--s-8);font:500 var(--t-input)/var(--lh-none) var(--sans);color:var(--ink);text-align:left}
@@ -931,7 +931,7 @@ body.phone .toasts{bottom:calc(var(--pb) + 28px + env(safe-area-inset-bottom))}
 .hs-copy:active{transform:scale(.98)}
 .hs-dl{background:var(--surface-up);color:var(--ink)}
 .hs-code{margin-top:var(--s-14);color:var(--ink-weak);font-size:var(--t-meta)}
-.hs-code summary{cursor:pointer;width:max-content}
+.hs-code summary{cursor:pointer;width:max-content;position:relative}.hs-code summary::after{content:"";position:absolute;left:0;right:0;bottom:calc(var(--s-4) * -1);height:var(--tap)}
 .hs-code code{display:block;margin-top:var(--s-4);padding:var(--s-6) var(--s-7);border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);font:400 var(--t-label)/var(--lh-18) var(--mono);word-break:break-all}
 /* the drawings: a few lines of the real screen, the one to tap in the accent */
 .hs-step{display:flex;flex-direction:column}
@@ -1214,7 +1214,7 @@ body.share-page .share-foot{order:2}
 .rel-l{margin:0;padding:0 0 0 var(--s-8);font:400 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink)}
 .rel-l li{margin:0 0 var(--s-3)}
 .rel-l li::marker{color:var(--ink-weak)}
-.rel code{font:400 .92em/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up)}
+.rel code{font:400 var(--t-label)/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up)}
 .rel-older{border-top:1px solid var(--line);padding:var(--s-6) var(--s-1) var(--s-4)}
 .rel-older summary{cursor:pointer;width:max-content;font:500 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink-weak)}
 .rel-older .rel:first-of-type{margin-top:var(--s-6)}

@@ -4,7 +4,7 @@ flowchart TD
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
   S1["1. Backing up: sqlite3 .backup, or stop, copy the<br/>data folder, start.<br/><i>works</i>"]:::works
   S2["2. Upgrading names the copy in the log: 'database:<br/>upgrading from schema 6 to 12; the database as<br/>it was is saved at<br/>.../bookmarks-schema6-....db'.<br/><i>works</i>"]:::works
-  S3["3. Going back, 0.1.10 refuses: 'database was<br/>written by a newer Pinned (schema 12); this<br/>version knows 6. Update the image or restore a<br/>backup.' It names no file and no README<br/>section; the container restarts into the same<br/>line.<br/><i>friction</i>"]:::friction
+  S3["3. Going back, 0.1.10 refuses: 'database was<br/>written by a newer Pinned (schema 12); this<br/>version knows 6. Update the image or restore a<br/>backup.' It names no file. From 0.1.11 on, a<br/>version that refuses a newer database names the<br/>copy to restore and the README section.<br/><i>friction</i>"]:::friction
   S4["4. Restoring as the README says (move bookmarks.db<br/>aside, copy the schema 6 file in, no -wal or<br/>-shm) brings 0.1.10 back with all 15 bookmarks<br/>and 5 folders.<br/><i>works</i>"]:::works
   S5["5. Links saved after the upgrade are not in that<br/>copy; the README says to export them first.<br/><i>works</i>"]:::works
   S1 --> S2

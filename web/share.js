@@ -22,9 +22,9 @@ const loadIcons = () => document.querySelectorAll('#share img[data-src]').forEac
 
 const hl = s => highlight(s, query);
 const hostLine = (h, cls = '') => truncStart(hl(h), cls);
-const fav = (b, size) => { const l = esc(b.letter || (b.title || '?').charAt(0).toUpperCase());
+const fav = (b, size, hide) => { const l = esc(b.letter || (b.title || '?').charAt(0).toUpperCase());
   const u = b.icon && iconURL.get(b.icon), src = u ? `src="${esc(u)}"` : `data-src="${esc(b.icon || '')}"`;
-  return `<span class="fav" data-l="${l}"${b.icon ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${b.icon ? `<img ${src} alt="" width="${size}" height="${size}" draggable="false">` : l}</span>`; };
+  return `<span class="fav"${hide ? ' aria-hidden="true"' : ''} data-l="${l}"${b.icon ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${b.icon ? `<img ${src} alt="" width="${size}" height="${size}" draggable="false">` : l}</span>`; };
 
 /* folders inside the shared one: the root has no id in the response, its children point at it */
 const folders = () => shared.folders || [];
@@ -43,9 +43,9 @@ function list() {
 }
 const deskTile = b => `<article class="tile"><div class="t-main">${fav(b, 40)}<a class="t-title" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${hl(b.title)}</a>
   <p class="t-host">${hostLine(b.host || b.url)}</p></div><div class="t-strip hue-${hueOf(b.folder_id)}"><span class="dot"></span><span class="path">${esc(nameOf(b.folder_id) || shared.folder.name)}</span><time>${fmtDate(b.created_at)}</time></div></article>`;
-const phoneTile = b => `<article class="pt"><a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(b.title)}, ${esc(b.host || b.url)}">
-  <span class="pt-main">${fav(b, 36)}<span class="pt-title">${hl(b.title)}</span>${hostLine(b.host || b.url, 'host')}</span>
-  <span class="pt-strip hue-${hueOf(b.folder_id)}"><span class="dot"></span><time>${fmtDate(b.created_at)}</time></span></a></article>`;
+const phoneTile = b => `<article class="pt"><a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">
+  <span class="pt-main">${fav(b, 36, true)}<span class="pt-title">${hl(b.title)}</span><span class="vh">, </span>${hostLine(b.host || b.url, 'host')}</span>
+  <span class="pt-strip hue-${hueOf(b.folder_id)}" aria-hidden="true"><span class="dot"></span><time>${fmtDate(b.created_at)}</time></span></a></article>`;
 const chips = () => { const t = tops(); if (!t.length) return '';
   const mini = (id, name, h) => `<button type="button" class="fmini hue-${h}${VIEW === id ? ' fill' : ''}" data-sv="${id}" aria-pressed="${VIEW === id}"><span class="v"><span class="nm">${ic(id === 'all' ? 'all' : 'folder', 'fi')}<span class="nt">${esc(name)}</span></span></span></button>`;
   return `<div class="prow-x frow share-chips" role="group" aria-label="Folders">${mini('all', 'All', 'ink-h')}${t.map(f => mini(f.id, f.name, hueOf(f.id))).join('')}</div>`; };

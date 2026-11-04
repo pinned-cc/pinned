@@ -32,7 +32,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stro
 .fld-in:focus{border-color:var(--accent);box-shadow:var(--focus-field)}
 .fld-in::placeholder{color:var(--ink-weak);opacity:.7}
 .fld-err{margin:8px 2px 0;font:500 13px/18px var(--sans);color:var(--danger)}
-.host{font:400 11.5px/13px var(--mono);color:var(--ink-weak);letter-spacing:-.01em}
+.host{font:400 12px/13px var(--mono);color:var(--ink-weak);letter-spacing:-.01em}
 
 /* buttons */
 .tbtn{height:44px;padding:0 14px;border-radius:22px;font:500 15px/1 var(--sans);color:var(--accent-soft)}

@@ -74,7 +74,22 @@ export function fillSheet() {
   if (s.type === 'addto') atAfterFill();
   if (hadFocus && !el.contains(document.activeElement)) el.focus({ preventScroll: true }); /* a redraw keeps focus inside the sheet */
   const ta = el.querySelector('textarea'); if (ta) fitTa(ta);
+  fitSave(el, s.type === 'save');
   if (s.type === 'name') { const i = el.querySelector('input'); const n = i.value.length; try { i.setSelectionRange(n, n); } catch (e) { /* ok */ } }
+}
+/* the save sheet on the phone keeps the 60 percent bound of every sheet, and grows past it only as far as the end of
+   the Folder row, at most to the visible height (app.css, .sheet:has(form[data-save])): --sv-need is the sheet's
+   height with the body shown down to that row. Measured again when the form changes size (the Already saved line,
+   the picker, the address field). */
+let svFit = null;
+function fitSave(el, on) {
+  if (svFit) { svFit.disconnect(); svFit = null; }
+  el.style.removeProperty('--sv-need');
+  const f = on && el.querySelector('form[data-save]'); if (!f || !window.ResizeObserver) return;
+  const set = () => { const b = el.querySelector('.sh-body'), r = el.querySelector('.sv-folder'); if (!b || !r) return;
+    const need = el.offsetHeight - b.clientHeight + r.getBoundingClientRect().bottom - b.getBoundingClientRect().top + b.scrollTop;
+    el.style.setProperty('--sv-need', Math.ceil(need) + 'px'); };
+  svFit = new ResizeObserver(set); svFit.observe(f); set();
 }
 export const fitTa = ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 2 + 'px'; };
 
@@ -179,7 +194,7 @@ export function parseChangelog(md) { const out = []; let rel = null, grp = null,
   return out; }
 const mdInline = t => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
 const relDay = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-const releaseHTML = r => `<section class="rel"><h3 class="rel-h"><span class="rel-v">${esc(r.v)}</span>${ui.version === r.v ? '<span class="rel-now">This version</span>' : ''}<span class="rel-d">${esc(relDay(r.date))}</span></h3>
+const releaseHTML = r => `<section class="rel"><h3 class="rel-h"><span class="rel-v">${esc(r.v)}</span>${(ui.version ?? '').replace(/^v/, '') === r.v ? '<span class="rel-now">This version</span>' : ''}<span class="rel-d">${esc(relDay(r.date))}</span></h3>
   ${r.intro.map(p => `<p class="rel-p">${mdInline(p)}</p>`).join('')}${r.groups.map(g => `${g.h ? `<p class="rel-g">${esc(g.h)}</p>` : ''}<ul class="rel-l">${g.items.map(i => `<li>${mdInline(i)}</li>`).join('')}</ul>`).join('')}</section>`;
 function releasesHTML(s) { const head = textHead("What's new");
   if (s.err) return head + `<p class="sh-text">${esc(s.err)}</p>`;

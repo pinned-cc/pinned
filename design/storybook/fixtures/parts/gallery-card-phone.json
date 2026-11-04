@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<article class=\"gk\" data-id=\"1\"><a class=\"g-in\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\" aria-label=\"Field notes on slow software, example.com, in Reading, opened 1m ago\"><span class=\"fav\" data-l=\"F\">F</span><span class=\"gk-time\"><time datetime=\"2026-11-04T10:17:51.000Z\">1m ago</time></span>\n  <span class=\"gk-title\">Field notes on slow software</span><span class=\"trunc-start gk-host\"><bdi dir=\"ltr\">example.com</bdi></span>\n  <span class=\"gk-foot\"><span class=\"gc-chip hue-cyan\"><span class=\"dot\"></span><span class=\"gc-cn\">Reading</span></span></span></a></article>",
+ "html": "<article class=\"gk\" data-id=\"1\"><a class=\"g-in\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\"><span class=\"fav\" aria-hidden=\"true\" data-l=\"F\">F</span><span class=\"gk-time\"><time aria-hidden=\"true\" datetime=\"2026-11-04T13:34:46.000Z\">1m ago</time></span>\n  <span class=\"gk-title\">Field notes on slow software</span><span class=\"vh\">, </span><span class=\"trunc-start gk-host\"><bdi dir=\"ltr\">example.com</bdi></span><span class=\"vh\">, in Reading, opened 1m ago</span>\n  <span class=\"gk-foot\"><span class=\"gc-chip hue-cyan\" aria-hidden=\"true\"><span class=\"dot\"></span><span class=\"gc-cn\">Reading</span></span></span></a></article>",
  "chain": [
   {
    "tag": "div",

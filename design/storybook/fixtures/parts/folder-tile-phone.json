@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<button type=\"button\" class=\"ftile hue-cyan\" data-view=\"1\" data-ftile=\"1\" aria-label=\"Reading, 3\"><span class=\"chk\" aria-hidden=\"true\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-check\"></use></svg></span>\n  <span class=\"ft-n\"><svg class=\"i fi\" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg><span class=\"ft-t\">Reading</span></span><span class=\"ft-c num\"><span class=\"ft-faces\"><span class=\"fav\" data-l=\"F\">F</span><span class=\"fav\" data-l=\"A\">A</span><span class=\"fav\" data-l=\"W\">W</span></span></span></button>",
+ "html": "<button type=\"button\" class=\"ftile hue-cyan\" data-view=\"1\" data-ftile=\"1\"><span class=\"chk\" aria-hidden=\"true\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-check\"></use></svg></span>\n  <span class=\"ft-n\"><svg class=\"i fi\" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg><span class=\"ft-t\">Reading</span></span><span class=\"ft-c num\" aria-hidden=\"true\"><span class=\"ft-faces\"><span class=\"fav\" aria-hidden=\"true\" data-l=\"F\">F</span><span class=\"fav\" aria-hidden=\"true\" data-l=\"A\">A</span><span class=\"fav\" aria-hidden=\"true\" data-l=\"W\">W</span></span></span><span class=\"vh\">, 3</span></button>",
  "chain": [
   {
    "tag": "div",

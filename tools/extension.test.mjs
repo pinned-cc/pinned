@@ -323,10 +323,10 @@ test('probe never sends the token over plain http to a public host it fell back 
 function optionsPage(stored, granted) {
   const { browser, rec } = stubBrowser(stored);
   const perms = new Set(granted);
-  rec.removed = [];
+  rec.removed = []; rec.requested = [];
   browser.permissions = {
     async contains({ origins }) { return origins.every(o => perms.has(o)); },
-    async request({ origins }) { origins.forEach(o => perms.add(o)); return true; },
+    async request({ origins }) { rec.requested.push(origins); origins.forEach(o => perms.add(o)); return true; },
     async remove({ origins }) { origins.forEach(o => { perms.delete(o); rec.removed.push(o); }); return true; },
   };
   const node = () => ({ value: '', hidden: true, className: '', disabled: false, children: [], textContent: '',
@@ -352,4 +352,106 @@ test('options: a failed Save keeps the access the saved address uses', async () 
   assert.deepEqual(plain(page.rec.removed), ['https://127.0.0.1/*']);
   assert.equal(page.rec.store.address, 'http://127.0.0.1:1');
   assert.ok(ctx);
+});
+
+// S23.1 (F-138): an address typed with http:// for a host outside the own network: Test and Save warn first and go
+// ahead on a second click of the same button; once gone ahead, the address counts for both until it changes.
+const TEST_WARN = 'On plain http your token may cross the internet unencrypted. Use https, or click Test again to connect anyway.';
+const SAVE_WARN = 'On plain http your token may cross the internet unencrypted. Use https, or click Save again to save anyway.';
+function optionsWithFetch(stored = {}) {
+  const page = optionsPage(stored, []), net = fakeFetch();
+  load(['shared.js', 'options.js'], page.browser, { document: page.document, fetch: net.f, setTimeout, clearTimeout });
+  const click = async () => { await page.els.test.handlers.click(); };
+  const submit = async () => { page.els.form.handlers.submit({ preventDefault() {} }); for (let i = 0; i < 40 && /^(Waiting|Looking)/.test(page.statusText()); i++) await settle(); await settle(); };
+  return { ...page, net, click, submit };
+}
+
+test('options: Test warns first for a public http address, sends nothing, and connects on the second click', async () => {
+  const o = optionsWithFetch(); await settle();
+  o.els.address.value = 'http://bookmarks.example.com'; o.els.token.value = 'tk_secret';
+  await o.click();
+  assert.equal(o.statusText(), TEST_WARN);
+  assert.equal(o.els.status.className, 'status bad');
+  assert.equal(o.net.seen.length, 0, 'the first Test sent a request');
+  await o.click();
+  assert.equal(o.statusText(), 'Connected to http://bookmarks.example.com, 1 folder.');
+  assert.deepEqual(plain(o.net.seen), [{ url: 'http://bookmarks.example.com/api/folders', auth: 'Bearer tk_secret' }]);
+});
+
+test('options: Save warns first for a public http address, asks for no access and stores nothing, then saves on the second click', async () => {
+  const o = optionsWithFetch(); await settle();
+  o.els.address.value = 'http://bookmarks.example.com'; o.els.token.value = 'tk_secret';
+  await o.submit();
+  assert.equal(o.statusText(), SAVE_WARN);
+  assert.equal(o.rec.requested.length, 0, 'the first Save asked for access');
+  assert.equal(o.rec.store.address, undefined); assert.equal(o.rec.store.token, undefined);
+  await o.submit();
+  assert.deepEqual(plain(o.rec.requested), [['http://bookmarks.example.com/*']]);
+  assert.equal(o.rec.store.address, 'http://bookmarks.example.com'); assert.equal(o.rec.store.token, 'tk_secret');
+  assert.equal(o.statusText(), 'Saved http://bookmarks.example.com.');
+  assert.equal(o.net.seen.length, 0);
+});
+
+test('options: gone ahead on Test, Save does not warn again; a warning of one button does not arm the other; a changed address warns again', async () => {
+  const o = optionsWithFetch(); await settle();
+  o.els.address.value = 'http://bookmarks.example.com'; o.els.token.value = 'tk_secret';
+  await o.click(); await o.click();
+  assert.match(o.statusText(), /^Connected/);
+  await o.submit();
+  assert.equal(o.statusText(), 'Saved http://bookmarks.example.com.');
+  assert.equal(o.rec.requested.length, 1);
+  // the address Save writes back, and the same address typed in capitals or with a slash, stays gone ahead
+  o.els.address.value = 'HTTP://Bookmarks.Example.com/';
+  await o.click(); assert.match(o.statusText(), /^Connected/);
+  // a warning of Test does not arm Save
+  o.els.address.value = 'http://pinned.example.org';
+  await o.click(); assert.equal(o.statusText(), TEST_WARN);
+  await o.submit(); assert.equal(o.statusText(), SAVE_WARN);
+  assert.equal(o.rec.requested.length, 1, 'Save went ahead on a warning of Test');
+  // the address changed between two clicks: the next click warns again
+  o.els.address.value = 'http://other.example.org';
+  await o.submit(); assert.equal(o.statusText(), SAVE_WARN);
+  assert.equal(o.rec.requested.length, 1);
+  // and going back to the first address after a change asks again
+  o.els.address.value = 'http://bookmarks.example.com';
+  const before = o.net.seen.length;
+  await o.click(); assert.equal(o.statusText(), TEST_WARN); assert.equal(o.net.seen.length, before);
+});
+
+test('options: own network, https and addresses without a scheme go ahead on the first click; public IPv4 and IPv6 over http warn', async () => {
+  for (const a of ['http://10.0.0.5:9095', 'http://127.0.0.1:9095', 'http://localhost:9095', 'http://nas', 'http://[::1]:9095', 'http://nas.local']) {
+    const o = optionsWithFetch(); await settle();
+    o.els.address.value = a; o.els.token.value = 'tk_secret';
+    await o.click();
+    assert.match(o.statusText(), /^Connected to /, a);
+    assert.equal(o.net.seen.length, 1, a);
+    await o.submit();
+    assert.match(o.statusText(), /^Saved /, a);
+    assert.equal(o.rec.requested.length, 1, a);
+  }
+  for (const a of ['https://bookmarks.example.com', 'bookmarks.example.com']) {
+    const o = optionsWithFetch(); await settle();
+    o.els.address.value = a; o.els.token.value = 'tk_secret';
+    await o.click();
+    assert.doesNotMatch(o.statusText(), /click (Test|Save) again/, a);
+    assert.ok(o.net.seen.length >= 1, a + ': no request');
+    for (const r of o.net.seen) if (r.url.startsWith('http:')) assert.equal(r.auth, undefined, 'token sent to ' + r.url);
+    await o.submit();
+    assert.doesNotMatch(o.statusText(), /click (Test|Save) again/, a);
+    assert.equal(o.rec.requested.length, 1, a);
+  }
+  for (const a of ['http://203.0.113.5:9095', 'http://[2001:db8::1]', 'http://nas.tailnet.ts.net', 'http://nas.example.home:9095', 'http://[::ffff:10.0.0.5]']) {
+    const o = optionsWithFetch(); await settle();
+    o.els.address.value = a; o.els.token.value = 'tk_secret';
+    await o.click(); assert.equal(o.statusText(), TEST_WARN, a);
+    await o.submit(); assert.equal(o.statusText(), SAVE_WARN, a);
+    assert.equal(o.net.seen.length, 0, a); assert.equal(o.rec.requested.length, 0, a);
+  }
+});
+
+test('options: an address saved before with http:// for a public host is used until Test or Save; Test then warns once', async () => {
+  const o = optionsWithFetch({ address: 'http://bookmarks.example.com', token: 'tk_old' }); await settle();
+  assert.equal(o.els.address.value, 'http://bookmarks.example.com');
+  await o.click(); assert.equal(o.statusText(), TEST_WARN); assert.equal(o.net.seen.length, 0);
+  await o.click(); assert.match(o.statusText(), /^Connected/);
 });

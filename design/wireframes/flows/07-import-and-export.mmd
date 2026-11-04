@@ -3,12 +3,12 @@ flowchart TD
   classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
   S1["1. More in the sidebar (desktop) or Settings<br/>(phone), Import, pick a browser bookmarks file.<br/><i>works</i>"]:::works
-  S2["2. While it runs nothing shows: no progress,<br/>Import stays live for a second click, the empty<br/>Dashboard stays empty. A 20 MB file takes about<br/>15 seconds.<br/><i>friction</i>"]:::friction
+  S2["2. While it runs a toast says 'Importing. This can<br/>take a moment for a big file.' and every Import<br/>is disabled and busy. 100000 links (17.4 MB)<br/>take about 9 seconds.<br/><i>works</i>"]:::works
   S3["3. Done: 'Imported 15, skipped 0', folders kept.<br/><i>works</i>"]:::works
   S4["4. The same file again: 'Imported 0, skipped 15'.<br/><i>works</i>"]:::works
   S5["5. A file that is not a bookmarks file: 'Not a<br/>bookmark file.'; folders more than 256 deep:<br/>'The folders in this file nest more than 256<br/>deep. Pinned cannot import it.'<br/><i>works</i>"]:::works
   S6["6. Export downloads bookmarks.html.<br/><i>works</i>"]:::works
-  S7["7. With a folder locked in this browser the export<br/>leaves it out and says nothing; someone moving<br/>away or keeping a copy loses those links<br/>without knowing.<br/><i>friction</i>"]:::friction
+  S7["7. With a folder locked in this browser the export<br/>leaves it out and says so: 'Exported without<br/>Finance: it is locked. Unlock it first to<br/>include it.'<br/><i>works</i>"]:::works
   S8["8. The nightly export/bookmarks.html in the data<br/>folder holds everything, locked folders too.<br/><i>works</i>"]:::works
   S1 --> S2
   S2 --> S3

@@ -27,7 +27,8 @@
     "id": "sheet",
     "role": "dialog",
     "aria-modal": "true",
-    "aria-label": "Save"
+    "aria-label": "Save",
+    "style": "--sv-need: 485px;"
    }
   },
   {
