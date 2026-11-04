@@ -370,10 +370,11 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 
 			// A second open is no upgrade and writes no second copy.
 			s.Close()
-			s, err = Open(path)
+			s2, err := Open(path)
 			if err != nil {
 				t.Fatal(err)
 			}
+			defer s2.Close()
 			if again, _ := listBackups(path); len(again) != len(copies) {
 				t.Errorf("a second start wrote another copy: %v", again)
 			}
