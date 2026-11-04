@@ -31,6 +31,7 @@ One line per run, newest first: date, commit, Playwright version, result per eng
 
 | Date | Commit | Playwright | Chromium | WebKit | Firefox |
 |---|---|---|---|---|---|
+| 2026-11-04 | 8faf0e2 (0.1.12, not released) | 1.61.0 | 149 passed, 0 failed | 148 passed, 0 failed | not run: Firefox does not start on macOS 27.0.1. |
 | 2026-11-03 | 404c279 (0.1.11, not released) | 1.61.0 | 141 passed, 0 failed | 140 passed, 0 failed | not run: Firefox does not start on macOS 27.0.1 (both Playwright builds stop at the graphics start); to run on Linux in the VM test. |
 | 2026-11-03 | 175a5d2 (0.1.11, not released) | 1.61.0 | 141 passed, 0 failed | 140 passed, 0 failed | 140 passed, 0 failed, Firefox 151 on Ubuntu 26.04 (VM), against the image built from this commit. |
 | 2026-10-31 | b1b6a0b (0.1.11, not released) | 1.61.0 | 140 passed, 0 failed | 139 passed, 0 failed | not run here: to be run on a plain terminal. |
