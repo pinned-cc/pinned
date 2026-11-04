@@ -493,7 +493,7 @@ function popupPage(stored, answers = {}) {
     return new Response(JSON.stringify(a[1]), { status: a[0], headers: { 'Content-Type': 'application/json' } });
   };
   const node = tag => ({ tag, attrs: {}, children: [], text: '', handlers: {}, style: { setProperty() {} },
-    classList: { add() {}, toggle() {} }, value: '', focus() {}, select() {}, setSelectionRange() {},
+    classList: { add() {}, toggle() {} }, value: '', focus() { document.activeElement = this; }, select() {}, setSelectionRange() {},
     set textContent(t) { this.text = t; this.children = []; }, get textContent() { return this.text + this.children.map(c => c.textContent || '').join(''); },
     setAttribute(k, v) { this.attrs[k] = v; }, appendChild(c) { this.children.push(c); }, replaceChildren(...c) { this.children = c; },
     addEventListener(k, f) { this.handlers[k] = f; }, querySelector() { return null; } });
@@ -503,7 +503,7 @@ function popupPage(stored, answers = {}) {
   const all = (n = pop) => [n, ...(n.children || []).flatMap(c => all(c))];
   const button = label => all().find(n => n.tag === 'button' && n.textContent === label);
   load(['shared.js', 'popup.js'], browser, { document, fetch, window: { close() {} }, matchMedia: () => ({ matches: false }), setTimeout, clearTimeout });
-  return { rec, seen, pop, all, button, text: () => pop.textContent };
+  return { rec, seen, pop, all, button, focused: () => document.activeElement, text: () => pop.textContent };
 }
 
 test('popup: a public http address stored before sends nothing until Continue, which stores plainOK and then connects', async () => {
@@ -511,7 +511,9 @@ test('popup: a public http address stored before sends nothing until Continue, w
   assert.equal(p.seen.length, 0, 'the token was sent before Continue');
   assert.match(p.text(), /^Plain http to bookmarks\.example\.com/);
   assert.ok(p.text().includes(POPUP_WARN));
-  assert.ok(p.button('Open settings'));
+  /* the safe choice carries the weight: Open settings is the primary button and has the focus, Continue the text button */
+  assert.equal(p.button('Open settings').className, 'save'); assert.equal(p.button('Continue').className, 'tbtn');
+  assert.equal(p.focused(), p.button('Open settings'), 'focus is not on Open settings');
   await p.button('Continue').handlers.click(); await settle();
   assert.equal(p.rec.store.plainOK, OLD.address);
   assert.deepEqual(plain(p.seen.slice(0, 2).map(r => [r.url, r.auth])), [['http://bookmarks.example.com/api/folders', 'Bearer tk_old'], ['http://bookmarks.example.com/api/check?url=https%3A%2F%2Fa.example%2Fpage', 'Bearer tk_old']]);

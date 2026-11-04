@@ -823,7 +823,7 @@ S23.1.7 The first draft left the popup and the right click save out of 0.1.12. R
 S23.1.8 A stored address (F-170). What changes.
 - extras/extension/shared.js: `config()` also reads `plainOK`, the one public http address the user has gone ahead with; `Pinned.plainUnconfirmed(cfg)` is true when `cfg.address` is `http:` for a host `localHost` refuses and `plainOK` is not that address. An address typed with `http://` for the own network, an https address and an address without a stored token are never held.
 - extras/extension/options.js: a Save that goes ahead on its second click stores `plainOK` with the address; a Save of any other address stores `plainOK` empty. When the options page opens on a stored address that is held, the status shows the warning at once and Save is armed for that address, so one click on Save confirms it, as the second click does; Test still asks twice.
-- extras/extension/popup.js: when the stored address is held, the popup sends nothing (no /api/folders, no /api/check, no save) and shows a notice with two buttons, Continue and Open settings. Continue stores `plainOK` and goes on as today; Open settings opens the options page.
+- extras/extension/popup.js: when the stored address is held, the popup sends nothing (no /api/folders, no /api/check, no save) and shows a notice with two buttons: Open settings, the popup's primary button (`.save`), which has the keyboard focus and is the one Enter runs, and Continue, the popup's text button (`.tbtn`) beside it, so the safe choice carries the weight (the owner's decision, 04.11). Continue stores `plainOK` and goes on as today; Open settings opens the options page.
 - extras/extension/background.js: the right click save, when the address is held, sends nothing and opens the options page, as it does today without an address or token.
 Why: popup.js and background.js read the stored config and send the token with no check (F-170: popup.js:113, 151, 162; background.js:38-42). A 0.1.11 user who saved `http://<public host>` kept sending the token in clear at every popup open and save.
 Cases.
@@ -833,7 +833,7 @@ Cases.
 - Own network (`http://10.0.0.5:9095`, `http://nas`), https, no address: unchanged.
 - Chromium and Firefox: the same files. Phone: no extension.
 WORDING: needs his OK.
-- Popup notice, title: "Plain http to <host>" (the host and port of the address); text: "On plain http your token may cross the internet unencrypted. Use https, or click Continue to connect anyway."; buttons "Continue" and "Open settings".
+- Popup notice, title: "Plain http to <host>" (the host and port of the address); text: "On plain http your token may cross the internet unencrypted. Use https, or click Continue to connect anyway."; buttons "Open settings" (primary, focused) and "Continue" (text button).
 - Options page, opened on a held address: "On plain http your token may cross the internet unencrypted. Use https, or click Save to keep using this address."
 Test. tools/extension.test.mjs, with a setting stored the 0.1.11 way: the popup makes no request and shows the notice; Continue stores `plainOK` and then the popup asks for /api/folders with the token; the right click save makes no request and opens the options page, and with `plainOK` set it posts as before; the options page shows the open warning, one Save click stores the address with `plainOK`, a Save of an own network address clears it. Own network and https settings: the popup asks for /api/folders at once. These fail before the change.
 
