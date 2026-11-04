@@ -2336,7 +2336,7 @@ async function release0112(browser, engine) {
         await p.evaluate(v => { window.Pinned.U.view = v; window.Pinned.render(); }, v); await visible(p.locator('#pmain article.pt'));
         await p.tap('#pmain [data-a="select"]'); await p.locator('#pmain article.pt .pt-in').first().tap(); await visible(p.locator('#pbulkwrap .pbulk .bb:not([disabled])'));
         const bb = await p.evaluate(() => [...document.querySelectorAll('#pbulkwrap .bb')].map(b => { const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()), rg = document.createRange(); rg.selectNodeContents(t);
-          const q = [...rg.getClientRects()], r = b.getBoundingClientRect(); return { t: t.textContent.trim(), lines: new Set(q.map(x => Math.round(x.top))).size, in: q.every(x => x.left >= r.left - 0.5 && x.right <= r.right + 0.5), fs: parseFloat(getComputedStyle(b).fontSize) }; }));
+          const q = [...rg.getClientRects()], r = b.getBoundingClientRect(); return { t: t.textContent.trim(), lines: new Set(q.map(x => Math.round(x.top))).size, in: q.every(x => x.left >= r.left - 0.1 && x.right <= r.right + 0.1), fs: parseFloat(getComputedStyle(b).fontSize) }; }));
         const bad = bb.filter(b => b.lines !== 1 || !b.in || b.fs < 12);
         assert(!bad.length, v + ' at 320: ' + JSON.stringify(bad));
         if (v === 'trash') await shot(p, `${engine}-r12-bar-320-trash`);

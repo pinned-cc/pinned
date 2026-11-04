@@ -826,7 +826,7 @@ body:has(#layer.open) .papp.selecting #pbulkwrap{opacity:0;visibility:hidden;poi
 /* the bar sits over cards: solid and unblurred, so the count never reads over a card behind it */
 @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){.pbulk.pbulk{background:#18181b;-webkit-backdrop-filter:none;backdrop-filter:none}}
 /* 320: the bar takes 8 px more each side; the count with All and five actions on one line, every target 44 px */
-@media (max-width:359px){.pbulk{margin:0 calc(var(--s-4) * -1);padding:0 var(--s-2) 0 var(--s-6)}.pbulk .bb{width:var(--tap)}.pall{gap:var(--s-2);margin-left:calc(var(--s-2) * -1);padding:0 var(--s-2)}}
+@media (max-width:359px){.pbulk{margin:0 calc(var(--s-4) * -1);padding:0 var(--s-2) 0 var(--s-6)}.pbulk .bb{width:auto;min-width:var(--tap)}.pall{gap:var(--s-2);margin-left:calc(var(--s-2) * -1);padding:0 var(--s-2)}}
 /* a soft backing under the bottom bar: the page ground fades in below the search and plus, so cards never show in the
    gaps beside them; it rises with the taller selection bar. A gradient only, no blur */
 .papp::after{content:"";position:fixed;left:0;right:0;bottom:0;z-index:19;pointer-events:none;height:calc(126px + env(safe-area-inset-bottom));
