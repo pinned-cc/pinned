@@ -45,7 +45,16 @@ func CheckLen(raw string) error {
 func Key(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
 	if i := strings.IndexByte(raw, '#'); i >= 0 {
-		raw = raw[:i]
+		// White space before the fragment goes too, so "http://h/a #top"
+		// is http://h/a. A control character in it stays refused, as
+		// url.Parse refuses it below.
+		cut := strings.TrimSpace(raw[:i])
+		for _, c := range raw[len(cut):i] {
+			if c < 0x20 || c == 0x7f {
+				return "", ErrInvalid
+			}
+		}
+		raw = cut
 	}
 	schemeEnd := strings.Index(raw, "://")
 	if schemeEnd <= 0 {

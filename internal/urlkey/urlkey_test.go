@@ -14,6 +14,13 @@ func TestKeyEquality(t *testing.T) {
 		{"http://example.com/a#top", "http://example.com/a"},
 		{"http://example.com", "http://example.com/"},
 		{"http://nas/?q=1", "http://nas?q=1"},
+		// White space before the fragment is trimmed like white space at
+		// the ends (spec S23.4).
+		{"http://h/a #top", "http://h/a"},
+		{"http://h/a   #top", "http://h/a"},
+		{"http://h/?q=a #x", "http://h/?q=a"},
+		{"http://h/a\u00a0#x", "http://h/a"},
+		{"http://h #x", "http://h/"},
 	}
 	for _, p := range same {
 		a, err := Key(p[0])
@@ -41,6 +48,16 @@ func TestKeyEquality(t *testing.T) {
 		b, _ := Key(p[1])
 		if a == b {
 			t.Errorf("want %q != %q, both gave %q", p[0], p[1], a)
+		}
+	}
+}
+
+// A tab, CR or LF before the fragment stays refused, as url.Parse refused it
+// before the trim came in (spec S23.4).
+func TestKeyRefusesControlBeforeFragment(t *testing.T) {
+	for _, raw := range []string{"http://h/a\t#x", "http://h/a\n#x", "http://h/a\r#x", "http://h/a \t #x", "http://h/a\x7f#x"} {
+		if k, err := Key(raw); !errors.Is(err, ErrInvalid) {
+			t.Errorf("Key(%q) = %q, %v; want ErrInvalid", raw, k, err)
 		}
 	}
 }
