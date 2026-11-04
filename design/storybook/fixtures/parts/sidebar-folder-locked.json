@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<button type=\"button\" class=\"si sf hue-lilac locked\" data-view=\"9\" data-fid=\"9\" aria-current=\"false\" aria-label=\"Private, 0\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Private</span><span class=\"si-c si-lock\" aria-label=\"locked\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg></span></button>",
+ "html": "<button type=\"button\" class=\"si sf hue-lilac locked\" data-view=\"9\" data-fid=\"9\" aria-current=\"false\" aria-label=\"Private locked\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Private</span> <span class=\"si-c si-lock\" aria-label=\"locked\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-lock\"></use></svg></span></button>",
  "chain": [
   {
    "tag": "div",

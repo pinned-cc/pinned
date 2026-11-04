@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<button type=\"button\" class=\"si sf hue-cyan\" data-view=\"1\" data-fid=\"1\" aria-current=\"false\" aria-label=\"Reading, 3\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Reading</span><span class=\"si-c\">3</span></button>",
+ "html": "<button type=\"button\" class=\"si sf hue-cyan\" data-view=\"1\" data-fid=\"1\" aria-current=\"false\" aria-label=\"Reading 3\">\n    <span class=\"si-ic\"><svg class=\"i \" aria-hidden=\"true\"><use href=\"#i-folder\"></use></svg></span><span class=\"si-n\">Reading</span> <span class=\"si-c\">3</span></button>",
  "chain": [
   {
    "tag": "div",

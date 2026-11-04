@@ -30,9 +30,9 @@
  },
  "box": {
   "x": 0,
-  "y": 337.609375,
+  "y": 307,
   "width": 390,
-  "height": 506.390625,
+  "height": 537,
   "position": "fixed",
   "margin": [
    0,
