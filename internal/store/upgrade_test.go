@@ -16,7 +16,7 @@ import (
 )
 
 // The databases in testdata/upgrade were written by the released binaries
-// v0.1.0 to v0.1.10, one each, not by this code: each binary was built from
+// v0.1.0 to v0.1.11, one each, not by this code: each binary was built from
 // its tag, started on an empty data folder and filled through its own HTTP
 // API (nested folders, a locked folder with a subfolder, a hide from Recent
 // folder, a share with and one without a password, two API tokens, one used
@@ -31,6 +31,16 @@ import (
 // Every release from 0.1.0 to 0.1.10 is at schema 6, but 0.1.0 differs from
 // the later ones (titles are not cut at 500 characters), and each one is
 // kept so a future migration is tested against every database users have.
+//
+// 0.1.11 is at schema 12: its run differs where 0.1.11 asks for more (a
+// folder password of 8 characters or more, the app password again to make
+// a token, an address of 8192 bytes at most, so 8000 there), and it keeps
+// what 0.1.11 writes (keyed lock and share hashes with their stamps, the
+// extension token bound to its origin, the app password as a hash). It also
+// holds addresses with white space before the #fragment, whose key 0.1.11
+// kept with that space (spec S23.4.7): "spaced", "nbsp", the pair "pair"
+// and "pairspaced" for one page, "trashspaced" in Trash and "lockspaced" in
+// the locked folder.
 const (
 	fixtureSecret = "pinned-upgrade-fixture-secret-32"
 	upgradeDir    = "testdata/upgrade"
@@ -41,7 +51,9 @@ type fixtureManifest struct {
 	Password           string            `json:"password"`
 	LockPassword       string            `json:"lock_password"`
 	SharePassword      string            `json:"share_password"`
+	ExtensionOrigin    string            `json:"extension_origin"`
 	Folders            map[string]int64  `json:"folders"`
+	Bookmarks          map[string]int64  `json:"bookmarks"`
 	ShareOpen          string            `json:"share_open"`
 	SharePasswordToken string            `json:"share_password_token"`
 	Tokens             map[string]string `json:"tokens"`
@@ -98,8 +110,8 @@ func releasedFixtures(t *testing.T) []string {
 		tags = append(tags, strings.TrimSuffix(filepath.Base(p), ".db.gz"))
 	}
 	sort.Strings(tags)
-	if len(tags) != 11 {
-		t.Fatalf("want the 11 databases of v0.1.0 to v0.1.10, found %v", tags)
+	if len(tags) != 12 {
+		t.Fatalf("want the 12 databases of v0.1.0 to v0.1.11, found %v", tags)
 	}
 	return tags
 }
@@ -152,6 +164,7 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 	for _, tag := range releasedFixtures(t) {
 		t.Run(tag, func(t *testing.T) {
 			path, m := fixtureDB(t, tag)
+			before, _, _ := schemaOf(t, path)
 			s, err := Open(path)
 			if err != nil {
 				t.Fatalf("open the %s database: %v", tag, err)
@@ -161,26 +174,31 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 				t.Errorf("schema %d after the upgrade, want %d", v, len(migrations))
 			}
 
-			// The copy from before the upgrade is the old database.
+			// The copy from before the upgrade is the old database. A
+			// database at this schema is no upgrade; TestReleasedKeysSetAgain
+			// checks the copy the key pass makes of it.
 			copies, err := listBackups(path)
-			if err != nil || len(copies) != 1 || copies[0].schema != 6 {
-				t.Fatalf("want one schema 6 copy, got %v (%v)", copies, err)
+			upgraded := before < len(migrations)
+			if upgraded && (err != nil || len(copies) != 1 || copies[0].schema != before) {
+				t.Fatalf("want one schema %d copy, got %v (%v)", before, copies, err)
 			}
-			cp := filepath.Join(filepath.Dir(path), copies[0].name)
-			var oldVersion, oldRows int
-			err = func() error {
-				db, err := sql.Open("sqlite", "file:"+cp+"?mode=ro")
-				if err != nil {
-					return err
+			if upgraded {
+				cp := filepath.Join(filepath.Dir(path), copies[0].name)
+				var oldVersion, oldRows int
+				err = func() error {
+					db, err := sql.Open("sqlite", "file:"+cp+"?mode=ro")
+					if err != nil {
+						return err
+					}
+					defer db.Close()
+					return db.QueryRow(`SELECT (SELECT version FROM schema_version), (SELECT COUNT(*) FROM bookmarks)`).Scan(&oldVersion, &oldRows)
+				}()
+				if err != nil || oldVersion != before || oldRows != len(m.State.Bookmarks) {
+					t.Errorf("copy holds schema %d with %d bookmarks (%v), want %d and %d", oldVersion, oldRows, err, before, len(m.State.Bookmarks))
 				}
-				defer db.Close()
-				return db.QueryRow(`SELECT (SELECT version FROM schema_version), (SELECT COUNT(*) FROM bookmarks)`).Scan(&oldVersion, &oldRows)
-			}()
-			if err != nil || oldVersion != 6 || oldRows != len(m.State.Bookmarks) {
-				t.Errorf("copy holds schema %d with %d bookmarks (%v), want 6 and %d", oldVersion, oldRows, err, len(m.State.Bookmarks))
-			}
-			if fi, err := os.Stat(cp); err != nil || fi.Mode().Perm() != 0o600 {
-				t.Errorf("copy mode %v (%v), want 0600", fi.Mode().Perm(), err)
+				if fi, err := os.Stat(cp); err != nil || fi.Mode().Perm() != 0o600 {
+					t.Errorf("copy mode %v (%v), want 0600", fi.Mode().Perm(), err)
+				}
 			}
 
 			// Folders: ids, tree, names, order, Hide from Recent, the lock.
@@ -206,18 +224,21 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 				}
 				// The JSON says locked for a folder under a lock too; only
 				// the folder that was locked has a lock of its own.
-				if own := w.ID == m.Folders["private"]; (f.LockHash != nil) != own || (own && !w.Locked) {
+				own := w.ID == m.Folders["private"]
+				if (f.LockHash != nil) != own || (own && !w.Locked) {
 					t.Errorf("folder %d %q: own lock %v, want %v", w.ID, w.Name, f.LockHash != nil, own)
 				}
-				if f.LockStamp != nil {
-					t.Errorf("folder %d: a lock from before has no stamp, got %q", w.ID, *f.LockStamp)
+				// Stamps came in 0.1.11 (migration 11): a lock set by an
+				// earlier version has none, one set by 0.1.11 has one.
+				if (f.LockStamp != nil) != (own && !upgraded) {
+					t.Errorf("folder %d: stamp %v, want one only for a lock set by 0.1.11", w.ID, f.LockStamp != nil)
 				}
 			}
 			private := got[m.Folders["private"]]
 			if private.LockHash == nil {
 				t.Fatal("the locked folder lost its lock")
 			}
-			if ok, _ := auth.CheckPasswordHash(*private.LockHash, m.LockPassword); !ok {
+			if ok, _ := auth.CheckKeyedPassword([]byte(fixtureSecret), *private.LockHash, m.LockPassword); !ok {
 				t.Error("the old folder password no longer opens the lock")
 			}
 
@@ -278,8 +299,8 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 				if !ok || sh.FolderID != w.ID || (sh.PasswordHash != nil) != w.Share.HasPassword || !samePtr(sh.ExpiresAt, w.Share.ExpiresAt) {
 					t.Errorf("share of folder %d: got %+v (found %v), want %+v", w.ID, sh, ok, *w.Share)
 				}
-				if sh.PasswordStamp != nil {
-					t.Errorf("share of folder %d: a password from before has no stamp", w.ID)
+				if (sh.PasswordStamp != nil) != (w.Share.HasPassword && !upgraded) {
+					t.Errorf("share of folder %d: stamp %v, want one only for a password set by 0.1.11", w.ID, sh.PasswordStamp != nil)
 				}
 			}
 			if len(byToken) != 2 {
@@ -292,12 +313,13 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 			if err != nil || sh.PasswordHash == nil {
 				t.Fatalf("the share with a password: %+v, %v", sh, err)
 			}
-			if ok, _ := auth.CheckPasswordHash(*sh.PasswordHash, m.SharePassword); !ok {
+			if ok, _ := auth.CheckKeyedPassword([]byte(fixtureSecret), *sh.PasswordHash, m.SharePassword); !ok {
 				t.Error("the old share password no longer opens the share")
 			}
 
-			// API tokens, each found by the hash of its value, not bound to
-			// an origin yet: 0.1.11 binds at the first use from an extension.
+			// API tokens, each found by the hash of its value. Before 0.1.11
+			// none is bound to an origin: 0.1.11 binds at the first use from
+			// an extension, which its own run made with "Brave extension".
 			tokens, err := s.Tokens()
 			if err != nil {
 				t.Fatal(err)
@@ -307,7 +329,8 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 			}
 			for name, value := range m.Tokens {
 				tk, err := s.TokenByHash(auth.HashToken([]byte(fixtureSecret), value))
-				if err != nil || tk.Name != name || tk.Origin != nil {
+				bound := !upgraded && name == "Brave extension"
+				if err != nil || tk.Name != name || (tk.Origin != nil) != bound || (bound && *tk.Origin != m.ExtensionOrigin) {
 					t.Errorf("token %q: %+v, %v", name, tk, err)
 				}
 			}
@@ -349,8 +372,8 @@ func TestReleasedDatabasesUpgrade(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if copies, _ := listBackups(path); len(copies) != 1 {
-				t.Errorf("a second start wrote another copy: %v", copies)
+			if again, _ := listBackups(path); len(again) != len(copies) {
+				t.Errorf("a second start wrote another copy: %v", again)
 			}
 		})
 	}
@@ -400,9 +423,12 @@ func TestReleasedDatabasesKeepThePassword(t *testing.T) {
 				if !tc.same {
 					pw = "another-password-Zt5q"
 				}
-				var legacy string
-				if err := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, legacyPasswordSetting).Scan(&legacy); err != nil {
-					t.Fatalf("%s: the old version's password record is missing: %v", tc.name, err)
+				// 0.1.0 to 0.1.10 kept an HMAC record, 0.1.11 the hash.
+				var legacy, stored string
+				hasLegacy := s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, legacyPasswordSetting).Scan(&legacy) == nil
+				s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, passwordSetting).Scan(&stored)
+				if hasLegacy == (tag == "v0.1.11") || (!hasLegacy && !strings.HasPrefix(stored, "$2")) {
+					t.Fatalf("%s: legacy record %v, hash %.4q; want the record of %s", tc.name, hasLegacy, stored, tag)
 				}
 				changed, err := s.SyncPassword(legacyCheck(pw), cheap)
 				if err != nil || changed != tc.changed {
@@ -412,8 +438,12 @@ func TestReleasedDatabasesKeepThePassword(t *testing.T) {
 				s.db.QueryRow(`SELECT COUNT(*) FROM settings WHERE key = ?`, legacyPasswordSetting).Scan(&n)
 				var h string
 				s.db.QueryRow(`SELECT value FROM settings WHERE key = ?`, passwordSetting).Scan(&h)
-				if n != 0 || h != "hash-of-the-test-password" {
-					t.Errorf("%s: legacy rows %d, hash %q; want the record moved to the hash", tc.name, n, h)
+				want := "hash-of-the-test-password"
+				if !hasLegacy && tc.same {
+					want = stored // the same password keeps 0.1.11's hash
+				}
+				if n != 0 || h != want {
+					t.Errorf("%s: legacy rows %d, hash %.12q; want %.12q", tc.name, n, h, want)
 				}
 				tokens, _ := s.Tokens()
 				sessions, _ := s.Sessions()
