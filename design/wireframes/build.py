@@ -327,8 +327,8 @@ reg('palette-bar', 'Search opened from the browser address bar', 'Search', dk(si
 reg('palette-locked', 'Search, a locked folder stays hidden', 'Search', dk(side(folders=FOLD), tb_dash(), dash_body(), over=pal('bank', none=True)), keys(Escape='dash'))
 reg('p-search', 'Phone, search', 'Phone', phone(ph_home('dash', pcards(4)) + '<div class="blur"></div><div class="psh" style="top:60px"><div class="grab"></div>'
     + inp('git', None, focus=True, caret=True) + '<div class="plbl">Work</div>' + ''.join(A('open-tab', f'<span class="fav sm"></span>{b(90, 9)}', 'row', 'height:44px') for _ in range(2)) + '</div>'))
-reg('all-big', 'All bookmarks after a 100000 link import, page frozen', 'Search', dk(side('all', counts=dict(all='100000')), tb_folder('All bookmarks', '100000', menu_href=None, share_href=None).replace('glyph link', 'glyph'),
-    '<div class="faded"><div class="glbl">Today</div>' + cards(12, 'Big 0') + '</div><div class="notice2" style="position:absolute;left:0;right:0;top:60px">Not the app: the browser shows nothing for over 2 minutes while every card is drawn. 10000 links take 1.4 s.</div>'))
+reg('all-big', 'All bookmarks after a 100000 link import: the first 240 cards and Show all', 'Search', dk(side('all', counts=dict(all='100000')), tb_folder('All bookmarks', '100000', menu_href=None, share_href=None).replace('glyph link', 'glyph'),
+    '<div class="glbl">Today</div>' + cards(12, 'Big 0') + '<div class="row mt14"><span class="sm">Showing 240 of 100000 bookmarks</span><span class="sp"></span>' + pill('Show all 100000', 'all-big') + '</div>'))
 
 # ---- 02 save a link, web ----
 

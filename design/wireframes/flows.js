@@ -1434,7 +1434,7 @@ window.TITLES = {
  "palette-bar": "Search opened from the browser address bar",
  "palette-locked": "Search, a locked folder stays hidden",
  "p-search": "Phone, search",
- "all-big": "All bookmarks after a 100000 link import, page frozen",
+ "all-big": "All bookmarks after a 100000 link import: the first 240 cards and Show all",
  "add-sheet": "Add, the save sheet",
  "add-noscheme": "Add, address without http refused",
  "add-stale": "Add, address fixed, the old error is gone",
