@@ -2200,6 +2200,193 @@ async function flowFixes(browser, engine) {
   await cleanup(page); await ctx.close();
 }
 
+/* the items of 0.1.12 (docs/spec.md section 23), one check or more each */
+const SMALL_OK = '.ft-faces .fav, .gc-row .fav, .ios-apps, .ios-cap'; /* letter marks in a tile and the drawing of the iOS share menu (S23.9.3) */
+const smallText = page => page.evaluate(ok => { const out = [];
+  for (const el of document.querySelectorAll('body *')) {
+    if (el.closest('svg, script, style, template') || el.closest(ok) || !el.getClientRects().length) continue;
+    if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+    const st = getComputedStyle(el), r = el.getBoundingClientRect();
+    if (st.visibility === 'hidden' || r.width <= 2 || el.closest('.vh, [hidden]')) continue;
+    if (parseFloat(st.fontSize) < 12) out.push(`${el.className || el.tagName} "${el.textContent.trim().slice(0, 16)}" ${st.fontSize}`);
+  }
+  return [...new Set(out)]; }, SMALL_OK);
+async function release0112(browser, engine) {
+  console.log(`\n${engine}, 0.1.12 items`);
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US' });
+  const page = await ctx.newPage();
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await login(page); await cleanup(page);
+  const F = (await apiIn(page, 'POST', '/api/folders', { name: `ui-test r12 ${stamp}`, parent_id: null })).data;
+  const L = (await apiIn(page, 'POST', '/api/folders', { name: `ui-test r12 lock ${stamp}`, parent_id: null })).data;
+  const saved = (await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test r12 saved ${stamp}`, url: `https://ui-test.example/${stamp}/r12-saved`, folder_id: F.id })).data;
+  await apiIn(page, 'PATCH', `/api/bookmarks/${saved.id}`, { pinned: true });
+  for (const n of [1, 2]) await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test r12 card ${n}`, url: `https://ui-test.example/${stamp}/r12-${n}`, folder_id: F.id });
+  const trashed = (await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test r12 trashed ${stamp}`, url: `https://ui-test.example/${stamp}/r12-trashed`, folder_id: null })).data;
+  await apiIn(page, 'DELETE', `/api/bookmarks/${trashed.id}`);
+  const share = (await apiIn(page, 'POST', `/api/folders/${F.id}/share`, {})).data;
+  await apiIn(page, 'POST', `/api/folders/${L.id}/lock`, { password: T.lockPw });
+  await page.reload(); await visible(page.locator('#side .si'));
+  const cookies = await ctx.cookies();
+  const phoneCtx = async (w, h, extra = {}) => { const o = { viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true, locale: 'en-US', ...extra };
+    if (engine !== 'firefox') o.isMobile = true; const c = await browser.newContext(o); await c.addCookies(cookies); return c; };
+
+  await check('S23.5 360 to 440: Show the Save code takes a 44 px tap that ends at the code; below it, closed, nothing; open, the code', async () => {
+    for (const w of [360, 390, 430, 440]) { const c = await phoneCtx(w, 800); const p = await c.newPage();
+      try {
+        await p.goto(BASE + '/bookmarklet'); await visible(p.locator('.hs-code summary'));
+        const probe = () => p.evaluate(() => { const sm = document.querySelector('.hs-code summary'); sm.scrollIntoView({ block: 'center' });
+          const r = sm.getBoundingClientRect(), a = getComputedStyle(sm, '::after'), x = r.left + 12;
+          const bottom = r.bottom - parseFloat(a.bottom), top = bottom - parseFloat(a.height);
+          const at = y => document.elementFromPoint(x, y);
+          const inSum = y => { const e = at(y); return !!e && e.closest('summary') === sm; };
+          const below = at(bottom + 1);
+          return { h: bottom - top, top: inSum(top + 0.5), bot: inSum(bottom - 0.5), out: !inSum(bottom + 1), below: below ? (below.closest('code') ? 'code' : below.closest('a, button, summary, input, [role=button]') ? 'control' : 'none') : 'none', textH: r.height }; });
+        const shut = await probe();
+        assert(shut.h >= 44 && shut.top && shut.bot && shut.out, w + ' closed: ' + JSON.stringify(shut));
+        assert(shut.below === 'none', w + ': under the closed summary sits ' + shut.below);
+        await p.tap('.hs-code summary'); await visible(p.locator('.hs-code code'));
+        const open = await probe();
+        assert(open.h >= 44 && open.top && open.bot && open.below === 'code', w + ' open: ' + JSON.stringify(open));
+        if (w === 390) await shot(p, `${engine}-r12-save-code-390`);
+      } finally { await c.close(); } }
+  });
+
+  await check('S23.6 Add sheet with an already saved address: at 360x780 the Folder row shows whole above the foot; with the keyboard stand-in (--vvh, --kb) the sheet keeps its top and Save in view at 360 and 390', async () => {
+    for (const [w, h] of [[360, 780], [390, 844]]) { const c = await phoneCtx(w, h); const p = await c.newPage();
+      try {
+        await p.goto(BASE + '/'); await visible(p.locator('#papp .ptbar.tabs'));
+        await p.tap('.pbottom .padd'); await sheetOpen(p);
+        await p.fill('#sheet [data-f=url]', saved.url); await visible(p.locator('#sheet .dupe:not(.off)'));
+        await p.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {})))); await p.waitForTimeout(100);
+        const g = await p.evaluate(() => { const r = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null; };
+          const body = r('#sheet .sh-body'), lbl = r('#sheet #sv-fl'), row = r('#sheet .sv-folder .fpick'), sheet = r('#sheet');
+          return { body: [body.top, body.bottom], lbl: [lbl.top, lbl.bottom], row: row && row.height ? [row.top, row.bottom] : null, sheetH: sheet.height, sheetTop: sheet.top, vvh: innerHeight }; });
+        if (w === 360) assert(g.row && g.lbl[0] >= g.body[0] && g.row[1] <= g.body[1] + 0.5, '360: the Folder row is cut: ' + JSON.stringify(g));
+        if (w === 360) await shot(p, `${engine}-r12-add-sheet-360`);
+        /* the keyboard stand-in: what phone.js sets when a 336 px keyboard is up (S23.6.3) */
+        await p.evaluate(kb => { const d = document.documentElement.style; d.setProperty('--vvh', (innerHeight - kb) + 'px'); d.setProperty('--kb', kb + 'px'); }, 336);
+        await p.waitForTimeout(100);
+        const k = await p.evaluate(kb => { const s = document.querySelector('#sheet').getBoundingClientRect(), b = document.querySelector('#sheet [data-a="save-go"]').getBoundingClientRect(), x = document.querySelector('#sheet [data-a="close"]').getBoundingClientRect();
+          return { top: s.top, bottom: s.bottom, save: [b.top, b.bottom], close: x.top, vis: innerHeight - kb }; }, 336);
+        assert(k.top >= 0 && k.close >= 0 && k.save[0] >= 0 && k.save[1] <= k.vis + 0.5 && Math.abs(k.bottom - k.vis) < 1, w + ' keyboard: ' + JSON.stringify(k));
+        if (w === 360) await shot(p, `${engine}-r12-add-sheet-360-keyboard`);
+      } finally { await c.close(); } }
+  });
+
+  await check('S23.7 phone, server unreachable at the first load, 390 and 320: the head with the gear shows and opens Settings, the notice shows, and no "0 bookmarks" before the data', async () => {
+    for (const [w, h] of [[390, 844], [320, 640]]) { const c = await phoneCtx(w, h); const p = await c.newPage();
+      try {
+        await p.route('**/api/state', r => r.abort('connectionrefused'));
+        await p.goto(BASE + '/'); await visible(p.locator('.pnotice', { hasText: 'Cannot reach your Pinned server.' }));
+        await visible(p.locator('#pmain .phead .gear')); await visible(p.locator('#pmain .phead .bulb'));
+        if (w === 390) await shot(p, `${engine}-r12-unreachable-390`);
+        await p.tap('#pmain .phead .gear');
+        await until(p, () => (document.querySelector('.ptb-t') || {}).textContent === 'Settings', null, 'settings screen');
+        const sum = (await p.textContent('.pset .pset-sum')).trim();
+        assert(!/bookmark|folder/.test(sum), w + ': the summary reads "' + sum + '" before any data');
+        await p.unroute('**/api/state');
+      } finally { await c.close(); } }
+    /* while loading, the head is there too, and with the data the summary counts */
+    const c = await phoneCtx(390, 844); const p = await c.newPage();
+    try {
+      let go; const held = new Promise(r => { go = r; });
+      await p.route('**/api/state', async r => { await held; await r.fallback(); });
+      await p.goto(BASE + '/'); await visible(p.locator('#pmain .phead .gear')); await visible(p.locator('#pmain .pgrid[aria-busy="true"]'));
+      go(); await visible(p.locator('#pmain .precent')); await p.tap('#pmain .phead .gear');
+      await until(p, () => /bookmarks? in \d+ folders?/.test((document.querySelector('.pset .pset-sum') || {}).textContent || ''), null, 'the summary with the data');
+    } finally { await c.close(); }
+  });
+
+  await check('S23.9 no text below 12 px: desktop Dashboard, a folder, More and What\'s new; phone Dashboard, a folder and Settings; the 320 selection bar keeps every word on one line', async () => {
+    const found = [];
+    await page.click('#side [data-view="dashboard"]'); await page.waitForTimeout(300); found.push(...(await smallText(page)).map(x => 'dashboard ' + x));
+    await page.click(`#side .sf[data-fid="${F.id}"]`); await visible(page.locator('#body article.tile')); found.push(...(await smallText(page)).map(x => 'folder ' + x));
+    await openFoot(page); found.push(...(await smallText(page)).map(x => 'more ' + x));
+    await page.click('#side .app-ver'); await visible(page.locator('#sheet .rel'));
+    const code = await page.evaluate(() => { const c = document.querySelector('#sheet .rel code'); return c ? parseFloat(getComputedStyle(c).fontSize) : 12; });
+    found.push(...(await smallText(page)).map(x => 'whats-new ' + x)); if (code < 12) found.push('whats-new code ' + code);
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+    const c = await phoneCtx(390, 844); const p = await c.newPage();
+    try {
+      await p.goto(BASE + '/'); await visible(p.locator('#pmain .precent')); found.push(...(await smallText(p)).map(x => 'phone dashboard ' + x));
+      await p.evaluate(id => { window.Pinned.U.view = id; window.Pinned.render(); }, F.id); await visible(p.locator('#pmain article.pt')); found.push(...(await smallText(p)).map(x => 'phone folder ' + x));
+      await p.evaluate(() => { window.Pinned.U.view = 'settings'; window.Pinned.render(); }); await visible(p.locator('.pset')); found.push(...(await smallText(p)).map(x => 'phone settings ' + x));
+      assert(!found.length, found.join('; '));
+      await p.setViewportSize({ width: 320, height: 640 });
+      for (const v of ['trash', F.id]) {
+        await p.evaluate(v => { window.Pinned.U.view = v; window.Pinned.render(); }, v); await visible(p.locator('#pmain article.pt'));
+        await p.tap('#pmain [data-a="select"]'); await p.locator('#pmain article.pt .pt-in').first().tap(); await visible(p.locator('#pbulkwrap .pbulk .bb:not([disabled])'));
+        const bb = await p.evaluate(() => [...document.querySelectorAll('#pbulkwrap .bb')].map(b => { const t = [...b.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()), rg = document.createRange(); rg.selectNodeContents(t);
+          const q = [...rg.getClientRects()], r = b.getBoundingClientRect(); return { t: t.textContent.trim(), lines: new Set(q.map(x => Math.round(x.top))).size, in: q.every(x => x.left >= r.left - 0.5 && x.right <= r.right + 0.5), fs: parseFloat(getComputedStyle(b).fontSize) }; }));
+        const bad = bb.filter(b => b.lines !== 1 || !b.in || b.fs < 12);
+        assert(!bad.length, v + ' at 320: ' + JSON.stringify(bad));
+        if (v === 'trash') await shot(p, `${engine}-r12-bar-320-trash`);
+        await p.tap('#pmain [data-a="select"][aria-pressed="true"]'); await gone(p.locator('#pbulkwrap .pbulk'));
+      }
+    } finally { await c.close(); }
+  });
+
+  await check('S23.10 lock dialog: the note sits 6 px below the Repeat password field, at 1440 and 390', async () => {
+    const gap = q => q.evaluate(() => { const f = document.querySelector('#sheet input[name=pw2]').closest('.fld').getBoundingClientRect(), n = document.querySelector('#sheet .fld + .sh-text').getBoundingClientRect(); return n.top - f.bottom; });
+    await page.click(`#side .sf[data-fid="${F.id}"]`); await page.click('#tbwrap [data-a="folder-menu"]'); await menuItem(page, 'Lock with a password').click();
+    await visible(page.locator('#layer.dialog.open #sheet input[name=pw2]')); await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
+    const d = await gap(page); await shot(page, `${engine}-r12-lock-1440`); await page.keyboard.press('Escape'); await sheetClosed(page);
+    assert(Math.abs(d - 6) < 0.5, '1440: the note is ' + d + ' px below the field');
+    const c = await phoneCtx(390, 844); const p = await c.newPage();
+    try {
+      await p.goto(BASE + '/'); await visible(p.locator('#papp .ptbar.tabs'));
+      await p.evaluate(id => { window.Pinned.U.view = id; window.Pinned.render(); }, F.id); await p.tap('#pmain [data-a="folder-menu"]');
+      await p.locator('#sheet .sh-row', { hasText: 'Lock with a password' }).first().tap();
+      await visible(p.locator('#layer.dialog.open #sheet input[name=pw2]')); await p.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
+      const m = await gap(p); await shot(p, `${engine}-r12-lock-390`);
+      assert(Math.abs(m - 6) < 0.5, '390: the note is ' + m + ' px below the field');
+    } finally { await c.close(); }
+  });
+
+  await check('S23.11 and the review\'s item 3: the spoken names hold the visible ones: sidebar folders "name count" or "name locked", the phone pinned row and the share page cards', async () => {
+    const side = await page.evaluate(() => [...document.querySelectorAll('#side .sf')].map(b => { const n = b.querySelector('.si-n').textContent, c = b.querySelector('.si-c'), lk = c && c.classList.contains('si-lock');
+      const vis = [...b.childNodes].map(x => x.nodeType === 3 ? x.textContent : x.matches('.si-n, .si-c') ? x.textContent : '').join('').replace(/\s+/g, ' ').trim();
+      return { label: b.getAttribute('aria-label'), want: n + ' ' + (lk ? 'locked' : c.textContent), vis, lk }; }));
+    assert(side.length >= 2 && side.every(r => r.label === r.want && r.label.startsWith(r.vis)), 'sidebar: ' + JSON.stringify(side.filter(r => r.label !== r.want || !r.label.startsWith(r.vis))));
+    assert(side.some(r => r.lk && / locked$/.test(r.label)), 'no locked folder named "<name> locked"');
+    const c = await phoneCtx(390, 844); const p = await c.newPage();
+    try {
+      await p.goto(BASE + '/'); await visible(p.locator('#pmain .precent .prc'));
+      const pr = await p.evaluate(t => { const a = [...document.querySelectorAll('#pmain .prc')].find(x => x.querySelector('.prc-l').textContent === t);
+        return a && { label: a.getAttribute('aria-label'), icon: a.querySelector('.prc-ic').getAttribute('aria-hidden'), vh: (a.querySelector('.vh') || {}).textContent }; }, saved.title);
+      assert(pr && pr.label === null && pr.icon === 'true' && pr.vh === ', pinned', 'pinned row: ' + JSON.stringify(pr));
+      await p.goto(share.url); await visible(p.locator('#share article.pt .pt-in'));
+      const sc = await p.evaluate(() => [...document.querySelectorAll('#share article.pt .pt-in')].map(a => ({ label: a.getAttribute('aria-label'), fav: a.querySelector('.fav').getAttribute('aria-hidden'), strip: a.querySelector('.pt-strip').getAttribute('aria-hidden'), sep: (a.querySelector('.pt-main .vh') || {}).textContent })));
+      assert(sc.length === 3 && sc.every(x => x.label === null && x.fav === 'true' && x.strip === 'true' && x.sep === ', '), 'share cards: ' + JSON.stringify(sc));
+    } finally { await c.close(); }
+  });
+
+  await check('S23.13 What\'s new marks "This version" for the running v-tagged version, beside that heading only; not for dev or a missing version', async () => {
+    const md = await page.evaluate(async () => (await fetch('/changelog', { credentials: 'same-origin' })).text());
+    const first = (md.match(/^## (\S+?)(?:, \d{4}-\d{2}-\d{2})?\s*$/m) || [])[1]; assert(first, 'no release heading in /changelog');
+    const was = await page.evaluate(() => window.Pinned.U.version);
+    const marks = async (v, keep) => { await page.evaluate(v => { window.Pinned.U.version = v; window.Pinned.render(); }, keep ? 'dev' : v);
+      await openFoot(page); await page.click('#side .app-ver');
+      if (keep) await page.evaluate(v => { window.Pinned.U.version = v; }, v);
+      await visible(page.locator('#sheet .rel'));
+      const m = await page.evaluate(() => [...document.querySelectorAll('#sheet .rel-now')].map(n => [n.textContent, n.closest('.rel').querySelector('.rel-v').textContent]));
+      await page.keyboard.press('Escape'); await sheetClosed(page); return m; };
+    try {
+      const a = await marks('v' + first); assert(a.length === 1 && a[0][0] === 'This version' && a[0][1] === first, 'v' + first + ': ' + JSON.stringify(a));
+      const b = await marks(first); assert(b.length === 1 && b[0][1] === first, first + ': ' + JSON.stringify(b));
+      const d = await marks('dev'); assert(!d.length, 'dev: ' + JSON.stringify(d));
+    } finally { await page.evaluate(v => { window.Pinned.U.version = v; window.Pinned.render(); }, was); }
+    /* without a version (null until /health answers) the sheet still draws: the button that opens it is shown for a version, so it is opened with one and the version taken away before the releases draw */
+    await page.route('**/changelog', async r => { await new Promise(ok => setTimeout(ok, 300)); await r.fallback(); });
+    try { const n = await marks(null, true); assert(!n.length, 'null: ' + JSON.stringify(n)); }
+    finally { await page.unroute('**/changelog'); await page.evaluate(v => { window.Pinned.U.version = v; window.Pinned.render(); }, was); }
+  });
+
+  await check('no script errors', async () => assert(!errors.length, errors.join('; ')));
+  await cleanup(page); await ctx.close();
+}
+
 const pw = await loadPlaywright();
 for (const engine of ['chromium', 'webkit', 'firefox']) {
   if (only && only !== engine) continue;
@@ -2208,7 +2395,7 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
   /* a browser that does not start is a failure of the run, and the other engines still run */
   try { browser = await pw[engine].launch({ timeout: 60000 }); }
   catch (e) { failures++; console.log(`  FAIL  ${engine} did not start\n        ${String(e.message || e).split('\n')[0]}`); continue; }
-  try { await desktop(browser, engine); await flowFixes(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); } finally { await browser.close(); }
+  try { await desktop(browser, engine); await flowFixes(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); await release0112(browser, engine); } finally { await browser.close(); }
 }
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);
