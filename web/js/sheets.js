@@ -320,7 +320,7 @@ export function newSave(o = {}) {
   const ids = (data.settings.recent_folders || []).filter(pickable).slice(0, 3);
   let folder = o.folder !== undefined ? o.folder : pickable(data.settings.last_folder) ? data.settings.last_folder : (ids[0] == null ? null : ids[0]);
   const recent = folder != null && !ids.includes(folder) ? [folder, ...ids].slice(0, 3) : ids;
-  return { title: o.title || '', url: o.url || '', folder, recent, picker: false, nf: false, dup: null, hid: false, icon: null, err: '', busy: false, ticked: false };
+  return { title: o.title || '', url: o.url || '', folder, recent, picker: false, nf: false, dup: null, icon: null, err: '', busy: false, ticked: false };
 }
 export function saveHTML() {
   const s = layers.save;
@@ -333,7 +333,7 @@ export function saveHTML() {
   <form data-save id="svf" novalidate>
   <label class="fld"><span class="sh-lbl">Title</span><input class="fld-in" data-f="title" value="${esc(s.title)}" autocomplete="off" enterkeyhint="next"></label>
   <label class="fld"><span class="sh-lbl">URL</span><textarea class="fld-in" data-f="url" rows="1" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" enterkeyhint="done">${esc(s.url)}</textarea></label>
-  <p class="dupe${s.dup || s.hid ? '' : ' off'}" role="status">${ic('warn')}<span class="dupe-t">${dupeInner(s)}</span></p>
+  <p class="dupe${s.dup ? '' : ' off'}" role="status">${ic('warn')}<span class="dupe-t">${dupeInner(s)}</span></p>
   ${s.err ? `<p class="fld-err" role="alert">${esc(s.err)}</p>` : ''}
   <div class="sv-folder" role="radiogroup" aria-labelledby="sv-fl"><span class="sh-lbl" id="sv-fl">Folder</span>
     ${rec.length ? `<div class="prow fpick">` : `<div class="prow fpick" hidden>`}${rec.map(id => fmini(folderById.get(id), { attr: 'pick', current: id === s.folder, radio: true, fill: id === s.folder, label: pathOf(id), noCount: true })).join('')}</div></div>
@@ -343,10 +343,10 @@ export function saveHTML() {
 /* the save sheet's actions, in the sheet's foot outside the body that scrolls; Save submits the form by its id */
 export function saveActs() { const s = layers.save;
   return `<div class="sv-acts">${s.folder == null ? '' : `<button type="button" class="tbtn" data-a="save-inbox">Save to Inbox</button>`}
-    <button type="submit" form="svf" class="save" data-a="save-go"${s.ticked ? ' disabled aria-label="Saved"' : s.hid ? ' disabled' : ''}>${s.ticked ? ic('check') : primaryLabel(s)}</button></div>`; }
+    <button type="submit" form="svf" class="save" data-a="save-go"${s.ticked ? ' disabled aria-label="Saved"' : ''}>${s.ticked ? ic('check') : primaryLabel(s)}</button></div>`; }
 /* until the favicon is known the square is a quiet shimmering placeholder */
 export const svFav = s => s.icon ? favHTML({ icon: s.icon.icon, tile: s.icon.tile, letter: '' }, 48) : `<span class="fav sv-ph${s.checking ? ' busy' : ''}" aria-hidden="true"><span class="ph-in"></span></span>`;
-export const dupeInner = s => s.hid ? `<span class="d1">Already saved</span>` : s.dup
+export const dupeInner = s => s.dup
   ? `<span class="d1"><span class="d0">Already saved in&nbsp;</span>${hostLine(pathOf(fid(s.dup)))}<span class="d0">.</span></span><span class="d2">Save anyway moves it here.</span>`
   : `<span class="d1">Not saved yet</span>`;
 export const primaryLabel = s => s.dup ? 'Save anyway' : s.folder == null ? 'Save to Inbox' : 'Save';
@@ -355,18 +355,18 @@ export function doneHTML() { const s = layers.save;
     <button type="button" class="save" data-a="done">Done</button></div>`; }
 export function patchSave() { // update the live parts of the save sheet without losing the caret
   const el = sheetEl(), s = layers.save, d = el.querySelector('.dupe'); if (!d) return;
-  d.classList.toggle('off', !s.dup && !s.hid); d.querySelector('.dupe-t').innerHTML = dupeInner(s);
+  d.classList.toggle('off', !s.dup); d.querySelector('.dupe-t').innerHTML = dupeInner(s);
   const sf = el.querySelector('.sv-fav'), key = s.icon ? s.icon.icon : '';
   if (sf.dataset.k !== key) { sf.dataset.k = key; sf.innerHTML = svFav(s); if (key) sf.firstElementChild.classList.add('fade-in'); }
   const ph = sf.querySelector('.sv-ph'); if (ph) ph.classList.toggle('busy', !!s.checking); /* the shimmer runs only while the address is being looked up */
-  const b = el.querySelector('[data-a="save-go"]'); if (b && !s.ticked) { b.textContent = primaryLabel(s); b.disabled = !!s.hid; }
+  const b = el.querySelector('[data-a="save-go"]'); if (b && !s.ticked) { b.textContent = primaryLabel(s); }
 }
 let checkT = null, checkSeq = 0;
 export function checkUrl(now) {
   clearTimeout(checkT); const go = async () => { const u = layers.save.url.trim(), my = ++checkSeq;
-    if (!validUrl(u)) { layers.save.dup = null; layers.save.hid = false; layers.save.icon = null; layers.save.checking = false; patchSave(); return; }
+    if (!validUrl(u)) { layers.save.dup = null; layers.save.icon = null; layers.save.checking = false; patchSave(); return; }
     layers.save.checking = true; patchSave();
-    try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.checking = false; layers.save.dup = r.duplicate || null; layers.save.hid = !!r.locked; layers.save.icon = r.icon || null; patchSave(); /* locked: saved in a locked folder, as a save would answer */ } catch (e) { if (my === checkSeq && layers.save) { layers.save.checking = false; patchSave(); } /* the save itself reports */ } };
+    try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.checking = false; layers.save.dup = r.duplicate || null; layers.save.icon = r.icon || null; patchSave(); } catch (e) { if (my === checkSeq && layers.save) { layers.save.checking = false; patchSave(); } /* the save itself reports */ } };
   if (now) go(); else checkT = setTimeout(go, 220);
 }
 export async function doSave(inbox) {
@@ -377,7 +377,6 @@ export async function doSave(inbox) {
   s.busy = true; s.err = '';
   try { await api('POST', '/api/bookmarks', body); }
   catch (e) { s.busy = false; if (e.auth) return; if (e.status === 409 && e.data && e.data.duplicate) { s.dup = e.data.duplicate; fillSheet(); return; }
-    if (e.status === 409 && e.data && e.data.locked) { s.hid = true; s.dup = null; fillSheet(); return; }
     s.err = errorText(e, 'Could not save. Try again.'); fillSheet(); return; }
   s.busy = false; s.savedTitle = body.title; s.savedIn = pathOf(folder);
   announce(`Saved in ${s.savedIn}`);

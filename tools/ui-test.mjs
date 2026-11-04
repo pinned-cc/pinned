@@ -2167,6 +2167,22 @@ async function flowFixes(browser, engine) {
     await page.unroute('**/api/import');
   });
 
+  await check('S23.15: a "locked" in an /api/check or 409 answer, which the server never sends, changes nothing in the save sheet', async () => {
+    await page.route('**/api/check?*', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ duplicate: null, icon: null, locked: true }) }));
+    await page.route('**/api/bookmarks', r => r.request().method() === 'POST' ? r.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: 'Already saved', duplicate: null, locked: true }) }) : r.fallback());
+    await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
+    const checked = page.waitForResponse(r => r.url().includes('/api/check'));
+    await page.fill('#sheet [data-f=url]', `https://ui-test.example/${stamp}/locked-answer`);
+    await checked; await page.waitForTimeout(100);
+    await until(page, () => { const d = document.querySelector('#sheet .dupe'); return d && d.classList.contains('off') && d.textContent.includes('Not saved yet'); }, null, 'the status stays Not saved yet, hidden as for any new address');
+    assert(!(await page.locator('#sheet [data-a="save-go"]').isDisabled()), 'Save disabled by a locked check answer');
+    await page.click('#sheet [data-a="save-go"]');
+    await visible(page.locator('#sheet .fld-err', { hasText: 'Already saved' }));
+    assert(!(await page.locator('#sheet [data-a="save-go"]').isDisabled()), 'Save disabled by a locked 409');
+    await page.keyboard.press('Escape'); await sheetClosed(page);
+    await page.unroute('**/api/check?*'); await page.unroute('**/api/bookmarks');
+  });
+
   await check('no server: a save and a load say Cannot reach your Pinned server', async () => {
     await page.route('**/api/bookmarks', r => r.request().method() === 'POST' ? r.abort('connectionrefused') : r.fallback());
     await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
