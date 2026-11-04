@@ -45,7 +45,7 @@ jobs:
       # No QEMU: the Dockerfile cross compiles with GOARCH on the build platform.
       # provenance-add-gha=false: buildx would otherwise write the whole push
       # event, with the pusher's email, into the provenance, in min mode too.
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
           driver-opts: provenance-add-gha=false
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
@@ -97,7 +97,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       # Signed with the workflow's identity, stored by GitHub; anyone can check
       # it with: gh attestation verify oci://ghcr.io/pinned-cc/pinned:<version> -R pinned-cc/pinned
       - id: attest
