@@ -67,7 +67,7 @@
       "micro": {
         "$type": "dimension",
         "$value": {
-          "value": 11,
+          "value": 12,
           "unit": "px"
         },
         "$extensions": {
@@ -82,7 +82,7 @@
       "small": {
         "$type": "dimension",
         "$value": {
-          "value": 11.5,
+          "value": 12,
           "unit": "px"
         },
         "$extensions": {

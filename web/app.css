@@ -82,9 +82,9 @@
   --save-edge:inset 0 1px 0 rgba(255,255,255,.11),0 0 0 1px rgba(255,255,255,.04),0 -16px 48px rgba(0,0,0,.55);
   --save-field:rgba(14,14,16,.6);
 
-  /* type: sizes by role. 11.5, 12.5 and 13.5 sit between steps; see the style guide before merging them */
-  --t-micro:11px;
-  --t-small:11.5px;
+  /* type: sizes by role, 12 px at least for text to read. 12.5 and 13.5 sit between steps; see the style guide before merging them */
+  --t-micro:12px;
+  --t-small:12px;
   --t-label:12px;
   --t-tag:12.5px;
   --t-meta:13px;
@@ -1214,7 +1214,7 @@ body.share-page .share-foot{order:2}
 .rel-l{margin:0;padding:0 0 0 var(--s-8);font:400 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink)}
 .rel-l li{margin:0 0 var(--s-3)}
 .rel-l li::marker{color:var(--ink-weak)}
-.rel code{font:400 .92em/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up)}
+.rel code{font:400 var(--t-label)/1 var(--mono);padding:1px 4px;border-radius:4px;background:var(--surface-up)}
 .rel-older{border-top:1px solid var(--line);padding:var(--s-6) var(--s-1) var(--s-4)}
 .rel-older summary{cursor:pointer;width:max-content;font:500 var(--t-meta)/var(--lh-20) var(--sans);color:var(--ink-weak)}
 .rel-older .rel:first-of-type{margin-top:var(--s-6)}
