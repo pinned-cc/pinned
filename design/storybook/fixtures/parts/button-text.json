@@ -27,7 +27,8 @@
     "id": "sheet",
     "role": "dialog",
     "aria-modal": "true",
-    "aria-label": "Save"
+    "aria-label": "Save",
+    "style": "--sv-need: 485px;"
    }
   },
   {
@@ -53,7 +54,7 @@
  },
  "box": {
   "x": 18,
-  "y": 668,
+  "y": 667.609375,
   "width": 186.984375,
   "height": 44,
   "position": "static",

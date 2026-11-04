@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<article class=\"pt row\" data-id=\"2\"><a class=\"pt-in\" href=\"https://example.org/essays/rivers\" target=\"_blank\" rel=\"noopener noreferrer\" draggable=\"false\" data-open=\"2\" aria-label=\"A long read about rivers and the towns they make, example.org\"><span class=\"pt-main\"><span class=\"fav\" data-l=\"A\">A</span><span class=\"pt-title\">A long read about rivers and the towns they make</span><span class=\"trunc-start host\"><bdi dir=\"ltr\">example.org</bdi></span></span>\n    <span class=\"pt-strip hue-cyan\"><span class=\"dot\"></span><time datetime=\"2026-11-04\">Today</time></span></a></article>",
+ "html": "<article class=\"pt row\" data-id=\"2\"><a class=\"pt-in\" href=\"https://example.org/essays/rivers\" target=\"_blank\" rel=\"noopener noreferrer\" draggable=\"false\" data-open=\"2\"><span class=\"pt-main\"><span class=\"fav\" aria-hidden=\"true\" data-l=\"A\">A</span><span class=\"pt-title\">A long read about rivers and the towns they make</span><span class=\"vh\">, </span><span class=\"trunc-start host\"><bdi dir=\"ltr\">example.org</bdi></span></span>\n    <span class=\"pt-strip hue-cyan\" aria-hidden=\"true\"><span class=\"dot\"></span><time datetime=\"2026-11-04\">Today</time></span></a></article>",
  "chain": [
   {
    "tag": "div",

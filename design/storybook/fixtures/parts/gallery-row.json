@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<article class=\"gc-row\" data-id=\"1\"><a class=\"g-in\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\" aria-label=\"Field notes on slow software, example.com, in Reading, opened Just now\"><span class=\"fav\" data-l=\"F\">F</span><span class=\"gc-tt\"><span class=\"gc-t\">Field notes on slow software</span><span class=\"trunc-start gc-host\"><bdi dir=\"ltr\">example.com</bdi></span></span>\n    <span class=\"gc-chip hue-cyan\"><span class=\"dot\"></span><span class=\"gc-cn\">Reading</span></span><span class=\"gc-time\"><time datetime=\"2026-11-04T10:17:51.000Z\">Just now</time></span></a></article>",
+ "html": "<article class=\"gc-row\" data-id=\"1\"><a class=\"g-in\" href=\"https://example.com/notes/slow-software\" target=\"_blank\" rel=\"noopener noreferrer\" data-open=\"1\" draggable=\"false\"><span class=\"fav\" aria-hidden=\"true\" data-l=\"F\">F</span><span class=\"gc-tt\"><span class=\"gc-t\">Field notes on slow software</span><span class=\"vh\">, </span><span class=\"trunc-start gc-host\"><bdi dir=\"ltr\">example.com</bdi></span><span class=\"vh\">, in Reading, opened Just now</span></span>\n    <span class=\"gc-chip hue-cyan\" aria-hidden=\"true\"><span class=\"dot\"></span><span class=\"gc-cn\">Reading</span></span><span class=\"gc-time\"><time aria-hidden=\"true\" datetime=\"2026-11-04T13:34:46.000Z\">Just now</time></span></a></article>",
  "chain": [
   {
    "tag": "div",

@@ -11,7 +11,7 @@
  "sprite": "app",
  "focus": -1,
  "hover": -1,
- "html": "<article class=\"pt\" data-id=\"18\"><a class=\"pt-in\" href=\"https://example.org/sort-me\" target=\"_blank\" rel=\"noopener noreferrer\" draggable=\"false\" data-open=\"18\" aria-label=\"A page to sort, example.org\"><span class=\"pt-main\"><span class=\"fav\" data-l=\"A\">A</span><span class=\"pt-title\">A page to sort</span><span class=\"trunc-start host\"><bdi dir=\"ltr\">example.org</bdi></span></span>\n    <span class=\"pt-strip hue-tray\"><span class=\"dot\"></span><time datetime=\"2026-11-04\">Today</time></span></a></article>",
+ "html": "<article class=\"pt\" data-id=\"18\"><a class=\"pt-in\" href=\"https://example.org/sort-me\" target=\"_blank\" rel=\"noopener noreferrer\" draggable=\"false\" data-open=\"18\"><span class=\"pt-main\"><span class=\"fav\" aria-hidden=\"true\" data-l=\"A\">A</span><span class=\"pt-title\">A page to sort</span><span class=\"vh\">, </span><span class=\"trunc-start host\"><bdi dir=\"ltr\">example.org</bdi></span></span>\n    <span class=\"pt-strip hue-tray\" aria-hidden=\"true\"><span class=\"dot\"></span><time datetime=\"2026-11-04\">Today</time></span></a></article>",
  "chain": [
   {
    "tag": "div",
