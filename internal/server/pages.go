@@ -54,26 +54,24 @@ func (s *Server) page(name string, needLogin bool) http.HandlerFunc {
 	return h
 }
 
-// notFound answers every path no other route takes. GET and HEAD get the
-// styled page web/404.html with status 404. Other methods get a plain 405
-// with the Allow header Go's mux sent before this route caught every path:
-// the methods another route takes on the path, or GET and HEAD, this page.
+// notFound answers every path no other route takes. It answers as Go's mux
+// did before this route caught every path (0.1.11): 405 with the Allow
+// header on a path another route takes with some method, the plain 404 for
+// other methods, and a redirect where Go's mux sent one. Only a GET or HEAD
+// that 0.1.11 answered 404 gets the styled page web/404.html instead.
 // /api/ and /static/ keep their own answers: their routes are more specific.
 func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
+	h, _ := s.bare.Handler(r)
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		var allow []string
-		for _, m := range []string{http.MethodDelete, http.MethodGet, http.MethodHead, http.MethodPatch, http.MethodPost, http.MethodPut} {
-			probe := r.Clone(r.Context())
-			probe.Method = m
-			if _, pattern := s.mux.Handler(probe); pattern != "/" {
-				allow = append(allow, m)
-			}
-		}
-		if len(allow) == 0 {
-			allow = []string{http.MethodGet, http.MethodHead}
-		}
-		w.Header().Set("Allow", strings.Join(allow, ", "))
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		h.ServeHTTP(w, r)
+		return
+	}
+	// The mux's own answers write nothing else, so trying one costs
+	// nothing.
+	probe := &statusOnly{header: http.Header{}}
+	h.ServeHTTP(probe, r)
+	if probe.code != http.StatusNotFound {
+		h.ServeHTTP(w, r)
 		return
 	}
 	data, err := fs.ReadFile(s.web, "404.html")
@@ -87,6 +85,25 @@ func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		w.Write(data)
 	}
+}
+
+// statusOnly is a ResponseWriter that keeps only the status of an answer.
+type statusOnly struct {
+	header http.Header
+	code   int
+}
+
+func (s *statusOnly) Header() http.Header { return s.header }
+
+func (s *statusOnly) WriteHeader(code int) {
+	if s.code == 0 {
+		s.code = code
+	}
+}
+
+func (s *statusOnly) Write(b []byte) (int, error) {
+	s.WriteHeader(http.StatusOK)
+	return len(b), nil
 }
 
 // safeNext keeps redirects on this site. next must parse as a URL with no

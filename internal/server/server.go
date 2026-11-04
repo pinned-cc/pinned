@@ -106,6 +106,9 @@ type Server struct {
 	// sleep waits after a failed check; tests replace it.
 	sleep func(time.Duration)
 	mux   *http.ServeMux
+	// bare holds the same routes as mux without its catch all, the route
+	// table of 0.1.11: notFound asks it how Go's mux answered a path.
+	bare *http.ServeMux
 	// totp checks the second factor; nil when TOTP_SECRET is not set.
 	totp *auth.TOTP
 	// codeBackoff counts wrong codes after a right password, across all
@@ -130,7 +133,7 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 	s := &Server{
 		cfg: cfg, st: st, web: web, icons: icons, secret: secret,
 		loginLimiter: auth.NewLimiter(), tokenLimiter: auth.NewLimiter(),
-		sleep: time.Sleep, mux: http.NewServeMux(),
+		sleep: time.Sleep, mux: http.NewServeMux(), bare: http.NewServeMux(),
 		log: log.Default(), waitLogged: map[string]time.Time{},
 		codeBackoff: auth.NewBackoff(),
 	}
@@ -140,11 +143,18 @@ func New(cfg Config, st *store.Store, web fs.FS, icons IconQueue, secret []byte)
 	if u, err := url.Parse(cfg.BaseURL); err == nil && strings.EqualFold(u.Scheme, "https") {
 		s.baseHost = strings.TrimSuffix(u.Host, ":443")
 	}
-	s.routes()
+	s.routes(s.mux)
+	s.routes(s.bare)
+	// Every other path: the styled not found page. Without a method, since
+	// "GET /" would clash with "/api/".
+	s.mux.HandleFunc("/", s.notFound)
 	return s
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.serve(w, r, s.mux) }
+
+// serve answers r with the routes of m, after the headers every answer gets.
+func (s *Server) serve(w http.ResponseWriter, r *http.Request, m *http.ServeMux) {
 	securityHeaders(w.Header())
 	if s.cfg.HSTSMaxAge > 0 && s.isHTTPS(r) {
 		w.Header().Set("Strict-Transport-Security", "max-age="+strconv.Itoa(s.cfg.HSTSMaxAge))
@@ -153,11 +163,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		preflight(w, r)
 		return
 	}
-	s.mux.ServeHTTP(w, r)
+	m.ServeHTTP(w, r)
 }
 
-func (s *Server) routes() {
-	m := s.mux
+// routes adds every route but the catch all of New. They are the routes of
+// 0.1.11, which the tests compare with (spec S23.8).
+func (s *Server) routes(m *http.ServeMux) {
 	// Pages
 	m.HandleFunc("GET /{$}", s.page("index.html", true))
 	m.HandleFunc("GET /login", s.loginPage)
@@ -227,10 +238,6 @@ func (s *Server) routes() {
 	m.HandleFunc("/api/", s.api(func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	}))
-
-	// Every other path: the styled not found page. Without a method, since
-	// "GET /" would clash with "/api/" above.
-	m.HandleFunc("/", s.notFound)
 }
 
 // ---- sessions and guards ----

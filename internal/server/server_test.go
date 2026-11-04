@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
@@ -758,8 +759,9 @@ func TestStaticETag(t *testing.T) {
 }
 
 // A path no route takes answers the styled page web/404.html with 404, for
-// GET and HEAD; other methods get 405 with the Allow header Go's mux sent
-// before. /api/ and /static/ keep their own answers (spec S23.8).
+// GET and HEAD; other methods answer as Go's mux did in 0.1.11: 405 with
+// Allow on a path another route takes, else the plain 404. /api/ and
+// /static/ keep their own answers (spec S23.8).
 func TestNotFoundPage(t *testing.T) {
 	e := newEnv(t, Config{})
 	send := func(method, path string) *http.Response {
@@ -785,15 +787,24 @@ func TestNotFoundPage(t *testing.T) {
 	if resp := send("HEAD", "/nope"); resp.StatusCode != 404 || resp.Header.Get("Content-Type") != "text/html; charset=utf-8" {
 		t.Errorf("HEAD /nope: %d %s", resp.StatusCode, resp.Header.Get("Content-Type"))
 	}
-	for path, allow := range map[string]string{"/nope": "GET, HEAD", "/login": "GET, HEAD, POST", "/health": "GET, HEAD", "/static/app.css": "GET, HEAD"} {
+	for path, allow := range map[string]string{"/login": "GET, HEAD, POST", "/health": "GET, HEAD", "/static/app.css": "GET, HEAD"} {
 		for _, method := range []string{"POST", "PUT"} {
 			if path == "/login" && method == "POST" {
 				continue
 			}
 			resp := send(method, path)
 			body := string(readAll(resp))
-			if resp.StatusCode != 405 || resp.Header.Get("Allow") != allow || strings.Contains(body, "<") {
-				t.Errorf("%s %s: %d Allow %q %s", method, path, resp.StatusCode, resp.Header.Get("Allow"), body)
+			if resp.StatusCode != 405 || resp.Header.Get("Allow") != allow || body != "Method Not Allowed\n" {
+				t.Errorf("%s %s: %d Allow %q %q", method, path, resp.StatusCode, resp.Header.Get("Allow"), body)
+			}
+		}
+	}
+	for _, method := range []string{"POST", "PUT", "DELETE"} {
+		for _, path := range []string{"/nope", "/logout", "/s/x/y"} {
+			resp := send(method, path)
+			body := string(readAll(resp))
+			if resp.StatusCode != 404 || resp.Header.Get("Allow") != "" || resp.Header.Get("Content-Type") != "text/plain; charset=utf-8" || body != "404 page not found\n" {
+				t.Errorf("%s %s: %d Allow %q %q, want Go's plain 404", method, path, resp.StatusCode, resp.Header.Get("Allow"), body)
 			}
 		}
 	}
@@ -816,5 +827,67 @@ func TestNotFoundPage(t *testing.T) {
 		if code != 404 || strings.TrimSpace(string(body)) != `{"error":"no such endpoint"}` {
 			t.Errorf("%s /api/nope: %d %s", method, code, body)
 		}
+	}
+}
+
+// TestRoutesAnswerAsBefore sends every method to every route's path and to
+// paths no route takes, through this server and through a mux with the
+// route table of 0.1.11, which is this one without the catch all of New
+// (spec S23.8). Wherever 0.1.11's mux answered itself (404, 405 or a
+// redirect), the answer is the same in status, body and headers, except GET
+// and HEAD of a path 0.1.11 answered 404, which get the styled page.
+func TestRoutesAnswerAsBefore(t *testing.T) {
+	e := newEnv(t, Config{})
+	old := http.NewServeMux()
+	e.server.routes(old)
+	paths := []string{
+		"/", "/login", "/login/", "/save", "/bookmarklet", "/search", "/opensearch.xml", "/manifest.webmanifest",
+		"/health", "/changelog", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.svg",
+		"/icons", "/icons/", "/icons/1-ab.png", "/extras", "/extras/", "/extras/pinned-extension.zip",
+		"/static", "/static/", "/static/app.css", "/static/nope", "/s", "/s/", "/s/-/data", "/s/-/icons/a.png",
+		"/s/-/unlock", "/s/tok", "/s/tok/data", "/s/tok/icons/a.png", "/s/tok/unlock", "/s/x/y", "/s/tok/x/y",
+		"/api", "/api/", "/api/login", "/api/state", "/api/bookmarks", "/api/bookmarks/1", "/api/nope",
+		"/nope", "/logout", "/index.html", "/a/b/c", "/static/../login", "/%2e%2e/login", "//evil.com", "/\\evil.com",
+	}
+	methods := []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE", "PROPFIND"}
+	compared := 0
+	for _, session := range []bool{false, true} {
+		if session {
+			e.login()
+		}
+		cookies := e.client.Jar.Cookies(mustURL(e.srv.URL))
+		for _, path := range paths {
+			for _, method := range methods {
+				req := func() *http.Request {
+					r := httptest.NewRequest(method, "/", nil)
+					r.URL.Path, r.RequestURI = path, path
+					for _, c := range cookies {
+						r.AddCookie(c)
+					}
+					return r
+				}
+				h, pattern := old.Handler(req())
+				if pattern != "" && fmt.Sprintf("%T", h) != "*http.redirectHandler" {
+					continue // a route of 0.1.11 answers; the same code answers in both
+				}
+				was, now := httptest.NewRecorder(), httptest.NewRecorder()
+				e.server.serve(was, req(), old)
+				e.server.ServeHTTP(now, req())
+				name := fmt.Sprintf("%s %s (session %v)", method, path, session)
+				if (method == "GET" || method == "HEAD") && was.Code == 404 {
+					if now.Code != 404 || now.Header().Get("Content-Type") != "text/html; charset=utf-8" {
+						t.Errorf("%s: %d %s, want the styled 404 page", name, now.Code, now.Header().Get("Content-Type"))
+					}
+					continue
+				}
+				compared++
+				if now.Code != was.Code || now.Body.String() != was.Body.String() || fmt.Sprint(now.Header()) != fmt.Sprint(was.Header()) {
+					t.Errorf("%s: now %d %v %q, 0.1.11 %d %v %q", name, now.Code, now.Header(), now.Body, was.Code, was.Header(), was.Body)
+				}
+			}
+		}
+	}
+	if compared < 300 {
+		t.Errorf("only %d answers compared", compared)
 	}
 }
