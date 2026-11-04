@@ -1,6 +1,6 @@
 # Examples
 
-Six small ways to save links to Pinned without opening the app. Each one is a single file. None needs anything that a Mac or a Linux box does not already have, apart from the tool it is written for (Raycast, Home Assistant, n8n).
+Five small ways to save links to Pinned without opening the app. Each one is a single file. None needs anything that a Mac or a Linux box does not already have, apart from the tool it is written for (Raycast, Home Assistant, n8n).
 
 ## Before you start
 
