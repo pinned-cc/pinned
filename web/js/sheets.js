@@ -179,7 +179,7 @@ export function parseChangelog(md) { const out = []; let rel = null, grp = null,
   return out; }
 const mdInline = t => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
 const relDay = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-const releaseHTML = r => `<section class="rel"><h3 class="rel-h"><span class="rel-v">${esc(r.v)}</span>${ui.version === r.v ? '<span class="rel-now">This version</span>' : ''}<span class="rel-d">${esc(relDay(r.date))}</span></h3>
+const releaseHTML = r => `<section class="rel"><h3 class="rel-h"><span class="rel-v">${esc(r.v)}</span>${(ui.version ?? '').replace(/^v/, '') === r.v ? '<span class="rel-now">This version</span>' : ''}<span class="rel-d">${esc(relDay(r.date))}</span></h3>
   ${r.intro.map(p => `<p class="rel-p">${mdInline(p)}</p>`).join('')}${r.groups.map(g => `${g.h ? `<p class="rel-g">${esc(g.h)}</p>` : ''}<ul class="rel-l">${g.items.map(i => `<li>${mdInline(i)}</li>`).join('')}</ul>`).join('')}</section>`;
 function releasesHTML(s) { const head = textHead("What's new");
   if (s.err) return head + `<p class="sh-text">${esc(s.err)}</p>`;
