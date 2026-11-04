@@ -17,7 +17,7 @@ export const hostLine = (host, cls = '', mark, query) => truncStart(mark ? hl(ho
 export const favHTML = (b, size = 40) => {
   if (!b) return `<span class="fav">${ic('all')}</span>`;
   const src = iconSrc(b), l = esc(b.letter || (b.title || '?').trim().charAt(0).toUpperCase() || '?');
-  return `<span class="fav" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`;
+  return `<span class="fav" aria-hidden="true" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="${size}" height="${size}" loading="lazy" draggable="false">` : l}</span>`;
 };
 export const contAttr = c => c === undefined ? '' : ` data-container="${c === null ? 'inbox' : c}"`;
 /* the view's own controls sit on the view, never in a sheet: Sort shows the order in use and opens a short menu of
@@ -54,7 +54,7 @@ export const searchPh = () => COARSE.matches ? 'Search bookmarks' : innerWidth >
 export function syncSearch() {
   const q = byId('q'), t = byId('qt'), ph = searchPh();
   if (q) { q.placeholder = ph; if (q.value !== ui.q) q.value = ui.q; }
-  if (t) { t.dataset.ph = ph; t.textContent = ui.q; }
+  if (t) { t.dataset.ph = ph; t.textContent = ui.q; t.parentElement.setAttribute('aria-label', ui.q ? 'Search bookmarks, ' + ui.q : 'Search bookmarks'); } /* the spoken name holds the query it shows */
 }
 export const sideItem = (v, cls, icon) => `<button type="button" class="si ${cls}" data-view="${v}" aria-current="${ui.view === v}">
   <span class="si-ic">${ic(icon)}</span><span class="si-n">${viewName(v)}</span>${v === 'dashboard' ? '' : `<span class="si-c">${data.has ? count(v) : ''}</span>`}</button>`;
@@ -204,8 +204,8 @@ export function renderDesk() {
 export const showFolders = () => typeof ui.view === 'number';
 /* on the Folders screen a tile carries the selection tick; it shows while selecting */
 export const ftileHTML = f => { const shut = isLocked(f), pk = foldersSel() && !shut, on = pk && ui.picked.has(f.id);
-  return `<button type="button" class="ftile ${hueClass(f.id)}${shut ? ' locked' : ''}${on ? ' picked' : ''}" data-view="${f.id}" data-ftile="${f.id}"${pk && ui.selecting ? ` aria-pressed="${on}"` : ''} aria-label="${esc(f.name)}, ${shut ? 'locked' : count(f.id)}">${pk ? `<span class="chk" aria-hidden="true">${ic('check')}</span>` : ''}
-  <span class="ft-n">${ic('folder', 'fi')}<span class="ft-t">${esc(f.name)}</span>${f.share ? ic('link', 'lk') : ''}${f.locked && !shut ? ic('lock', 'lk') : ''}</span><span class="ft-c num">${shut ? ic('lock', 'ft-lock') : ftFaces(f.id)}</span></button>`; };
+  return `<button type="button" class="ftile ${hueClass(f.id)}${shut ? ' locked' : ''}${on ? ' picked' : ''}" data-view="${f.id}" data-ftile="${f.id}"${pk && ui.selecting ? ` aria-pressed="${on}"` : ''}>${pk ? `<span class="chk" aria-hidden="true">${ic('check')}</span>` : ''}
+  <span class="ft-n">${ic('folder', 'fi')}<span class="ft-t">${esc(f.name)}</span>${f.share ? ic('link', 'lk') : ''}${f.locked && !shut ? ic('lock', 'lk') : ''}</span><span class="ft-c num" aria-hidden="true">${shut ? ic('lock', 'ft-lock') : ftFaces(f.id)}</span><span class="vh">, ${shut ? 'locked' : count(f.id)}</span></button>`; };
 /* the folder's count as a short row of its newest favicons, then +n for the rest; null is every bookmark */
 export function ftFaces(id) {
   const s = id == null ? null : descSet(id), L = live().filter(b => !s || (fid(b) != null && s.has(b.folder_id))).sort((a, b) => b.created_at - a.created_at);
@@ -223,10 +223,10 @@ export function folderSection(phone) {
    row at the foot, always there with its count */
 export function foldersScreen(phone) {
   const L = sortedTop(), n = count('all'), nt = count('trash');
-  const all = `<button type="button" class="ftile fplace" data-view="all" aria-label="All bookmarks, ${n}"><span class="ft-n">${ic('all', 'fi')}<span class="ft-t">All bookmarks</span></span><span class="ft-c num">${ftFaces(null)}</span></button>`;
+  const all = `<button type="button" class="ftile fplace" data-view="all"><span class="ft-n">${ic('all', 'fi')}<span class="ft-t">All bookmarks</span></span><span class="ft-c num" aria-hidden="true">${ftFaces(null)}</span><span class="vh">, ${n}</span></button>`;
   const nf = L.length ? '' : `<button type="button" class="ftile fnew" data-a="new-folder">${ic('plus', 'fi')}<span>New folder</span></button>`;
   return `<div class="fgrid${phone ? ' fgrid-p' : ''} fscreen" role="group" aria-label="Folders">${all}${L.map(ftileHTML).join('')}${nf}</div>
-    <button type="button" class="ftrash${phone ? ' p' : ''}" data-view="trash" aria-label="Trash, ${nt}">${ic('trash')}<span class="ftrash-n">Trash</span><span class="ftrash-c num">${nt}</span>${ic('chev', 'ftrash-ch')}</button>`;
+    <button type="button" class="ftrash${phone ? ' p' : ''}" data-view="trash">${ic('trash')}<span class="ftrash-n">Trash</span><span class="ftrash-c num" aria-hidden="true">${nt}</span><span class="vh">, ${nt}</span>${ic('chev', 'ftrash-ch')}</button>`;
 }
 /* a folder with subfolders and no links of its own shows the small add tile */
 export const onlySubs = () => typeof ui.view === 'number' && !ui.selecting && kids(ui.view).length > 0 && !listFor().length && canAddTo();
@@ -261,13 +261,13 @@ export const nfMini = () => fmini({ id: 'new', name: 'New folder', hue: 'plain' 
 /* a div, not a form: it sits inside the save form */
 export const nfForm = () => `<div class="nf" data-nf><input class="fld-in" name="nf-name" placeholder="Folder name" aria-label="Folder name" autocomplete="off" enterkeyhint="done"><button type="button" class="tbtn" data-a="nf-create">Create</button></div>`;
 /* the card's link, a checkbox while selecting; Select and Done swap only this shell and keep what is inside */
-export const ptShell = (b, inner) => { const label = `${esc(b.title)}, ${esc(hostOf(b))}`; return ui.selecting
-    ? `<button type="button" class="pt-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}" aria-label="Select ${esc(b.title)}">${inner}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
-    : b.deleted_at ? `<button type="button" class="pt-in" data-a="tile-acts" aria-label="${label}">${inner}</button>`
-    : `<a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" draggable="false" data-open="${b.id}" aria-label="${label}">${inner}</a>`; };
+export const ptShell = (b, inner) => ui.selecting
+    ? `<button type="button" class="pt-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}"><span class="vh">Select </span>${inner}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
+    : b.deleted_at ? `<button type="button" class="pt-in" data-a="tile-acts">${inner}</button>`
+    : `<a class="pt-in" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" draggable="false" data-open="${b.id}">${inner}</a>`;
 export function phoneTile(b, ts) {
-  const inner = `<span class="pt-main">${favHTML(b, 36)}<span class="pt-title">${hl(b.title)}</span>${hostLine(hostOf(b), 'host', true)}</span>
-    <span class="pt-strip hue-${hue(fid(b))}"><span class="dot"></span>${ts ? `<time datetime="${isoDate(ts)}">${fmtDate(ts)}</time>` : ''}</span>`;
+  const inner = `<span class="pt-main">${favHTML(b, 36)}<span class="pt-title">${hl(b.title)}</span><span class="vh">, </span>${hostLine(hostOf(b), 'host', true)}</span>
+    <span class="pt-strip hue-${hue(fid(b))}" aria-hidden="true"><span class="dot"></span>${ts ? `<time datetime="${isoDate(ts)}">${fmtDate(ts)}</time>` : ''}</span>`;
   return `<article class="pt${ui.layout === 'list' ? ' row' : ''}${ui.picked.has(b.id) ? ' picked' : ''}" data-id="${b.id}">` + ptShell(b, inner) + `</article>`;
 }
 export const pskel = () => `<div class="pt sk" aria-hidden="true"><div class="b f"></div><div class="b l1"></div><div class="b l2"></div></div>`;

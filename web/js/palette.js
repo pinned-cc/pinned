@@ -49,8 +49,8 @@ export function openPalette(o = {}) {
 export function palRecentFill() {
   const q = ui.q.trim(), R = palRecent();
   byId('pal-rec').innerHTML = R.length ? `<div class="pal-lbl">Recent</div><nav class="precent pal-recent" aria-label="Recent">` + R.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
-    return `<a class="prc pal-rc" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}">
-      <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>
+    return `<a class="prc pal-rc" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-open="${b.id}" draggable="false">
+      <span class="prc-ic" aria-hidden="true" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>
       <span class="prc-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>` : (q ? '' : `<p class="pal-none">Nothing opened yet.</p>`);
 }
 /* results only: the panel and the Recent row stay as they are */

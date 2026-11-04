@@ -18,14 +18,15 @@ export const ago = ts => { const s = Math.max(0, Date.now() / 1000 - ts), n = da
   if (n === 1) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   if (n < 7) return WEEKDAYS[d.getDay()];
   return fmtDay(ts); };
-const when = ts => `<time datetime="${new Date(ts * 1000).toISOString()}">${esc(ago(ts))}</time>`;
+const when = ts => `<time aria-hidden="true" datetime="${new Date(ts * 1000).toISOString()}">${esc(ago(ts))}</time>`;
 const linkAttrs = b => `href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-open="${b.id}" draggable="false"`;
 const folderName = b => b.folder_id == null ? 'Inbox' : (folderById.get(b.folder_id) || { name: '' }).name;
 /* the gallery's time: when a link was opened, or when it was saved while nothing has been opened yet */
 let at = 'opened_at';
-const label = b => `${esc(b.title)}, ${esc(hostOf(b))}, in ${esc(folderName(b))}, ${at === 'opened_at' ? 'opened' : 'saved'} ${esc(ago(b[at]))}`;
+/* what a card says to a screen reader after its title and host, in hidden text: the folder chip and the time are marks */
+const tail = b => `<span class="vh">, in ${esc(folderName(b))}, ${at === 'opened_at' ? 'opened' : 'saved'} ${esc(ago(b[at]))}</span>`;
 /* where a link is from: a small chip in the folder's hue */
-const chip = b => `<span class="gc-chip ${hueClass(fid(b))}"><span class="dot"></span><span class="gc-cn">${esc(folderName(b))}</span></span>`;
+const chip = b => `<span class="gc-chip ${hueClass(fid(b))}" aria-hidden="true"><span class="dot"></span><span class="gc-cn">${esc(folderName(b))}</span></span>`;
 
 /* calm empty states, centred in the space below the title: a fresh install, an empty Inbox, a Dashboard with nothing opened yet;
    a fresh install points to How to save, which on the desktop otherwise sits under the sidebar's More */
@@ -48,13 +49,13 @@ export const sortedHTML = phone => live().length ? calm(phone, `${pile()}<p clas
    so hold, drag, Shift and Cmd clicks, the marquee and the right click menu work on it; while selecting its link is a
    checkbox with the round tick */
 export const galShell = (b, html) => ui.selecting
-  ? `<button type="button" class="g-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}" aria-label="Select ${esc(b.title)}">${html}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
-  : `<a class="g-in" ${linkAttrs(b)} aria-label="${label(b)}">${html}</a>`;
+  ? `<button type="button" class="g-in" data-a="pick" role="checkbox" aria-checked="${ui.picked.has(b.id)}"><span class="vh">Select </span>${html}<span class="chk" aria-hidden="true">${ic('check')}</span></button>`
+  : `<a class="g-in" ${linkAttrs(b)}>${html}</a>`;
 const item = (cls, b, html) => `<article class="${cls}${ui.picked.has(b.id) ? ' picked' : ''}" data-id="${b.id}">${galShell(b, html)}</article>`;
 const card = b => item('gk', b, `${favHTML(b, 56)}<span class="gk-time">${when(b[at])}</span>
-  <span class="gk-title">${esc(b.title)}</span>${hostLine(hostOf(b), 'gk-host')}
+  <span class="gk-title">${esc(b.title)}</span><span class="vh">, </span>${hostLine(hostOf(b), 'gk-host')}${tail(b)}
   <span class="gk-foot">${chip(b)}</span>`);
-const row = b => item('gc-row', b, `${favHTML(b, 28)}<span class="gc-tt"><span class="gc-t">${esc(b.title)}</span>${hostLine(hostOf(b), 'gc-host')}</span>
+const row = b => item('gc-row', b, `${favHTML(b, 28)}<span class="gc-tt"><span class="gc-t">${esc(b.title)}</span><span class="vh">, </span>${hostLine(hostOf(b), 'gc-host')}${tail(b)}</span>
     ${chip(b)}<span class="gc-time">${when(b[at])}</span>`);
 /* rows in two columns from 1100 px: the first half on the left, the rest on the right, both starting on one line */
 const rows = L => { const h = Math.ceil(L.length / 2); return `<div class="gl"><div class="gl-col">${L.slice(0, h).map(row).join('')}</div><div class="gl-col">${L.slice(h).map(row).join('')}</div></div>`; };

@@ -367,8 +367,8 @@ async function desktop(browser, engine) {
     const made = []; for (const x of ['a', 'b']) made.push((await apiIn(page, 'POST', '/api/folders', { name: `ui-test fsort ${x}`, parent_id: null })).data.id);
     await page.reload(); await visible(page.locator('#side .si')); await toFolders();
     assert(await page.getAttribute('#body .fscreen > .ftile >> nth=0', 'data-view') === 'all', 'All bookmarks is not the first card');
-    assert(/^All bookmarks, \d+$/.test(await page.getAttribute('#body .fscreen > .ftile >> nth=0', 'aria-label')), 'All bookmarks has no count');
-    assert(/^Trash, \d+$/.test(await page.getAttribute('#body .ftrash', 'aria-label')), 'no Trash row with its count');
+    assert(/^All bookmarks, \d+$/.test(await page.locator('#body .fscreen > .ftile').first().evaluate(e => e.querySelector('.ft-t').textContent + e.querySelector('.vh').textContent)), 'All bookmarks has no count');
+    assert(/^Trash, \d+$/.test(await page.locator('#body .ftrash').evaluate(e => e.querySelector('.ftrash-n').textContent + e.querySelector('.vh').textContent)), 'no Trash row with its count');
     assert(await page.locator('#tbwrap [data-a="new-folder"]').count() === 1 && await page.locator('#tbwrap [data-a="fsort"]').count() === 1, 'New folder or the folder order missing with two folders');
     assert(!(await page.locator('#tbwrap [data-a$="menu"]').count()), 'three dots on the Folders screen');
     await page.click('#tbwrap [data-a="fsort"]'); await menuItem(page, 'A to Z').click();
@@ -1488,11 +1488,11 @@ async function phone(browser, engine) {
     assert(await add.locator('.nf-c').count() === 1, 'the Folders tab + is not the filled circle');
     assert(await page.evaluate(() => { const a = getComputedStyle(document.querySelector('#pmain .vbar .nf-c')), w = document.querySelector('#pmain .vbar .nf-c').getBoundingClientRect().width; return a.backgroundColor !== 'rgba(0, 0, 0, 0)' && Math.abs(w - 28) < 0.5; }), 'the Folders tab circle has no fill or is not 28 px');
     const first = page.locator('#pmain .fscreen > .ftile').first();
-    assert(await first.getAttribute('data-view') === 'all' && /^All bookmarks, \d+$/.test(await first.getAttribute('aria-label')), 'All bookmarks is not the first card');
+    assert(await first.getAttribute('data-view') === 'all' && /^All bookmarks, \d+$/.test(await first.evaluate(e => e.querySelector('.ft-t').textContent + e.querySelector('.vh').textContent)), 'All bookmarks is not the first card');
     const fb = await first.boundingBox(), sb = await page.locator('#pmain .fscreen .ftile[data-ftile]').first().boundingBox();
     assert(Math.abs(fb.width - sb.width) < 1 && Math.abs(fb.height - sb.height) < 1, 'All bookmarks is not a folder card in size');
     const tr = page.locator('#pmain .ftrash'); await visible(tr);
-    assert(/^Trash, \d+$/.test(await tr.getAttribute('aria-label')), 'Trash row has no count');
+    assert(/^Trash, \d+$/.test(await tr.evaluate(e => e.querySelector('.ftrash-n').textContent + e.querySelector('.vh').textContent)), 'Trash row has no count');
     assert((await tr.boundingBox()).height > 43.5, 'Trash row under 44 px');
     await shot(page, `${engine}-phone-folders`);
     await add.tap(); await sheetOpen(page); await visible(page.locator('#sheet input[name=v]'));
