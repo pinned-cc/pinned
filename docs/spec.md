@@ -596,6 +596,7 @@ S17.13 02.20: the right click menu was not run (headless) (FT 04.11 02.20).
 S17.14 Found on the way: the axe 2.5.3 finding (S15.11); at 360 px the Add sheet cuts the Folder row to a sliver; the phone unreachable state has no head with the gear; the 404 is plain text; How to save "Show the Save code" is a 136 by 19 px target; text below 12 px in places; the binary listens on every address outside Docker (FT 04.11 Found on the way 2 to 6). 0.1.12: S23.11, S23.6, S23.7, S23.8, S23.5, S23.9; the listen address is not changed.
 S17.15 Not run on 04.11: Firefox and Safari for the extension, the permission prompt, the phone long press (covered by the UI test), a reverse proxy with HTTPS, Tailscale and Private Relay, icons (ICONS=off), Docker and setup.sh (FT 04.11 Left out).
 S17.16 Open process items of 04.11: spec, store terms, REUSE, Storybook with tokens and a soundness review start after the current runs; nothing in the repo is pushed until aligned (decision log). On the branch, the tokens with Storybook (9911272) and the upgrade tests (5454d4f) are merged (22fc1d5, S23.18).
+S17.17 F-137 leftover (re-check 04.11 point 1): an SVG icon with more than eight pictures written with character references in style `url()` is stored, dropped at the next start and fetched again at every start. Low, user impact none. 0.1.12: S23.21.
 
 ## 18. Decisions log
 
@@ -634,7 +635,7 @@ S19.6 Settings values. docs/data-format.md:64 says `value` is JSON. `password_ha
 S19.7 Flows text. design/wireframes/flows/flows.md describes ad2cb8e (flows.md:3). At v0.1.11 these steps read or behave differently: 01.2, 01.5, 02.2, 02.3, 02.11, 02.13, 03.11, 04.4, 04.7, 04.13, 05.1, 05.2 (says fewer than 4 characters; the code needs 8, locks.go:25), 05.6, 06.4, 07.2, 07.7, 08.3, 08.4, 08.5, 09.4, 11.3, 12.1, 12.2, 12.3 (FT 04.11 per step and Counts 7).
 S19.8 Extension message. CHANGELOG.md:25 says an address with another scheme is refused "with the message to enter an address starting with http or https". options.js:17 says "Enter an address, such as 10.0.0.5:9095 or https://bookmarks.example.com." (FT 04.11 Found on the way 1).
 S19.9 Touch targets. CHANGELOG.md:32 says the card buttons are at least 44 px. On a mouse desktop they are 28 px; 44 px only for coarse pointers from 720 px (app.css:342, 1458).
-S19.10 Refetch icon. CHANGELOG.md:24 names "Refetch icon" among the user's actions. There is no control for it in web/; only the API route (server.go:206), which README.md:269 names.
+S19.10 Refetch icon. CHANGELOG.md:24 names "Refetch icon" among the user's actions. There is no control for it in web/; only the API route (server.go:206), which README.md:269 names. (Review 04.11 said no user doc names it; checked again at the build: README.md:269 ends with `POST /api/bookmarks/{id}/refetch-icon`, so this line stands.)
 S19.11 Token answers. README.md:176 says everything else answers 403 with a token. A token PATCH with a field other than title and folder_id answers 400 "a token can change only title and folder_id" (api.go:294-296).
 S19.12 Home screen on iPhone. README.md:138 says the app can be added to the home screen on the iPhone. The iPhone panel of How to save (web/bookmarklet.html:29-92) has no such step; its only "Add to Home Screen" is a row in the drawn iOS share menu (bookmarklet.html:40). The only home screen step is on the Android tab (bookmarklet.html:118).
 S19.13 Bookmarklet window (weak). CHANGELOG.md:171 (0.1.2) says the save window is 392 by about 530. The code opens it at 392 by 544 (web/js/app.js:93) and the save page then fits the window to the panel's height (app.js:64-72), so the fitted height can be the "about 530".
@@ -765,7 +766,7 @@ S22.26 Folders screen: Shift click and Cmd or Ctrl click pick folders while sele
 
 This section is the whole of 0.1.12. Nothing outside it goes in. Every item names what changes, why (the finding or file), every case it touches, the test that proves it, and the exact user facing words before and after. Items whose words or look the maintainer has to approve before the build carry "WORDING: needs his OK".
 
-Sources for this section, besides the code at 74e3037: FT 04.11 and widths 04.11 (S6.2, S17), the re-check of three audit points of 04.11 ("re-check 04.11"), and the fuzz run of 04.11 ("fuzz 04.11").
+Sources for this section, besides the code at 74e3037: FT 04.11 and widths 04.11 (S6.2, S17), the re-check of three audit points of 04.11 ("re-check 04.11"), the fuzz run of 04.11 ("fuzz 04.11"), and the independent soundness review of this section of 04.11 ("review 04.11"). Where review 04.11 found an item SOUND WITH CHANGES or UNSOUND, its change is written into the item below and wins over the first draft.
 
 ### 23.0 Rules for every item
 
@@ -781,7 +782,7 @@ S23.0.5 The extension. There is one extension build: tools/pack-extension.sh pac
 
 ### 23.1 Extension: warn before the token goes over plain http to a public host (F-138)
 
-S23.1.1 What changes. In the extension's options (extras/extension/options.js), when the address typed names `http://` and its host is not on the user's own network (`Pinned.localHost` false, extras/extension/shared.js:29-38), Test and Save do not send anything on the first click. They show a warning in the status line, with the warn icon, and go ahead only on a second click while the address field still holds the same address. Once confirmed, the address stays confirmed for both buttons until the address field changes or the options page is opened again. Nothing changes for an `https://` address, for an address typed without a scheme (S11.8, the probe already refuses the http guess for a public host), or for an `http://` address on the own network (for example `http://10.0.0.5:9095`, `http://localhost:9095`, `http://nas`, `http://[::1]:9095`).
+S23.1.1 What changes. In the extension's options (extras/extension/options.js), the warning is decided on the cleaned address, not on the typed text: it applies when `addressCandidates()` gives one candidate, `new URL(candidate).protocol === 'http:'` and `Pinned.localHost(hostname)` is false (extras/extension/shared.js:29-38). This covers `HTTP://` typed in capitals too. Then Test and Save do not send anything on the first click. They show a warning in the status line, with the warn icon (the existing `.status.bad` style, extras/extension/ui.css:140), and go ahead only on a second click of the same button while the cleaned address is still the one warned about. The confirmation is kept as that cleaned candidate in a variable and compared at each click, not with an `input` listener, so the address Save writes back into the field (options.js:63: trailing slash, case) does not count as a change. Once confirmed by a second click of either button, the address is confirmed for both buttons until the cleaned address changes or the options page is opened again. The permission request of Save stays synchronous inside the second click, with no await before it (options.js:41-44): Firefox drops a request made after an await. Nothing changes for an `https://` address, for an address typed without a scheme (S11.8, the probe already refuses the http guess for a public host), or for an `http://` address on the own network (for example `http://10.0.0.5:9095`, `http://localhost:9095`, `http://nas`, `http://[::1]:9095`).
 
 S23.1.2 Why. Release audit 4 finding F-138 (low, user impact possible) and re-check 04.11 point 3: an address typed with `http://` for a public host is used as typed (shared.js:20-26, line 23), probe applies the own network test only to a second candidate (shared.js:48), and api() sends the token in the Authorization header (shared.js:80-86). The options then say "Connected" with the check icon (options.js:32) and "Saved" (options.js:71); every popup open and save sends the token in clear from then on (popup.js:113, 151, 162). The fix decided: show the existing http warning on Test and Save for a non local http address and require a second click.
 
@@ -793,6 +794,8 @@ S23.1.3 Cases.
 - The address field changed between the clicks: the next click warns again.
 - An address saved before 0.1.12 with `http://` for a public host: it keeps working in the popup and the right click save, with no new warning, until Test or Save is used again. The extension has no step that reads a stored address again and warns. Not changed in 0.1.12 (see S23.1.7).
 - Own network and https addresses, and addresses without a scheme: one click, as in 0.1.11.
+- An `http://` name on the own network that has a dot now warns: split DNS such as `http://nas.example.home:9095` resolving to 192.168.x, or a Tailscale MagicDNS name such as `http://nas.tailnet.ts.net`, which travels inside WireGuard. Accepted, since one more click goes ahead; it is why the words say "may cross" (S23.1.5). An IPv4 mapped IPv6 address (`http://[::ffff:10.0.0.5]`) warns too; accepted.
+- A warning shown by Test does not arm Save, and the other way round: the second click of the same button confirms. Once confirmed, the address is confirmed for both.
 - Browsers: the options page is the same file in Chromium browsers (Brave, Chrome, Edge) and in Firefox (S11.11); both run it as a normal extension page. The popup and background scripts do not change.
 - Light and dark: the options page is always dark (S17.4); the warning uses the existing `status bad` style (options.js:9-13).
 - Phone: the extension does not run on a phone.
@@ -801,14 +804,16 @@ S23.1.4 Test. In tools/extension.test.mjs, with the options page stand-in (optio
 - `http://bookmarks.example.com` and a token: first Test click makes no request and the status reads the Test warning; second click makes the request with `Bearer <token>` and the status reads "Connected to http://bookmarks.example.com, 1 folder.".
 - The same with Save: first submit makes no `permissions.request` and stores nothing; second submit requests `http://bookmarks.example.com/*`, stores the address and token, and reads "Saved http://bookmarks.example.com.".
 - Confirm on Test, then Save: Save does not warn again. Change the address after the first click: the next click warns.
-- `http://10.0.0.5:9095`, `http://127.0.0.1:<port>`, `https://bookmarks.example.com` and `bookmarks.example.com`: no warning, behaviour as in the existing tests (:111, :303, :342).
-- `http://203.0.113.5:9095` warns; `http://[2001:db8::1]` warns.
+- `http://10.0.0.5:9095`, `http://127.0.0.1:<port>` and `bookmarks.example.com`: no warning, behaviour as in the existing tests (:111, :303, :342). `https://bookmarks.example.com`: fakeFetch fails every https request (tools/extension.test.mjs:293-301), so the test asserts only that no warning is shown and that one request is made.
+- `http://203.0.113.5:9095` warns; `http://[2001:db8::1]` warns; `HTTP://bookmarks.example.com` warns.
+- The stand-in optionsPage gets a request counter in `permissions.request`, which the check "no permissions.request on the first Save" needs; it has none today (tools/extension.test.mjs:323-339).
+- A Save that writes back a cleaned address (trailing slash added) followed by Test: Test does not warn again.
 By hand once in Chromium and in Firefox (temporary add-on): the two clicks, and the browser's access prompt appears only on the second Save.
 
 S23.1.5 Wording. WORDING: needs his OK. The warning reuses the words of the existing probe message, "<https address> did not answer. <http address> does, but on plain http your token would cross the internet unencrypted. Use https, or type <http address> to connect anyway" (shared.js:50, shown with a full stop by options.js:33).
-- Test, proposed: "On plain http your token would cross the internet unencrypted. Use https, or click Test again to connect anyway."
-- Save, proposed: "On plain http your token would cross the internet unencrypted. Use https, or click Save again to save anyway."
-- extras/extension/README.md:20, current last sentence: "For any other host it does not send the token over plain http: it says that http answers and that you type `http://` in front to use it anyway." Proposed, added after it: "Typed with `http://` for such a host, Test and Save first say that your token would cross the internet unencrypted, and go ahead when you click again."
+- Test, proposed (review 04.11: "may", since a dotted name on the own network warns too): "On plain http your token may cross the internet unencrypted. Use https, or click Test again to connect anyway."
+- Save, proposed: "On plain http your token may cross the internet unencrypted. Use https, or click Save again to save anyway."
+- extras/extension/README.md:20, current last sentence: "For any other host it does not send the token over plain http: it says that http answers and that you type `http://` in front to use it anyway." Proposed, added after it: "Typed with `http://` for such a host, Test and Save first say that your token may cross the internet unencrypted, and go ahead when you click again."
 - CHANGELOG 0.1.12: see S23.20.
 
 S23.1.6 After an address without a scheme gets the existing message "... or type http://... to connect anyway", typing `http://` and clicking Test asks once more. That is intended: the second click is the confirmation.
@@ -817,42 +822,55 @@ S23.1.7 Not in 0.1.12: a warning in the popup for an address stored before 0.1.1
 
 ### 23.2 Audit record: the V3.5.1 evidence names the routes outside csrf() (no code)
 
-S23.2.1 What changes. The checklist of release audit 4 (outside the repository) gives for ASVS V3.5.1 the evidence "csrf() internal/server/server.go:295-308: a non GET or HEAD request needs X-Requested-With: fetch". It is corrected to say that `POST /login` (server.go:164) and the two share unlock routes `POST /s/-/unlock` and `POST /s/{token}/unlock` (server.go:186, 190) are outside csrf() by design: a plain HTML form cannot send the header, a forged form login with the one account only makes the owner's own session, and the unlock routes set only a share cookie and need the share password. The pass stays a pass. F-138 is marked fixed by S23.1.
+S23.2.1 What changes. The checklist of release audit 4 (outside the repository) gives for ASVS V3.5.1 the evidence "csrf() internal/server/server.go:295-308: a non GET or HEAD request needs X-Requested-With: fetch". It is corrected to say that `POST /login` (server.go:164) and the two share unlock routes `POST /s/-/unlock` and `POST /s/{token}/unlock` (server.go:186, 190) are outside csrf() by design: a plain HTML form cannot send the header, a forged form login with the one account only makes the owner's own session, and the unlock routes set only a share cookie and need the share password. The pass stays a pass. F-138 is marked fixed by S23.1. The same record also states:
+- The re-check of F-137 (re-check 04.11 point 1): fixed in 0.1.11 for what the finding claims (embedded pictures are counted as they are decoded, internal/favicon/svg.go:541-542, 653), with a test that fails without the fix (TestSVGEmbeddedPicturesBounded, internal/favicon/svg_test.go:350, fails on 72325b9 and passes at v0.1.11). The leftover outside the finding's claim, pictures in a style `url()` refetched at every start, is fixed in 0.1.12 by S23.21.
+- The optional hardening of re-check 04.11 point 2, refusing `POST /login` when `Sec-Fetch-Site` is cross-site or an `Origin` header names another site: not taken in 0.1.12, and recorded as not applicable. Login CSRF means logging the victim into the attacker's account so the victim's data lands there; Pinned has one account and one password (README.md:3), so a forged login can only make the owner's own session, and only with the password. Cross site guessing through the owner's browser stays under the login limiter, and the answer cannot be read (frame-ancestors 'none', X-Frame-Options DENY, Referrer-Policy no-referrer, guard.go:205, 215). No ASVS 5.0.0 Level 2 requirement asks for more (V3.5.1, V3.3.2, V7.2.4, V7.6.2, re-check 04.11 point 2).
 
-S23.2.2 Why. Re-check 04.11 point 2: not a finding, but the evidence overstates what csrf() covers. S7.18 and S8.50 already state the choice in this spec.
+S23.2.2 Why. Re-check 04.11 point 2: not a finding, but the evidence overstates what csrf() covers. S7.18 and S8.50 already state the choice in this spec. Review 04.11 Missing 1 and 2: the F-137 re-check and the declined hardening were not recorded.
 
 S23.2.3 Cases and test: none in the product. The audit of 0.1.12 checks the corrected text against server.go.
 
-### 23.3 Image provenance without the pusher's account
+### 23.3 Image provenance without the pusher's account, and a signed provenance on the release
 
-S23.3.1 What changes. .github/workflows/build.yml:80, `provenance: mode=max`, becomes `provenance: mode=min`. `sbom: true` (build.yml:79) stays. The comment at build.yml:77-78 stays true as written.
+S23.3.1 What changes, in .github/workflows/build.yml.
+- The image job: `provenance: mode=max` (build.yml:80) becomes `provenance: mode=min`, and the setup-buildx-action step (build.yml:44) gets `with: driver-opts: provenance-add-gha=false`. `sbom: true` (build.yml:79) stays. The comment at build.yml:77-78 stays true as written. The build step gets `id: build`, and the job gets `outputs: digest: ${{ steps.build.outputs.digest }}`, the image index digest.
+- A new job `release-assets`, only on a release tag (`if: startsWith(github.ref, 'refs/tags/v')`, `needs: image`), with its own permissions `contents: write`, `id-token: write` and `attestations: write` (the workflow default stays `contents: read`). It signs a build provenance of the image with actions/attest-build-provenance (subject `ghcr.io/<owner>/pinned` at the image job's digest), reads the SPDX SBOM of linux/amd64 and linux/arm64 from the image's attestation (`docker buildx imagetools inspect ... --format '{{ json (index .SBOM "linux/<arch>").SPDX }}'`), fails if an SBOM has no `spdxVersion`, waits up to 15 minutes for the GitHub release of the tag (the release is made by hand right after the tag), and uploads `sbom-<version>-amd64.spdx.json`, `sbom-<version>-arm64.spdx.json` and `pinned-<version>-provenance.sigstore.json` to it. The job's lines are those of the prepared change build-sbom.diff of 04.11, merged with the mode=min line and the driver option above.
+- Every action stays pinned to a full commit, with its tag in a comment. Checked on 04.11 against each upstream repository's tags (`git ls-remote --tags`): actions/checkout 11d5960a = v4.4.0, actions/setup-go 40f1582b = v5.6.0, docker/setup-buildx-action 8d2750c6 = v3.12.0, docker/login-action c94ce9fb = v3.7.0, docker/metadata-action c299e40c = v5.10.0, docker/build-push-action 10e90e36 = v6.19.2, actions/attest-build-provenance 4d101475 = v4.2.2 (it runs actions/attest 508db95d = v4.2.1, pinned by commit in its own action.yml).
 
-S23.3.2 Why. With mode=max the build record attached to the public image carries the build's GitHub context, among it the GitHub account email of whoever pushed the commit or tag. mode=min keeps the record of what was built from which source, without that context.
+S23.3.2 Why. With the GitHub context in the build record, the record attached to the public image carries the whole push event, among it `pusher.email`, the GitHub account email of whoever pushed the commit or tag (review 04.11 read it in the published provenance of 0.1.11: attestation sha256:1883d9a2, `predicate.buildDefinition.internalParameters.github_event_payload`). mode=min alone does not take it out, contrary to the first draft of this item: docker buildx writes the push event into the builder as `provenance.d/github_actions_context.json` (docker/buildx driver/docker-container/driver.go:177-185, util/ghutil/ghutil.go: `github_event_payload`, `github_actor`, `github_triggering_actor` and more) whenever it runs in GitHub Actions, and BuildKit copies that into `internalParameters` in both modes, after the mode switch (moby/buildkit solver/llbsolver/provenance.go: `pr.BuildDefinition.InternalParameters.ProvenanceCustomEnv = customEnv`). The driver option `provenance-add-gha=false` (buildx v0.30.0 on, commit 7652057da; docs.docker.com, docker-container driver) stops buildx writing it. An older buildx refuses an unknown driver option ("invalid driver option", driver/docker-container/factory.go:126), so the job fails instead of publishing the payload. mode=min also leaves the build arguments and labels out of the record (scrubMinRequest), and keeps `vcs:source` and `vcs:revision`, the repository and the commit (docker/buildx build/git.go:104, 113). Read from the sources on 04.11.
+
+The signed provenance names no person either. actions/attest-build-provenance v4.2.2 has no predicate of its own: it calls actions/attest v4.2.1, which builds the predicate with `buildSLSAProvenancePredicate` of @actions/attest (actions/attest src/provenance.ts; dist/index.js at 508db95d) from the job's OIDC token: `buildDefinition.buildType`; `externalParameters.workflow` (ref, repository URL, workflow path); `internalParameters.github` (event_name, repository_id, repository_owner_id, runner_environment); `resolvedDependencies` (the repository at the ref, with its commit); `runDetails.builder.id` (the workflow file at its ref) and `runDetails.metadata.invocationId` (the run URL). No email, no account name, no push event. The bundle is signed keyless: its certificate from Sigstore's Fulcio carries the workflow identity (repository, workflow and ref, commit, trigger event, run URL, owner and repository ids, visibility; sigstore/fulcio config/identity/config.yaml, github-workflow), not the account that pushed. For a public repository the signature is also written to the public Rekor log, with the same certificate.
 
 S23.3.3 Cases.
 - Every image built from the first push of this change on: release tags (`X.Y.Z`, `X.Y`, `latest`), `main` and `sha-<commit>` (S3.26), for linux/amd64 and linux/arm64.
-- Images already published (0.1.0 to 0.1.11 and earlier `main` and `sha-` images) keep their mode=max record. Changing them would need a rebuild, which changes the digests that the Umbrel PR 6243 and the ZimaOS PR 1116 pin (S3.21). Not done in 0.1.12.
+- The release assets: only on a `v*` tag; `main` and `sha-` builds get no release job.
+- No GitHub release made within 15 minutes of the tag: the upload fails and the job shows red; the image is already pushed and unaffected. Running the job again after the release exists uploads the three files (`--clobber`).
+- Images already published (0.1.0 to 0.1.11 and earlier `main` and `sha-` images) keep their mode=max record with the push event. Changing them would need a rebuild, which changes the digests that the Umbrel PR 6243 and the ZimaOS PR 1116 pin (S3.21). Not done in 0.1.12. The SBOM and the edited provenance of 0.1.11 prepared on 04.11 (the push event taken out) may be uploaded to the v0.1.11 release by hand; that is a release step outside the repository.
 - The cache line `cache-to: type=gha,mode=max` (build.yml:76) is a different setting and stays.
+- Checking the signed provenance: `gh attestation verify oci://ghcr.io/pinned-cc/pinned:<version> -R pinned-cc/pinned`, as the comment in the job says. SECURITY.md:49-53 stays true.
 
-S23.3.4 Test. After the push to main that carries the change, and again for the 0.1.12 tag: `docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:main --format '{{ json .Provenance }}'` shows a record for both platforms that holds no email address and still names the repository and the commit; `docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:main --format '{{ json .SBOM }}'` shows an SBOM for both platforms.
+S23.3.4 Test. After the push to main that carries the change, and again for the 0.1.12 tag: `docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:main --format '{{ json .Provenance }}'` shows a record for both platforms that holds no `github_event_payload`, no `github_actor` and no `@` email address, and still names the repository and the commit (`vcs:source`, `vcs:revision`); `docker buildx imagetools inspect ghcr.io/pinned-cc/pinned:main --format '{{ json .SBOM }}'` shows an SBOM for both platforms. For the tag: the release carries the three files; `jq -e .spdxVersion` passes on both SBOMs; the predicate inside the `.sigstore.json` bundle (base64 payload of its DSSE envelope) holds no `@` and no `pusher`; `gh attestation verify` passes. The workflow file is read line by line before the push (no test can run it locally).
 
 S23.3.5 Wording: none in the app. CHANGELOG: see S23.20.
 
 ### 23.4 One bookmark for an address with a space before its #fragment (fuzz)
 
-S23.4.1 What changes. internal/urlkey/urlkey.go:47-49: after the cut at `#`, the rest is trimmed again: `raw = strings.TrimSpace(raw[:i])`. A fuzz test is added as internal/urlkey/fuzz_test.go, FuzzKey, with its seeds and the failing input kept as internal/urlkey/testdata/fuzz/FuzzKey/c8b34848d449a7e4 (`string("http://0/0 #")`), as in fuzz 04.11. TestKeyEquality (internal/urlkey/urlkey_test.go:9) gets the pair `http://h/a #top` and `http://h/a`.
+S23.4.1 What changes. internal/urlkey/urlkey.go:47-49: after the cut at `#`, the rest is trimmed again with `strings.TrimSpace`, and an ASCII control character (below 0x20, or 0x7f) among the characters that trim takes off makes the address invalid (ErrInvalid), as url.Parse made it in 0.1.11 (urlkey.go:78). So spaces and other Unicode white space (a no break space) before `#` are trimmed, and a tab, CR or LF before `#` stays refused. A fuzz test is added as internal/urlkey/fuzz_test.go, FuzzKey, with its seeds and the failing input kept as internal/urlkey/testdata/fuzz/FuzzKey/c8b34848d449a7e4 (`string("http://0/0 #")`), as in fuzz 04.11. TestKeyEquality (internal/urlkey/urlkey_test.go:9) gets the pairs `http://h/a #top` and `http://h/a`, `http://h/?q=a #x` and `http://h/?q=a`, `http://h/a\u00a0#x` and `http://h/a`, and `http://h #x` and `http://h/`; a new table refuses `http://h/a\t#x`, `http://h/a\n#x`, `http://h/a\r#x` and `http://h/a \t #x`.
 
 S23.4.2 Why. Key trims spaces from the whole address and then cuts the fragment (urlkey.go:46-49), so the space before `#` stays: `http://h/a #top` gives the key `http://h/a ` and `http://h/a` gives `http://h/a`, two bookmarks for one page. The key of a key is then not the same key (`Key("http://h/a ")` is `http://h/a`). Found by fuzz 04.11; checked again on 74e3037 with the urlkey package alone.
 
 S23.4.3 Cases.
 - A space or spaces before `#`: trimmed. The same for a query, `http://h/?q=a #x` gives `http://h/?q=a`, the same key as without the space.
-- A tab before `#`: already refused by url.Parse (urlkey.go:78), unchanged.
+- A tab, CR or LF before `#` (alone or among spaces): refused, as in 0.1.11, where url.Parse refused it (urlkey.go:78). Review 04.11 found that a plain TrimSpace would accept it: the stored `url` would keep the character (bookmarks.go:248 trims only the ends). Refusing keeps 0.1.11's answer (400 with the invalid address message) and keeps FuzzKey green; trimming only ASCII spaces would not, since a no break space then breaks the key of a key.
+- A no break space or other Unicode white space before `#`: trimmed. In 0.1.11 it stayed in the key, so the key of the key differed.
+- `http://h #x`, a space between host and `#`: now accepted with the key `http://h/`. In 0.1.11 it was refused (the space was in the host).
+- A control character elsewhere in the address: unchanged, url.Parse refuses it.
 - The stored `url` column keeps the address as saved (S4.13); only the key changes.
 - Every place that takes a key: saves, edits, restores, imports, /api/check, icon reuse by origin (S4.19 to S4.30, S9.1, S10.4).
-- Bookmarks saved before 0.1.12 whose stored key ends in a space keep that key. A new save of the same address with the space before `#` no longer finds them as duplicates. No pass rewrites stored keys in 0.1.12 (no schema change, S23.0.4). Such addresses come only from typing a space before `#` by hand, or from an import file that has one; browsers write a space in an address as `%20`.
+- Bookmarks saved before 0.1.12 whose stored key ends in a space keep that key. A new save of the same address with the space before `#` no longer finds them as duplicates, and a Force save of it (`force: true`) makes a second bookmark instead of updating the old one (liveByKey with the new key, internal/store/bookmarks.go:117-136, 267-269). No pass rewrites stored keys in 0.1.12 (no schema change, S23.0.4). Such addresses come only from typing a space before `#` by hand, or from an import file that has one; browsers write a space in an address as `%20`.
 - Going back to 0.1.11: it computes the old key for new saves; keys 0.1.12 stored stay valid addresses for it.
 
-S23.4.4 Test. `go test ./internal/urlkey` runs FuzzKey over its seeds and the kept input and runs the new TestKeyEquality pair; both fail without the fix. `go test -run '^$' -fuzz FuzzKey -fuzztime 60s ./internal/urlkey` finds nothing.
+S23.4.4 Test. `go test ./internal/urlkey` runs FuzzKey over its seeds and the kept input and runs the new TestKeyEquality pairs and the refusal table; FuzzKey's kept input and the space pairs fail without the fix. `go test -run '^$' -fuzz FuzzKey -fuzztime 60s ./internal/urlkey` finds nothing.
 
 S23.4.5 Wording: none in the app. CHANGELOG: see S23.20.
 
@@ -860,7 +878,7 @@ S23.4.6 Open: the same fuzz diff also holds a second fuzz test, internal/netscap
 
 ### 23.5 How to save: "Show the Save code" gets a 44 px target
 
-S23.5.1 What changes. web/app.css:934, `.hs-code summary{cursor:pointer;width:max-content}`, gets a hit area through `::after`, the way the device tabs on the same page get theirs (widths 04.11, Layout numbers 3): `position:relative` on the summary, and `.hs-code summary::after{content:"";position:absolute;left:0;right:0;top:-17px;bottom:-8px}` on the same line. The summary's text box is 19 px high (widths 04.11, Problem 1); the area is 17 px above and 8 px below it, 44 px in all, the value of `--tap` (app.css:157). The summary's look, its marker and the space around it do not change.
+S23.5.1 What changes. web/app.css:934, `.hs-code summary{cursor:pointer;width:max-content}`, gets a hit area through `::after`, the way the device tabs on the same page get theirs (widths 04.11, Layout numbers 3): `position:relative` on the summary, and, written from tokens as review 04.11 settled, `.hs-code summary::after{content:"";position:absolute;left:0;right:0;bottom:calc(var(--s-4) * -1);height:var(--tap)}` on the same line. The area ends at the code block's top edge (`--s-4` is the code's own top margin, app.css:935) and reaches 44 px, the value of `--tap` (app.css:157), up from there, whatever the text height (browser minimum font size, zoom). With today's 19 px text box (widths 04.11, Problem 1) that is 17 px above and 8 px below it. The summary's look, its marker and the space around it do not change.
 
 S23.5.2 Why. widths 04.11 Problem 1: on 360 to 440 px the summary "Show the Save code" is a 136 by 19 px target (app.css:934 has no min-height, while `.hs-fix summary` at app.css:959 has `min-height:var(--tap)`). The CHANGELOG of 0.1.11 says the touch targets on How to save are at least 44 px (CHANGELOG.md:32).
 
@@ -871,13 +889,13 @@ S23.5.3 Cases.
 - Light and dark: nothing drawn.
 - Chromium and WebKit: `::after` on a summary works in both (the device tabs on the same page use the same way).
 
-S23.5.4 Test. The ten width scan: at 360, 390, 430 and 440 the summary's target, counted with its `::after`, is at least 44 px high in Chromium and WebKit, light and dark; with the summary open, the point 1 px below the summary's hit area is inside the code block (document.elementFromPoint). The screenshots of How to save match 0.1.11 at every width.
+S23.5.4 Test. The ten width scan: at 360, 390, 430 and 440 the summary's target, counted with its `::after`, is at least 44 px high in Chromium and WebKit, light and dark; with the summary open, the point 1 px below the summary's hit area is inside the code block (document.elementFromPoint); with it closed, the point 1 px below the hit area lands on nothing clickable (below the closed details sits the Log out button with `margin-top: var(--s-12)`, app.css:986, web/bookmarklet.html:151-152). The screenshots of How to save match 0.1.11 at every width.
 
 S23.5.5 Wording: none.
 
 ### 23.6 Phone: the Add sheet shows the Folder row on a small screen
 
-S23.6.1 What changes. On the phone (below 720 px), the save sheet may grow taller than 60 percent of the visible height, the limit every phone sheet has (`.sheet{max-height:calc(var(--vvh,100dvh) * .6)}`, app.css:632). For the save sheet only, the limit becomes the bound the tall sheets already use, the visible height less the top safe area and 12 px (`.sheet.tall`, app.css:583), written as a rule on `.layer:not(.page-sheet) .sheet:has(form[data-save])` inside the phone media query, the way app.css:1389 already picks a sheet with `:has`. The sheet still takes only the height of its content.
+S23.6.1 What changes. On the phone (below 720 px), the save sheet may grow taller than 60 percent of the visible height, the limit every phone sheet has (`.sheet{max-height:calc(var(--vvh,100dvh) * .6)}`, app.css:632). For the save sheet only, the limit becomes the visible height less the top safe area and 12 px, `max-height:calc(var(--vvh,100dvh) - env(safe-area-inset-top) - 12px)`, written as a rule on `.layer:not(.page-sheet) .sheet:has(form[data-save])` inside the phone media query, the way app.css:1389 already picks a sheet with `:has`. Review 04.11: not the `.sheet.tall` value (app.css:583), which is a share of the layout viewport, not of the visible height; with the keyboard up (`bottom: var(--kb)`, app.css:636) that value would put the sheet's top above the visible screen by about the keyboard's height, hiding the grab, the favicon and Close. The sheet still takes only the height of its content.
 
 S23.6.2 Why. widths 04.11 Problem 2: at 360 by 780 with an already saved address, the sheet starts at about y 312 and the Folder row is cut to a sliver of about 7 px at the bottom of the scroll area, so the folder the link goes to is out of sight above Save to Inbox and Save anyway. 390 and wider show the folder chips.
 
@@ -891,7 +909,7 @@ S23.6.3 Cases.
 - Light and dark: no colour changes.
 - Chromium and WebKit: both support `:has` (already used at app.css:1389).
 
-S23.6.4 Test. The ten width scan, add-sheet screen with an already saved address: at 360x780 the Folder label and the whole chip row are inside the sheet's visible body above the foot, in Chromium and WebKit, light and dark; at 390, 430 and 440 the sheet's height matches 0.1.11 within 1 px; desktop widths unchanged. A ui-test check at 390x844 with the keyboard stand-in (`--kb`) keeps the Save button in view.
+S23.6.4 Test. The ten width scan, add-sheet screen with an already saved address: at 360x780 the Folder label and the whole chip row are inside the sheet's visible body above the foot, in Chromium and WebKit, light and dark; at 390, 430 and 440 the sheet's height matches 0.1.11 within 1 px; desktop widths unchanged. A ui-test check at 360x780 with the already saved address, with a keyboard stand-in that does not exist yet and is named in the test: `--vvh` and `--kb` set on `document.documentElement` to a keyboard height (780 minus 336, and 336); the sheet's top is at or below 0 of the visible area and Save is visible. (At 390x844 the content fits under 60 percent and the new rule does nothing, so a check there proves nothing.)
 
 S23.6.5 Wording: none.
 
@@ -914,42 +932,44 @@ S23.7.4 Test. ui-test: at 390x844 and at 320 wide, with the API answering with a
 
 S23.7.5 Wording: none.
 
+S23.7.6 Implementation note (review 04.11): build `head` first and return it while `!data.has`, before `pinned()` is read; renderPhoneMain keeps `.phead` by signature (render.js:357-365), so the earlier head is reused when the data comes.
+
 ### 23.8 A styled page for an address that does not exist
 
-S23.8.1 What changes. A new page, web/404.html, built like web/share.html: the same head (viewport, `theme-color`, `color-scheme`, favicon, the Geist preload, /static/app.css, /static/js/theme.js), `<meta name="robots" content="noindex">`, and a body that reuses the share page's broken link state (`<main class="lone"><div class="lone-box"><h2>...</h2></div></main>`, web/share.js:93) with one line of text and a link to `/`. The server registers `GET /` as the last page route; it answers this page with status 404, `Content-Type: text/html; charset=utf-8` and `Cache-Control: no-cache`, with the app's security headers (server.go:147-148). It needs no login and shows nothing from the data.
+S23.8.1 What changes. A new page, web/404.html, built like web/share.html: the same head (viewport, `theme-color`, `color-scheme`, `robots` noindex, `referrer` no-referrer, favicon, the Geist preload, /static/app.css, /static/js/theme.js) and a body that reuses the share page's broken link state (`<main class="lone"><div class="lone-box"><h2>...</h2></div></main>`, web/share.js:93) with one line of text and a link to `/` in the look of the primary button of the small pages (`<a class="save" href="/">`, `.lone .save`, app.css:896). No new class, colour, size or rule: the page uses app.css as it is. The server registers the method less pattern `"/"` as the last route (review 04.11: `GET /` next to the method less `"/api/"`, server.go:227, makes ServeMux panic at start, "pattern GET / conflicts with pattern /api/"). Its handler answers GET and HEAD with web/404.html, status 404, `Content-Type: text/html; charset=utf-8` and `Cache-Control: no-cache`, setting the status itself (page(), pages.go:33-55, writes 200), with no body for HEAD; every other method gets a plain text `405 method not allowed`. The app's security headers come from ServeHTTP as on every answer (server.go:147-148). It needs no login and shows nothing from the data. If web/404.html cannot be read, the answer is Go's plain "404 page not found", as before.
 
 S23.8.2 Why. widths 04.11 Problem 8 and FT 04.11 Found on the way 3: an unknown page gets Go's plain text "404 page not found" in browser colours in both themes (S5.11, S20.10). For 0.1.12 a styled page is wanted (agreed scope).
 
 S23.8.3 Cases.
-- Any GET or HEAD of a path no other route takes, outside `/api/` and `/static/`: the styled page, 404.
-- `/api/` paths: unchanged, JSON "no such endpoint" or 401 (S7.15, S8.55).
-- `/static/` misses: unchanged, the file server's plain 404; these are assets, not pages.
+- Any GET or HEAD of a path no other route takes, outside `/api/` and `/static/`: the styled page, 404. This includes `/icons` and `/extras` without a file name and `/s/` paths that do not match a share route, such as `/s/x/y`.
+- `/api/` paths: unchanged, JSON "no such endpoint" or 401 (S7.15, S8.55); a wrong method on an `/api/` path still reaches the more specific `"/api/"` and answers JSON.
+- `/static/` misses: unchanged, the file server's plain 404 (pages.go:271-286); these are assets, not pages.
 - `/extras/{file}`, `/icons/{file}` and the share icon routes: unchanged (S21.19, S7.14).
-- `/s/` paths that do not match a share route, such as `/s/x/y`: the styled page.
-- A wrong method on a path: Go's plain 405 as today for known paths; a POST to an unknown path now gets 405 too, since `GET /` matches the path (server_test.go:263 accepts 404 or 405).
-- Theme: theme.js picks light or dark before the first paint, as on every page (S5.4); no bulb, like the login and share pages (S5.5).
+- A wrong method on a known page path (`PUT /login`, `POST /health`, `POST /logout`): it now reaches the catch all, not Go's own 405. The status stays 405, plain text, without Go's `Allow` header (review 04.11). A POST to an unknown path: 405 too. server_test.go:263 (POST /logout, 404 or 405) still passes.
+- OPTIONS: `/api/` preflights are answered before the mux (server.go:152-155), unchanged; elsewhere 405.
+- Theme: theme.js picks light or dark before the first paint, as on every page (S5.4); no bulb, like the login and share pages (S5.5). The default CSP (guard.go:205) allows /static/js/theme.js.
 - Phone and desktop: `.lone` centres the box at every width (app.css:890-891).
-- Umbrel: the path sits behind the Umbrel login, which comes first (S3.17).
+- Umbrel: an unknown path sits behind the Umbrel login, which comes first (S3.17), except under the whitelisted `/s/*` and `/static/*` (umbrel/docker-compose.yml:10): `/s/x/y` shows the page without the Umbrel login. It holds nothing from the data and nothing the public /login page does not already show.
 - Older versions keep the plain text answer.
 
-S23.8.4 Test. internal/server: GET and HEAD `/nope` answer 404 with text/html and the page's text; GET `/api/nope` with a session answers 404 JSON "no such endpoint"; GET `/static/nope` answers 404 plain text; the security headers are on the 404 page. The ten width scan's screen error-404 shows the new page: no horizontal scroll, text inside the window, in Chromium and WebKit, light and dark; P-WEB-2 axe run clean on it.
+S23.8.4 Test. internal/server: GET `/nope` answers 404 with `text/html; charset=utf-8`, `Cache-Control: no-cache`, the page's text and the security headers; HEAD `/nope` answers 404 with text/html (no body to check); GET `/s/x/y` answers the page; POST `/nope` and PUT `/login` answer 405; GET `/api/nope` with a session answers 404 JSON "no such endpoint" and PUT `/api/nope` with a session answers JSON too; GET `/static/nope` answers 404 plain text; GET `/` and GET `/login` still answer their pages. A test in the root package reads the embedded web/404.html: it links /static/app.css and /static/js/theme.js, holds the h2 text and the link to `/`, and uses only classes app.css defines. The ten width scan's screen error-404 shows the new page: no horizontal scroll, text inside the window, in Chromium and WebKit, light and dark; P-WEB-2 axe run clean on it.
 
-S23.8.5 Wording. WORDING: needs his OK. Current: "404 page not found" (Go's text). Proposed: title "Not found", the line "This page does not exist." in the h2, and a link "Open Pinned" to `/`, in the look of the existing primary button of the small pages (`.lone .save`, app.css:896). The words follow the share page's "This link does not work." (share.js:93).
+S23.8.5 Wording. WORDING: needs his OK. Current: "404 page not found" (Go's text). Proposed: title "Not found", the line "This page does not exist." in the h2, and a link "Open Pinned" to `/`. The words follow the share page's "This link does not work." (share.js:93). The 405 body is "method not allowed", as Go's own.
 
 ### 23.9 Readable text at 12 px at least
 
-S23.9.1 What changes. The two type tokens below 12 px become 12 px: `--t-micro` 11 px and `--t-small` 11.5 px (app.css:86-87) both become 12 px, in web/app.css and in design/tokens/type.json. They are used by exactly 15 rules, all readable text (app.css:241, 263, 330, 334, 672, 800, 821, 853, 1196, 1210, 1297, 1300, 1317, 1318, 1321): sidebar counts `.si-c`, the dock labels `.dk-l`, card hosts `.t-host`, card strips `.t-strip` (time and folder path), sheet hosts `.host`, the phone pinned labels `.prc-l`, the phone selection bar labels `.pbulk .bb`, phone card strips `.pt-strip`, the version line `.app-ver`, "This version" `.rel-now`, the gallery hosts and times `.gk-host`, `.gk-time`, `.gc-host`, `.gc-time` and the gallery folder chips `.gc-chip`. Code in What's new, `.rel code{font:400 .92em/1 var(--mono)}` (app.css:1217), 11.96 px, becomes `var(--t-label)`, 12 px. The comment at app.css:85 that names 11.5 is updated.
+S23.9.1 What changes. The two type tokens below 12 px become 12 px: `--t-micro` 11 px and `--t-small` 11.5 px (app.css:86-87) both become 12 px, in web/app.css and in design/tokens/type.json. They are used by exactly 15 rules, all readable text (app.css:241, 263, 330, 334, 672, 800, 821, 853, 1196, 1210, 1297, 1300, 1317, 1318, 1321): sidebar counts `.si-c`, the dock labels `.dk-l`, card hosts `.t-host`, card strips `.t-strip` (time and folder path), sheet hosts `.host`, the phone pinned labels `.prc-l`, the phone selection bar labels `.pbulk .bb`, phone card strips `.pt-strip`, the version line `.app-ver`, "This version" `.rel-now`, the gallery hosts and times `.gk-host`, `.gk-time`, `.gc-host`, `.gc-time` and the gallery folder chips `.gc-chip`. Code in What's new, `.rel code{font:400 .92em/1 var(--mono)}` (app.css:1217), 11.96 px, becomes `var(--t-label)`, 12 px, in web/app.css and in its token entries: the line listed in design/tokens/type.json (about :510) and the two `.rel code` font entries of design/tokens/parts.json (`"css": "400 .92em/1 var(--mono)"`, about :220 and :5790), or check 2 of check-tokens.mjs fails at app.css:1217 (review 04.11). The comment at app.css:85 that names 11.5 is updated.
 
 S23.9.2 Why. widths 04.11 result 7 and Problem 5: text below 12 px in 15 places, set so in app.css. Rule from the agreed scope: raise to 12 px only where it is readable text, and keep the hierarchy.
 
-S23.9.3 Not changed, as they are not text to read: the letters of the small faces on folder tiles (`.ft-faces .fav`, 9 px, app.css:484) and of the 20 px favicons in gallery rows (`.gc-row .fav`, 10 px, app.css:1314), which are letter marks inside a tile; and the drawing of the iOS share menu on How to save (`.ios-apps > span` 10 px, `.ios-cap` 11 px, app.css:1507, 1532), which is a picture of another system's screen.
+S23.9.3 Not changed, as they are not text to read (and not scanned: the extension's popup and options, extras/extension/ui.css, were outside widths 04.11; nothing changes there): the letters of the small faces on folder tiles (`.ft-faces .fav`, 9 px, app.css:484) and of the 20 px favicons in gallery rows (`.gc-row .fav`, 10 px, app.css:1314), which are letter marks inside a tile; and the drawing of the iOS share menu on How to save (`.ios-apps > span` 10 px, `.ios-cap` 11 px, app.css:1507, 1532), which is a picture of another system's screen.
 
 S23.9.4 The hierarchy. Every changed text stays below its neighbour: names in the sidebar and titles on cards are 13.5 to 15 px (`.t-title`, `.pt-title` 14 px, app.css:323, 851; `.gc-t` 13.5 px, :1316; `.gk-title` 15 px, :1296); weights and colours stay. Micro and small become equal; where they sat side by side (gallery host and time, both small already) nothing changes between them.
 
 S23.9.5 Cases.
 - Fixed heights that hold this text: `.si-c` 20 px (app.css:241), `.t-strip` 24 px (:334), `.pt-strip` 20 px (:853), `.gc-chip` 22 px (:1318): 12 px with line height 1 fits each.
 - Widths that clip with an ellipsis (`.dk-l` 72 px, `.prc-l` 56 px, `.gk-time`, `.path`): a few more characters are cut; the ellipsis stays.
-- The phone selection bar buttons are 52 px wide (app.css:821) and 44 px below 360 px (app.css:829): "Restore", "Delete", "Move", "Copy", "Share", "Trash", "More" must stay on one line at 320 px. If "Restore" does not fit at 44 px, those buttons keep 11.5 px below 360 px only, written in the existing rule at app.css:829.
+- The phone selection bar buttons are 52 px wide (app.css:821) and 44 px below 360 px (app.css:829): "Restore", "Delete", "Move", "Copy", "Share", "Trash", "More" must stay on one line at 320 px. Review 04.11: measure "Restore" at 12 px weight 500 in a 44 px button before the build and decide. If it fits, no exception. If it does not, those buttons keep 11.5 px below 360 px only, written in the existing rule at app.css:829, and that one exception is written into S23.9.6 and into the CHANGELOG line of S23.20.
 - Phone and desktop, light and dark, Chromium and WebKit: sizes only.
 - The share page uses the same rules (`.t-strip`, `.pt-strip`, hosts): it changes the same way.
 
@@ -983,7 +1003,7 @@ S23.11.3 Cases.
 - The icon rail (720 to 999 px): the name is visually hidden and the count not drawn (app.css:1437-1438); the label still carries both, as today, so the rail keeps the count for screen readers. The rail's tooltip reads `.si-n`, not the label (render.js:584), unchanged.
 - Subfolders in the tree: the same row, the same label.
 - A locked folder: today "Finance, 0" (count() gives 0 while locked, web/js/state.js:48-59); proposed "Finance locked".
-- Not in 0.1.12: the same axe rule on the phone pinned row ("Portainer, pinned") and on the phone share page cards (FT 04.11 Found on the way 2), which the agreed scope does not name.
+- Not in 0.1.12: the same axe rule on the phone pinned row ("Portainer, pinned", render.js:342) and on the phone share page cards ("title, host", render.js:46) (FT 04.11 Found on the way 2), which the agreed scope does not name. Review 04.11 Missing 3: P-WEB-2 then keeps failing on those two screens in the 0.1.12 audit; the fix is the same one character change. Open: the maintainer confirms whether they stay out.
 - Visible look: unchanged.
 
 S23.11.4 Test. axe 4.14, WCAG 2.0 and 2.1 A and AA, on the Dashboard and desktop Settings at 1280 and 900 wide, Chromium and WebKit, light and dark: no label-content-name-mismatch on `#side .sf`. ui-test checks that read the sidebar labels are updated, if any.
@@ -1002,9 +1022,11 @@ S23.12.4 Test. Read CHANGELOG.md:25 against options.js:17; tools/extension.test.
 
 S23.12.5 Wording. WORDING: needs his OK. Proposed end of CHANGELOG.md:25: "It is now refused with the message to enter an address, such as `10.0.0.5:9095` or `https://bookmarks.example.com`."
 
+S23.12.6 The other copies of the 0.1.11 notes (review 04.11): the GitHub release text of v0.1.11 and the pinned.cc releases page keep the old line unless edited by hand. They are corrected by hand on the release day of 0.1.12, together with the corrections of S23.14.9 and S23.14.10; both are outside this repository.
+
 ### 23.13 What's new marks "This version"
 
-S23.13.1 What changes. web/js/sheets.js:182 compares the running version without a leading "v": `ui.version.replace(/^v/, '') === r.v`. The version shown elsewhere stays as the server gives it ("Pinned v0.1.12", render.js:193, 312, 318).
+S23.13.1 What changes. web/js/sheets.js:182 compares the running version without a leading "v": `(ui.version ?? '').replace(/^v/, '') === r.v`. `ui.version` is null until /health answers (web/js/state.js:77, app.js:46) and stays null when /health fails or answers without a session; without the `?? ''` the sheet would throw while drawing (review 04.11). The version shown elsewhere stays as the server gives it ("Pinned v0.1.12", render.js:193, 312, 318).
 
 S23.13.2 Why. S19.18: the release binary carries the tag name with its "v" (build.yml:62-66; Dockerfile:14, 18), the app takes it from `/health` (web/js/app.js:46), and What's new compares it with the CHANGELOG heading, which has no "v" (sheets.js:172, 182). So "This version" never shows on a released image.
 
@@ -1016,7 +1038,7 @@ S23.13.3 Cases.
 - The server side (`main.version`, the icon failure reset, main.go:339) does not change.
 - Phone Settings and desktop More open the same sheet; light and dark use `.rel-now`, accent colour (app.css:1210), 12 px after S23.9.
 
-S23.13.4 Test. ui-test: with `window.Pinned.ui.version` set to `v` plus the first heading's version, What's new shows "This version" beside that heading only; with `dev`, nowhere. Release check: a binary built with `-X main.version=v0.1.12` shows it.
+S23.13.4 Test. ui-test: with `window.Pinned.ui.version` set to `v` plus the first heading's version, What's new shows "This version" beside that heading only; with `dev`, nowhere; with `null`, nowhere, and the sheet draws. Release check: a binary built with `-X main.version=v0.1.12` shows it.
 
 S23.13.5 Wording: none new. "This version" is the existing text (sheets.js:182).
 
@@ -1030,7 +1052,7 @@ S23.14.2 S19.2, header cap. The code is right (`maxHeaderBytes = 64 << 10`, cmd/
 
 S23.14.3 S19.3, SVG storage. The code is right (internal/favicon/image.go:86-107). docs/data-format.md:155, current: "an SVG is kept as it is, only when it passes the check in `docs/security.md`." Proposed: "an SVG that passes the check in `docs/security.md` is stored as a new SVG written from what the check kept, never as the site sent it."
 
-S23.14.4 S19.4, embedded pictures in an SVG. The code is right: the check accepts PNG, JPEG, GIF and WebP data (internal/favicon/svg.go:254-262), the rewrite stores PNG, JPEG and GIF as a new PNG and drops an `image` element whose picture is WebP (svg.go:621-695, 544-546). docs/security.md:107, current: "and an embedded PNG or JPEG is stored as a new PNG." Proposed: "and an embedded PNG, JPEG or GIF is stored as a new PNG, while an embedded WebP picture is left out of the stored SVG."
+S23.14.4 S19.4, embedded pictures in an SVG. The code is right: the check accepts PNG, JPEG, GIF and WebP data (internal/favicon/svg.go:254-262), the rewrite stores PNG, JPEG and GIF as a new PNG and drops an `image` element whose picture is WebP (svg.go:621-695, 544-546). docs/security.md:107, current: "and an embedded PNG or JPEG is stored as a new PNG." Proposed, as review 04.11 settled (pictures in a style `url()` are only checked, never decoded or rewritten, re-check 04.11 point 1): "and an embedded PNG, JPEG or GIF picture in an `image` element is stored as a new PNG, and one in WebP or not written in base64 is left out of the stored SVG; a picture in a style `url()` is kept as written."
 
 S23.14.5 S19.5, folders table. The code is right (`hide_recent INTEGER NOT NULL DEFAULT 0`, internal/store/store.go:166-167). docs/data-format.md, folders table (:24-34), gets a row after `lock_stamp`: column `hide_recent`, type INTEGER NOT NULL, meaning "1 when the folder is left out of Recent; its subfolders are too. 0 by default."
 
@@ -1040,9 +1062,9 @@ S23.14.7 S19.7, the flows text. The flows doc changes (S23.17).
 
 S23.14.8 S19.8, the extension message. The CHANGELOG changes (S23.12).
 
-S23.14.9 S19.9, touch targets. The code is the decided design: card buttons are 28 px for a mouse and 44 px for touch from 720 px (app.css:342, 1458); on How to save the snippet Copy buttons are 36 px (app.css:976). CHANGELOG.md:32, current: "Touch targets on How to save, the folder share button and the card buttons are at least 44 px." Proposed: "On touch screens, the touch targets on How to save, the folder share button and the card buttons are at least 44 px, apart from the Copy buttons in the help on How to save, which are 36 px." WORDING: needs his OK.
+S23.14.9 S19.9, touch targets. The code is the decided design: card buttons are 28 px for a mouse and 44 px for touch from 720 px (app.css:342, 1458); on How to save the snippet Copy buttons are 36 px (app.css:976). CHANGELOG.md:32, current: "Touch targets on How to save, the folder share button and the card buttons are at least 44 px." Proposed, with review 04.11's change (the line describes 0.1.11, where Show the Save code was 19 px high, widths 04.11 Problem 1): "On touch screens, the touch targets on How to save, the folder share button and the card buttons are at least 44 px, apart from Show the Save code (44 px from 0.1.12) and the Copy buttons in the help on How to save, which are 36 px." WORDING: needs his OK.
 
-S23.14.10 S19.10, Refetch icon. The code has no Refetch icon control, only the route (server.go:206), at every tag from 0.1.0 to 0.1.11 (`git grep -i refetch vX.Y.Z -- web` finds only comments). CHANGELOG.md:24, current: "Saving it again, changing its address, Refetch icon or the next version try again." Proposed: "Saving it again, changing its address, a refetch through the API (`POST /api/bookmarks/{id}/refetch-icon`) or the next version try again." WORDING: needs his OK.
+S23.14.10 S19.10, Refetch icon. The code has no Refetch icon control, only the route (server.go:206), at every tag from 0.1.0 to 0.1.11 (`git grep -i refetch vX.Y.Z -- web` finds only comments). CHANGELOG.md:24, current: "Saving it again, changing its address, Refetch icon or the next version try again." Proposed, as review 04.11 settled: "Saving it again, changing its address or the next version try again." The review's reason, that no user doc names the route, does not hold (README.md:269 names it for going back, S19.10); the shorter line is kept because the changelog speaks of what a user does in the app. WORDING: needs his OK; the alternative is the first draft's "Saving it again, changing its address, a refetch through the API (`POST /api/bookmarks/{id}/refetch-icon`) or the next version try again."
 
 S23.14.11 S19.11, token answers. The code is right (api.go:294-296). README.md:176 gets, after its sentence: "A `PATCH /api/bookmarks/{id}` with a token that sends any field other than `title` and `folder_id` answers 400." WORDING: needs his OK.
 
@@ -1053,6 +1075,7 @@ S23.14.13 S19.13, the bookmarklet window. Not a defect: the window opens at 392 
 S23.14.14 S19.14, the Umbrel README. The package files are right (umbrel/docker-compose.yml, umbrel-app.yml at 74e3037). umbrel/README.md changes:
 - :1 "# Umbrel package, draft" becomes "# Umbrel package".
 - :3, current "These two files are the draft for a pull request to the Umbrel App Store, https://github.com/getumbrel/umbrel-apps. They are not used by anything in this repository." Proposed: "These two files are the package in the pull request to the Umbrel App Store, https://github.com/getumbrel/umbrel-apps/pull/6243. Nothing else in this repository uses them."
+- :7, current "## What has to be filled in before the pull request" (review 04.11: the PR exists). Proposed: "## What to fill in for each release".
 - :9, current "... and put the index digest in place of `sha256:PLACEHOLDER`." Proposed: "... and put the index digest after the tag, as in `ghcr.io/pinned-cc/pinned:0.1.11@sha256:...`."
 - :21, current "`BASE_URL` points at the device address and the store port, so the Save button code and the search entry use it." Proposed: "No `BASE_URL` is set: the app takes its address from each request, so the Save button code and the search entry use the address the browser used."
 - :24, "Not tested on an Umbrel yet." Open: whether it has been run on an Umbrel; the line stays until the maintainer says.
@@ -1070,7 +1093,7 @@ S23.14.18 Test for all of S23.14: each changed line is read against the code it 
 
 S23.15.1 What changes.
 - internal/server/locks.go:187-192: writeLockedDuplicate and the answer `{"error": "Already saved", "duplicate": null, "locked": true}` go.
-- internal/server/locks.go:197-208, handleDuplicate: when the existing bookmark is one the caller cannot see, which the lookups never produce (S20.1), it logs one `error:` line without the bookmark and answers 500 "something went wrong" (server.go:666). A hidden bookmark still never reaches an answer.
+- internal/server/locks.go:197-208, handleDuplicate: when the existing bookmark is one the caller cannot see, which the lookups never produce (S20.1), it logs one `error:` line without the bookmark and answers 500 "something went wrong" (server.go:666). handleDuplicate has no Server receiver, so the line is a plain `log.Printf`, like writeStoreError's (server.go:665). A hidden bookmark still never reaches an answer.
 - web/js/sheets.js: the `hid` state and its branches go: :308 (`hid: false`), :321 and :343 (the dupe line), :331 and :347 (Save disabled), :334 (the "Already saved" status), :352 and :354 (from /api/check, which never sends `locked`), :365 (the 409 branch).
 - extras/extension/popup.js: the same: :59, :61, :98, :108, :117, :158 and :163; and :153, the filter of locked folders from /api/folders, which never sends them (tokens.go:226-237).
 
@@ -1085,7 +1108,9 @@ S23.15.3 Cases.
 
 S23.15.4 Test. A Go test calls handleDuplicate with a DuplicateError whose bookmark sits in a hidden folder: 500, and the body holds neither its title nor its address. The existing tests that save and check an address held only in a locked folder pass (internal/server/access_test.go:121). tools/extension.test.mjs: a 409 with `duplicate` still leads to Save anyway. `grep -n "locked" web/js/sheets.js extras/extension/popup.js` finds nothing that reads a 409 or /api/check or /api/folders answer.
 
-S23.15.5 Wording: none in normal use.
+S23.15.5 Wording: none in normal use. The 500 answer is the existing "something went wrong".
+
+S23.15.6 Who builds what: the server side (locks.go) and its Go test go with the server work; the sheets.js and popup.js removals and the extension test go with the web and extension work.
 
 ### 23.16 README: going back to an older version
 
@@ -1105,13 +1130,13 @@ S23.17.1 What changes. design/wireframes/flows/flows.md and the twelve `.mmd` di
 - the steps 0.1.12 changes are written from 0.1.12: 02.13 (the http warning, S23.1), 05.1 and 05.8 (the lock note, S23.10), 10.4 (This version, S23.13), 12.3 (the phone head, S23.7);
 - each step's status (works, friction, broken) is the 0.1.12 state: FT 04.11's 11 friction steps (S17.1) less 05.8, fixed by S23.10;
 - build.py's own description (build.py:2-3), "0.1.11 candidate, ad2cb8e", says 0.1.12.
-design/wireframes/flow-test.md, the record of the flow test of 31.10.2026, is generated by the same script (flows_data.py:383 on). It stays as it is: the script stops writing it, so the record of 31.10 is not rewritten with new step texts.
+design/wireframes/flow-test.md, the record of the flow test of 31.10.2026, is generated by the same script (flows_data.py:383 on). It stays as it is: the script stops writing it, so the record of 31.10 is not rewritten with new step texts. The lines that point readers to it for "the findings" and "the results" (flows_data.py:296, 359) then say "the flow test of 31.10 is in flow-test.md; the 04.11 results are in the step texts" (review 04.11).
 
 S23.17.2 Why. FT 04.11 Counts 7 and S6.3, S19.7: the flows text still describes ad2cb8e.
 
-S23.17.3 Cases. The Storybook reads flows.md and the `.mmd` files directly (design/storybook/stories/flows.stories.js:3-5), so it shows the new text after a rebuild. The screens in design/wireframes/screens stay as drawn; a screen is redrawn only where it shows a part 0.1.12 changes (the lock dialog note, the extension options status).
+S23.17.3 Cases. The Storybook reads flows.md and the `.mmd` files directly (design/storybook/stories/flows.stories.js:3-5), so it shows the new text after a rebuild. The screens in design/wireframes/screens stay as drawn; a screen is redrawn only where it shows a part 0.1.12 changes: the lock dialog note, the extension options status, whats-new.html (This version, S23.13) and the phone unreachable screen if it shows the phone frame (S23.7) (review 04.11).
 
-S23.17.4 Test. After `python3 design/wireframes/build.py`: `git diff` shows flows.md and the `.mmd` files changed, flow-test.md unchanged; every step text read against FT 04.11 and the 0.1.12 build; the Storybook flows story renders all twelve diagrams.
+S23.17.4 Test. After `python3 design/wireframes/build.py`: `git diff` shows flows.md, the `.mmd` files, index.html, flows.js and walk.html changed (they carry the same step texts and the header, review 04.11) and the redrawn screens, and flow-test.md unchanged; every step text read against FT 04.11 and the 0.1.12 build; the Storybook flows story renders all twelve diagrams.
 
 S23.17.5 Wording: the step texts are descriptions for the repository, not app text.
 
@@ -1126,34 +1151,64 @@ S23.18.2 Cases. design/ is not in the image: the image's last stage holds only t
 
 S23.18.3 Test. `go test -count=1 ./internal/store` passes on 74e3037 (run on 04.11 for this spec). `npm run check:tokens` passes before and after the 0.1.12 CSS edits.
 
+S23.18.4 Prepared changes of 04.11 outside the repository (review 04.11 Missing 4): build-sbom.diff is taken into S23.3. The others stay out of 0.1.12 unless an item is added for them: security.diff, readme.diff, readme-badges.diff, the REUSE files, and the scorecard fixes (CodeQL, OSV scanner, the main branch ruleset, the security policy link, and the netscape fuzz test of S23.4.6).
+
 ### 23.19 gitleaks: allow the upgrade fixtures
 
 S23.19.1 What changes. A `.gitleaks.toml` at the repository root extends the default rules and allows one path, with its reason:
 - `[extend]` with `useDefault = true`;
-- one `[[allowlists]]` entry with the description "Upgrade test fixtures: passwords and tokens of throwaway runs of released binaries, hashed under a fixture secret.key (internal/store/upgrade_test.go:18-29); they open nothing anywhere else" and `paths = ['''^internal/store/testdata/''']`.
+- one `[[allowlists]]` entry with the description "Upgrade test fixtures: passwords and tokens of throwaway runs of released binaries, hashed under a fixture secret.key (internal/store/upgrade_test.go:18-29); they open nothing anywhere else", `targetRules = ['generic-api-key']`, so a real secret of another kind dropped into testdata later is still found, and `paths = ['''internal/store/testdata/''']`, without a `^` anchor, so it matches when gitleaks is run on the repository from another folder and the paths are not relative (review 04.11).
 
 S23.19.2 Why. gitleaks reports 32 hits in internal/store/testdata/upgrade, all of rule generic-api-key, both in `gitleaks git` over v0.1.11..74e3037 (32) and in `gitleaks dir .` (32 of 35), run with gitleaks 8.30.1 for this spec. They are the test passwords and tokens the upgrade fixtures were made with (upgrade_test.go:18-29).
 
 S23.19.3 Cases. `gitleaks dir .` also reports 3 hits of rule curl-auth-header in extras/examples/README.md (lines 29, 42, 55: `Authorization: Bearer tk_your_token`, a placeholder), present since before 0.1.12. Not in the agreed scope; they stay reported. CI does not run gitleaks; the release audit does.
 
-S23.19.4 Test. `gitleaks git .` and `gitleaks dir .` report no hit in internal/store/testdata; a planted real looking token in another path is still found.
+S23.19.4 Test. `gitleaks git .` and `gitleaks dir .` report no hit in internal/store/testdata; a planted real looking token in another path is still found; a planted secret of another rule (a private key block) in internal/store/testdata is still found.
 
 ### 23.20 CHANGELOG 0.1.12, and release steps
 
-S23.20.1 What changes. CHANGELOG.md gets a section "## 0.1.12, <release date>" above 0.1.11 (the heading form parseChangelog reads, sheets.js:172). WORDING: needs his OK. Proposed, under "### Fixes":
-- "In the browser extension's options, an address typed with `http://` for a server outside your own network now says, on Test and on Save, that your token would cross the internet unencrypted, and goes ahead only when you click again. Before, it said Connected."
+S23.20.1 What changes. CHANGELOG.md gets a section "## 0.1.12" above 0.1.11, with ", <release date>" added to the heading on the day the maintainer sets (the heading form parseChangelog reads, sheets.js:172; the date is optional there, so the heading parses before it has one). WORDING: needs his OK. Proposed, under "### Fixes":
+- "In the browser extension's options, an address typed with `http://` for a server outside your own network now says, on Test and on Save, that your token may cross the internet unencrypted, and goes ahead only when you click again. Before, it said Connected."
 - "An address with a space before its `#`, such as `http://nas/a #top`, is now the same bookmark as `http://nas/a`."
 - "How to save: Show the Save code is easier to tap."
 - "On a small phone the Add sheet shows the folder the link goes to."
 - "On the phone, the Settings gear shows when the server cannot be reached at the first load."
 - "A page that does not exist says so in the app's look, instead of a plain line of text."
-- "Small text, such as counts, times, hosts and the version line, is at least 12 px."
+- "Small text, such as counts, times, hosts and the version line, is at least 12 px." (Depends on the S23.9.5 decision for 320 px: if the selection bar keeps 11.5 px below 360 px, the line names that exception.)
 - "In the lock dialog the note no longer overlaps the Repeat password field."
 - "Screen readers read each folder in the sidebar by the name and count it shows."
 - "What's new marks the version you run."
-- "The image's build record no longer names the account that pushed the release. The software bill of materials stays."
+- "An SVG icon with more than eight pictures in its style is now refused when it is fetched. Before, it was stored, removed at the next start and fetched again at every start." (S23.21)
+- "The image's build record no longer names the account that pushed the release. The software bill of materials stays. Each release on GitHub now carries the software bill of materials of both platforms and a signed build provenance, which `gh attestation verify` checks." (S23.3)
 The doc corrections of S23.12, S23.14 and S23.16 are not listed.
 
-S23.20.2 Release steps, no behaviour change: README.md:24 names `v0.1.12` in the install command; extras/vps/setup.sh:19 defaults to the image `ghcr.io/pinned-cc/pinned:0.1.12`; docs/testing.md gets the rows of the 0.1.12 runs (S23.14.16); the Umbrel and ZimaOS packages move to 0.1.12 by digest only after the image is built and checked (S3.21, S23.3.4).
+S23.20.2 Release steps, no behaviour change. With the build (review 04.11 changes 1 to 3):
+- README.md:24 names `v0.1.12` in the install command.
+- extras/vps/setup.sh:5 and :9 (the commands in its head) name `v0.1.12`, and setup.sh:19 defaults to the image `ghcr.io/pinned-cc/pinned:0.1.12`; tools/setup.test.sh:68 checks `ghcr.io/pinned-cc/pinned:0.1.12`, in the same commit, or `sh tools/setup.test.sh` fails in CI (build.yml:32).
+- README.md:27 keeps "Tested for 0.1.11 on a fresh Ubuntu 26.04 server": the fresh server run is not repeated in this build. If it is run for 0.1.12 before the tag, the line names 0.1.12.
+- docs/testing.md: the two rows of 2026-11-03 move to the top (S23.14.16); the rows of the 0.1.12 runs go above them when those runs are made.
+- Not version pins, and they stay: the lines of README.md:269, 271, docs/ and the code that name 0.1.11 as the version a behaviour came in, and the design/ files that say they were taken from the app at 0.1.11 (design/scripts, design/storybook, design/tokens).
+On the release day, after the image is built and checked (S3.21, S23.3.4), and not before, the store packages move as one, so that no package says 0.1.12 while it installs the 0.1.11 image:
+- umbrel/umbrel-app.yml:7 `version` and umbrel/docker-compose.yml:13 the image, `ghcr.io/pinned-cc/pinned:0.1.12@sha256:<index digest>`; `releaseNotes` stays empty while PR 6243 is open (S3.19) and is filled once the app is in the store.
+- casaos/docker-compose.yml:4 the image by digest, :74 `version`, :75 `update_at` and :77 `release_notes`.
+- Then the ZimaOS PR 1116 and the Umbrel PR 6243, outside this repository.
 
-S23.20.3 Test. What's new on the 0.1.12 build opens on 0.1.12 with "This version" (S23.13), and the last three releases open.
+S23.20.3 Test. What's new on the 0.1.12 build opens on 0.1.12 with "This version" (S23.13), and the last three releases open. `git grep -n "0\.1\.11"` after the build lists only the lines S23.20.2 says stay and the store package lines of the release day.
+
+### 23.21 SVG icons with pictures in a style url() are not fetched again at every start (F-137 leftover)
+
+S23.21.1 What changes. internal/favicon/svg.go, rewriteSVG: after the rewrite, the written SVG is refused (errUnsafeSVG) when it holds more than eight `data:image` (the raw count of svg.go:483, `maxEmbedded`, on the output). The raw count at the start of rewriteSVG stays, as the quick first refusal of F-150, and so does the per picture count of the `image` elements (svg.go:541-542, 653).
+
+S23.21.2 Why. Re-check 04.11 point 1 (review 04.11 Missing 1): the raw count reads the bytes as sent, so nine pictures written `data&#58;image` in style `url()` pass it; the rewrite counts only `image` elements, and writes the decoded `:` back as a plain character (escape(), svg.go:699), so the stored file holds nine plain `data:image`. At the next start rewriteStoredSVG (internal/favicon/fetch.go:300-322) runs the check again, the raw count refuses the stored file, the icon is dropped and the start fetch stores it again: one fetch per such icon at every start, against the comment at fetch.go:307-309 that a rewrite of a rewrite gives the same bytes. With the count on the output, what is stored always passes the first count again.
+
+S23.21.3 Cases.
+- Pictures in style `url()` (attribute or style element) written with character references: more than eight, refused at the first fetch; the fetch counts it as a failure (Run, fetch.go:482-486), so the start fetch gives up on the link after three, as for any bad icon (S9). Eight or fewer: stored as today.
+- The same text in a kept text element (`text`, `title`) written with character references: counted the same way, since it is in the stored bytes the first count reads.
+- `image` elements: unchanged; already counted as decoded.
+- Icons stored by 0.1.11 with more than eight such pictures: already dropped at each start by 0.1.11's own check; in 0.1.12 the start check drops them the same way, and the refetch now refuses them, so they show the letter and are not fetched again after three failures.
+- No change for an icon that 0.1.11 stores and keeps across starts: its stored bytes already pass the raw count, which is this check.
+- Decode work: none added; the count is one pass over at most 1 MB (maxSVGOut).
+
+S23.21.4 Test. internal/favicon: nine pictures in style `url()` written `data&#58;image` (attribute and style element) are refused by processSVG; eight are stored, and processSVG of the stored bytes gives the same bytes. Without the fix the first case is stored and the second processSVG refuses it.
+
+S23.21.5 Wording: none in the app. CHANGELOG: see S23.20.
