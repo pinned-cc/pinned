@@ -529,3 +529,20 @@ test('manifest version is the newest release in CHANGELOG.md', () => {
   const newest = changelog.match(/^## (\d+\.\d+\.\d+)/m)[1];
   assert.equal(manifest.version, newest);
 });
+
+// S23.15 (F-173): the popup has no locked state; the server never sends one, and a stray flag changes nothing.
+test('popup: a locked flag in /api/check, /api/folders or a 409 changes nothing', async () => {
+  const p = popupPage({ address: 'http://127.0.0.1:1', token: 't' }, {
+    '/api/folders': [200, [{ id: 1, parent_id: null, name: 'Work', position: 0, locked: true }]],
+    '/api/check': [200, { duplicate: null, icon: null, locked: true }],
+    '/api/bookmarks': [409, { error: 'Already saved', duplicate: null, locked: true }],
+  });
+  await settle();
+  const go = () => p.all().find(n => n.attrs && n.attrs['data-a'] === 'save-go');
+  assert.ok(p.text().includes('Not saved yet'), p.text());
+  assert.ok(p.text().includes('Work'), 'the folder the server listed is left out');
+  assert.equal(go().attrs.disabled, undefined, 'Save disabled');
+  await p.all().find(n => n.tag === 'form').handlers.submit({ preventDefault() {} }); await settle();
+  assert.ok(p.text().includes('Already saved.'), p.text());
+  assert.equal(go().attrs.disabled, undefined, 'Save disabled after the 409');
+});

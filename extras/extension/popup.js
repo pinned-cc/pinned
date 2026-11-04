@@ -57,10 +57,9 @@
   function primaryLabel() { return S.dup ? 'Save anyway' : S.folder == null ? 'Save to Inbox' : 'Save'; }
 
   function dupeEl() {
-    var p = h('p', { class: 'dupe' + (S.dup || S.hid ? '' : ' off'), role: 'status' }, icon('warn'));
+    var p = h('p', { class: 'dupe' + (S.dup ? '' : ' off'), role: 'status' }, icon('warn'));
     var t = h('span', { class: 'dupe-t' });
-    if (S.hid) t.appendChild(h('span', { class: 'd1', text: 'Already saved' }));
-    else if (S.dup) {
+    if (S.dup) {
       t.appendChild(h('span', { class: 'd1', text: 'Already saved in ' + F.path(S.dup.folder_id == null ? null : S.dup.folder_id) + '.' }));
       t.appendChild(h('span', { class: 'd2', text: 'Save anyway moves it here.' }));
     } else t.appendChild(h('span', { class: 'd1', text: 'Not saved yet' }));
@@ -96,7 +95,7 @@
       list,
       h('div', { class: 'sv-acts' },
         none ? null : h('button', { type: 'button', class: 'tbtn', onclick: function () { save(true); } }, 'Save to Inbox'),
-        h('button', { type: 'submit', class: 'save', 'data-a': 'save-go', disabled: S.hid || S.busy }, primaryLabel())));
+        h('button', { type: 'submit', class: 'save', 'data-a': 'save-go', disabled: S.busy }, primaryLabel())));
     form.addEventListener('submit', function (e) { e.preventDefault(); save(false); });
 
     pop.classList.add('in');
@@ -106,7 +105,7 @@
   }
 
   async function save(inbox) {
-    if (S.busy || S.hid || S.ticked) return;
+    if (S.busy || S.ticked) return;
     var folder = inbox ? null : S.folder;
     var body = { title: S.title.trim() || hostOf(S.url), url: S.url, folder_id: folder };
     if (S.dup) body.force = true;
@@ -115,7 +114,6 @@
     catch (e) {
       S.busy = false;
       if (e.status === 409 && e.data && e.data.duplicate) { S.dup = e.data.duplicate; render(); return; }
-      if (e.status === 409 && e.data && e.data.locked) { S.hid = true; S.dup = null; render(); return; }
       S.err = e.message + '.'; render(); return;
     }
     await Pinned.remember(folder);
@@ -158,17 +156,17 @@
     var folders;
     try { folders = await Pinned.api(cfg, 'GET', '/api/folders'); }
     catch (e) { notice(e.status === 401 ? 'The token was not accepted' : 'Could not reach your server', e.status === 401 ? 'Check the token in settings.' : cfg.address, { label: 'Open settings', run: openOptions }); return; }
-    folders = (Array.isArray(folders) ? folders : []).filter(function (f) { return !(f.locked && !f.unlocked); });
+    folders = Array.isArray(folders) ? folders : [];
     F = Pinned.folderIndex(folders);
 
     var recent = cfg.recent.filter(F.has);
     S = { title: (tab.title || '').trim(), url: tab.url, folder: recent.length ? recent[0] : null, recent: recent, picker: false,
-      dup: null, hid: false, icon: null, checked: false, err: '', busy: false, rendered: false };
+      dup: null, icon: null, checked: false, err: '', busy: false, rendered: false };
     render();
 
     try {
       var r = await Pinned.api(cfg, 'GET', '/api/check?url=' + encodeURIComponent(S.url));
-      S.dup = r && r.duplicate || null; S.hid = !!(r && r.locked); S.icon = r && r.icon || null;
+      S.dup = r && r.duplicate || null; S.icon = r && r.icon || null;
     } catch (e) { /* the save itself reports */ }
     S.checked = true;
     render();

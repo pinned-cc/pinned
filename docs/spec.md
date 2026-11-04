@@ -1144,6 +1144,8 @@ S23.15.5 Wording: none in normal use. The 500 answer is the existing "something 
 
 S23.15.5a Done after re-review 04.11, which found the sheets.js part still in the build (sheets.js:323, 336, 346, 349, 358, 362, 367, 369, 380 at 4ae9cdb): every `hid` read and write and both `locked` reads go; the save sheet keeps the two states the server sends, "Not saved yet" and "Already saved in <path>. Save anyway moves it here.". A ui-test check sends a 409 with `locked: true` and an /api/check answer with `locked: true` (route stubs) and wants the sheet to behave as for an answer without it: Save stays enabled and the status reads "Not saved yet" for the check, and the error line shows the server's text for the 409; it fails before the removal.
 
+S23.15.5b The popup part, done after release audit 5 (F-173: popup.js was not in the diff): the `hid` state, the 409 `locked` branch, the `locked` flag read from /api/check and the filter of locked folders on /api/folders go, as S23.15.1 lists. tools/extension.test.mjs: with /api/check answering `locked: true` and /api/folders listing a folder with `locked: true`, the popup shows "Not saved yet" with Save enabled and lists that folder (the server sends neither); a 409 with `locked: true` and no `duplicate` shows the server's text as an error. `grep -n "locked\|hid" extras/extension/popup.js` finds nothing. It fails before the removal.
+
 S23.15.6 Who builds what: the server side (locks.go) and its Go test go with the server work; the sheets.js and popup.js removals and the extension test go with the web and extension work.
 
 ### 23.16 README: going back to an older version
