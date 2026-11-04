@@ -1,0 +1,9 @@
+# gitleaks: the default rules, and one path they may leave alone.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Upgrade test fixtures: passwords and tokens of throwaway runs of released binaries, hashed under a fixture secret.key (internal/store/upgrade_test.go:18-29); they open nothing anywhere else"
+targetRules = ['generic-api-key']
+paths = ['''internal/store/testdata/''']
