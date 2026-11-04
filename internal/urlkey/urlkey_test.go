@@ -20,7 +20,6 @@ func TestKeyEquality(t *testing.T) {
 		{"http://h/a   #top", "http://h/a"},
 		{"http://h/?q=a #x", "http://h/?q=a"},
 		{"http://h/a\u00a0#x", "http://h/a"},
-		{"http://h #x", "http://h/"},
 	}
 	for _, p := range same {
 		a, err := Key(p[0])
@@ -55,7 +54,10 @@ func TestKeyEquality(t *testing.T) {
 // A tab, CR or LF before the fragment stays refused, as url.Parse refused it
 // before the trim came in (spec S23.4).
 func TestKeyRefusesControlBeforeFragment(t *testing.T) {
-	for _, raw := range []string{"http://h/a\t#x", "http://h/a\n#x", "http://h/a\r#x", "http://h/a \t #x", "http://h/a\x7f#x"} {
+	for _, raw := range []string{"http://h/a\t#x", "http://h/a\n#x", "http://h/a\r#x", "http://h/a \t #x", "http://h/a\x7f#x",
+		// white space right after the host or port is in the host: refused
+		// as in 0.1.11 (release audit 5, V-1)
+		"http://h #x", "http://h:8080 #x", "http://h\u00a0#x", "http://user@h #x", "https://h:443  #x"} {
 		if k, err := Key(raw); !errors.Is(err, ErrInvalid) {
 			t.Errorf("Key(%q) = %q, %v; want ErrInvalid", raw, k, err)
 		}

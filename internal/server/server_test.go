@@ -891,3 +891,22 @@ func TestRoutesAnswerAsBefore(t *testing.T) {
 		t.Errorf("only %d answers compared", compared)
 	}
 }
+
+// White space between host or port and # gets 0.1.11's answer on the API,
+// which the extension and the save page use too (spec S23.4, release audit
+// 5, V-1).
+func TestSpaceAfterHostIsABadAddress(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	for _, raw := range []string{"http://h #x", "http://h:8080 #x"} {
+		code, body := e.do("POST", "/api/bookmarks", map[string]any{"url": raw, "title": "x"})
+		if code != 400 || !strings.Contains(string(body), "url must start with http:// or https:// and have a host") {
+			t.Errorf("save %q: %d %s", raw, code, body)
+		}
+		code, body = e.do("GET", "/api/check?url="+url.QueryEscape(raw), nil)
+		if code != 400 {
+			t.Errorf("check %q: %d %s", raw, code, body)
+		}
+	}
+	e.expect("POST", "/api/bookmarks", map[string]any{"url": "http://h/a #top", "title": "x"}, 201)
+}

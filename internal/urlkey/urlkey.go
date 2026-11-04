@@ -54,6 +54,14 @@ func Key(raw string) (string, error) {
 				return "", ErrInvalid
 			}
 		}
+		// The address is stored with that white space. After a path or a
+		// query it is part of them; right after the host or port it is in
+		// the host, which url.Parse and browsers refuse, as 0.1.11 did.
+		if len(cut) < i {
+			if at := strings.Index(cut, "://"); at < 0 || !strings.ContainsAny(cut[at+3:], "/?") {
+				return "", ErrInvalid
+			}
+		}
 		raw = cut
 	}
 	schemeEnd := strings.Index(raw, "://")

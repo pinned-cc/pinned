@@ -905,3 +905,36 @@ func TestSessionColumnsMigration(t *testing.T) {
 		t.Errorf("second delete: %v", err)
 	}
 }
+
+// White space between host or port and # is refused on every way in, as in
+// 0.1.11; after a path it is trimmed from the key (spec S23.4, release audit
+// 5, V-1). An import skips such a link and counts it, as 0.1.11 did.
+func TestSpaceAfterHostRefusedEverywhere(t *testing.T) {
+	s := open(t)
+	for _, raw := range []string{"http://h #x", "http://h:8080 #x"} {
+		if _, _, err := s.Create(NewBookmark{URL: raw}); !errors.Is(err, urlkey.ErrInvalid) {
+			t.Errorf("save %q: %v, want an invalid address", raw, err)
+		}
+	}
+	b, _, err := s.Create(NewBookmark{URL: "http://h/a #top"})
+	if err != nil || b.URLKey != "http://h/a" {
+		t.Fatalf("save with a path: %+v %v", b, err)
+	}
+	bad := "http://h:8080 #x"
+	if _, _, err := s.Update(b.ID, Patch{URL: &bad}); !errors.Is(err, urlkey.ErrInvalid) {
+		t.Errorf("edit to %q: %v, want an invalid address", bad, err)
+	}
+	file := `<!DOCTYPE NETSCAPE-Bookmark-file-1><DL><p>
+<DT><A HREF="http://h #x">host</A>
+<DT><A HREF="http://h:8080 #x">port</A>
+<DT><A HREF="http://h/b #x">path</A>
+</DL>`
+	root, err := netscape.Parse(strings.NewReader(file))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := s.Import(root, nil)
+	if err != nil || res.Added != 1 || res.Skipped != 2 {
+		t.Errorf("import: %+v %v, want 1 added and 2 skipped", res, err)
+	}
+}
