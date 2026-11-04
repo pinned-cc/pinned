@@ -227,6 +227,10 @@ func (s *Server) routes() {
 	m.HandleFunc("/api/", s.api(func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	}))
+
+	// Every other path: the styled not found page. Without a method, since
+	// "GET /" would clash with "/api/" above.
+	m.HandleFunc("/", s.notFound)
 }
 
 // ---- sessions and guards ----

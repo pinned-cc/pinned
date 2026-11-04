@@ -54,6 +54,41 @@ func (s *Server) page(name string, needLogin bool) http.HandlerFunc {
 	return h
 }
 
+// notFound answers every path no other route takes. GET and HEAD get the
+// styled page web/404.html with status 404. Other methods get a plain 405
+// with the Allow header Go's mux sent before this route caught every path:
+// the methods another route takes on the path, or GET and HEAD, this page.
+// /api/ and /static/ keep their own answers: their routes are more specific.
+func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		var allow []string
+		for _, m := range []string{http.MethodDelete, http.MethodGet, http.MethodHead, http.MethodPatch, http.MethodPost, http.MethodPut} {
+			probe := r.Clone(r.Context())
+			probe.Method = m
+			if _, pattern := s.mux.Handler(probe); pattern != "/" {
+				allow = append(allow, m)
+			}
+		}
+		if len(allow) == 0 {
+			allow = []string{http.MethodGet, http.MethodHead}
+		}
+		w.Header().Set("Allow", strings.Join(allow, ", "))
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	data, err := fs.ReadFile(s.web, "404.html")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.WriteHeader(http.StatusNotFound)
+	if r.Method == http.MethodGet {
+		w.Write(data)
+	}
+}
+
 // safeNext keeps redirects on this site. next must parse as a URL with no
 // scheme and no host, its path must start with a single "/" (not "//" and
 // not "/\"), and it must hold no control characters, which browsers strip

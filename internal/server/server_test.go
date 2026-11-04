@@ -46,6 +46,7 @@ var testWeb = fstest.MapFS{
 	"save.html":                   {Data: []byte("<p>save</p>")},
 	"bookmarklet.html":            {Data: []byte(`<a href="javascript:open('{{BASE_URL}}/save')">Save</a>`)},
 	"share.html":                  {Data: []byte(`<p>share {{BASE_URL}}</p>`)},
+	"404.html":                    {Data: []byte("<h2>This page does not exist.</h2>")},
 	"app.css":                     {Data: []byte("body{}")},
 	"app.js":                      {Data: []byte("1")},
 	"icons/icon-192.png":          {Data: []byte("\x89PNG")},
@@ -753,5 +754,67 @@ func TestStaticETag(t *testing.T) {
 	}
 	if body := readAll(resp); resp.StatusCode != 200 || string(body) != "body{}" {
 		t.Errorf("stale etag: %d %q", resp.StatusCode, body)
+	}
+}
+
+// A path no route takes answers the styled page web/404.html with 404, for
+// GET and HEAD; other methods get 405 with the Allow header Go's mux sent
+// before. /api/ and /static/ keep their own answers (spec S23.8).
+func TestNotFoundPage(t *testing.T) {
+	e := newEnv(t, Config{})
+	send := func(method, path string) *http.Response {
+		t.Helper()
+		req, _ := http.NewRequest(method, e.srv.URL+path, nil)
+		resp, err := e.client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp
+	}
+	for _, path := range []string{"/nope", "/s/x/y", "/icons", "/extras/"} {
+		resp := send("GET", path)
+		body := string(readAll(resp))
+		h := resp.Header
+		if resp.StatusCode != 404 || h.Get("Content-Type") != "text/html; charset=utf-8" || h.Get("Cache-Control") != "no-cache" || !strings.Contains(body, "This page does not exist.") {
+			t.Errorf("GET %s: %d %s %q %s", path, resp.StatusCode, h.Get("Content-Type"), h.Get("Cache-Control"), body)
+		}
+		if h.Get("Content-Security-Policy") != contentSecurityPolicy || h.Get("X-Frame-Options") != "DENY" || h.Get("X-Content-Type-Options") != "nosniff" || h.Get("Referrer-Policy") != "no-referrer" {
+			t.Errorf("GET %s: security headers missing: %v", path, h)
+		}
+	}
+	if resp := send("HEAD", "/nope"); resp.StatusCode != 404 || resp.Header.Get("Content-Type") != "text/html; charset=utf-8" {
+		t.Errorf("HEAD /nope: %d %s", resp.StatusCode, resp.Header.Get("Content-Type"))
+	}
+	for path, allow := range map[string]string{"/nope": "GET, HEAD", "/login": "GET, HEAD, POST", "/health": "GET, HEAD", "/static/app.css": "GET, HEAD"} {
+		for _, method := range []string{"POST", "PUT"} {
+			if path == "/login" && method == "POST" {
+				continue
+			}
+			resp := send(method, path)
+			body := string(readAll(resp))
+			if resp.StatusCode != 405 || resp.Header.Get("Allow") != allow || strings.Contains(body, "<") {
+				t.Errorf("%s %s: %d Allow %q %s", method, path, resp.StatusCode, resp.Header.Get("Allow"), body)
+			}
+		}
+	}
+	// The pages, the static files and the API keep their answers.
+	if resp := send("GET", "/login"); resp.StatusCode != 200 || !strings.Contains(string(readAll(resp)), "login") {
+		t.Errorf("GET /login: %d", resp.StatusCode)
+	}
+	if resp := send("GET", "/static/nope"); resp.StatusCode != 404 || !strings.HasPrefix(resp.Header.Get("Content-Type"), "text/plain") {
+		t.Errorf("GET /static/nope: %d %s", resp.StatusCode, resp.Header.Get("Content-Type"))
+	}
+	if resp := send("GET", "/api/nope"); resp.StatusCode != 401 {
+		t.Errorf("GET /api/nope without a session: %d", resp.StatusCode)
+	}
+	e.login()
+	if resp := send("GET", "/"); resp.StatusCode != 200 || !strings.Contains(string(readAll(resp)), "app") {
+		t.Errorf("GET /: %d", resp.StatusCode)
+	}
+	for _, method := range []string{"GET", "PUT"} {
+		code, body := e.do(method, "/api/nope", nil)
+		if code != 404 || strings.TrimSpace(string(body)) != `{"error":"no such endpoint"}` {
+			t.Errorf("%s /api/nope: %d %s", method, code, body)
+		}
 	}
 }
