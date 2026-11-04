@@ -1131,6 +1131,8 @@ S23.15.6 Who builds what: the server side (locks.go) and its Go test go with the
 
 S23.16.1 What changes. README.md:269, first sentence, current: "An older version does not start on a database a newer one has upgraded." Proposed: "Versions from 0.1.1 on do not start on a database a newer version has upgraded. 0.1.0 has no such check and opens it, but folder and share passwords set or used since 0.1.11 do not open there, so never start 0.1.0 on an upgraded database: go back with the copy, as below." The rest of the paragraph stays. WORDING: needs his OK.
 
+S23.16.1a Added after that paragraph, as a line of its own (re-review 04.11, low: after the key pass of S23.4.7, 0.1.11 makes a second bookmark for such an address): "After 0.1.12 has set new keys for addresses with a space before their `#`, 0.1.11 may not recognise those few addresses as already saved, so saving one of them again there makes a second bookmark." WORDING: needs his OK.
+
 S23.16.2 Why. The upgrade run of 04.11 found that 0.1.0 opens a database 0.1.11 upgraded. S4.10, S12.7, S19.1: 0.1.0's migrate loop does nothing when the stored version is higher (`git show v0.1.0:internal/store/store.go`, line 146); 0.1.1 to 0.1.10 refuse it (`git show v0.1.1:internal/store/store.go`, line 161). S20.4: lock and share hashes in the `k1:` form fail 0.1.0's plain bcrypt compare (`git show v0.1.0:internal/server/locks.go`, line 300).
 
 S23.16.3 Cases. 0.1.0 (opens it), 0.1.1 to 0.1.10 (refuse with "database was written by a newer Pinned (schema N); this version knows 6. ..."), 0.1.11 (refuses a newer schema and names the copy, S4.11), 0.1.12 (no new schema, so 0.1.11 opens a 0.1.12 database, S23.0.4). Each read with `git show vX.Y.Z:internal/store/store.go`.
