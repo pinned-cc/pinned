@@ -1236,3 +1236,17 @@ S23.22.1 What changes. internal/store/testdata/upgrade gets v0.1.11.db.gz and v0
 S23.22.2 Why. Code review 04.11, low: there was no fixture of schema 12 with keyed hashes, stamps and sessions, the database almost every user upgrades from next. TOTP_SECRET stores nothing in the database (the code check is in memory), so the run does not set it.
 
 S23.22.3 Test. `go test ./internal/store` runs TestReleasedDatabasesUpgrade and TestReleasedDatabasesKeepThePassword over twelve databases; TestReleasedKeysSetAgain (S23.4.7) uses the 0.1.11 one. gitleaks keeps to the allowlist of S23.19, which covers the folder.
+
+### 23.23 The extension carries the app's version (code review 04.11, low)
+
+S23.23.1 What changes. extras/extension/manifest.json:5, `"version": "1.0.0"` becomes `"version": "0.1.12"`, the version of the release it ships in, and from now on it moves with each release. tools/extension.test.mjs checks that it equals the newest heading of CHANGELOG.md, so a release cannot ship with an old one. S11.5 and S20.7 describe 0.1.11 and stay as they are.
+
+S23.23.2 Why. Code review 04.11, low: the version was 1.0.0 in every release (S20.7), while options.js and ui.css change in 0.1.12, so neither a user nor a later store could tell whether a loaded extension has the http warning of S23.1.
+
+S23.23.3 Going down from 1.0.0. The extension is only loaded unpacked (Chromium browsers, from the folder) or as a temporary add-on (Firefox, about:debugging); there is no store listing and no update URL (S20.8), so no update check compares versions. Checked on 04.11: in Chromium (Playwright 1.61.0, a persistent profile), the folder loaded with 1.0.0 and then again with 0.1.12 at the same path runs 0.1.12 with the same extension id and keeps what was stored (server address and token). Firefox replaces a temporary add-on of the same id whatever its version (XPIInstall.sys.mjs, installTemporaryAddon and _activateAddon, read on 04.11: no version comparison), and a file install of a lower version is not refused either (only a version an update asked for is checked). So 0.1.12 is used, not 1.1.0. A store listing later starts from the version of that release.
+
+S23.23.4 Where the version shows. Chromium browsers: the extension's card on chrome://extensions (brave://extensions, edge://extensions), under the name. Firefox: the extension's entry on about:debugging (This Firefox), and Manage on about:addons. The extension's own pages do not show it, and nothing in the extension or the server reads it.
+
+S23.23.5 Cases. Packed into the zip at build (tools/pack-extension.sh, Dockerfile:16), so the zip a 0.1.12 server serves at `/extras/pinned-extension.zip` says 0.1.12. An extension loaded earlier keeps saying 1.0.0 until it is loaded again. Wording: none in the app.
+
+S23.23.6 Test. `node --test tools/extension.test.mjs`: the new check fails at 1.0.0 and passes at 0.1.12.

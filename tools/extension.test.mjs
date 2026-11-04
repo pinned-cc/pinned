@@ -455,3 +455,12 @@ test('options: an address saved before with http:// for a public host is used un
   await o.click(); assert.equal(o.statusText(), TEST_WARN); assert.equal(o.net.seen.length, 0);
   await o.click(); assert.match(o.statusText(), /^Connected/);
 });
+
+// The extension carries the version of the release it ships in, the newest
+// heading of CHANGELOG.md, so a user can tell which build is loaded (spec S23.23).
+test('manifest version is the newest release in CHANGELOG.md', () => {
+  const manifest = JSON.parse(source('manifest.json'));
+  const changelog = readFileSync(join(dir, '..', '..', 'CHANGELOG.md'), 'utf8');
+  const newest = changelog.match(/^## (\d+\.\d+\.\d+)/m)[1];
+  assert.equal(manifest.version, newest);
+});
