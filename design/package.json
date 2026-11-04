@@ -12,10 +12,13 @@
     "proof": "npm run check:tokens && npm run build-storybook && npm run shoot"
   },
   "devDependencies": {
-    "@storybook/html-vite": "9.1.21",
+    "@storybook/html-vite": "10.6.5",
     "mermaid": "12.2.0",
-    "storybook": "9.1.21",
+    "storybook": "10.6.5",
     "style-dictionary": "5.7.1",
     "vite": "7.3.7"
+  },
+  "overrides": {
+    "glob": "14.0.3"
   }
 }

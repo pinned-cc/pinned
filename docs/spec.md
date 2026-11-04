@@ -1273,3 +1273,13 @@ S23.23.4 Where the version shows. Chromium browsers: the extension's card on chr
 S23.23.5 Cases. Packed into the zip at build (tools/pack-extension.sh, Dockerfile:16), so the zip a 0.1.12 server serves at `/extras/pinned-extension.zip` says 0.1.12. An extension loaded earlier keeps saying 1.0.0 until it is loaded again. Wording: none in the app.
 
 S23.23.6 Test. `node --test tools/extension.test.mjs`: the new check fails at 1.0.0 and passes at 0.1.12.
+
+### 23.24 design/: the dev tools move past their npm advisories (release audit 5, F-174, low)
+
+S23.24.1 What changes. design/package.json: `storybook` and `@storybook/html-vite` 9.1.21 become 10.6.5, and an `overrides` entry sets `glob` to 14.0.3; design/package-lock.json is resolved again from these ranges. Storybook 10 no longer pulls in `@vitest/mocker` (3.2.4 had GHSA-82fw-gwwq-j7x9 and GHSA-qxg6-89mg-rqv8, fixed in 4.1.12, which no Storybook 9 accepts); glob 14.0.3 fixes GHSA-3g3m-2fjr-6pw4 and brings minimatch 11.0.4, which fixes GHSA-g3hv-75wg-m249. style-dictionary 5.7.1 reaches glob through `@bundled-es-modules/glob`, whose Node entry re-exports `glob/raw`, which glob 14 still exports, so the override is the glob style-dictionary runs.
+
+S23.24.2 What stays: deepmerge 4.3.1, GHSA-gcqx-w48m-w2h4 (low, prototype poisoning of the merged object). The advisory names no fixed version (last affected 4.3.1, the newest release, checked on osv.dev and npm on 04.11). style-dictionary 5.7.1 and the newest, 5.8.0, take it through `@bundled-es-modules/deepmerge`, which carries its own copy. It merges the token files of design/tokens, which are this repository's own, so no outside input reaches it. Recorded as accepted until a fixed deepmerge or a style-dictionary without it exists.
+
+S23.24.3 Why it is low and touches no user. design/ runs only by hand on the maintainer's machine (Storybook, Style Dictionary, the token check, S23.18.2); it is not in CI, not embedded in the binary (assets.go) and not in the image (Dockerfile:20-31).
+
+S23.24.4 Test. Run on 04.11 in a scratch copy, then the files taken over: `npm install`, `npm run check:tokens` passes ("every token matches web/app.css, and every value in app.css is a token"); `npm run build-storybook` builds, and its index.json holds the same 109 stories with the same ids as the 9.1.21 build. An OSV query over every package of the new design/package-lock.json (402 packages) finds only deepmerge 4.3.1; over the old lock it found the four packages of F-174. `npm run shoot` (screens against the real app) is not run here: it needs the capture of the real app first (S23.18).
