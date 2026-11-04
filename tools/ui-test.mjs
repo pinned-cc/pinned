@@ -2252,8 +2252,8 @@ async function release0112(browser, engine) {
       } finally { await c.close(); } }
   });
 
-  await check('S23.6 Add sheet with an already saved address: at 360x780 the Folder row shows whole above the foot; with the keyboard stand-in (--vvh, --kb) the sheet keeps its top and Save in view at 360 and 390', async () => {
-    for (const [w, h] of [[360, 780], [390, 844]]) { const c = await phoneCtx(w, h); const p = await c.newPage();
+  await check('S23.6 Add sheet with an already saved address: at 360x780 the Folder row shows whole above the foot; it grows no further than the end of the Folder row, so where the row fits in 60 percent the sheet keeps that bound; with the keyboard stand-in (--vvh, --kb) the sheet keeps its top and Save in view at 360, 390 and 440', async () => {
+    for (const [w, h] of [[360, 780], [390, 844], [440, 956]]) { const c = await phoneCtx(w, h); const p = await c.newPage();
       try {
         await p.goto(BASE + '/'); await visible(p.locator('#papp .ptbar.tabs'));
         await p.tap('.pbottom .padd'); await sheetOpen(p);
@@ -2262,7 +2262,9 @@ async function release0112(browser, engine) {
         const g = await p.evaluate(() => { const r = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null; };
           const body = r('#sheet .sh-body'), lbl = r('#sheet #sv-fl'), row = r('#sheet .sv-folder .fpick'), sheet = r('#sheet');
           return { body: [body.top, body.bottom], lbl: [lbl.top, lbl.bottom], row: row && row.height ? [row.top, row.bottom] : null, sheetH: sheet.height, sheetTop: sheet.top, vvh: innerHeight }; });
-        if (w === 360) assert(g.row && g.lbl[0] >= g.body[0] && g.row[1] <= g.body[1] + 0.5, '360: the Folder row is cut: ' + JSON.stringify(g));
+        assert(g.row && g.lbl[0] >= g.body[0] && g.row[1] <= g.body[1] + 0.5, w + ': the Folder row is cut: ' + JSON.stringify(g));
+        const need = await p.evaluate(() => parseFloat(document.querySelector('#sheet').style.getPropertyValue('--sv-need')) || 0);
+        assert(need > 0 && g.sheetH <= Math.max(0.6 * h, need) + 1, w + ': the sheet is taller than 60 percent or the Folder row needs: ' + JSON.stringify({ h: g.sheetH, need }));
         if (w === 360) await shot(p, `${engine}-r12-add-sheet-360`);
         /* the keyboard stand-in: what phone.js sets when a 336 px keyboard is up (S23.6.3) */
         await p.evaluate(kb => { const d = document.documentElement.style; d.setProperty('--vvh', (innerHeight - kb) + 'px'); d.setProperty('--kb', kb + 'px'); }, 336);

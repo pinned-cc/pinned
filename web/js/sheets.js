@@ -74,7 +74,22 @@ export function fillSheet() {
   if (s.type === 'addto') atAfterFill();
   if (hadFocus && !el.contains(document.activeElement)) el.focus({ preventScroll: true }); /* a redraw keeps focus inside the sheet */
   const ta = el.querySelector('textarea'); if (ta) fitTa(ta);
+  fitSave(el, s.type === 'save');
   if (s.type === 'name') { const i = el.querySelector('input'); const n = i.value.length; try { i.setSelectionRange(n, n); } catch (e) { /* ok */ } }
+}
+/* the save sheet on the phone keeps the 60 percent bound of every sheet, and grows past it only as far as the end of
+   the Folder row, at most to the visible height (app.css, .sheet:has(form[data-save])): --sv-need is the sheet's
+   height with the body shown down to that row. Measured again when the form changes size (the Already saved line,
+   the picker, the address field). */
+let svFit = null;
+function fitSave(el, on) {
+  if (svFit) { svFit.disconnect(); svFit = null; }
+  el.style.removeProperty('--sv-need');
+  const f = on && el.querySelector('form[data-save]'); if (!f || !window.ResizeObserver) return;
+  const set = () => { const b = el.querySelector('.sh-body'), r = el.querySelector('.sv-folder'); if (!b || !r) return;
+    const need = el.offsetHeight - b.clientHeight + r.getBoundingClientRect().bottom - b.getBoundingClientRect().top + b.scrollTop;
+    el.style.setProperty('--sv-need', Math.ceil(need) + 'px'); };
+  svFit = new ResizeObserver(set); svFit.observe(f); set();
 }
 export const fitTa = ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 2 + 'px'; };
 
