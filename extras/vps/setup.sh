@@ -2,11 +2,11 @@
 # Pinned on a fresh server: installs Docker if it is missing, writes the compose file, asks for the
 # password once and starts the container. Debian, Ubuntu and most Docker-capable distributions.
 #
-#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/v0.1.11/extras/vps/setup.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/v0.1.12/extras/vps/setup.sh | sh
 #
 # It asks for the password on the terminal. Without one (cloud-init, CI), set APP_PASSWORD:
 #
-#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/v0.1.11/extras/vps/setup.sh | APP_PASSWORD='...' sh
+#   curl -fsSL https://raw.githubusercontent.com/pinned-cc/pinned/v0.1.12/extras/vps/setup.sh | APP_PASSWORD='...' sh
 #
 # Afterwards Pinned answers on port 9095 of this server only (127.0.0.1), for a proxy on the same server that
 # does HTTPS: Caddy, Traefik or a Cloudflare tunnel. See the README. To reach it on plain http from other
@@ -16,7 +16,7 @@ set -eu
 DIR="${PINNED_DIR:-$HOME/pinned}"
 PORT="${PINNED_PORT:-9095}"
 # the release this script belongs to; a re-run of a newer release's script updates
-IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:0.1.11}"
+IMAGE="${PINNED_IMAGE:-ghcr.io/pinned-cc/pinned:0.1.12}"
 # the address the port is published on: this server only by default. A firewall such as ufw does not block
 # Docker's ports, so any other address is reachable from every network that reaches it.
 BIND="${PINNED_BIND:-127.0.0.1}"

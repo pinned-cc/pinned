@@ -65,7 +65,7 @@ grep -q 'on this server only' "$T/default.out" || bad "default does not say this
 grep -q 'Next: put HTTPS in front' "$T/default.out" || bad "default does not name the next step"
 grep -q WARNING "$T/default.out" && bad "default warns"
 grep -q 'ifconfig.me' "$T/default.curl" && bad "default asked ifconfig.me"
-grep -q 'ghcr.io/pinned-cc/pinned:0.1.11' "$T/default/compose.yml" || bad "image is not the release tag"
+grep -q 'ghcr.io/pinned-cc/pinned:0.1.12' "$T/default/compose.yml" || bad "image is not the release tag"
 
 # Every other address warns: all addresses, one public address, IPv6.
 for bind in 0.0.0.0 :: 203.0.113.5 2001:db8::5; do
