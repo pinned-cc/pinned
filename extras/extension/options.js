@@ -18,6 +18,24 @@
     if (!t) { show('bad', 'Enter the token.'); tok.focus(); return null; }
     return { candidates: c, token: t };
   }
+  /* an address typed with http:// for a host outside the own network sends the token in clear: Test and Save say so first
+     and go ahead on a second click of the same button; once gone ahead, the address counts for both until it changes.
+     Decided on the cleaned address, so the address Save writes back into the field is the same address. */
+  var armed = null, confirmed = '';
+  function plainPublic(c) {
+    if (c.length !== 1) return '';
+    var u = new URL(c[0]);
+    return u.protocol === 'http:' && !Pinned.localHost(u.hostname) ? c[0] : '';
+  }
+  function holdForPlain(cfg, button) {
+    var a = plainPublic(cfg.candidates);
+    if (a !== confirmed) confirmed = '';
+    if (!a || a === confirmed) { armed = null; return false; }
+    if (armed && armed.address === a && armed.button === button) { armed = null; confirmed = a; return false; }
+    armed = { address: a, button: button };
+    show('bad', 'On plain http your token may cross the internet unencrypted. Use https, or click ' + (button === 'test' ? 'Test again to connect' : 'Save again to save') + ' anyway.');
+    return true;
+  }
   function folderCount(f) { var n = Array.isArray(f) ? f.length : 0; return n + (n === 1 ? ' folder' : ' folders'); }
   /* a refused token or another server answer, said with the address that answered */
   function reachedButText(e) { return 'Reached ' + e.address + ', but ' + e.message.charAt(0).toLowerCase() + e.message.slice(1) + (/[.!?]$/.test(e.message) ? '' : '.'); }
@@ -25,7 +43,7 @@
   Pinned.config().then(function (c) { saved = c; addr.value = c.address; tok.value = c.token; if (!c.address) addr.focus(); });
 
   testBtn.addEventListener('click', async function () {
-    var cfg = read(); if (!cfg) return;
+    var cfg = read(); if (!cfg || holdForPlain(cfg, 'test')) return;
     testBtn.disabled = true; show('wait', 'Testing');
     try {
       var got = await Pinned.probe(cfg.candidates, cfg.token);
@@ -36,7 +54,7 @@
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    var cfg = read(); if (!cfg) return;
+    var cfg = read(); if (!cfg || holdForPlain(cfg, 'save')) return;
     var patterns = cfg.candidates.map(Pinned.originPattern), host = new URL(cfg.candidates[0]).hostname;
     /* the request has to start inside the click, before anything is awaited; without a scheme it asks for both,
        and the one that does not answer is given back below */
