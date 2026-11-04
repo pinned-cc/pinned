@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"math"
+	mrand "math/rand/v2"
 	"runtime"
 	"strings"
 	"testing"
@@ -91,15 +91,21 @@ func TestBreachedPassword(t *testing.T) {
 // TestBreachedRandomPasswords checks 100000 random 16 character passwords:
 // at a false positive rate of one in a million, none should be refused.
 func TestBreachedRandomPasswords(t *testing.T) {
+	// The filter refuses about one password in a million that is not in the
+	// list. With 100000 truly random tries a run would then fail about one
+	// time in ten, so the tries come from a fixed seed and the bound allows
+	// for that rate: more than 5 refused means the rate is well above one in
+	// a million.
 	const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!"
 	n := 100000
 	if testing.Short() {
 		n = 10000
 	}
+	src := mrand.NewChaCha8([32]byte{'p', 'i', 'n', 'n', 'e', 'd'})
 	buf := make([]byte, 16)
 	refused := 0
 	for i := 0; i < n; i++ {
-		if _, err := rand.Read(buf); err != nil {
+		if _, err := src.Read(buf); err != nil {
 			t.Fatal(err)
 		}
 		for j := range buf {
@@ -109,9 +115,10 @@ func TestBreachedRandomPasswords(t *testing.T) {
 			refused++
 		}
 	}
-	if refused > 0 {
+	if refused > 5 {
 		t.Errorf("%d of %d random passwords refused", refused, n)
 	}
+	t.Logf("%d of %d random passwords refused", refused, n)
 }
 
 // TestBreachedCost logs what the filter costs: the first check opens it,
