@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -185,22 +186,18 @@ func (s *Server) visibleBookmark(r *http.Request, id int64) (store.Bookmark, *lo
 	return b, v, nil
 }
 
-// writeLockedDuplicate answers a duplicate whose original is hidden without
-// telling anything about it. The duplicate lookups skip hidden folders, so
-// it should not happen; it stays so a hidden bookmark is never shown.
-func writeLockedDuplicate(w http.ResponseWriter) {
-	writeJSON(w, http.StatusConflict, map[string]any{"error": "Already saved", "duplicate": nil, "locked": true})
-}
-
-// handleDuplicate writes a 409 for a duplicate error, hiding a locked original.
-// It returns false when err is not a duplicate.
+// handleDuplicate writes a 409 for a duplicate error. It returns false when
+// err is not a duplicate. The duplicate lookups skip the folders v hides,
+// so an original the caller cannot see does not reach it; if one ever did,
+// it answers 500 without telling anything about that bookmark.
 func handleDuplicate(w http.ResponseWriter, v *lockView, err error) bool {
 	var dup *store.DuplicateError
 	if !errors.As(err, &dup) {
 		return false
 	}
 	if v != nil && v.bookmarkHidden(dup.Existing) {
-		writeLockedDuplicate(w)
+		log.Printf("error: a duplicate lookup found a bookmark in a locked folder")
+		writeError(w, http.StatusInternalServerError, "something went wrong")
 		return true
 	}
 	writeJSON(w, http.StatusConflict, map[string]any{"error": "Already saved", "duplicate": toJSON(dup.Existing)})

@@ -3,6 +3,7 @@ package server
 import (
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -599,5 +600,30 @@ func TestTokenBoundToFirstExtensionOrigin(t *testing.T) {
 	// A new token is free again.
 	if resp := call("chrome-extension://other"); resp.StatusCode != 200 {
 		t.Errorf("new token from another extension: %d", resp.StatusCode)
+	}
+}
+
+// The duplicate lookups never hand back a bookmark the caller cannot see.
+// If one ever did, the answer is a 500 that names nothing of it, no longer
+// the locked 409 of 0.1.0 to 0.1.11 (spec S23.15).
+func TestHiddenDuplicateTellsNothing(t *testing.T) {
+	hash := "k1:x"
+	work := int64(7)
+	v := &lockView{folders: map[int64]store.Folder{work: {ID: work, Name: "Work", LockHash: &hash}}, open: map[int64]bool{}}
+	dup := &store.DuplicateError{Existing: store.Bookmark{ID: 3, Title: "Payroll portal", URL: "https://example.org/portal", FolderID: &work}}
+	w := httptest.NewRecorder()
+	if !handleDuplicate(w, v, dup) {
+		t.Fatal("a duplicate error was not handled")
+	}
+	body := w.Body.String()
+	if w.Code != 500 || strings.Contains(body, "Payroll") || strings.Contains(body, "example.org") || strings.Contains(body, "locked") || strings.Contains(body, "duplicate") {
+		t.Errorf("hidden duplicate: %d %s", w.Code, body)
+	}
+	// One the caller can see is still the 409 with the bookmark.
+	v.open[work] = true
+	w = httptest.NewRecorder()
+	handleDuplicate(w, v, dup)
+	if w.Code != 409 || !strings.Contains(w.Body.String(), "example.org/portal") {
+		t.Errorf("visible duplicate: %d %s", w.Code, w.Body.String())
 	}
 }
