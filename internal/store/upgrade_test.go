@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/pinned-cc/pinned/internal/auth"
+	"github.com/pinned-cc/pinned/internal/urlkey"
 )
 
 // The databases in testdata/upgrade were written by the released binaries
@@ -456,5 +458,140 @@ func TestReleasedDatabasesKeepThePassword(t *testing.T) {
 				s.Close()
 			}
 		})
+	}
+}
+
+// TestReleasedKeysSetAgain opens the 0.1.11 database, whose rows with white
+// space before the #fragment carry the key 0.1.11 made, and checks that the
+// first start sets every key again (spec S23.4.7), after a copy, without
+// losing or merging a bookmark, and that the next start changes nothing.
+func TestReleasedKeysSetAgain(t *testing.T) {
+	path, m := fixtureDB(t, "v0.1.11")
+	id := func(name string) int64 {
+		t.Helper()
+		v, ok := m.Bookmarks[name]
+		if !ok {
+			t.Fatalf("the manifest names no bookmark %q", name)
+		}
+		return v
+	}
+	stale := map[int64]string{}
+	func() {
+		db, err := sql.Open("sqlite", "file:"+path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer db.Close()
+		for _, name := range []string{"spaced", "nbsp", "pairspaced", "trashspaced", "lockspaced"} {
+			var key string
+			if err := db.QueryRow(`SELECT url_key FROM bookmarks WHERE id = ?`, id(name)).Scan(&key); err != nil {
+				t.Fatal(err)
+			}
+			if k, _ := urlkey.Key(key); k == key {
+				t.Fatalf("%s: 0.1.11 stored the key %q, which is the key of today", name, key)
+			}
+			stale[id(name)] = key
+		}
+		// A given up icon fetch on the spaced row keeps its count.
+		if _, err := db.Exec(`INSERT INTO icon_failures (bookmark_id, url_key, count) VALUES (?, ?, ?)`, id("spaced"), stale[id("spaced")], IconGiveUp); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _, _ := schemaOf(t, path); v != 12 {
+		t.Errorf("schema %d, want 12: 0.1.11 must still open it", v)
+	}
+	copies, err := listBackups(path)
+	if err != nil || len(copies) != 1 || copies[0].schema != 12 {
+		t.Fatalf("want one schema 12 copy before the keys changed, got %v (%v)", copies, err)
+	}
+	func() {
+		db, err := sql.Open("sqlite", "file:"+filepath.Join(filepath.Dir(path), copies[0].name)+"?mode=ro")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer db.Close()
+		for bid, key := range stale {
+			var got string
+			if err := db.QueryRow(`SELECT url_key FROM bookmarks WHERE id = ?`, bid).Scan(&got); err != nil || got != key {
+				t.Errorf("copy: bookmark %d key %q (%v), want the old %q", bid, got, err, key)
+			}
+		}
+	}()
+
+	all, err := s.Bookmarks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != len(m.State.Bookmarks) {
+		t.Errorf("%d bookmarks, want %d: none is merged or deleted", len(all), len(m.State.Bookmarks))
+	}
+	for _, b := range all {
+		if k, err := urlkey.Key(b.URL); err != nil || k != b.URLKey {
+			t.Errorf("bookmark %d %q: key %q, want %q (%v)", b.ID, b.URL, b.URLKey, k, err)
+		}
+	}
+	given, err := s.IconsGivenUp()
+	if err != nil || given[id("spaced")] != "http://127.0.0.1:13/a" {
+		t.Errorf("icon failure of the spaced row: %q (%v), want it moved to the new key", given[id("spaced")], err)
+	}
+
+	locked := Hidden{m.Folders["private"]: true, m.Folders["inner"]: true}
+	// One page, one bookmark: either spelling finds the row 0.1.11 saved.
+	for _, raw := range []string{"http://127.0.0.1:13/a", "http://127.0.0.1:13/a #top", "http://127.0.0.1:13/a#other"} {
+		if b, err := s.FindLive(raw, locked); err != nil || b.ID != id("spaced") {
+			t.Errorf("check %q: %d, %v; want bookmark %d", raw, b.ID, err, id("spaced"))
+		}
+		var dup *DuplicateError
+		if _, _, err := s.Create(NewBookmark{URL: raw, Hidden: locked}); !errors.As(err, &dup) || dup.Existing.ID != id("spaced") {
+			t.Errorf("save %q: %v, want Already saved with bookmark %d", raw, err, id("spaced"))
+		}
+	}
+	if b, err := s.FindLive("http://127.0.0.1:13/n", locked); err != nil || b.ID != id("nbsp") {
+		t.Errorf("no break space row: %d, %v", b.ID, err)
+	}
+	// The pair 0.1.11 kept as two bookmarks: both kept, the older answers,
+	// a Force save updates the older, an edit of the newer keeps its address.
+	if b, err := s.FindLive("http://127.0.0.1:14/b #y", locked); err != nil || b.ID != id("pair") {
+		t.Errorf("pair: found %d, %v; want the older %d", b.ID, err, id("pair"))
+	}
+	if b, created, err := s.Create(NewBookmark{URL: "http://127.0.0.1:14/b", Title: "Forced", Force: true, Hidden: locked}); err != nil || created || b.ID != id("pair") {
+		t.Errorf("Force save of the pair: %d created=%v %v", b.ID, created, err)
+	}
+	same := "http://127.0.0.1:14/b #x"
+	title := "Pair, edited"
+	if b, changed, err := s.Update(id("pairspaced"), Patch{Title: &title, URL: &same, Hidden: locked}); err != nil || changed || b.Title != title {
+		t.Errorf("edit of the newer of the pair: %+v changed=%v %v", b, changed, err)
+	}
+	for _, name := range []string{"pair", "pairspaced"} {
+		if b, err := s.Bookmark(id(name)); err != nil || b.DeletedAt != nil {
+			t.Errorf("%s: %+v, %v; want it kept and live", name, b, err)
+		}
+	}
+	// In Trash: re-keyed and restorable; in the locked folder: hidden while
+	// locked, found when unlocked.
+	if err := s.Restore(id("trashspaced"), locked); err != nil {
+		t.Errorf("restore: %v", err)
+	}
+	if _, err := s.FindLive("http://127.0.0.1:16/l", locked); !errors.Is(err, ErrNotFound) {
+		t.Errorf("locked row found while locked: %v", err)
+	}
+	if b, err := s.FindLive("http://127.0.0.1:16/l", nil); err != nil || b.ID != id("lockspaced") {
+		t.Errorf("locked row when unlocked: %d, %v", b.ID, err)
+	}
+
+	// The next start finds nothing to change and writes no copy.
+	s.Close()
+	s, err = Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	if again, _ := listBackups(path); len(again) != 1 {
+		t.Errorf("a second start wrote another copy: %v", again)
 	}
 }

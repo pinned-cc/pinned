@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/pinned-cc/pinned/internal/urlkey"
 	_ "modernc.org/sqlite"
 )
 
@@ -85,7 +86,11 @@ func Open(path string) (*Store, error) {
 	db.SetMaxOpenConns(4)
 	db.SetMaxIdleConns(4)
 	s := &Store{db: db, Now: time.Now}
-	if err := s.migrate(path); err != nil {
+	copied, err := s.migrate(path)
+	if err == nil {
+		err = s.rekey(path, copied)
+	}
+	if err != nil {
 		db.Close()
 		var newer *NewerSchemaError
 		var backup *BackupError
@@ -248,47 +253,124 @@ func (e *BackupError) Error() string {
 
 func (e *BackupError) Unwrap() error { return e.Err }
 
-func (s *Store) migrate(path string) error {
+// migrate runs the migrations the database lacks. copied reports whether
+// it wrote a copy of the database first, or the database is new: either way
+// nothing from before this start needs another copy.
+func (s *Store) migrate(path string) (copied bool, err error) {
 	if _, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)`); err != nil {
-		return err
+		return false, err
 	}
 	var version int
-	err := s.db.QueryRow(`SELECT version FROM schema_version`).Scan(&version)
+	err = s.db.QueryRow(`SELECT version FROM schema_version`).Scan(&version)
 	if errors.Is(err, sql.ErrNoRows) {
 		if _, err := s.db.Exec(`INSERT INTO schema_version (version) VALUES (0)`); err != nil {
-			return err
+			return false, err
 		}
 	} else if err != nil {
-		return err
+		return false, err
 	}
 	if version > len(migrations) {
-		return &NewerSchemaError{Have: version, Know: len(migrations), Backup: newestBackup(path, len(migrations))}
+		return false, &NewerSchemaError{Have: version, Know: len(migrations), Backup: newestBackup(path, len(migrations))}
 	}
 	// A new database (version 0) has nothing to keep.
 	if version > 0 && version < len(migrations) {
 		dst, err := backupBeforeMigrate(s.db, path, version)
 		if err != nil {
-			return &BackupError{Version: version, Err: err}
+			return false, &BackupError{Version: version, Err: err}
 		}
 		log.Printf("database: upgrading from schema %d to %d; the database as it was is saved at %s", version, len(migrations), dst)
 	}
 	for i := version; i < len(migrations); i++ {
 		tx, err := s.db.Begin()
 		if err != nil {
-			return err
+			return false, err
 		}
 		if _, err := tx.Exec(migrations[i]); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("migration %d: %w", i+1, err)
+			return false, fmt.Errorf("migration %d: %w", i+1, err)
 		}
 		if _, err := tx.Exec(`UPDATE schema_version SET version = ?`, i+1); err != nil {
 			tx.Rollback()
-			return err
+			return false, err
 		}
 		if err := tx.Commit(); err != nil {
+			return false, err
+		}
+	}
+	return version < len(migrations), nil
+}
+
+// rekey sets url_key to urlkey.Key(url) on every bookmark, live or in Trash,
+// whose stored key differs: keys saved under an older rule, such as the
+// white space before a #fragment that 0.1.11 kept (spec S23.4.7). There is
+// no unique index on url_key (migration 12), so rows that end up with one
+// key are all kept and the oldest answers for the address (liveByKey); no
+// bookmark is deleted or merged. Before it writes, it copies the database
+// as an upgrade does, unless copied says that is done or not needed. If the
+// copy fails, nothing is changed and the start goes on. Only values change,
+// so 0.1.11 still opens the database.
+func (s *Store) rekey(path string, copied bool) error {
+	type change struct {
+		id       int64
+		old, key string
+	}
+	var changes []change
+	rows, err := s.db.Query(`SELECT id, url, url_key FROM bookmarks`)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var c change
+		var raw string
+		if err := rows.Scan(&c.id, &raw, &c.old); err != nil {
+			rows.Close()
+			return err
+		}
+		if key, err := urlkey.Key(raw); err == nil && key != c.old {
+			c.key = key
+			changes = append(changes, c)
+		}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil || len(changes) == 0 {
+		return err
+	}
+	where := "the copy taken before this start's upgrade"
+	if !copied {
+		dst, err := backupBeforeMigrate(s.db, path, len(migrations))
+		if err != nil {
+			log.Printf("database: %d bookmark keys are from an older version and were left as they are: the copy of the database before changing them failed: %v", len(changes), err)
+			return nil
+		}
+		where = dst
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for _, c := range changes {
+		if _, err := tx.Exec(`UPDATE bookmarks SET url_key = ? WHERE id = ? AND url_key = ?`, c.key, c.id, c.old); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`UPDATE icon_failures SET url_key = ? WHERE bookmark_id = ? AND url_key = ?`, c.key, c.id, c.old); err != nil {
 			return err
 		}
 	}
+	var shared int
+	for _, c := range changes {
+		var n int
+		if err := tx.QueryRow(`SELECT COUNT(*) FROM bookmarks WHERE url_key = ? AND id != ?`, c.key, c.id).Scan(&n); err != nil {
+			return err
+		}
+		if n > 0 {
+			shared++
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	log.Printf("database: set the key of %d bookmarks saved under the address rule of an older version (the database as it was is %s); %d of them now have the same address as another bookmark, and all are kept", len(changes), where, shared)
 	return nil
 }
 

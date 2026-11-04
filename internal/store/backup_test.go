@@ -350,3 +350,87 @@ func TestTokenOriginMigration(t *testing.T) {
 		t.Errorf("second bind moved it: %q %v", got, err)
 	}
 }
+
+// staleKeys writes a schema 12 database with rows keyed by hand, as an
+// older rule keyed them, and returns its path and the row ids.
+func staleKeys(t *testing.T, rows [][2]string) (string, []int64) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "bookmarks.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ids []int64
+	for i, r := range rows {
+		res, err := s.db.Exec(`INSERT INTO bookmarks (title, url, url_key, position, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 1)`, r[0], r[0], r[1], i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		id, _ := res.LastInsertId()
+		ids = append(ids, id)
+	}
+	s.Close()
+	return path, ids
+}
+
+// TestRekeyKeepsEveryBookmark: rows whose keys an older rule made and that
+// now give one key are all kept with that key, the oldest answers, and a
+// database with nothing to change gets no copy (spec S23.4.7).
+func TestRekeyKeepsEveryBookmark(t *testing.T) {
+	path, ids := staleKeys(t, [][2]string{
+		{"http://h/a #x", "http://h/a "},
+		{"http://h/a #y", "http://h/a "},
+		{"http://h/a", "http://h/a"},
+		{"http://h/other", "http://h/other"},
+	})
+	if copies, _ := listBackups(path); len(copies) != 0 {
+		t.Fatalf("a new database got a copy: %v", copies)
+	}
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	all, err := s.Bookmarks()
+	if err != nil || len(all) != 4 {
+		t.Fatalf("%d bookmarks (%v), want all 4 kept", len(all), err)
+	}
+	for _, b := range all[:3] {
+		if b.URLKey != "http://h/a" || b.DeletedAt != nil {
+			t.Errorf("bookmark %d: key %q, deleted %v; want http://h/a and live", b.ID, b.URLKey, b.DeletedAt)
+		}
+	}
+	if b, err := s.FindLive("http://h/a #z", nil); err != nil || b.ID != ids[0] {
+		t.Errorf("found %d (%v), want the oldest %d", b.ID, err, ids[0])
+	}
+	if copies, _ := listBackups(path); len(copies) != 1 || copies[0].schema != len(migrations) {
+		t.Errorf("want one copy before the keys changed, got %v", copies)
+	}
+}
+
+// TestRekeyWithoutCopyChangesNothing: when the copy cannot be written, the
+// keys stay as they were and the store still opens.
+func TestRekeyWithoutCopyChangesNothing(t *testing.T) {
+	path, ids := staleKeys(t, [][2]string{{"http://h/a #x", "http://h/a "}})
+	dir := filepath.Dir(path)
+	backupPath = func(string, int, time.Time) string { return filepath.Join(dir, "missing", "copy.db") }
+	t.Cleanup(func() { backupPath = defaultBackupPath })
+	s, err := Open(path)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	b, err := s.Bookmark(ids[0])
+	if err != nil || b.URLKey != "http://h/a " {
+		t.Errorf("key %q (%v), want the old key kept without a copy", b.URLKey, err)
+	}
+	s.Close()
+	backupPath = defaultBackupPath
+	s, err = Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	if b, _ := s.Bookmark(ids[0]); b.URLKey != "http://h/a" {
+		t.Errorf("key %q after a start that can copy, want http://h/a", b.URLKey)
+	}
+}
