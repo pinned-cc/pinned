@@ -38,10 +38,16 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       # No QEMU: the Dockerfile cross compiles with GOARCH on the build platform.
+      # provenance-add-gha=false: buildx would otherwise write the whole push
+      # event, with the pusher's email, into the provenance, in min mode too.
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        with:
+          driver-opts: provenance-add-gha=false
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
@@ -64,7 +70,8 @@ jobs:
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           else echo "value=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"; fi
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+      - id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -77,4 +84,42 @@ jobs:
           # A software bill of materials and the build provenance, attached
           # to the image index (docker buildx imagetools inspect).
           sbom: true
-          provenance: mode=max
+          provenance: mode=min
+
+  # On a release tag: the SBOM of each platform and a signed provenance of the
+  # image go onto the GitHub release, next to the release notes.
+  release-assets:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      # Signed with the workflow's identity, stored by GitHub; anyone can check
+      # it with: gh attestation verify oci://ghcr.io/pinned-cc/pinned:<version> -R pinned-cc/pinned
+      - id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/pinned
+          subject-digest: ${{ needs.image.outputs.digest }}
+      - name: SBOM and provenance onto the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/pinned@${{ needs.image.outputs.digest }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          for arch in amd64 arm64; do
+            docker buildx imagetools inspect "$IMAGE" \
+              --format "{{ json (index .SBOM \"linux/$arch\").SPDX }}" > "sbom-$v-$arch.spdx.json"
+            # An empty or null SBOM fails the job instead of landing on the release.
+            jq -e '.spdxVersion' "sbom-$v-$arch.spdx.json" > /dev/null
+          done
+          cp "$BUNDLE" "pinned-$v-provenance.sigstore.json"
+          # The release is made by hand right after the tag; wait for it, up to 15 minutes.
+          for _ in $(seq 90); do gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1 && break; sleep 10; done
+          gh release upload "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --clobber \
+            "sbom-$v-amd64.spdx.json" "sbom-$v-arm64.spdx.json" "pinned-$v-provenance.sigstore.json"
