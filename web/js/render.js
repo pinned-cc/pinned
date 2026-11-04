@@ -62,8 +62,8 @@ export const sideAction = (name, icon, a) => `<button type="button" class="si" d
 export function deskTree() {
   const sel = ui.view, path = typeof sel === 'number' ? new Set(chain(sel).map(f => f.id)) : new Set();
   /* folders use the same row as All bookmarks, Inbox and Trash: the icon box carries the folder hue */
-  const row = (f, sub) => `<button type="button" class="si sf ${hueClass(f.id)}${sub ? ' sub' : ''}${isLocked(f) ? ' locked' : ''}" data-view="${f.id}" data-fid="${f.id}" aria-current="${f.id === sel}" aria-label="${esc(f.name)}, ${count(f.id)}">
-    <span class="si-ic">${ic('folder')}</span><span class="si-n">${esc(f.name)}</span>${f.share ? ic('link', 'lk') : ''}${f.locked && !isLocked(f) ? ic('lock', 'lk') : ''}${isLocked(f) ? `<span class="si-c si-lock" aria-label="locked">${ic('lock')}</span>` : `<span class="si-c">${count(f.id)}</span>`}</button>`;
+  const row = (f, sub) => `<button type="button" class="si sf ${hueClass(f.id)}${sub ? ' sub' : ''}${isLocked(f) ? ' locked' : ''}" data-view="${f.id}" data-fid="${f.id}" aria-current="${f.id === sel}" aria-label="${esc(f.name)} ${isLocked(f) ? 'locked' : count(f.id)}">
+    <span class="si-ic">${ic('folder')}</span><span class="si-n">${esc(f.name)}</span> ${f.share ? ic('link', 'lk') : ''}${f.locked && !isLocked(f) ? ic('lock', 'lk') : ''}${isLocked(f) ? `<span class="si-c si-lock" aria-label="locked">${ic('lock')}</span>` : `<span class="si-c">${count(f.id)}</span>`}</button>`;
   const level = (pid, sub) => kids(pid).map(f => row(f, sub) + (path.has(f.id) && kids(f.id).length
     ? `<div class="subs" data-parent="${f.id}" role="group" aria-label="${esc(f.name)} folders">${level(f.id, true)}</div>` : '')).join('');
   return `<div class="fstack" data-parent="" role="group" aria-label="Folders">${level(null, false)}</div>`;
@@ -343,9 +343,9 @@ export function phoneRecents() {
   const all = pinned();
   if (!all.length) return head;
   return head + `<div class="pglbl prc-lbl"><span>Pinned</span></div><nav class="precent" aria-label="Recent" data-dock>` + all.map(b => { const src = iconSrc(b), l = esc(b.letter || b.title.charAt(0));
-    return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-id="${b.id}" data-open="${b.id}" draggable="false" aria-label="${esc(b.title)}${b.pinned ? ', pinned' : ''}">
-      <span class="prc-ic" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
-      <span class="prc-l">${esc(b.title)}</span></a>`; }).join('') + `</nav>`;
+    return `<a class="prc${b.pinned ? ' pinned' : ''}" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer" data-id="${b.id}" data-open="${b.id}" draggable="false">
+      <span class="prc-ic" aria-hidden="true" data-l="${l}"${src ? ` style="--tile:${esc(b.tile || 'var(--tile-blank)')}"` : ''}>${src ? `<img src="${esc(src)}" alt="" width="44" height="44" draggable="false">` : l}</span>${b.pinned ? `<span class="prc-pin" aria-hidden="true">${ic('pin')}</span>` : ''}
+      <span class="prc-l">${esc(b.title)}</span>${b.pinned ? '<span class="vh">, pinned</span>' : ''}</a>`; }).join('') + `</nav>`;
 }
 export function phoneBulk() { const n = ui.picked.size, dis = n ? '' : 'disabled';
   /* the count and All are one control: a tap on it selects every card; the bar keeps the desktop's actions in the desktop's order */
