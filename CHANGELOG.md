@@ -6,16 +6,17 @@ Everything that changes for people who run the app goes here. Versions follow se
 
 ### Fixes
 
-- In the browser extension's options, an address typed with `http://` for a server outside your own network now says, on Test and on Save, that your token may cross the internet unencrypted, and goes ahead only when you click again. Before, it said Connected.
-- An address with a space before its `#`, such as `http://nas/a #top`, is now the same bookmark as `http://nas/a`.
+- In the browser extension, an address with `http://` for a server outside your own network now says that your token may cross the internet unencrypted, and goes ahead only when you click again: on Test and Save in the options, and in the popup for an address saved before this version. Before, it said Connected.
+- An address with a space before its `#`, such as `http://nas/a #top`, is now the same bookmark as `http://nas/a`, also for bookmarks saved before.
 - How to save: Show the Save code is easier to tap.
 - On a small phone the Add sheet shows the folder the link goes to.
 - On the phone, the Settings gear shows when the server cannot be reached at the first load.
 - A page that does not exist says so in the app's look, instead of a plain line of text.
 - Small text, such as counts, times, hosts and the version line, is at least 12 px.
 - In the lock dialog the note no longer overlaps the Repeat password field.
-- Screen readers read each folder in the sidebar by the name and count it shows.
+- Screen readers read folders in the sidebar, cards, tiles and the phone search by the words they show.
 - What's new marks the version you run.
+- The extension's version now follows the app's, starting at 0.1.12.
 - An SVG icon with more than eight pictures in its style is now refused when it is fetched. Before, it was stored, removed at the next start and fetched again at every start.
 - The image's build record no longer names the account that pushed the release. The software bill of materials stays. Each release on GitHub now carries the software bill of materials of both platforms and a signed build provenance, which `gh attestation verify` checks.
 
