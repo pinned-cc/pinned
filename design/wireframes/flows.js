@@ -16,13 +16,13 @@ window.FLOWS = [
    },
    {
     "n": "2",
-    "text": "Without a password, or with fewer than 8 characters, the server does not start and says why.",
+    "text": "Without a password, with fewer than 8 characters, or with a common one, the server does not start and says why.",
     "screens": [
      "term-start-error"
     ],
-    "do": "Set a longer password.",
+    "do": "Set another password.",
     "now": "works",
-    "ev": "Binary output: \"APP_PASSWORD is not set. Set it, or APP_PASSWORD_FILE ...\" and \"APP_PASSWORD is shorter than 8 characters ...\"",
+    "ev": "Binary output: \"APP_PASSWORD is not set. Set it, or APP_PASSWORD_FILE ...\", \"APP_PASSWORD is shorter than 8 characters ...\" and, for Pinned2026! or password123, \"APP_PASSWORD is too easy to guess ...\" (FT 04.11).",
     "walk": "click"
    },
    {
@@ -49,13 +49,13 @@ window.FLOWS = [
    },
    {
     "n": "5",
-    "text": "After 5 wrong tries the page says \"Wait 30 seconds and try again.\"; during the wait the right password gets the same answer, with no countdown.",
+    "text": "The fifth wrong try says \"Wrong password. Wait 30 seconds before the next try.\", the next one \"Too many tries. Wait 30 seconds, then try again.\", and the right password during the wait names the time left, such as \"Wait 26 seconds\". The line does not count down.",
     "screens": [
      "login-wait"
     ],
     "do": "Wait, then log in.",
     "now": "friction",
-    "ev": "shot b22; /login?error=wait; web/js/app.js:79 (fixed text).",
+    "ev": "shot f01-05-login-wait (FT 04.11); web/js/app.js:79-84.",
     "walk": "click"
    },
    {
@@ -123,24 +123,24 @@ window.FLOWS = [
    },
    {
     "n": "2",
-    "text": "An address typed without http, such as example.com, is refused on Save with \"Enter a full address starting with http or https.\" The extension options add https:// on their own.",
+    "text": "An address typed without http, such as example.com, is refused on Save with \"Enter a full address starting with http or https.\", the caret at the end of the address. The extension options try https, then http.",
     "screens": [
      "add-noscheme"
     ],
     "do": "Type http:// in front.",
     "now": "friction",
-    "ev": "shot a11; web/js/sheets.js:359; compare extras/extension/shared.js:12.",
+    "ev": "shot f02-02-add-noscheme (FT 04.11); compare extras/extension/shared.js addressCandidates.",
     "walk": "click"
    },
    {
     "n": "3",
-    "text": "After fixing the address the old error stays under the field, next to the live check that now says the link is fine or already saved.",
+    "text": "Typing the address again removes the old error at once; the live check alone says the link is new or already saved.",
     "screens": [
      "add-stale"
     ],
-    "do": "Ignore it and save.",
-    "now": "friction",
-    "ev": "shot a12; web/js/actions.js:281 (onInput never clears s.err); web/js/sheets.js:322.",
+    "do": "Save.",
+    "now": "works",
+    "ev": "shot f02-03-04-add-dupe (FT 04.11); web/js/actions.js:291-295.",
     "walk": "click"
    },
    {
@@ -223,13 +223,13 @@ window.FLOWS = [
    },
    {
     "n": "11",
-    "text": "Extension: How to save, Extension: download, unzip, load unpacked; \"a token\" opens API tokens.",
+    "text": "Extension: How to save, Extension: download, unzip, load unpacked; \"a token\" opens API tokens. Firefox removes it when it quits, so after a restart it is loaded again with a new token.",
     "screens": [
      "howto-extension"
     ],
     "do": "Download, load, then follow a token.",
     "now": "works",
-    "ev": "shot b17-howto-Extension; web/bookmarklet.html:141 (/#tokens), web/js/app.js:42-44.",
+    "ev": "shot f02-11-howto-extension (FT 04.11); web/bookmarklet.html.",
     "walk": "click"
    },
    {
@@ -245,13 +245,14 @@ window.FLOWS = [
    },
    {
     "n": "13",
-    "text": "The home address typed as most people write it, 10.0.0.5:9095, becomes https:// and Test says \"Could not reach https://10.0.0.5:9095.\" Nothing hints that the server speaks http.",
+    "text": "A home address typed as most people write it, 10.0.0.5:9095, tries https, then http, and Test says \"Connected to http://10.0.0.5:9095, 5 folders.\" An address typed with http:// for a host outside the own network first says \"On plain http your token may cross the internet unencrypted. Use https, or click Test again to connect anyway.\" (Save: \"click Save again to save anyway\") and goes ahead on a second click of the same button.",
     "screens": [
-     "ext-options-fail"
+     "ext-options-ok",
+     "ext-options-plain"
     ],
-    "do": "Type http:// in front.",
-    "now": "friction",
-    "ev": "shot e03; extras/extension/shared.js:12 and :34; README install answers on plain http :9095.",
+    "do": "Click again, or type https.",
+    "now": "works",
+    "ev": "shot f02-13-ext-options-noscheme (FT 04.11); the warning from 0.1.12: extras/extension/options.js holdForPlain, tools/extension.test.mjs.",
     "walk": "click"
    },
    {
@@ -463,13 +464,13 @@ window.FLOWS = [
    },
    {
     "n": "11",
-    "text": "After a very large import, All bookmarks draws every card at once: 10000 links hold the page for 1.4 s, 100000 links freeze it for more than 2 minutes. The README promises imports of 470000 links.",
+    "text": "After a very large import, All bookmarks draws the first 240 cards with \"Show all 100000\" in under a second; Show all and scrolling keep every frame short, and the search finds any link.",
     "screens": [
      "all-big"
     ],
-    "do": "Open All bookmarks.",
-    "now": "broken",
-    "ev": "j.mjs timing on 10000 and 100000 imported links; web/js/render.js:149-170 renders all sections.",
+    "do": "Show all, or search.",
+    "now": "works",
+    "ev": "shots f03-11-all-big, f03-11-all-big-showall (FT 04.11): 100000 links drawn in 919 ms, longest frame 83 ms, after Show all 142 ms.",
     "walk": "click"
    }
   ]
@@ -515,13 +516,13 @@ window.FLOWS = [
    },
    {
     "n": "4",
-    "text": "The folder three dots hold Add bookmarks, New folder inside, Rename, Move to, Hide from Recent, Lock with a password, Delete. Share is not there: only the small link glyph by the title opens it (the right click menu has it).",
+    "text": "The folder three dots: Share first, then Add bookmarks, New folder inside, Rename, Move to, Hide from Recent, Lock with a password, Delete.",
     "screens": [
      "folder-menu"
     ],
-    "do": "Look for Share.",
-    "now": "friction",
-    "ev": "shot a28; web/js/actions.js:109 folderItems has no Share, web/js/actions.js:103 folderSheetItems (right click) does.",
+    "do": "Pick Share.",
+    "now": "works",
+    "ev": "shot f04-04-folder-menu (FT 04.11).",
     "walk": "click"
    },
    {
@@ -549,14 +550,14 @@ window.FLOWS = [
    },
    {
     "n": "7",
-    "text": "Move from the card or the selection bar moves without a word: no toast, no Undo. A drag onto a folder says \"Moved to Reading\" with Undo.",
+    "text": "Move from the card's More or the selection bar says \"Moved to Work\" with Undo, as a drag onto a folder does; Undo puts it back.",
     "screens": [
      "move-sheet",
      "folder-moved"
     ],
     "do": "Pick a folder.",
-    "now": "friction",
-    "ev": "log-a \"move toast:\" empty; web/js/actions.js:158 calls actions.move, web/js/actions.js:98-102 moveWithUndo has the toast.",
+    "now": "works",
+    "ev": "shot f04-07-moved (FT 04.11); web/js/actions.js moveWithUndo.",
     "walk": "click"
    },
    {
@@ -620,13 +621,13 @@ window.FLOWS = [
    },
    {
     "n": "13",
-    "text": "With More open in the sidebar at 800 px height the folder list shrinks to about two rows, its scroll bar is hidden, and More stays open on the next visit.",
+    "text": "With More open at 1280 by 800 the folder list keeps 4 of 5 folders in view and the actions scroll in their own space. The folder list's scroll bar is hidden, so the fifth folder gives no sign, and More stays open after a reload.",
     "screens": [
      "dash-more"
     ],
-    "do": "Look for Finance and Work.",
+    "do": "Look for Work.",
     "now": "friction",
-    "ev": "shots a03, a06; web/app.css:198-199 (scrollbar-width:none); web/js/actions.js:204 keeps the open state.",
+    "ev": "shot f04-13-dash-more (FT 04.11); web/app.css scrollbar-width:none.",
     "walk": "click"
    },
    {
@@ -662,24 +663,24 @@ window.FLOWS = [
   "steps": [
    {
     "n": "1",
-    "text": "Folder actions, Lock with a password: Password, Repeat password and the note that it cannot be recovered.",
+    "text": "Folder actions, Lock with a password: Password, Repeat password, a Close button, and 6 px below the second field the note \"Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.\"",
     "screens": [
      "lock-sheet"
     ],
     "do": "Type it twice.",
     "now": "works",
-    "ev": "shot a44.",
+    "ev": "shot f05-01-lock-sheet (FT 04.11); the gap from 0.1.12: web/app.css .fld + .sh-text, tools/ui-test.mjs S23.10.",
     "walk": "start"
    },
    {
     "n": "2",
-    "text": "Fewer than 4 characters, or two that differ, are named under the fields.",
+    "text": "Fewer than 8 characters, two that differ, or one too easy to guess are named under the fields: \"Use at least 8 characters.\", \"The passwords do not match.\", \"This password is too easy to guess. Choose another one.\"",
     "screens": [
      "lock-error"
     ],
     "do": "Fix it.",
     "now": "works",
-    "ev": "log-a \"Use at least 4 characters.\", \"The passwords do not match.\"",
+    "ev": "shot f05-02-lock-error (FT 04.11).",
     "walk": "click"
    },
    {
@@ -719,13 +720,13 @@ window.FLOWS = [
    },
    {
     "n": "6",
-    "text": "The lock dialogs have no close button; only Escape or a tap outside closes them.",
+    "text": "The lock, unlock and remove lock dialogs have a Close button in the head, 44 by 44; Escape and a tap outside close them too.",
     "screens": [
      "unlock"
     ],
-    "do": "Look for a way out.",
-    "now": "friction",
-    "ev": "shot a46; web/js/sheets.js:83-91 (no close in lockHTML); P-WEB-2.",
+    "do": "Close.",
+    "now": "works",
+    "ev": "shot f05-07-remove-lock (FT 04.11).",
     "walk": "click"
    },
    {
@@ -742,13 +743,13 @@ window.FLOWS = [
    },
    {
     "n": "8",
-    "text": "On the phone the lock dialog note sits tight under the second field.",
+    "text": "On the phone the lock dialog note sits 6 px below the Repeat password field, as on the desktop.",
     "screens": [
      "p-lock"
     ],
     "do": "Read the note.",
-    "now": "friction",
-    "ev": "shot b13.",
+    "now": "works",
+    "ev": "shot f05-08-phone-lock (FT 04.11, the 6 px overlap of 0.1.11); fixed in 0.1.12: web/app.css .fld + .sh-text, tools/ui-test.mjs S23.10.",
     "walk": "click"
    }
   ]
@@ -793,14 +794,14 @@ window.FLOWS = [
    },
    {
     "n": "4",
-    "text": "Lock with a password: a password under 8 characters is refused only after Set, \"A share password needs at least 8 characters.\"; the field gives no hint before.",
+    "text": "Share with a password: \"Use at least 8 characters.\" sits under the field before Set; a shorter one then says \"A share password needs at least 8 characters.\"",
     "screens": [
      "share-pw",
      "share-pw-error"
     ],
     "do": "Type 8 or more.",
-    "now": "friction",
-    "ev": "shot a35.",
+    "now": "works",
+    "ev": "shots f06-04-share-pw, f06-04-share-pw-error (FT 04.11).",
     "walk": "click"
    },
    {
@@ -881,13 +882,13 @@ window.FLOWS = [
    },
    {
     "n": "2",
-    "text": "While it runs nothing shows: no progress, Import stays live for a second click, the empty Dashboard stays empty. A 20 MB file takes about 15 seconds.",
+    "text": "While it runs a toast says \"Importing. This can take a moment for a big file.\" and every Import is disabled and busy. 100000 links (17.4 MB) take about 9 seconds.",
     "screens": [
      "import-running"
     ],
-    "do": "Wait without knowing.",
-    "now": "friction",
-    "ev": "shot i01; web/js/actions.js:133-137 (no busy state); CHANGELOG 0.1.11 \"about 15 seconds\".",
+    "do": "Wait.",
+    "now": "works",
+    "ev": "log-big 07.2 (FT 04.11).",
     "walk": "click"
    },
    {
@@ -936,13 +937,13 @@ window.FLOWS = [
    },
    {
     "n": "7",
-    "text": "With a folder locked in this browser the export leaves it out and says nothing; someone moving away or keeping a copy loses those links without knowing.",
+    "text": "With a folder locked in this browser the export leaves it out and says so: \"Exported without Finance: it is locked. Unlock it first to include it.\"",
     "screens": [
      "export"
     ],
-    "do": "Trust the file.",
-    "now": "friction",
-    "ev": "log-a \"has Finance: false\"; internal/server/api.go:707; README says it, the app does not.",
+    "do": "Unlock it first, or keep the file.",
+    "now": "works",
+    "ev": "shot f07-07-export (FT 04.11).",
     "walk": "click"
    },
    {
@@ -986,35 +987,35 @@ window.FLOWS = [
    },
    {
     "n": "3",
-    "text": "A wrong code says \"Wrong password or code.\" and both fields are empty again.",
+    "text": "A wrong code says \"Wrong password or code. A code works once: wait for the next one.\" and both fields are empty again.",
     "screens": [
      "login-code-error"
     ],
     "do": "Type both again.",
     "now": "friction",
-    "ev": "shot c02; internal/server/pages.go:97-103 (redirect, the form is lost).",
+    "ev": "shot f08-03-login-code-error (FT 04.11); internal/server/pages.go:89-109 (redirect, the form is lost).",
     "walk": "click"
    },
    {
     "n": "4",
-    "text": "The same code used in a second browser inside its 30 seconds is refused with the same text.",
+    "text": "The same code used in a second browser inside its 30 seconds is refused with \"A code works once: wait for the next one.\"",
     "screens": [
      "login-code-error"
     ],
     "do": "Wait for the next code.",
-    "now": "friction",
-    "ev": "log-c \"same code twice: ... Wrong password or code.\"",
+    "now": "works",
+    "ev": "shot f08-04-same-code (FT 04.11).",
     "walk": "click"
    },
    {
     "n": "5",
-    "text": "After 5 wrong codes every login is held from 1 minute up to a day, but the page says \"Wait 30 seconds and try again.\" and the right code gets the same answer while the hold lasts.",
+    "text": "After 5 wrong codes in a row: \"Wrong password or code. Wait 60 seconds before the next try.\", then \"Too many tries. Wait 59 seconds, then try again.\"; the right code during the hold names the time left, and after the wait it logs in.",
     "screens": [
      "login-wait"
     ],
-    "do": "Wait 30 seconds, fail again.",
-    "now": "broken",
-    "ev": "log-c \"after 5 wrong codes\", \"right code during hold\"; web/js/app.js:79; README, Wrong passwords and tokens.",
+    "do": "Wait the time it names.",
+    "now": "works",
+    "ev": "shots f08-05-hold-5, f08-05-right-during-hold (FT 04.11); log security event=totp.wait.",
     "walk": "click"
    },
    {
@@ -1136,13 +1137,13 @@ window.FLOWS = [
    },
    {
     "n": "4",
-    "text": "The form is gone after Create: a second token needs the sheet closed and opened again, and nothing says where the token goes next.",
+    "text": "After Create the sheet says \"Next, paste it into the extension's options with the address\" of this server \"or into your script.\" The form is gone: a second token needs the sheet closed and opened again.",
     "screens": [
      "token-created"
     ],
     "do": "Close, reopen.",
     "now": "friction",
-    "ev": "web/js/sheets.js:199-202.",
+    "ev": "shot f09-03-token-created (FT 04.11).",
     "walk": "click"
    },
    {
@@ -1219,13 +1220,13 @@ window.FLOWS = [
    },
    {
     "n": "4",
-    "text": "What's new shows the changelog of this version, the last three open.",
+    "text": "What's new shows the changelog, the last three releases open and older ones folded; the release you run is marked \"This version\", also on a release image whose version starts with v.",
     "screens": [
      "whats-new"
     ],
     "do": "Read.",
     "now": "works",
-    "ev": "shot a61; web/js/sheets.js:164-188.",
+    "ev": "shot f10-04-whats-new (FT 04.11, no mark on v0.1.11); the mark from 0.1.12: web/js/sheets.js releaseHTML, tools/ui-test.mjs S23.13.",
     "walk": "click"
    },
    {
@@ -1280,13 +1281,13 @@ window.FLOWS = [
    },
    {
     "n": "3",
-    "text": "Going back, 0.1.10 refuses: \"database was written by a newer Pinned (schema 12); this version knows 6. Update the image or restore a backup.\" It names no file and no README section; the container restarts into the same line.",
+    "text": "Going back, 0.1.10 refuses: \"database was written by a newer Pinned (schema 12); this version knows 6. Update the image or restore a backup.\" It names no file. From 0.1.11 on, a version that refuses a newer database names the copy to restore and the README section.",
     "screens": [
      "term-downgrade"
     ],
     "do": "Find the README section.",
     "now": "friction",
-    "ev": "Run: 0.1.10 on the upgraded folder; internal/store/store.go:210 has the same text for the next downgrade.",
+    "ev": "log-upgrade 11.3 (FT 04.11); internal/store/store.go:214-220.",
     "walk": "click"
    },
    {
@@ -1319,36 +1320,37 @@ window.FLOWS = [
   "steps": [
    {
     "n": "1",
-    "text": "Wrong password and the wait after 5 tries (01.4, 01.5).",
+    "text": "Wrong password, and the wait after 5 tries with the time left (01.4, 01.5).",
     "screens": [
      "login-error",
      "login-wait"
     ],
     "do": "See flow 01.",
     "now": "works",
-    "ev": "shots a01, b22.",
+    "ev": "shots f01-04-login-wrong, f01-05-login-wait (FT 04.11).",
     "walk": "start"
    },
    {
     "n": "2",
-    "text": "The server stops while the app is open: Save says \"Could not save. Try again.\"; nothing says the server cannot be reached.",
+    "text": "The server stops while the app is open: Save says \"Cannot reach your Pinned server. Check your connection, then try again.\"",
     "screens": [
      "save-down"
     ],
-    "do": "Try again, in vain.",
-    "now": "friction",
-    "ev": "shot c10; web/js/sheets.js:366.",
+    "do": "Try again when it is back.",
+    "now": "works",
+    "ev": "shot f12-02-save-down (FT 04.11); web/js/api.js.",
     "walk": "click"
    },
    {
     "n": "3",
-    "text": "The cards stay on screen, dimmed, under \"Bookmarks could not load.\" with Retry.",
+    "text": "The cards stay on screen, dimmed, under \"Cannot reach your Pinned server.\" with Retry. On the phone, when the server cannot be reached at the first load, the head with the bulb and the Settings gear shows above the tabs and the notice.",
     "screens": [
-     "notice-down"
+     "notice-down",
+     "p-notice-down"
     ],
-    "do": "Retry.",
+    "do": "Retry, or open Settings.",
     "now": "works",
-    "ev": "shot c12; web/js/render.js:147.",
+    "ev": "shot f12-03-notice-down (FT 04.11); the phone head from 0.1.12: web/js/render.js phoneRecents, tools/ui-test.mjs S23.7.",
     "walk": "click"
    },
    {
@@ -1450,6 +1452,7 @@ window.TITLES = {
  "ext-options": "Extension options, empty",
  "ext-options-fail": "Extension options, nothing answers, Test names both addresses it tried",
  "ext-options-ok": "Extension options, the address as typed, Test found it on http",
+ "ext-options-plain": "Extension options, an http:// address outside the own network: Test warns first, a second click connects",
  "ext-popup-nosetup": "Extension popup before setup",
  "ext-popup": "Extension popup",
  "ext-popup-picker": "Extension popup, every folder",
@@ -1490,7 +1493,7 @@ window.TITLES = {
  "unlocked": "Finance unlocked for 10 minutes",
  "unlocked-menu": "Unlocked folder actions: Relock now, Remove lock",
  "remove-lock": "Remove lock, asks the app password",
- "p-lock": "Phone, lock dialog, note tight under the field",
+ "p-lock": "Phone, lock dialog, the note below the field",
  "reading": "Folder, Reading",
  "share-off": "Share, off",
  "share-on": "Share, link on",
@@ -1530,5 +1533,6 @@ window.TITLES = {
  "term-restore": "Terminal, restoring the saved copy",
  "save-down": "Server down, Save fails",
  "notice-down": "Server down, could not load, Retry",
+ "p-notice-down": "Phone, server down at the first load: the head with the gear, the tabs, the notice",
  "browser-down": "Server down, reload shows the browser error"
 };

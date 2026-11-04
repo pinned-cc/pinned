@@ -3,8 +3,8 @@ flowchart TD
   classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
   S1["1. Add (desktop) or the plus (phone) opens the<br/>save sheet, the folder preset to the last one<br/>used.<br/><i>works</i>"]:::works
-  S2["2. An address typed without http, such as<br/>example.com, is refused on Save with 'Enter a<br/>full address starting with http or https.' The<br/>extension options add https:// on their own.<br/><i>friction</i>"]:::friction
-  S3["3. After fixing the address the old error stays<br/>under the field, next to the live check that<br/>now says the link is fine or already saved.<br/><i>friction</i>"]:::friction
+  S2["2. An address typed without http, such as<br/>example.com, is refused on Save with 'Enter a<br/>full address starting with http or https.', the<br/>caret at the end of the address. The extension<br/>options try https, then http.<br/><i>friction</i>"]:::friction
+  S3["3. Typing the address again removes the old error<br/>at once; the live check alone says the link is<br/>new or already saved.<br/><i>works</i>"]:::works
   S4["4. An address already saved shows 'Already saved<br/>in Homelab. Save anyway moves it here.' and the<br/>button turns into Save anyway.<br/><i>works</i>"]:::works
   S5["5. The same host on another port is a new<br/>bookmark: Not saved yet.<br/><i>works</i>"]:::works
   S6["6. Choose another folder lists every folder and<br/>New folder.<br/><i>works</i>"]:::works
@@ -12,9 +12,9 @@ flowchart TD
   S8["8. Bookmarklet: How to save, Computer, drag Save<br/>to Pinned into the bookmarks bar.<br/><i>works</i>"]:::works
   S9["9. On any page Save to Pinned opens /save in a<br/>small window with title, address, recent<br/>folders and Log out.<br/><i>works</i>"]:::works
   S10["10. Saving draws a tick and closes the window;<br/>where the browser keeps it open, a Saved state<br/>with Done.<br/><i>works</i>"]:::works
-  S11["11. Extension: How to save, Extension: download,<br/>unzip, load unpacked; 'a token' opens API<br/>tokens.<br/><i>works</i>"]:::works
+  S11["11. Extension: How to save, Extension: download,<br/>unzip, load unpacked; 'a token' opens API<br/>tokens. Firefox removes it when it quits, so<br/>after a restart it is loaded again with a new<br/>token.<br/><i>works</i>"]:::works
   S12["12. With a token made (flow 09), the extension<br/>options take the address and the token.<br/><i>works</i>"]:::works
-  S13["13. The home address typed as most people write it,<br/>10.0.0.5:9095, becomes https:// and Test says<br/>'Could not reach https://10.0.0.5:9095.'<br/>Nothing hints that the server speaks http.<br/><i>friction</i>"]:::friction
+  S13["13. A home address typed as most people write it,<br/>10.0.0.5:9095, tries https, then http, and Test<br/>says 'Connected to http://10.0.0.5:9095, 5<br/>folders.' An address typed with http:// for a<br/>host outside the own network first says 'On<br/>plain http your token may cross the internet<br/>unencrypted. Use https, or click Test again to<br/>connect anyway.' (Save: 'click Save again to<br/>save anyway') and goes ahead on a second click<br/>of the same button.<br/><i>works</i>"]:::works
   S14["14. With http:// Test says 'Connected, 5 folders';<br/>Save stores both and asks the browser for<br/>access to that host.<br/><i>works</i>"]:::works
   S15["15. The toolbar button or Option Shift S opens the<br/>popup: title selected, address, three recent<br/>folders, Save to Inbox.<br/><i>works</i>"]:::works
   S16["16. Saved: the tick draws and the popup closes.<br/><i>works</i>"]:::works

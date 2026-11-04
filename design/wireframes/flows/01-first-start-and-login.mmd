@@ -3,10 +3,10 @@ flowchart TD
   classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
   S1["1. The owner starts the container with a password:<br/>APP_PASSWORD=... docker compose up -d.<br/><i>works</i>"]:::works
-  S2["2. Without a password, or with fewer than 8<br/>characters, the server does not start and says<br/>why.<br/><i>works</i>"]:::works
+  S2["2. Without a password, with fewer than 8<br/>characters, or with a common one, the server<br/>does not start and says why.<br/><i>works</i>"]:::works
   S3["3. Opening the app without a login goes to the<br/>login page.<br/><i>works</i>"]:::works
   S4["4. A wrong password comes back with 'Wrong<br/>password.' and the caret in the field.<br/><i>works</i>"]:::works
-  S5["5. After 5 wrong tries the page says 'Wait 30<br/>seconds and try again.'; during the wait the<br/>right password gets the same answer, with no<br/>countdown.<br/><i>friction</i>"]:::friction
+  S5["5. The fifth wrong try says 'Wrong password. Wait<br/>30 seconds before the next try.', the next one<br/>'Too many tries. Wait 30 seconds, then try<br/>again.', and the right password during the wait<br/>names the time left, such as 'Wait 26 seconds'.<br/>The line does not count down.<br/><i>friction</i>"]:::friction
   S6["6. The right password lands on the empty Dashboard<br/>with Add bookmark, Import and How to save.<br/><i>works</i>"]:::works
   S7["7. On the phone the same login, then Dashboard,<br/>Inbox and Folders tabs, the Settings gear, the<br/>search pill and the plus.<br/><i>works</i>"]:::works
   S8["8. Light and dark follow the system; the bulb<br/>switches and the choice is kept per browser.<br/><i>works</i>"]:::works

@@ -4,9 +4,9 @@ flowchart TD
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
   S1["1. The owner makes a secret, sets TOTP_SECRET,<br/>restarts and adds it to the authenticator by<br/>hand; a bad secret stops the start with a<br/>message.<br/><i>works</i>"]:::works
   S2["2. The login shows Password and Code; Enter in the<br/>password moves to the code.<br/><i>works</i>"]:::works
-  S3["3. A wrong code says 'Wrong password or code.' and<br/>both fields are empty again.<br/><i>friction</i>"]:::friction
-  S4["4. The same code used in a second browser inside<br/>its 30 seconds is refused with the same text.<br/><i>friction</i>"]:::friction
-  S5["5. After 5 wrong codes every login is held from 1<br/>minute up to a day, but the page says 'Wait 30<br/>seconds and try again.' and the right code gets<br/>the same answer while the hold lasts.<br/><i>broken</i>"]:::broken
+  S3["3. A wrong code says 'Wrong password or code. A<br/>code works once: wait for the next one.' and<br/>both fields are empty again.<br/><i>friction</i>"]:::friction
+  S4["4. The same code used in a second browser inside<br/>its 30 seconds is refused with 'A code works<br/>once: wait for the next one.'<br/><i>works</i>"]:::works
+  S5["5. After 5 wrong codes in a row: 'Wrong password<br/>or code. Wait 60 seconds before the next try.',<br/>then 'Too many tries. Wait 59 seconds, then try<br/>again.'; the right code during the hold names<br/>the time left, and after the wait it logs in.<br/><i>works</i>"]:::works
   S6["6. Browsers logged in before stay logged in; API<br/>tokens need no code.<br/><i>works</i>"]:::works
   S7["7. More, Signed in: each browser with its sign in<br/>day and last use, this one marked.<br/><i>works</i>"]:::works
   S8["8. Two browsers of one kind read the same, 'Chrome<br/>on macOS', with no address or place to tell<br/>them apart.<br/><i>friction</i>"]:::friction

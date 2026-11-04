@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Builds the clickable wireframes of Pinned as it is built (0.1.11 candidate, ad2cb8e, with the
-screens the flow test fixes changed redrawn as fixed).
+"""Builds the clickable wireframes of Pinned as it is built (0.1.12, the release-0.1.12 branch from
+a1fe24b; the screens the flow test fixes and 0.1.12 changed are drawn as they are now).
 
     python3 build.py
 
-Writes next to this file: screens/*.html, flows.js, index.html, walk.html, flow-test.md,
-flows/flows.md and flows/NN-*.mmd. The screens share one set of parts (sidebar, search,
+Writes next to this file: screens/*.html, flows.js, index.html, walk.html, flows/flows.md and
+flows/NN-*.mmd. flow-test.md, the record of the flow test of 31.10.2026, is left as it is. The screens share one set of parts (sidebar, search,
 toolbar, cards, sheets, phone frame), so a change to a part changes every screen.
-Flow steps, their screens and the flow test results live in flows_data.py.
+Flow steps, their screens and the verdicts of the flow test live in flows_data.py.
 """
 import json
 from pathlib import Path
@@ -415,6 +415,10 @@ reg('ext-options-ok', 'Extension options, the address as typed, Test found it on
     '<div class="opt"><b class="h2">Pinned</b>' + fld('Address', '10.0.0.5:9095', None) + fld('Token', '&#8226;' * 30, None)
     + f'<div class="row">{pill("Test")}{pill("Save", "ext-popup", pri=True)}</div>'
     + '<span class="okt">&#10003; Connected to http://10.0.0.5:9095, 5 folders.</span><span class="note2">Save asks the browser for access to 10.0.0.5, keeps http://10.0.0.5:9095 and says Saved http://10.0.0.5:9095.</span></div>')))
+reg('ext-options-plain', 'Extension options, an http:// address outside the own network: Test warns first, a second click connects', 'Extension', browser('chrome-extension://.../options.html', page=(
+    '<div class="opt"><b class="h2">Pinned</b>' + fld('Address', 'http://bookmarks.example.com', None) + fld('Token', '&#8226;' * 30, None)
+    + f'<div class="row">{pill("Test", "ext-options-ok")}{pill("Save", "ext-popup", pri=True)}</div>'
+    + '<span class="errt">! On plain http your token may cross the internet unencrypted. Use https, or click Test again to connect anyway.</span><span class="note2">A second click of the same button goes ahead; Save says it the same way, "click Save again to save anyway", unless Test already went ahead for this address.</span></div>')))
 reg('ext-popup-nosetup', 'Extension popup before setup', 'Extension', browser('https://www.example.com/article', ext_on=True, over=xpop(
     '<div class="dhead"><h3>Set your address and token first</h3><span class="x">&#10005;</span></div>' + big('Open settings', 'ext-options'))))
 EXTFORM = ('<div class="dhead"><span class="fav"></span>' + A(None, '&#10005;', 'x') + '</div>' + fld('Title', '<span style="background:var(--sel)">' + b(150, 9) + '</span>', None, focus=True)
@@ -486,10 +490,10 @@ reg('p-select', 'Phone, selecting after a long press', 'Phone', phone(PFOLDER_HE
 LOCKF = lambda on='dash', more=False: side(on, more=more)
 reg('lock-sheet', 'Lock with a password', 'Locks', dk(side('Work'), tb_folder('Work', '2'), folder_body(2, 'Work', subs=False), over=dlg(
     '<div class="dhead"><h3>Work</h3>' + A('folder', '&#10005;', 'x') + '</div>' + fld('Password', '', None, focus=True) + fld('Repeat password', '', None)
-    + '<span class="sm">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span>' + big('Lock', 'locked'), w=360, top=180)), keys(Escape='folder'))
+    + '<span class="sm">Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span>' + big('Lock', 'locked'), w=360, top=180)), keys(Escape='folder'))
 reg('lock-error', 'Lock, passwords too short or not matching', 'Locks', dk(side('Work'), tb_folder('Work', '2'), folder_body(2, 'Work', subs=False), over=dlg(
     '<div class="dhead"><h3>Work</h3>' + A('folder', '&#10005;', 'x') + '</div>' + fld('Password', '&#8226;&#8226;&#8226;', None, focus=True) + fld('Repeat password', '&#8226;&#8226;&#8226;', None)
-    + '<span class="sm">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span><span class="errt">Use at least 4 characters.</span>' + big('Lock', 'locked'), w=360, top=180)))
+    + '<span class="sm">Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span><span class="errt">Use at least 8 characters.</span>' + big('Lock', 'locked'), w=360, top=180)))
 LOCKED = [('Homelab', '8', 0, 'folder'), ('Network', '3', 1, 'folder'), ('Reading', '3', 0, 'reading'), ('Finance', 'lock', 0, 'unlock'), ('Work', 'lock', 0, 'unlock')]
 reg('locked', 'Locked, back on the Dashboard', 'Locks', dk(side(folders=LOCKED, counts=dict(all='13')), tb_dash(), dash_body(n=8), over=toast('Folder locked')))
 reg('unlock', 'Unlock dialog, with a close button', 'Locks', dk(side(folders=LOCKED, counts=dict(all='13')), tb_dash(), dash_body(n=8), over=dlg(
@@ -502,9 +506,9 @@ reg('unlocked-menu', 'Unlocked folder actions: Relock now, Remove lock', 'Locks'
     [('Add bookmarks', 'unlocked'), ('New folder inside', 'unlocked'), ('Rename', 'unlocked'), ('Move to', 'unlocked'), ('Hide from Recent', 'unlocked'), ('Relock now', 'locked'), ('Remove lock', 'remove-lock'), '-', ('Delete', 'unlocked', True)], 1028, 150)))
 reg('remove-lock', 'Remove lock, asks the app password', 'Locks', dk(side('Finance', folders=UNL), tb_folder('Finance', '2'), folder_body(2, 'Finance', subs=False), over=dlg(
     '<div class="dhead"><h3>Finance</h3>' + A('unlocked', '&#10005;', 'x') + '</div><span class="sm">Enter the app password to take the lock off Finance.</span>' + fld('App password', '', None, focus=True) + big('Remove lock', 'folder'), w=360, top=230)))
-reg('p-lock', 'Phone, lock dialog, note tight under the field', 'Phone', phone(PFOLDER_HEAD.replace('Homelab', 'Work') + '<div class="pbody faded">' + pcards(2, 'Work') + '</div>' + ph_bot()
+reg('p-lock', 'Phone, lock dialog, the note below the field', 'Phone', phone(PFOLDER_HEAD.replace('Homelab', 'Work') + '<div class="pbody faded">' + pcards(2, 'Work') + '</div>' + ph_bot()
     + '<div class="blur"></div><div class="pdlg"><div class="dhead"><b class="ink" style="font-size:17px">Work</b>' + A('p-folder', '&#10005;', 'x') + '</div>' + fld('Password', '', None, focus=True) + fld('Repeat password', '', None)
-    + '<span class="sm" style="margin-top:-12px">Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span>' + big('Lock', 'p-folders') + '</div>'))
+    + '<span class="sm">Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered.</span>' + big('Lock', 'p-folders') + '</div>'))
 
 # ---- 06 share ----
 
@@ -555,7 +559,7 @@ reg('imported', 'Imported, toast with the counts', 'Data', dk(side(more=True), t
 reg('import-bad', 'Import refused, not a bookmarks file', 'Data', dk(side(more=True), tb_dash(), dash_body(), over=toast('Not a bookmark file.') + '<div class="tip" style="left:520px;top:700px">Too deep: The folders in this file nest more than 256 deep. Pinned cannot import it.</div>'))
 reg('export', 'Export, bookmarks.html downloaded, locked folders left out', 'Data', dk(side(folders=LOCKED, more=True), tb_dash(), dash_body(), over=
     '<div class="dlg" style="right:16px;top:12px;width:300px;left:auto"><span class="sm ink">Downloads</span><div class="row2"><span class="fav sm"></span><span class="meta">bookmarks.html<small>1.8 KB</small></span></div></div>' + toast('Exported without 2 locked folders. Unlock them first to include them.')))
-reg('whats-new', "What's new", 'Data', DASH(over=dlg("<div class='dhead'><h3>What&#39;s new</h3>" + A('dash', '&#10005;', 'x') + "</div><b class='ink'>0.1.11 <span class='mute sm'>This version</span></b><span class='plbl'>New</span>" + ''.join(f'<span class="row gap4">&#8226; {b(260 - i * 20, 7, True)}</span>' for i in range(5)) + "<span class='plbl'>Fixes</span>" + ''.join(f'<span class="row gap4">&#8226; {b(240 - i * 18, 7, True)}</span>' for i in range(4)), w=460, top=80)))
+reg('whats-new', "What's new", 'Data', DASH(over=dlg("<div class='dhead'><h3>What&#39;s new</h3>" + A('dash', '&#10005;', 'x') + "</div><b class='ink'>0.1.12 <span class='mute sm'>This version</span></b><span class='plbl'>New</span>" + ''.join(f'<span class="row gap4">&#8226; {b(260 - i * 20, 7, True)}</span>' for i in range(5)) + "<span class='plbl'>Fixes</span>" + ''.join(f'<span class="row gap4">&#8226; {b(240 - i * 18, 7, True)}</span>' for i in range(4)), w=460, top=80)))
 
 # ---- 08 second factor, signed in ----
 reg('term-totp', 'Terminal, turning on the second factor', 'Server', term('Terminal, ~/pinned', [
@@ -667,6 +671,7 @@ reg('term-restore', 'Terminal, restoring the saved copy', 'Server', term('Termin
 # ---- 12 errors ----
 reg('save-down', 'Server down, Save fails', 'Errors', DASH(over=dlg(save_form(url='https://down.example/', err='Cannot reach your Pinned server. Check your connection, then try again.'))))
 reg('notice-down', 'Server down, could not load, Retry', 'Errors', dk(side('Homelab'), tb_folder('Homelab', '8'), '<div class="notice2"><b>!</b> Cannot reach your Pinned server.<span class="sp"></span>' + pill('Retry', 'notice-down') + '</div><div class="faded">' + folder_body() + '</div>'))
+reg('p-notice-down', 'Phone, server down at the first load: the head with the gear, the tabs, the notice', 'Errors', phone(ph_home('dash', '<div class="notice2"><b>!</b> Cannot reach your Pinned server.<span class="sp"></span>' + pill('Retry', 'p-dash') + '</div>')))
 reg('browser-down', 'Server down, reload shows the browser error', 'Errors', browser('http://10.0.0.5:9095', page='<b class="h2">This site cannot be reached</b><span class="sm">10.0.0.5 refused to connect. ERR_CONNECTION_REFUSED</span>'))
 
 
@@ -726,7 +731,8 @@ ALT = {
     'term-upgrade': [('Go back to 0.1.10', 'term-downgrade')],
     'term-downgrade': [('Restore the copy', 'term-restore')],
     'save-down': [('Close, change view', 'notice-down')],
-    'notice-down': [('Reload the page', 'browser-down')],
+    'notice-down': [('Reload the page', 'browser-down'), ('On the phone, at the first load', 'p-notice-down')],
+    'ext-options-ok': [('An http:// address outside the own network', 'ext-options-plain')],
     'browser-down': [('A bad import file', 'import-bad')],
 }
 for sid, items in ALT.items():

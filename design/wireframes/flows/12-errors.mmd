@@ -2,9 +2,9 @@ flowchart TD
   classDef works fill:#ffffff,stroke:#b8babe,color:#3a3e44;
   classDef friction fill:#f6f7f7,stroke:#3a3e44,stroke-width:2px,color:#3a3e44;
   classDef broken fill:#ffffff,stroke:#c4362b,stroke-width:2px,color:#c4362b;
-  S1["1. Wrong password and the wait after 5 tries<br/>(01.4, 01.5).<br/><i>works</i>"]:::works
-  S2["2. The server stops while the app is open: Save<br/>says 'Could not save. Try again.'; nothing says<br/>the server cannot be reached.<br/><i>friction</i>"]:::friction
-  S3["3. The cards stay on screen, dimmed, under<br/>'Bookmarks could not load.' with Retry.<br/><i>works</i>"]:::works
+  S1["1. Wrong password, and the wait after 5 tries with<br/>the time left (01.4, 01.5).<br/><i>works</i>"]:::works
+  S2["2. The server stops while the app is open: Save<br/>says 'Cannot reach your Pinned server. Check<br/>your connection, then try again.'<br/><i>works</i>"]:::works
+  S3["3. The cards stay on screen, dimmed, under 'Cannot<br/>reach your Pinned server.' with Retry. On the<br/>phone, when the server cannot be reached at the<br/>first load, the head with the bulb and the<br/>Settings gear shows above the tabs and the<br/>notice.<br/><i>works</i>"]:::works
   S4["4. Retry while still down shows the same notice.<br/><i>works</i>"]:::works
   S5["5. A reload while down shows the browser's own<br/>error page.<br/><i>works</i>"]:::works
   S6["6. A bad import file is refused with a message<br/>(07.5).<br/><i>works</i>"]:::works
