@@ -4,6 +4,6 @@ dist/
 *.db-*
 .DS_Store
 reference/
-SPEC.md
+/SPEC.md
 web/extras/pinned-extension.zip
 /pinned
