@@ -605,12 +605,47 @@ func rewriteSVG(data []byte) ([]byte, error) {
 		return nil, errUnknownFormat
 	}
 	// Pictures in a style url() are not counted above, and one written
-	// data&#58;image comes out plain. The stored file must pass the count
-	// at the top again, or the next start drops it and fetches it again.
-	if bytes.Count(bytes.ToLower(out.Bytes()), []byte("data:image")) > maxEmbedded {
+	// data&#58;image comes out plain. They are counted on what is written,
+	// as a browser reads it, so white space inside data:image counts too
+	// and the stored file passes the count at the top again (spec S23.21).
+	if writtenPictures(out.Bytes()) > maxEmbedded {
 		return nil, errUnsafeSVG
 	}
 	return out.Bytes(), nil
+}
+
+// writtenPictures counts data:image in an SVG rewriteSVG wrote, in each
+// attribute value and each run of text between tags, with character
+// references decoded and read through squash: a browser's URL parser drops
+// tabs and new lines, and a data URL the space before its type. It counts
+// at least what a count of the raw bytes counts.
+func writtenPictures(svg []byte) int {
+	d := xml.NewDecoder(bytes.NewReader(svg))
+	n := 0
+	var run strings.Builder
+	flush := func() {
+		n += strings.Count(squash(run.String()), "data:image")
+		run.Reset()
+	}
+	for {
+		tok, err := d.Token()
+		if err != nil {
+			break
+		}
+		switch t := tok.(type) {
+		case xml.StartElement:
+			flush()
+			for _, a := range t.Attr {
+				n += strings.Count(squash(a.Value), "data:image")
+			}
+		case xml.EndElement:
+			flush()
+		case xml.CharData:
+			run.Write(t)
+		}
+	}
+	flush()
+	return n
 }
 
 // rewriteAttrs returns the attributes of element (lower case) that are

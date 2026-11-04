@@ -442,3 +442,48 @@ func TestSVGStyleURLPicturesStoredOnceOrRefused(t *testing.T) {
 		}
 	}
 }
+
+// TestSVGStyleURLPictureSpellings: white space or a control character inside
+// data:image, plain or as a character reference, does not get more than
+// maxEmbedded pictures in a style url() stored (code review 04.11, spec
+// S23.21): the count reads the written SVG as a browser does.
+func TestSVGStyleURLPictureSpellings(t *testing.T) {
+	for _, spelling := range []string{"data: image", "DATA :IMAGE", "data&#9;:image", "data&#10;:image", "data:&#x20;image"} {
+		pic := "url(" + spelling + "/png;base64,iVBORw0KGgo=)"
+		inAttr := func(n int) []byte {
+			var b strings.Builder
+			b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">`)
+			for i := 0; i < n; i++ {
+				b.WriteString(`<rect width="16" height="16" style="fill:` + pic + `"/>`)
+			}
+			b.WriteString(`</svg>`)
+			return []byte(b.String())
+		}
+		inSheet := func(n int) []byte {
+			var b strings.Builder
+			b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><style>`)
+			for i := 0; i < n; i++ {
+				b.WriteString(".a" + string(rune('a'+i)) + "{fill:" + pic + "}")
+			}
+			b.WriteString(`</style><rect class="aa" width="16" height="16"/></svg>`)
+			return []byte(b.String())
+		}
+		for where, svg := range map[string]func(int) []byte{"style attribute": inAttr, "style element": inSheet} {
+			name := where + " " + spelling
+			if raw := bytes.Count(bytes.ToLower(svg(maxEmbedded+1)), []byte("data:image")); raw > maxEmbedded {
+				t.Fatalf("%s: the raw count sees %d, the case is not the one to test", name, raw)
+			}
+			if _, err := processSVG(svg(maxEmbedded + 1)); err == nil {
+				t.Errorf("%s: %d pictures were stored", name, maxEmbedded+1)
+			}
+			ic, err := processSVG(svg(maxEmbedded))
+			if err != nil {
+				t.Fatalf("%s: %d pictures refused: %v", name, maxEmbedded, err)
+			}
+			again, err := processSVG(ic.Data)
+			if err != nil || !bytes.Equal(again.Data, ic.Data) {
+				t.Errorf("%s: the stored file does not give the same bytes at the next start (%v)", name, err)
+			}
+		}
+	}
+}
