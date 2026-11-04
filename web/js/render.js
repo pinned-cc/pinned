@@ -309,7 +309,7 @@ export function settingsScreen() {
   const link = (href, icon, label, sub, ext) => `<a class="sr" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${chip(icon)}${body(label, sub)}<span class="sr-ch">${ic(ext ? 'open' : 'chev')}</span></a>`;
   const tokens = ui.tokenCount == null ? '' : ui.tokenCount === 0 ? 'No tokens yet' : ui.tokenCount === 1 ? '1 token' : `${ui.tokenCount} tokens`;
   return `<div class="pset">
-    <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}</div></div></div>
+    <div class="pset-head"><svg class="pset-mark" aria-hidden="true"><use href="#app-mark"/></svg><div><div class="pset-name">Pinned${ui.version ? ` <span class="pset-ver">${esc(ui.version)}</span>` : ''}</div><div class="pset-sum">${data.has ? `${nb} ${nb === 1 ? 'bookmark' : 'bookmarks'} in ${nf} ${nf === 1 ? 'folder' : 'folders'}${nt ? `, ${nt} in the Trash` : ''}` : '&nbsp;'}</div></div></div>
     <div class="pset-lbl">Save</div>
     ${link('/bookmarklet', 'all', 'How to save', 'Bookmarklet and extension')}${row('tokens', 'key', 'API tokens', tokens)}
     <div class="pset-lbl">Data</div>
@@ -336,8 +336,9 @@ export function phoneBody() {
 }
 let phoneLot = null;
 export function phoneRecents() {
-  if (!data.has) return '';
   const head = PHONE_TABS.includes(ui.view) ? `<div class="phead"><h1 class="phead-t">Pinned</h1><button type="button" class="bulb" data-theme-toggle aria-label="${document.documentElement.dataset.theme === 'light' ? 'Dark mode' : 'Light mode'}">${ic('bulb')}</button><button type="button" class="ib gear" data-view="settings" aria-label="Settings">${ic('gear')}</button></div>` : '';
+  /* the head shows before the data, so Settings can be reached when the server cannot; the pinned row waits for it */
+  if (!data.has) return head;
   /* the pinned links, marked with a pin: the phone's dock; the recently opened ones live on the Dashboard */
   const all = pinned();
   if (!all.length) return head;
