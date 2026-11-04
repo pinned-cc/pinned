@@ -116,12 +116,12 @@ body.sg{background:var(--ground);color:var(--ink);font:400 var(--t-body)/var(--l
       <p>One family, Geist, with Geist Mono for addresses and tokens. Three weights: 400 for running text, 500 for labels and controls, 600 for titles and primary buttons. Sizes are named by role; line heights are a separate scale. Text in a field is never under 16 px, so iOS does not zoom into it.</p>
       <div class="sg-tokens" data-type="1"></div>
       <h3>Line heights</h3>
-      <p class="sg-p"><code>--lh-none</code> is for one line controls, where the box height sets the rhythm. The ratios are for running text. The pixel steps hold stacked label pairs such as a title over an address. Every address line, 11.5 px mono under a title, uses <code>--lh-14</code>: on a card, a phone card, a list row, a sheet head and the Dashboard.</p>
+      <p class="sg-p"><code>--lh-none</code> is for one line controls, where the box height sets the rhythm. The ratios are for running text. The pixel steps hold stacked label pairs such as a title over an address. Every address line, 12 px mono under a title, uses <code>--lh-14</code>: on a card, a phone card, a list row, a sheet head and the Dashboard.</p>
       <div class="sg-tokens" data-prefix="--lh-"></div>
       <h3>Candidates to merge later</h3>
       <ul class="sg-rules">
-        <li><b>11.5, 12.5 and 13.5 px</b> sit between steps. 11.5 carries every address line and the small chips; 12.5 the tab count and the tooltip; 13.5 the sidebar rows, toasts and list titles. Each could move to its neighbour, but that shifts pixels, so they stay until it is decided by eye.</li>
-        <li><b>Addresses at 12 px</b>: the palette and the Add to sheet set theirs one step up from the 11.5 px address line. One size would do.</li>
+        <li><b>12.5 and 13.5 px</b> sit between steps. 12.5 the tab count and the tooltip; 13.5 the sidebar rows, toasts and list titles. Each could move to its neighbour, but that shifts pixels, so they stay until it is decided by eye.</li>
+        <li><b>Addresses at 12 px</b>: since 0.1.12 every address line is 12 px, the same size the palette and the Add to sheet set; no text to read is below 12 px.</li>
         <li><b>One off line heights</b> left as numbers: 15 and 22 px, 1.25 (the heading of the Share, API tokens and Add to sheets) and 1.5 (the How to save page).</li>
         <li><b>Favicon letters</b> scale with their tile, about 0.4 of its side (9 px on a 20 px tile up to 22 px on a 56 px tile). They are set beside the tile size, not from the type scale.</li>
       </ul>
