@@ -2,7 +2,7 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
-## 0.1.12
+## 0.1.12, 2026-11-04
 
 ### Fixes
 
