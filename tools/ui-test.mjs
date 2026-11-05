@@ -2185,14 +2185,20 @@ async function flowFixes(browser, engine) {
 
   await check('no server: a save and a load say Cannot reach your Pinned server', async () => {
     await page.route('**/api/bookmarks', r => r.request().method() === 'POST' ? r.abort('connectionrefused') : r.fallback());
+    /* each wait names its step, and the save waits for the address check first, so a late check answer cannot race the
+       save (WebKit timed out here once in four runs on 05.11.2026 without saying where) */
+    const step = async (what, p) => { try { await p; } catch (e) { throw new Error(what + ': ' + e.message.split('\n')[0]); } };
     await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
-    await page.fill('#sheet [data-f=url]', `https://ui-test.example/${stamp}/offline`); await page.click('#sheet [data-a="save-go"]');
-    await visible(page.locator('#sheet .fld-err', { hasText: 'Cannot reach your Pinned server. Check your connection, then try again.' }));
-    await page.keyboard.press('Escape'); await sheetClosed(page); await page.unroute('**/api/bookmarks');
+    const checked = page.waitForResponse(r => r.url().includes('/api/check'), { timeout: 8000 });
+    await page.fill('#sheet [data-f=url]', `https://ui-test.example/${stamp}/offline`);
+    await step('the address check answers', checked);
+    await page.click('#sheet [data-a="save-go"]');
+    await step('the save error shows', visible(page.locator('#sheet .fld-err', { hasText: 'Cannot reach your Pinned server. Check your connection, then try again.' }), 10000));
+    await page.keyboard.press('Escape'); await step('the sheet closes', sheetClosed(page)); await page.unroute('**/api/bookmarks');
     await page.route('**/api/state', r => r.abort('connectionrefused'));
-    await page.reload(); await visible(page.locator('.notice', { hasText: 'Cannot reach your Pinned server.' }));
+    await page.reload(); await step('the load notice shows after a reload', visible(page.locator('.notice', { hasText: 'Cannot reach your Pinned server.' }), 10000));
     await shot(page, `${engine}-fix-unreachable`);
-    await page.unroute('**/api/state'); await page.click('.notice [data-a="retry"]'); await gone(page.locator('.notice'));
+    await page.unroute('**/api/state'); await page.click('.notice [data-a="retry"]'); await step('the notice goes after Retry', gone(page.locator('.notice'), 10000));
   });
 
   await check('How to save, Extension: Firefox needs the add-on loaded again and a new token after a restart', async () => {
