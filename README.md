@@ -216,6 +216,8 @@ On Umbrel with the App Store package (`umbrel/` holds the draft), Umbrel's login
 
 ## Troubleshooting
 
+Problems we know about and have not fixed yet are in [Known issues](docs/known-issues.md).
+
 **The container restarts and the log says it cannot write to /data as user 1000.** Docker made the data folder as root, because it did not exist when the container first started. The container runs as user 1000. Give the folder to that user and start again: `sudo chown -R 1000:1000 ./data`, then `docker compose up -d`.
 
 **The Save bookmark opens a black page in Safari on the iPhone, marked Not Secure.** This happens with iCloud Private Relay on, when the app is reached through a Tailscale address (`*.ts.net`). Save runs inside the page you are on, and with Private Relay that page goes through Apple, which cannot reach your tailnet. Safari then falls back to http. Opening the app directly still works, which makes it look like a bookmark problem. It is not.

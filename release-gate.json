@@ -36,7 +36,7 @@
     {"id": "store-prs-green", "type": "cmd", "mode": "warn", "run": "bash \"$HOME/hichem-os/bin/release-checks/pinned.sh\" stores",
      "expect_zero": "(\\d+) warning\\(s\\)\\.", "timeout": 900},
     {"id": "update-path", "type": "cmd", "mode": "warn", "run": ["grep", "-q", "^\\*\\*Upgrading\\.\\*\\*", "README.md"]},
-    {"id": "known-issues-guide", "type": "cmd", "mode": "warn", "run": ["grep", "-q", "^## Known issues", "README.md"],
+    {"id": "known-issues-guide", "type": "cmd", "mode": "warn", "run": ["grep", "-q", "docs/known-issues.md", "README.md"],
      "note": "method 7.6: a guide with known issues for anything given to other people"},
     {"id": "report-a-problem", "type": "cmd", "mode": "warn", "wired": false,
      "note": "method 7.6: a Report a Problem export without telemetry; not built in Pinned yet, task [pinned-retro]"}
