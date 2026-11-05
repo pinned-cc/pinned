@@ -19,6 +19,7 @@ S1.4 It is for one person who runs Docker on a NAS, a Raspberry Pi, an old lapto
 S1.5 It is one password, one binary, one data folder (README.md:7); the binary is one static Go program with the web files embedded (assets.go:6-9, README.md:324).
 S1.6 Licence: AGPL-3.0-only (README.md:336, cmd/pinned/main.go:77). The common and breached password lists come from SecLists under MIT (README.md:338).
 S1.7 Supported versions: only the latest release gets security fixes (SECURITY.md:58-60).
+S1.8 Price and how it is sold: free of charge, no paid tier, no account; the source is AGPL-3.0-only (S1.6). It is handed out as the image `ghcr.io/pinned-cc/pinned` (S3.1), the setup script (S3.7) and the Umbrel and CasaOS packages (S3.17). Added 05.11.2026 for the method's before-code facts (playbooks/method.md part 2.1).
 
 ## 2. Out of scope
 
