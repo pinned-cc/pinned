@@ -1470,6 +1470,7 @@ S24.5.5 Never again, without a jump.
 - A tap closes the tip at once (the user asked for it to go).
 - When selecting starts, the tip stays drawn, so no card moves under the user's finger while they select, and the bar does not appear above a jumping list. The page remembers the view the flag was set in (`ui.tipView`); the tip is dropped at the next change of view (a tab, a folder, Settings) or the next load. The selection bar is at the bottom (S5.32), so the kept tip covers nothing.
 - In a private window without storage the helper swallows the error (util.js:61): the tip goes for that page and may show again at the next load. Accepted.
+- Changed after the code review of 06.11.2026: selecting ends the tip only on the phone with the tip on screen. Select on the desktop, or a hold while the tip was never drawn (under 3 bookmarks), leaves it for later, so a browser that never saw the tip still gets it once.
 
 S24.5.6 Look. Three directions for the maintainer's pick, before the build:
 - A: the phone notice layout of `.pnotice` (app.css:881-884: margins, 48 px minimum height, radius, gap, padding, `--t-body` text) with neutral colours from existing tokens instead of the notice's red: background `var(--card-tint)`, border `1px solid var(--card-rim)`, text `var(--ink)`, no icon, the existing close button at its right (`ib weak` with `i-close`, 44 by 44, as in every sheet head, sheets.js:213).
