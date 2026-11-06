@@ -53,7 +53,7 @@ export function paintLoop() { if (!paintState || !paintState.active) return; con
 /* mouse or pen, any width: a drag that starts on empty space draws a marquee and selects what it touches; Shift adds */
 let marquee = null;
 export const emptySpace = t => (t.closest('#content') && !t.closest('article, button, a, input, label, .tb, .head, #dockwrap'))
-  || (t.closest('#pmain') && !t.closest('article, button, a, input, label, .ptbar, .vbar, .precent, .phead'));
+  || (t.closest('#pmain') && !t.closest('article, button, a, input, label, .ptbar, .vbar, .precent, .phead, .ptip'));
 /* what a selection can hold here: the folder tiles of the Folders screen, or the cards */
 export const FPICK = '#app .fscreen .ftile[data-ftile]:not(.locked)';
 export const pickEls = () => [...document.querySelectorAll(foldersSel() ? FPICK : '#app article[data-id]')];

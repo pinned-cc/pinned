@@ -914,7 +914,9 @@ func TestHealthDoesNotRenewTheSession(t *testing.T) {
 			if len(resp.Cookies()) != 0 {
 				t.Fatalf("health set a cookie after %v: %v", later, resp.Cookies())
 			}
-			resp.Body.Close()
+			if h := decode[map[string]any](t, readAll(resp)); h["version"] == nil {
+				t.Fatalf("health saw no live session after %v: %v", later, h)
+			}
 		}
 	}
 	after, _ := e.st.Sessions()
