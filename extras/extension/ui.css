@@ -169,7 +169,7 @@ body.popup .sv-pick{align-self:flex-start}
   .fld-in,.fmini .v{background:rgba(255,255,255,.7)}
   .fmini.fill .v{background:color-mix(in srgb,var(--h) 16%,var(--fold))}
   .fav{box-shadow:inset 0 0 0 1px var(--line)}
-  .ib:hover,.si:not([aria-checked="true"]):hover,.opt-acts .btn:hover,.flist,.url-show{background:var(--hover)}
+  .ib:hover,.si:not([aria-checked="true"]):hover,.opt-acts .btn:hover,.url-show{background:var(--hover)}
   .flist{scrollbar-color:var(--line-2) transparent}
   body.popup{box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
   .tbtn:hover{background:var(--picked-fill)}
