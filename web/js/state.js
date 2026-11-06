@@ -77,7 +77,8 @@ export const ui = {
   version: null, /* from /health, which tells it only to a logged in session */
   mode: null, /* 'desk' or 'phone', set by render() */
   anchor: null, /* the bookmark id a Shift click or Shift arrow range starts from */
-  suppressClick: 0 /* until this time a click is swallowed: it ended a drag or a long press */
+  suppressClick: 0, /* until this time a click is swallowed: it ended a drag or a long press */
+  tipView: null /* the view the phone tip was ended in, this page: it stays drawn there until the view changes */
 };
 /* what is open over the page: a sheet and its state, the save form, the palette, a menu, the toast with Undo */
 export const layers = { sheet: null, save: null, palette: null, menu: null, undo: null };

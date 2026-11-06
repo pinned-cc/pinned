@@ -3,7 +3,7 @@
 import { actions, deleteFolders, folderItems, folderSheetItems, goView, moveWithUndo } from './actions.js';
 import { api } from './api.js';
 import { openMenu, tileMenu } from './menu.js';
-import { freshen, render } from './render.js';
+import { endTip, freshen, render } from './render.js';
 import { closeSheet, openSheet } from './sheets.js';
 import { bm, canSelect, folderById, foldersSel, layers, run, sections, setFsort, setSort, ui } from './state.js';
 import { toast } from './toast.js';
@@ -138,7 +138,7 @@ export function dragEnd() {
 /* hold and let go on a card or a folder on the Folders screen: selecting starts with it ticked, or it joins a running
    selection. A locked folder's hold opens its actions instead */
 export function holdSelect(el) {
-  const f = el.matches('.ftile'), id = +(f ? el.dataset.ftile : el.dataset.id); if (!ui.selecting) { ui.selecting = true; ui.picked.clear(); }
+  const f = el.matches('.ftile'), id = +(f ? el.dataset.ftile : el.dataset.id); if (!ui.selecting) { endTip(); ui.selecting = true; ui.picked.clear(); }
   el.classList.remove('held', 'press', 'lift'); ui.picked.add(id); ui.anchor = id; selSync(true);
 }
 export function heldAction(k, el, e, touch) {

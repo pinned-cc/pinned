@@ -2,6 +2,19 @@
 
 Everything that changes for people who run the app goes here. Versions follow semantic versioning once the first release is tagged.
 
+## 0.1.13
+
+### Fixes
+
+- After too many wrong passwords, the wait on the login page counts down.
+- An address typed without http or https in the app, such as example.com, is saved with https://, and an address on your own network, such as 192.168.1.5:9000, with http://.
+- The browser extension follows light and dark mode.
+- The folder list in the sidebar shows a scroll bar when it scrolls.
+- On the phone, a tip says once that holding a card selects it.
+- Signed in shows the time each browser signed in, so two browsers of the same kind can be told apart.
+- A browser signed out from another one goes to the login page within half a minute, also while it stays in view.
+- After creating an API token, the form stays for the next one.
+
 ## 0.1.12, 2026-11-04
 
 ### Fixes

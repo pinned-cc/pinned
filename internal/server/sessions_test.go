@@ -190,3 +190,56 @@ func TestBrowserName(t *testing.T) {
 		}
 	}
 }
+
+// 0.1.13, S24.7: the Signed in sheet tells two browsers of one kind apart by
+// the minute each signed in; it reads created_at, which the list carries to
+// the second.
+func TestSessionsJSONCarriesTheSignInSecond(t *testing.T) {
+	e := newEnv(t, Config{})
+	start := time.Now()
+	one, two := e.browser(uaFirefoxMac), e.browser(uaFirefoxMac)
+	if code := one.do("POST", "/api/login", `{"password":"pw"}`); code != 204 {
+		t.Fatalf("login %d", code)
+	}
+	e.st.Now = func() time.Time { return start.Add(61 * time.Second) }
+	if code := two.do("POST", "/api/login", `{"password":"pw"}`); code != 204 {
+		t.Fatalf("login %d", code)
+	}
+	e.login()
+	var at []int64
+	for _, x := range decode[[]sessionJSON](t, e.expect("GET", "/api/sessions", nil, 200)) {
+		if x.Browser == "Firefox on macOS" {
+			at = append(at, x.CreatedAt)
+		}
+	}
+	if len(at) != 2 || (at[0]-at[1] != 61 && at[1]-at[0] != 61) {
+		t.Fatalf("created_at of the two Firefox rows: %v", at)
+	}
+}
+
+// 0.1.13, S24.8: a browser signed out elsewhere asks /health every 30 s; the
+// answer for it has no version, which is what sends the page to the login.
+func TestHealthAfterSignOutHasNoVersion(t *testing.T) {
+	e := newEnv(t, Config{})
+	b := e.browser(uaSafariIOS)
+	if code := b.do("POST", "/api/login", `{"password":"pw"}`); code != 204 {
+		t.Fatalf("login %d", code)
+	}
+	e.login()
+	var id int64
+	for _, x := range decode[[]sessionJSON](t, e.expect("GET", "/api/sessions", nil, 200)) {
+		if !x.Current {
+			id = x.ID
+		}
+	}
+	e.expect("DELETE", "/api/sessions/"+itoa(id), map[string]string{"password": "pw"}, 204)
+	req, _ := http.NewRequest("GET", e.srv.URL+"/health", nil)
+	resp, err := b.client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := strings.TrimSpace(string(readAll(resp)))
+	if resp.StatusCode != 200 || body != `{"ok":true}` {
+		t.Fatalf("health after sign out: %d %s", resp.StatusCode, body)
+	}
+}

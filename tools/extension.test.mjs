@@ -548,3 +548,33 @@ test('popup: a locked flag in /api/check, /api/folders or a 409 changes nothing'
   assert.ok(p.text().includes('Already saved.'), p.text());
   assert.equal(go().attrs.disabled, undefined, 'Save disabled after the 409');
 });
+
+// 0.1.13, S24.2: the app adds http:// to an address on the own network and https:// elsewhere, by the extension's own list.
+test('the app and the extension agree on the own network', async () => {
+  const { Pinned } = load(['shared.js'], stubBrowser().browser);
+  globalThis.matchMedia = globalThis.matchMedia || (() => ({ matches: false, addEventListener() {}, addListener() {} }));
+  const util = await import(new URL('../web/js/util.js', import.meta.url).href);
+  for (const input of ['10.0.0.5', '172.16.0.1', '172.32.0.1', '192.168.1.5', '169.254.1.1', '100.64.0.1', '100.128.0.1', '127.0.0.1', '10.1', '8.8.8.8',
+    '[::1]', '[fd00::1]', '[fe80::1]', '[2001:db8::1]', 'localhost', 'NAS.Local', 'nas.lan', 'x.home.arpa', 'x.internal', 'example.com']) {
+    const own = Pinned.localHost(new URL('http://' + input).hostname);
+    assert.equal(util.addScheme(input), (own ? 'http://' : 'https://') + input, input);
+    assert.equal(util.localHost(new URL('http://' + input).hostname), own, 'localHost copy differs for ' + input);
+  }
+});
+
+// 0.1.13, S24.3: in light mode the popup and the options take the app's own light colours.
+test('ui.css has a light block with the app\'s light values', () => {
+  const ui = source('ui.css'), app = readFileSync(join(dir, '..', '..', 'web', 'app.css'), 'utf8');
+  const props = block => Object.fromEntries([...block.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
+  const m = /@media \(prefers-color-scheme: light\)\{\s*:root\{([^}]*)\}/.exec(ui); assert.ok(m, 'no light block in ui.css');
+  const light = props(m[1]);
+  const a = /:root\[data-theme="light"\]\{([^}]*)\}/.exec(app); assert.ok(a, 'no light block in app.css');
+  const appLight = props(a[1]);
+  for (const [k, v] of Object.entries(light)) assert.equal(v.replace(/\s+/g, ''), (appLight[k] || '').replace(/\s+/g, ''), k + ' differs from the app');
+  const dark = props(/:root\{([^}]*)\}/.exec(ui)[1]);
+  for (const k of Object.keys(dark)) if (k in appLight) assert.ok(k in light, k + ' is not set in the light block');
+  /* every var() names a property ui.css sets somewhere, or carries a fallback (--tile is set on the element by the script) */
+  const defined = new Set([...ui.matchAll(/(--[a-z0-9-]+)\s*:/g)].map(x => x[1]));
+  for (const [, k, fb] of ui.matchAll(/var\((--[a-z0-9-]+)\s*(,)?/g)) assert.ok(defined.has(k) || fb, k + ' is used but not defined in ui.css');
+  for (const f of ['popup.html', 'options.html']) assert.match(source(f), /<meta name="color-scheme" content="dark light">/, f);
+});

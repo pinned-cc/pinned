@@ -896,3 +896,29 @@ func TestUntrustedProtoIsLoggedOnce(t *testing.T) {
 		t.Errorf("a public client's header was logged: %q", buf.String())
 	}
 }
+
+// 0.1.13, S24.8: the page asks /health every 30 s while in view; the check
+// must never renew the session or record a use, or an idle session would stay
+// alive while a tab is left open.
+func TestHealthDoesNotRenewTheSession(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	before, err := e.st.Sessions()
+	if err != nil || len(before) != 1 {
+		t.Fatalf("sessions %v %v", before, err)
+	}
+	for _, later := range []time.Duration{2 * time.Hour, 25 * time.Hour} {
+		e.st.Now = func() time.Time { return time.Now().Add(later) }
+		for i := 0; i < 5; i++ {
+			resp := e.get("/health")
+			if len(resp.Cookies()) != 0 {
+				t.Fatalf("health set a cookie after %v: %v", later, resp.Cookies())
+			}
+			resp.Body.Close()
+		}
+	}
+	after, _ := e.st.Sessions()
+	if len(after) != 1 || after[0].UsedAt != before[0].UsedAt || after[0].ExpiresAt != before[0].ExpiresAt {
+		t.Fatalf("health renewed the session: before %+v after %+v", before, after)
+	}
+}

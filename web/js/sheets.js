@@ -6,7 +6,7 @@ import { closeMenu, tileMenu } from './menu.js';
 import { favHTML, fmini, hl, hostLine, miniPicker, nfForm, nfMini } from './render.js';
 import { bm, chain, data, descSet, fid, folderById, hostOf, hueClass, kids, layers, live, load, nowS, pathOf, pickable, run, ui } from './state.js';
 import { announce, toast } from './toast.js';
-import { byId, copy, dayDiff, errorText, esc, fmtDate, fmtDay, hostFromUrl, ic, isPhone, plural, reduce, tooMany, validUrl, wait } from './util.js';
+import { addScheme, byId, copy, dayDiff, errorText, esc, fmtDate, fmtDay, hostFromUrl, ic, isPhone, plural, reduce, tooMany, validUrl, wait } from './util.js';
 
 /* ================= sheets ================= */
 let lastFocus = null;
@@ -213,7 +213,8 @@ export function tokensHTML(s) {
   let h = `<div class="at-head"><h2 class="at-title">API tokens</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
   if (s.created) h += `<div class="tk-new"><span class="sh-lbl">${esc(s.created.name)}</span><div class="share-link"><div class="fld-in tk-val" tabindex="0" aria-label="Token">${esc(s.created.token)}</div><button type="button" class="tbtn" data-a="tk-copy">Copy</button></div>
     <p class="share-meta">Copy it now. It is not shown again.</p><p class="share-meta tk-next">Next, paste it into the extension's options with the address <b class="tk-addr">${esc(location.origin)}</b>, or into your script.</p></div>`;
-  else h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Extension on my laptop" autocomplete="off" spellcheck="false" enterkeyhint="next" aria-label="Token name"${isPhone() ? '' : ' data-autofocus'}></div>
+  /* the form stays below a new token, empty, for the next one */
+  h += `<form class="tk-form" data-token><span class="sh-lbl">New token</span><div class="share-row"><input class="fld-in" name="name" placeholder="Extension on my laptop" autocomplete="off" spellcheck="false" enterkeyhint="next" aria-label="Token name"${isPhone() || s.created ? '' : ' data-autofocus'}></div>
     <div class="share-pwf"><div class="share-row"><input class="fld-in" type="password" name="password" placeholder="App password" autocomplete="current-password" enterkeyhint="done" aria-label="App password"><button type="submit" class="tbtn">Create</button></div></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
   if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
   if (!s.list) return h + `<div class="tk-sec" aria-busy="true"></div>`;
@@ -227,7 +228,9 @@ export async function tokenCreate(f) {
   const s = layers.sheet, inp = f.elements.name, name = inp.value.trim(), pw = f.elements.password; if (!name) { inp.focus(); return; }
   if (!pw.value) { pw.focus(); return; }
   const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
-  try { const t = await api('POST', '/api/tokens', { name, password: pw.value }); if (layers.sheet !== s) return; s.created = t; s.formErr = null; s.confirm = null; await tokensLoad(); const c = sheetEl().querySelector('[data-a="tk-copy"]'); if (c) c.focus({ preventScroll: true }); }
+  try { const t = await api('POST', '/api/tokens', { name, password: pw.value }); if (layers.sheet !== s) return; s.created = t; s.formErr = null; s.confirm = null;
+    /* the fields of the form drawn now (a list that arrived while typing redrew it), so the next draw keeps nothing */
+    sheetEl().querySelectorAll('form[data-token] [name=name], form[data-token] [name=password]').forEach(i => { i.value = ''; }); await tokensLoad(); const c = sheetEl().querySelector('[data-a="tk-copy"]'); if (c) c.focus({ preventScroll: true }); }
   catch (e) { if (e.auth || layers.sheet !== s) return; s.formErr = e.status === 403 ? 'Wrong password' : errorText(e, 'That did not work. Try again.'); fillSheet();
     const n = sheetEl().querySelector('form[data-token] [name=name]'), p = sheetEl().querySelector('form[data-token] [name=password]'); if (n) n.value = name; if (p) p.focus(); }
 }
@@ -244,13 +247,16 @@ async function sessionsLoad() { const s = layers.sheet; try { const list = await
   if (s.confirm !== 'all' && s.confirm != null && !(s.list || []).some(x => x.id === s.confirm)) s.confirm = null;
   fillSheet(); }
 const ssName = x => x.browser || 'Browser';
+/* the sign in day and minute, local time: two browsers of one kind are told apart by when they signed in */
+const ssWhen = x => { const d = new Date(x.created_at * 1000); return `${fmtDay(x.created_at)} at ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const ssFull = x => `${ssName(x)}, signed in on ${ssWhen(x)}`;
 export function sessionsHTML(s) {
   const h = `<div class="at-head"><h2 class="at-title">Signed in</h2><button type="button" class="ib weak" data-a="close" aria-label="Close">${ic('close')}</button></div>`;
   if (s.err) return h + `<p class="share-meta tk-sec">${esc(s.err)}</p>`;
   if (!s.list) return h + `<div class="tk-sec" aria-busy="true"></div>`;
   const others = s.list.some(x => !x.current), one = s.list.find(x => x.id === s.confirm);
-  const form = `<form class="tk-sec" data-session><span class="sh-lbl">${one ? 'Sign out ' + esc(ssName(one)) : 'Sign out all others'}</span><div class="share-row"><input class="fld-in" type="password" name="password" placeholder="App password" autocomplete="current-password" enterkeyhint="done" aria-label="App password"><button type="button" class="tbtn" data-a="ss-cancel">Cancel</button><button type="submit" class="tbtn warn">Sign out</button></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
-  return h + `<div class="tk-sec"><span class="sh-lbl">Browsers</span><div class="sh-rows tk-list">` + s.list.map(x => `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(ssName(x))}</span><span class="tk-m">${x.current ? 'This browser, signed in on' : 'Signed in on'} ${fmtDay(x.created_at)}${x.current ? '' : ', last used ' + ago(x.used_at)}</span></span>${x.current ? '' : `<button type="button" class="tbtn warn" data-a="ss-end" data-id="${x.id}" aria-label="Sign out ${esc(ssName(x))}">Sign out</button>`}</div>`).join('') + `</div></div>`
+  const form = `<form class="tk-sec" data-session><span class="sh-lbl">${one ? 'Sign out ' + esc(ssFull(one)) : 'Sign out all others'}</span><div class="share-row"><input class="fld-in" type="password" name="password" placeholder="App password" autocomplete="current-password" enterkeyhint="done" aria-label="App password"><button type="button" class="tbtn" data-a="ss-cancel">Cancel</button><button type="submit" class="tbtn warn">Sign out</button></div>${s.formErr ? `<p class="fld-err" role="alert">${esc(s.formErr)}</p>` : ''}</form>`;
+  return h + `<div class="tk-sec"><span class="sh-lbl">Browsers</span><div class="sh-rows tk-list">` + s.list.map(x => `<div class="tk-row"><span class="tk-tt"><span class="tk-n">${esc(ssName(x))}</span><span class="tk-m">${x.current ? 'This browser, signed in on' : 'Signed in on'} ${ssWhen(x)}${x.current ? '' : ', last used ' + ago(x.used_at)}</span></span>${x.current ? '' : `<button type="button" class="tbtn warn" data-a="ss-end" data-id="${x.id}" aria-label="Sign out ${esc(ssFull(x))}">Sign out</button>`}</div>`).join('') + `</div></div>`
     + (s.confirm != null && (one || (s.confirm === 'all' && others)) ? form : others ? `<div class="sv-acts"><button type="button" class="tbtn warn" data-a="ss-others">Sign out all others</button></div>` : '');
 }
 export function sessionsAsk(which) { const s = layers.sheet; if (!s || s.type !== 'sessions') return; s.confirm = which; s.formErr = null; fillSheet();
@@ -363,15 +369,17 @@ export function patchSave() { // update the live parts of the save sheet without
 }
 let checkT = null, checkSeq = 0;
 export function checkUrl(now) {
-  clearTimeout(checkT); const go = async () => { const u = layers.save.url.trim(), my = ++checkSeq;
+  clearTimeout(checkT); const go = async () => { const u = addScheme(layers.save.url), my = ++checkSeq;
     if (!validUrl(u)) { layers.save.dup = null; layers.save.icon = null; layers.save.checking = false; patchSave(); return; }
     layers.save.checking = true; patchSave();
     try { const r = await api('GET', '/api/check?url=' + encodeURIComponent(u)); if (my !== checkSeq || !layers.save) return; layers.save.checking = false; layers.save.dup = r.duplicate || null; layers.save.icon = r.icon || null; patchSave(); } catch (e) { if (my === checkSeq && layers.save) { layers.save.checking = false; patchSave(); } /* the save itself reports */ } };
   if (now) go(); else checkT = setTimeout(go, 220);
 }
 export async function doSave(inbox) {
-  const s = layers.save; if (s.busy || s.ticked) return; const url = s.url.trim();
-  if (!validUrl(url)) { s.err = 'Enter a full address starting with http or https.'; fillSheet(); const ta = sheetEl().querySelector('textarea'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return; } /* the caret at the end, where the fix usually goes */
+  const s = layers.save; if (s.busy || s.ticked) return; const url = addScheme(s.url);
+  if (!validUrl(url)) { s.err = 'Enter an address, such as example.com or 10.0.0.5:9000.'; fillSheet(); const ta = sheetEl().querySelector('textarea'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return; } /* the caret at the end, where the fix usually goes */
+  /* the field shows the address that was meant, so an error or Already saved reads against it */
+  if (url !== s.url) { s.url = url; const ta = sheetEl() && sheetEl().querySelector('textarea'); if (ta) ta.value = url; }
   const folder = inbox ? null : s.folder;
   const body = { title: s.title.trim() || hostFromUrl(url), url, folder_id: folder == null ? null : folder }; if (s.dup) body.force = true;
   s.busy = true; s.err = '';

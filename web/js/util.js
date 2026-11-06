@@ -73,6 +73,28 @@ export const tooMany = secs => { const w = waitText(secs); return w ? `Too many 
 export const errorText = (e, fallback) => e && e.data && e.data.error ? cap(e.data.error) + (/[.!?]$/.test(e.data.error) ? '' : '.') : fallback;
 export function hostFromUrl(u) { try { return new URL(u).host; } catch (e) { return u; } }
 export const validUrl = u => { try { const x = new URL(u); return (x.protocol === 'http:' || x.protocol === 'https:') && !!x.hostname; } catch (e) { return false; } };
+/* a host on the user's own network, where a home server answers plain http; copied as it is from the extension
+   (extras/extension/shared.js localHost), so the app and the extension agree. tools/extension.test.mjs checks they do. */
+export function localHost(hostname) {
+  var h = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  var m = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h);
+  if (m) {
+    var a = +m[1], b = +m[2];
+    return a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127);
+  }
+  if (h.indexOf(':') !== -1) return h === '::1' || /^f[cd][0-9a-f]{0,2}:/.test(h) || /^fe[89ab][0-9a-f]?:/.test(h);
+  return h === 'localhost' || h.indexOf('.') === -1 || /\.(local|lan|home\.arpa|internal)$/.test(h);
+}
+/* an address typed without a scheme gets one: http:// on the own network, https:// elsewhere. Text that has a scheme, or
+   is not a host with an optional port and rest, comes back as typed, so validUrl refuses what it refused before. */
+export function addScheme(text) {
+  const t = String(text == null ? '' : text).trim();
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(t)) return t;
+  const m = /^(\[[0-9a-f:.]+\]|[^\s\/?#@:\[\]\\]+)(:[0-9]{1,5})?([\/?#][\s\S]*)?$/i.exec(t);
+  if (!m || (/^https?$/i.test(m[1]) && m[3] && m[3][0] === '/')) return t;
+  let host; try { host = new URL('http://' + t).hostname; } catch (e) { return t; }
+  return (localHost(host) ? 'http://' : 'https://') + t;
+}
 
 /* search hits: the matching text gets a quiet accent background */
 export function highlight(s, query) { const q = String(query == null ? '' : query).trim(); s = String(s == null ? '' : s); if (!q) return esc(s);
