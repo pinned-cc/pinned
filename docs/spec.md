@@ -1410,6 +1410,7 @@ S24.3.2 Decided behaviour. Both pages follow `prefers-color-scheme`. In light th
   - `.tbtn:hover` (ui.css:39), a green veil in dark: `var(--picked-fill)`, the app's light green veil (app.css:1556). No colour the app does not already use.
   - `.kcap` (ui.css:145-146): background `var(--hover)`, inset shadow `inset 0 -2px 0 var(--line-2)` instead of `rgba(0,0,0,.35)`, which reads as a dark smear on paper. Look, the maintainer's check: the app's own `.kcap` keeps its dark values in light (app.css:232-233), so this one rule is a judgement, not a copy. Provisional, proposed: the light inset.
   - `.sv-ph .ph-in` and `.sv-ph::after` (ui.css:53-54) keep their white veils, as the app does in light (app.css:792-793).
+- Changed after the flow test of 0.1.13: in light the folder icons (`.si-ic`) take `var(--hp)`, the hue's darker shade the chosen row's name and tick already use; with `var(--h)` six chosen-row icons were 2.4:1 to 2.97:1, with `var(--hp)` every icon is at 3.7:1 or more.
 - Changed after release audit 6 (F-180): the `.flist` background keeps its white veil in light instead of `var(--hover)`; with the grey tint the chosen row's text was 4.47:1 for rose and 4.48:1 for lilac, with the veil every hue is at 4.86:1 or more.
 - popup.html:5 and options.html:6: `content="dark"` becomes `content="dark light"`, so the browser's own scroll bars and form parts follow.
 - In light the Save button is the app's light primary: ink `#1b1a17` with paper text `#f4f1ea`. Text buttons are the light green `#167a4a`.
@@ -1487,7 +1488,7 @@ S24.5.7 Visible and spoken texts.
 
 S24.5.8 Accessibility.
 - No live region: the tip is part of the view when it draws, not an announcement.
-- Focus: when the tip is closed from its button by keyboard or a screen reader, focus moves to the first card of the view (`#pmain article[data-id] .pt-in`), or to `#pmain` when there is none.
+- Focus: when the tip is closed while focus is in it, focus moves to the first card of the view (`#pmain article[data-id] :is(.pt-in, .g-in)`, the Dashboard's cards being `.g-in`; corrected after the flow test), or to `#pmain` when there is none.
 - Touch target: the whole tip closes on tap; the close button is 44 by 44 (`--tap`).
 - VoiceOver users select with a double tap and hold; the words still hold. Checked in the VoiceOver pass of S24.0.5.
 - No animation at all.
