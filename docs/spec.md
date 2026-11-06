@@ -212,14 +212,14 @@ S5.21 Easy password notice: "Your app password is easy to guess. Set a stronger 
 
 ### 5d. Sheets, menus and other parts
 
-S5.22 Save sheet: favicon, Title, URL, status "Not saved yet" or "Already saved in <path>. Save anyway moves it here.", up to 3 recent folders, folder picker with New folder; errors "Enter a full address starting with http or https." and "Could not save. Try again."; the error clears on typing (sheets.js:305-366; actions.js:295; CHANGELOG.md:43, 50). The sheet has a Close button (sheets.js:317). A third status, "Already saved" with Save disabled, exists for a duplicate in a locked folder (sheets.js:334, 354, 365); the server never sends that answer (S20.1). 0.1.12 removes it (S23.15).
+S5.22 Save sheet: favicon, Title, URL, status "Not saved yet" or "Already saved in <path>. Save anyway moves it here.", up to 3 recent folders, folder picker with New folder; errors "Enter a full address starting with http or https." and "Could not save. Try again."; the error clears on typing (sheets.js:305-366; actions.js:295; CHANGELOG.md:43, 50). The sheet has a Close button (sheets.js:317). A third status, "Already saved" with Save disabled, exists for a duplicate in a locked folder (sheets.js:334, 354, 365); the server never sends that answer (S20.1). 0.1.12 removes it (S23.15). Since 0.1.13 an address without a scheme gets one and the error reads "Enter an address, such as example.com or 10.0.0.5:9000." (S24.2).
 S5.23 Move sheet with Inbox first, and Move to for folders with Top level first (sheets.js:47-54). A bookmark move shows a toast with Undo (actions.js:98-103, 169; CHANGELOG.md:53); a folder moved with Move to gets no toast and no Undo (actions.js:170).
 S5.24 Rename in place on the desktop (F2, Enter saves, Escape cancels), a sheet on the phone; New folder and Rename folder sheets (actions.js:55-74).
 S5.25 Confirms: Delete folder ("Its N subfolders go too. N bookmarks go to Trash."), Delete now, Empty trash, Stop sharing, Remove the password (actions.js:75-96; sheets.js:136, 155; CHANGELOG.md:30).
 S5.26 Lock, Unlock and Remove lock dialogs, each with Close; the lock note "Use at least 8 characters. Links in this folder stay out of sight everywhere until you unlock it. The password cannot be recovered." plus "Locking ends the share link." when shared (sheets.js:82-106; CHANGELOG.md:54).
 S5.27 Share sheet: Share with a link, Copy, Share (with the Web Share API), Lock with a password (Set, Change, Remove, the rule line "Use at least 8 characters."), Expires Never, 1, 7 or 30 days, and the open count (sheets.js:109-156).
 S5.28 API tokens sheet: list with created and last used, New token form (name, app password, Create), the token shown once with Copy and the next step, revoke asked in the row (sheets.js:189-222; CHANGELOG.md:56).
-S5.29 Signed in sheet: each browser with sign in day and last use, this one marked; Sign out and Sign out all others ask the app password (sheets.js:226-248).
+S5.29 Signed in sheet: each browser with sign in day and last use, this one marked; Sign out and Sign out all others ask the app password (sheets.js:226-248). Since 0.1.13 each row shows the sign in minute (S24.7).
 S5.30 What's new: the embedded CHANGELOG from `/changelog`, the newest 3 releases open, older folded (sheets.js:163-188; server.go:171; pages.go:201-206). 0.1.12 marks the running release (S23.13).
 S5.31 Add to <folder>: a searchable list of bookmarks not in the folder, "Move N to <folder>", toast with Undo (sheets.js:250-295).
 S5.32 Selection bar: desktop top bar, phone bottom bar; Select all, Move, Copy, Share, Trash, More; in Trash Restore and Delete; for folders Delete (render.js:86-105, 349-355).
@@ -582,16 +582,16 @@ S16.3 Findings at merge: 24 in all; open F-60 (no image for the audited commit, 
 ## 17. Known friction and open items (flow test 04.11.2026)
 
 S17.1 Counts at v0.1.11: 119 steps, 107 work, 11 friction, 0 broken, 1 by hand; on 31.10: 96 work, 21 friction, 2 broken (FT 04.11 Counts 2).
-S17.2 01.5: no countdown during a wait; the line keeps saying the wait it started with (FT 04.11 01.5).
-S17.3 02.2: the app refuses `example.com` without a scheme, while the extension options try https then http (FT 04.11 02.2).
-S17.4 02.19: the extension popup and options are always dark (FT 04.11 02.19; extras/extension/ui.css:17).
-S17.5 04.13: with More open the folder list has a hidden scroll bar and More stays open after a reload (FT 04.11 04.13; app.css scrollbar-width none).
-S17.6 04.15: nothing on the phone says that holding a card selects it (FT 04.11 04.15).
+S17.2 01.5: no countdown during a wait; the line keeps saying the wait it started with (FT 04.11 01.5). Fixed in 0.1.13, S24.1.
+S17.3 02.2: the app refuses `example.com` without a scheme, while the extension options try https then http (FT 04.11 02.2). Fixed in 0.1.13, S24.2.
+S17.4 02.19: the extension popup and options are always dark (FT 04.11 02.19; extras/extension/ui.css:17). Fixed in 0.1.13, S24.3.
+S17.5 04.13: with More open the folder list has a hidden scroll bar and More stays open after a reload (FT 04.11 04.13; app.css scrollbar-width none). Fixed in 0.1.13, S24.4 (the scroll bar; More staying open is a stored choice, S24.4.4).
+S17.6 04.15: nothing on the phone says that holding a card selects it (FT 04.11 04.15). Fixed in 0.1.13, S24.5.
 S17.7 05.8: the lock note overlaps the second field by 6 px (FT 04.11 05.8). 0.1.12: S23.10.
-S17.8 08.3: a wrong code empties both fields (FT 04.11 08.3; pages.go:89-109).
-S17.9 08.8: Signed in rows of one browser kind read the same, day only (FT 04.11 08.8; sheets.js:231-238).
-S17.10 08.11: a browser signed out elsewhere keeps showing data until its window gets focus or it sends a request (FT 04.11 08.11).
-S17.11 09.4: the token form is gone after Create; a second token needs the sheet reopened (FT 04.11 09.4).
+S17.8 08.3: a wrong code empties both fields (FT 04.11 08.3; pages.go:89-109). Still open: moved out of 0.1.13, S24.6.
+S17.9 08.8: Signed in rows of one browser kind read the same, day only (FT 04.11 08.8; sheets.js:231-238). Fixed in 0.1.13, S24.7.
+S17.10 08.11: a browser signed out elsewhere keeps showing data until its window gets focus or it sends a request (FT 04.11 08.11). Fixed in 0.1.13, S24.8.
+S17.11 09.4: the token form is gone after Create; a second token needs the sheet reopened (FT 04.11 09.4). Fixed in 0.1.13, S24.9.
 S17.12 11.3: 0.1.10 cannot name the copy when it refuses an upgraded database (FT 04.11 11.3).
 S17.13 02.20: the right click menu was not run (headless) (FT 04.11 02.20).
 S17.14 Found on the way: the axe 2.5.3 finding (S15.11); at 360 px the Add sheet cuts the Folder row to a sliver; the phone unreachable state has no head with the gear; the 404 is plain text; How to save "Show the Save code" is a 136 by 19 px target; text below 12 px in places; the binary listens on every address outside Docker (FT 04.11 Found on the way 2 to 6). 0.1.12: S23.11, S23.6, S23.7, S23.8, S23.5, S23.9; the listen address is not changed.
@@ -736,10 +736,10 @@ S21.22 Opening a link from the app posts `/api/bookmarks/{id}/open` with keepali
 
 ## 22. Front end behaviour
 
-S22.1 Browser storage: localStorage `pinned.sort`, `pinned.fsort`, `pinned.layout`, `pinned.foot` (through a helper that adds the `pinned.` prefix, util.js:58-62; state.js:74; actions.js:215) and `pinned-theme` (theme.js:4, 17); sessionStorage `pinned.pile` (home.js:38). `pinned.foot` is why More stays open after a reload (S17.5).
+S22.1 Browser storage: localStorage `pinned.sort`, `pinned.fsort`, `pinned.layout`, `pinned.foot` (through a helper that adds the `pinned.` prefix, util.js:58-62; state.js:74; actions.js:215) and `pinned-theme` (theme.js:4, 17); sessionStorage `pinned.pile` (home.js:38). `pinned.foot` is why More stays open after a reload (S17.5). Since 0.1.13 also `pinned.tip-hold`, set when the phone tip is closed or selecting starts (S24.5).
 S22.2 Phone start screen: Dashboard, Inbox and Folders tabs with counts and a sliding indicator (render.js:283-288, 383-391; phone.js:4); a bottom bar with the search pill and Add that rides above the keyboard (render.js:248-256; phone.js:6-12).
 S22.3 `/#tokens` opens the API tokens sheet; How to save links to it (app.js:42-43; bookmarklet.html:142). `/#q=<text>` opens the palette with that text (app.js:40-44).
-S22.4 The state is fetched again when the window gets focus and when the tab becomes visible, at most once per 1.5 s (app.js:47-48); this is how a browser signed out elsewhere finds out (S17.10).
+S22.4 The state is fetched again when the window gets focus and when the tab becomes visible, at most once per 1.5 s (app.js:47-48); this is how a browser signed out elsewhere finds out (S17.10). Since 0.1.13 the app page also asks `/health` every 30 s while it is visible and leaves for the login when the answer has no version (S24.8).
 S22.5 The version comes from `/health` and shows in the sidebar foot and in Settings (app.js:46; render.js:193, 312); see S19.18.
 S22.6 Save page window: it fits itself to the panel when it is 720 px wide or less and was opened by script (app.js:64-72); when it cannot close it shows Saved with Done, or goes to `/` when nothing was saved (sheets.js:380-383); it also takes a URL out of Android `text` (app.js:52-58).
 S22.7 Login with TOTP on: Enter in the password field with an empty code moves to the code field; the button is disabled after submit (app.js:86).
@@ -1284,3 +1284,440 @@ S23.24.2 What stays: deepmerge 4.3.1, GHSA-gcqx-w48m-w2h4 (low, prototype poison
 S23.24.3 Why it is low and touches no user. design/ runs only by hand on the maintainer's machine (Storybook, Style Dictionary, the token check, S23.18.2); it is not in CI, not embedded in the binary (assets.go) and not in the image (Dockerfile:20-31).
 
 S23.24.4 Test. Run on 04.11 in a scratch copy, then the files taken over: `npm install`, `npm run check:tokens` passes ("every token matches web/app.css, and every value in app.css is a token"); `npm run build-storybook` builds, and its index.json holds the same 109 stories with the same ids as the 9.1.21 build. An OSV query over every package of the new design/package-lock.json (402 packages) finds only deepmerge 4.3.1; over the old lock it found the four packages of F-174. `npm run shoot` (screens against the real app) is not run here: it needs the capture of the real app first (S23.18).
+
+## 24. Changes in 0.1.13
+
+Revised 05.11.2026 after an independent review (0 blockers, 6 must fix, 13 should fix, 8 notes). Written before any code of 0.1.13, against main at d685fe6. Every file:line below is at d685fe6. Where earlier sections cite older lines for the same code (for example pages.go:89-109 in S17.8), the line at d685fe6 is given here.
+
+This section is the whole of 0.1.13. Nothing outside it goes in. The nine changes were decided by the maintainer on 05.11.2026. They close nine of the ten friction steps left in the 0.1.12 flow test; step 11.3 stays (FT 0.1.12, "The 11 friction of 0.1.11, one by one"). Ids are S24.<change>.<point>. Each point is testable. Section 24.17 maps every review finding to the point that settles it.
+
+Marks used:
+- "wording, the maintainer's check": a new or changed text a user reads or hears, shown to the maintainer before the build. All of them are listed again in 24.15.
+- "look, the maintainer's check": a visible change that is not a plain reuse of an existing rule.
+- "provisional": the proposed answer where more than one makes sense, for the maintainer's check. All of them are listed again in 24.16.
+
+Sources read in full: docs/spec.md (sections 1 to 23, sections 8 and 16 again for S24.6), docs/known-issues.md, docs/security.md (sessions and cookies, stored secrets), FT 0.1.12, the review, and the code named below.
+
+Amended 06.11.2026: the texts of 24.15 are approved; the picks of 24.16 are taken as written; the tip look is direction A. S24.6 (the login step) is moved out of 0.1.13 to a later version, so 0.1.13 has no server change at all: S24.0.3 reads "No server change", and 24.15 items 6 and 18 and 24.16 items 10 and 11 wait with S24.6. Item 14 (DE and EN) stays an open release item for the maintainer before the tag.
+
+### 24.0 Rules for every change
+
+S24.0.1 The rules of S23.0.1 and S23.0.2 hold. The look stays. CSS is edited in place on the line that holds the rule, so the `source` lines of design/tokens/*.json keep pointing at the right declarations. Any changed value is changed in design/tokens/*.json too. `npm run check:tokens` in design/ passes after the build.
+
+S24.0.2 No schema change. 0.1.13 stays at schema 12. 0.1.12 opens a database that 0.1.13 used, as it is. Nothing new is stored in the database (S24.7.5). The one new server state, the login step of S24.6, lives in memory only.
+
+S24.0.3 One server change, and only one: the form login with a second factor (S24.6). No new route. No change to `/api/login`, `/health`, `/api/sessions`, `/api/tokens` or any other answer. Everything else is in web/, extras/extension/ and tools/.
+
+S24.0.4 Each change is one item in the sense of the release checklist and goes through its eight steps. The evidence per step is kept in the maintainer's items record outside this repo, which release-gate.json reads. New rows: S24.1 to S24.9, under the flows they touch (F01, F02, F04, F08, F09). Step 4 (design first) applies in full to S24.5 (a look of its own) and to the code only page of S24.6, and in short form to S24.3 (a reuse of the app's light colours, shown to the maintainer as screenshots before the build).
+
+S24.0.5 Whole release check, after every change is built:
+- The width scan of the 0.1.12 flow test (11 widths, 26 screens, Chromium and WebKit, light and dark) is run again and compared with the 0.1.12 screenshots. A difference is allowed only inside the parts a change names. Every phone width context sets `pinned.tip-hold` first, except the one screen that shows the tip (S24.5.10).
+- tools/ui-test.mjs passes in Chromium, WebKit and Firefox. `go test -race ./...`, `node --test tools/extension.test.mjs` and `sh tools/setup.test.sh` pass, as in CI. The suites run in local time, TZ=UTC and TZ=America/Los_Angeles.
+- The flow test runs on the 0.1.13 build and counts each step named below.
+- One VoiceOver pass in Safari on the maintainer's Mac, moves only, never presses, for what this section says a screen reader reads: the silent countdown and its one closing line (S24.1.4), the code only page (S24.6.7), the phone tip and its close button (S24.5.8, in Safari's responsive mode or the iPhone simulator), and the different Sign out names (S24.7.4).
+
+### 24.1 Login: the wait counts down
+
+S24.1.1 Problem. After five wrong passwords the login says "Wrong password. Wait 30 seconds before the next try." and keeps saying 30 while the time passes (S17.2; flow 01.5, friction in 0.1.11 and 0.1.12: "the text stays 'Wait 30 seconds' 4 s later"). The page writes the text once, from the `wait` value in the address (web/js/app.js:81-83).
+
+S24.1.2 Decided behaviour. While a wait runs, the wait in the error line counts down each second until the login can be tried again.
+- The only source of the seconds is the `wait` value the form login puts in the address (internal/server/pages.go:151-161). Every login, with or without a second factor, stays a form post (S24.6), so there is no second source.
+- The deadline is `Date.now() + wait * 1000`, taken once at load. At each tick the seconds left are `ceil((deadline - Date.now()) / 1000)`, clamped to between 0 and the original wait. So a background tab, a sleep of the computer or a clock moved forward shows the right time when it comes back, and a clock moved back never shows more than the server said. (`performance.now()` can pause during sleep on macOS and iOS, which would keep the button disabled longer than the server's wait.)
+- Each tick writes the line again with `waitText(left)` (web/js/util.js:70-71), in the same sentence as before. Below 120 seconds it says seconds (30, 29, 28 ...). From 120 seconds it says minutes rounded up, from 2 hours hours rounded up, as the server says a wait (guard.go:186-196). The figure changes when the rounded value changes.
+- During the wait the Log in button is disabled. The password field and, with a second factor, the code field stay editable, so the user can type ahead and a password manager can fill. Enter does nothing while the button is disabled (a disabled default button blocks implicit submission). Provisional, proposed: button disabled, fields editable. Reason: the ticket says "until the field can be used again"; a try during the wait is refused without a check (S8.14) and only restarts the message.
+- At zero the error line is emptied, the button is enabled, and focus stays where it is.
+- After reading `error` and `wait` from the address, the page removes both with `history.replaceState` and keeps `next`, so a reload does not restart a stale countdown. A reload during a wait shows the plain form; a try then gets the real time left from the server ("Too many tries. Wait 26 seconds, then try again.", flow 01.5), which counts down.
+- A wait value that `waitSecs` refuses (util.js:68; the cases `1e9`, `-5`, `Infinity`, `99999999`, `12abc` of tools/ui-test.mjs:2072) keeps today's plain messages and starts no countdown.
+
+S24.1.3 Visible texts.
+- Unchanged sentences, only the figure moves: "Wrong password. Wait N before the next try.", "Wrong password or code. Wait N before the next try.", "Too many tries. Wait N, then try again." (app.js:80-83; util.js:72).
+- New, spoken only, at zero: "You can try again now." (wording, the maintainer's check). It goes into a new visually hidden polite live region on the login page, next to `#login-err` (web/login.html:85): `<p class="vh" id="login-live" aria-live="polite"></p>`.
+
+S24.1.4 Accessibility.
+- `#login-err` has role alert (login.html:85). A new message (not a tick) is always written with `role="alert"` set first. Before the first tick of a countdown the page removes the role, so the rewrites each second are not announced; a screen reader user who moves to the line reads the current value. Since every login is a form post, the next message comes with a fresh page and its own alert, and the rule above covers any message written without a reload.
+- At zero the hidden live region says "You can try again now." once.
+- The Log in button is a real disabled button while the wait runs; focus does not land on it. The countdown never moves focus.
+- Reduced motion: nothing moves; only text changes.
+
+S24.1.5 Light and dark, phone and desktop: text only, in the existing `.fld-err` style, no layout change. The login is `.lone` at every width (app.css:890-891).
+
+S24.1.6 Tests.
+- tools/ui-test.mjs, new check "login page: the wait counts down to zero, then the button works again", with `page.clock.install()` (Playwright 1.64):
+  - `/login?error=1&wait=3`: the line reads "Wrong password. Wait 3 seconds before the next try." and Log in is disabled; after `clock.runFor(1000)` it reads "Wrong password. Wait 2 seconds before the next try."; after 3000 ms in all the line is empty, Log in is enabled, `#login-live` reads "You can try again now.", and `location.search` holds `next` but no `error` or `wait`.
+  - `/login?error=wait&wait=125`: "Too many tries. Wait 3 minutes, then try again." at start; after 5000 ms (120 s left) "Wait 2 minutes"; after 6000 ms (119 s left) "Wait 119 seconds".
+  - After the first tick `#login-err` has no `role`; a message written after the countdown ran out (the page reloaded with `error=1`) has `role="alert"`.
+- The existing check at tools/ui-test.mjs:2070 installs the clock too, so a slow runner cannot read 29 instead of 30.
+- No new Go test for this change: the server's answers do not change. TestLoginFormRateLimit (internal/server/server_test.go:277) and TestLoginAPIAndRateLimit (:200) keep the wait values.
+- Closes flow step 01.5.
+
+S24.1.7 Security. The limiter (S8.14, S8.17) is unchanged; the page only shows the time the server sent. The release audit re-reads V2.4.1 and V6.3.1.
+
+### 24.2 Add sheet: an address without a scheme gets one
+
+S24.2.1 Problem. The Add sheet refuses `example.com` with "Enter a full address starting with http or https." (S5.22, S17.3; flow 02.2, friction). The check is `validUrl` (web/js/util.js:75), used by the live duplicate check (web/js/sheets.js:367) and by Save (sheets.js:374). The extension options already take an address without a scheme (S11.8).
+
+S24.2.2 Decided behaviour (the maintainer's pick for public names). Before the live check and before Save, the sheet runs the typed address through a new helper `addScheme(text)` in web/js/util.js. The server and the API do not change: a script that posts `example.com` still gets 400 (S21).
+
+S24.2.3 The rule of `addScheme`, on the trimmed text:
+1. Text that starts with a scheme and `://` (`/^[a-z][a-z0-9+.-]*:\/\//i`) is returned as typed. `HTTP://X` and `https://x` keep today's answer; `ftp://x` is still refused by `validUrl`.
+2. Text that is a host, an optional port and an optional rest gets a scheme. The host is a bracketed IPv6 address (`[`, hex digits, `:` and `.`, `]`) or a run of characters with no white space, `/`, `?`, `#`, `@`, `:`, `[`, `]` or `\`. The port is `:` and 1 to 5 digits. The rest, when there is one, starts with `/`, `?` or `#`.
+3. Rule 2 does not apply when the host is `http` or `https` (any case) and the rest starts with `/`. These are the typos `https//example.com` and `http//nas`; without this, `http//nas` would read as the host `http` and be saved as `http://http//nas`, a bookmark that opens nothing.
+4. Anything else is returned as typed, so `validUrl` refuses it as today: `mailto:a@b.c`, `javascript:alert(1)`, `user@host`, `fe80::1` without brackets, `https//example.com`, an empty field.
+5. The scheme. The host is read the way the extension reads it: `hostname` of `new URL('http://' + text)`, which the URL parser has normalised (lower case, IPv4 short forms such as `10.1` read as `10.0.0.1`, brackets kept). If that parse throws, the text is returned as typed and `validUrl` refuses it. Then `localHost(hostname)`, the extension's function copied as it is (extras/extension/shared.js:29-38), decides: own network gets `http://`, every other host `https://`. The own network list: IPv4 10/8, 127/8, 172.16/12, 192.168/16, 169.254/16 and 100.64/10; IPv6 `::1`, `fc00::/7` and `fe80::/10`; `localhost`; a name without a dot; a name ending in `.local`, `.lan`, `.home.arpa` or `.internal`.
+
+S24.2.4 Cases.
+- `example.com` gives `https://example.com` (the maintainer's pick). `example.com/a?b#c` gives `https://example.com/a?b#c`.
+- `localhost:8080` gives `http://localhost:8080`. Today `new URL("localhost:8080")` reads `localhost:` as a scheme, so it is refused.
+- `192.168.1.5:9000` gives `http://192.168.1.5:9000`. `10.1:9000` gives `http://10.1:9000` (its hostname reads as 10.0.0.1, own network).
+- `nas.local` gives `http://nas.local`; `nas` gives `http://nas`; `pinned.home.arpa` gives `http://pinned.home.arpa`.
+- `100.101.102.103` (a Tailscale address) gives `http://100.101.102.103`; `nas.tailnet.ts.net` gives `https://nas.tailnet.ts.net`.
+- `[::1]:9095` gives `http://[::1]:9095`; `[2001:db8::1]` gives `https://[2001:db8::1]`.
+- `example.com:99999` gives `https://example.com:99999`; the URL parse refuses the port, so the error shows.
+- Provisional, proposed: `http://` for own network hosts, `https://` for the rest. Reason: services on the own network mostly answer plain http (the flow test seed itself: Portainer `10.0.0.5:9000`, Pi-hole `10.0.0.2`), and `https://` on them makes a bookmark that does not open. The list and the way the host is read are the extension's, so the app and the extension agree on "own network". The cost: an own network service that only speaks https (UniFi on `:8443`, Proxmox on `:8006`) gets `http://`, and the user types `https://` for it. The app does not try both, as decided.
+- What the user sees: on Save the URL field is set to the full address before the request goes out, so after an error or a 409 ("Already saved in ...") the field shows the address that was meant. On success the sheet closes as today and the card shows the host. An empty title becomes the host of the full address (sheets.js:376).
+- The live duplicate check (sheets.js:365-371) checks `addScheme(text)`, so `example.com` shows "Already saved in <path>. Save anyway moves it here." when `https://example.com` is saved. The field is not rewritten while the user types.
+- The save page `/save` uses the same sheet code (S5.8; sheets.js:318, "save sheet (app Add, and the /save page)"), so the same rule applies when the user edits the address there. The bookmarklet itself sends `location.href`, which has a scheme.
+- The extension popup and the right click save take the tab's address, which has a scheme; the extension options keep their own rule (S11.8). Neither changes. Rename (sheets.js:41) edits only the title.
+
+S24.2.5 Visible texts. Changed error, Add sheet and save page, for what is still refused. Current: "Enter a full address starting with http or https." (sheets.js:374). New: "Enter an address, such as example.com or 10.0.0.5:9000." (wording, the maintainer's check). It follows the extension's "Enter an address, such as 10.0.0.5:9095 or https://bookmarks.example.com." (extras/extension/options.js:17).
+
+S24.2.6 Accessibility. The error keeps role alert and the caret at the end of the address (sheets.js:374). The rewritten field value is read when the user returns to the field. Keyboard unchanged.
+
+S24.2.7 Light and dark, phone and desktop: only the error words change. The error is one line at 320 px in Chromium and WebKit (width scan, screen "Add sheet").
+
+S24.2.8 Tests.
+- tools/ui-test.mjs, new check "Add sheet: an address without a scheme is saved with one". POST /api/bookmarks is routed to a stub that records the body and answers 201 with a bookmark of the S21.1 shape (the sheet reloads the state after a save). Typing each of `example.com`, `localhost:8080`, `192.168.1.5:9000`, `10.1:9000`, `nas.local`, `[::1]:9095`, `nas.tailnet.ts.net` and Save records `https://example.com`, `http://localhost:8080`, `http://192.168.1.5:9000`, `http://10.1:9000`, `http://nas.local`, `http://[::1]:9095`, `https://nas.tailnet.ts.net`. Typing `mailto:a@b.c`, `javascript:alert(1)`, `user@host`, `https//example.com` and `http//nas` shows the new error and sends nothing.
+- The existing check at tools/ui-test.mjs:2077-2087 types `ftp://example.com` instead of `example.com`, waits for "Enter an address", and expects the field to read `ftp://example.com/x` after typing `/x`.
+- tools/extension.test.mjs, new test "the app and the extension agree on the own network": it loads shared.js (as it does today) and web/js/util.js with a stub `matchMedia` (util.js:52 and 55 call it at import), and for the 20 inputs 10.0.0.5, 172.16.0.1, 172.32.0.1, 192.168.1.5, 169.254.1.1, 100.64.0.1, 100.128.0.1, 127.0.0.1, 10.1, 8.8.8.8, `[::1]`, `[fd00::1]`, `[fe80::1]`, `[2001:db8::1]`, localhost, NAS.Local, nas.lan, x.home.arpa, x.internal, example.com, it checks that `addScheme` adds `http://` exactly where `Pinned.localHost(new URL('http://' + input).hostname)` is true.
+- No Go test: the server does not change. internal/urlkey keeps refusing an address without a scheme (S21).
+- Closes flow step 02.2.
+
+S24.2.9 Security. No login, session or token code changes. The rule never adds a scheme to text that has one, nor to text with `@` or a `:` not followed by digits, so `javascript:` and `mailto:` stay refused. The server checks every address as before (urlkey.Key).
+
+### 24.3 Extension: popup and options follow light and dark
+
+S24.3.1 Problem. The popup and the options are always dark (S17.4; flow 02.19, friction: popup background rgb(25, 25, 28), options rgb(10, 10, 11) with the system in light). ui.css sets the dark values on `:root` with `color-scheme:dark` (extras/extension/ui.css:4-18), and both pages carry `<meta name="color-scheme" content="dark">` (popup.html:5, options.html:6).
+
+S24.3.2 Decided behaviour. Both pages follow `prefers-color-scheme`. In light they use the app's own light colours (web/app.css:1536-1569; design/tokens/color.json, mode `light` at :1251). There is no bulb and no stored choice in the extension: the app's choice (`pinned-theme` in localStorage, S5.4) lives on the server's origin, which the extension cannot read.
+- ui.css gets one `@media (prefers-color-scheme: light){...}` block after its last line (156), so no earlier line moves. It sets `color-scheme:light` and these values, each copied from app.css: `--ground #f4f1ea`, `--screen #f4f1ea`, `--surface #faf8f3`, `--surface-up #fdfcf8`, `--sheet #faf8f3`, `--fold #f7f4ee`, `--line rgba(27,26,23,.10)`, `--line-2 rgba(27,26,23,.16)`, `--ink #1b1a17`, `--ink-weak #6b675e`, `--accent #1b1a17`, `--accent-ink #f4f1ea`, `--accent-soft #167a4a`, `--danger #b42318`, `--tile-blank #ebe7dd`, `--hover rgba(27,26,23,.045)`, `--press rgba(27,26,23,.07)`, `--focus-field 0 0 0 3px rgba(22,122,74,.16)`, `--picked-fill rgba(22,122,74,.07)`, and the folder hues `--cyan` to `--plain-p` as at app.css:1543-1551 (app.css:1537-1556). `--hover` and `--picked-fill` are new to ui.css; the dark `:root` of ui.css gets them too, with the app's dark values (`--hover rgba(255,255,255,.04)`, app.css:45; `--picked-fill rgba(95,211,154,.08)`, app.css:50), added on line 8 beside `--press` so no line moves.
+- The rules of ui.css that write a white veil as a literal get, inside the same light block, the value the same part has in the app's light theme:
+  - `.fld-in` background (ui.css:31): `rgba(255,255,255,.7)`, the light sheet field (app.css:1575, `--save-field` at :1568).
+  - `.fmini .v` not filled (ui.css:66): `rgba(255,255,255,.7)` (app.css:1575). `.fmini.fill .v` (ui.css:71): the light fill of app.css:1577, copied as written there (a `color-mix` of the hue into `--fold`).
+  - `.fav` inset rim (ui.css:50): `inset 0 0 0 1px var(--line)`, as the app's `.fav` (app.css:320).
+  - `.ib:hover` (ui.css:45), `.si:hover` (:81), `.opt-acts .btn:hover` (:135), `.flist` background (:78) and `.url-show` background (:119): `var(--hover)`, as the app's `.si:hover` (app.css:237). `.flist` scroll bar colour (:79): `var(--line-2)`.
+  - `body.popup` inset top edge (ui.css:114): `inset 0 1px 0 rgba(255,255,255,.6)`, the light `--edge-top` (app.css:1557).
+  - `.tbtn:hover` (ui.css:39), a green veil in dark: `var(--picked-fill)`, the app's light green veil (app.css:1556). No colour the app does not already use.
+  - `.kcap` (ui.css:145-146): background `var(--hover)`, inset shadow `inset 0 -2px 0 var(--line-2)` instead of `rgba(0,0,0,.35)`, which reads as a dark smear on paper. Look, the maintainer's check: the app's own `.kcap` keeps its dark values in light (app.css:232-233), so this one rule is a judgement, not a copy. Provisional, proposed: the light inset.
+  - `.sv-ph .ph-in` and `.sv-ph::after` (ui.css:53-54) keep their white veils, as the app does in light (app.css:792-793).
+- popup.html:5 and options.html:6: `content="dark"` becomes `content="dark light"`, so the browser's own scroll bars and form parts follow.
+- In light the Save button is the app's light primary: ink `#1b1a17` with paper text `#f4f1ea`. Text buttons are the light green `#167a4a`.
+- A change of the system setting while the popup or options is open switches at once (a media query, no script).
+
+S24.3.3 What the browser reports. The pages follow what the browser reports as `prefers-color-scheme` to extension pages. Chromium browsers report the system setting. Firefox may report its own website appearance setting instead. Not settled from the code; seen by hand in Firefox before the release (S24.3.6).
+
+S24.3.4 Visible texts: none. Accessibility: spoken names and keyboard unchanged. The focus outline `var(--accent)` (ui.css:24) is ink in light, as in the app. Contrast: the token pairs are the app's (ink #1b1a17 and #6b675e on #faf8f3 and #f4f1ea, #b42318, #167a4a), which the app's own checks hold to 4.5:1 (tools/ui-test.mjs:221). The extension also has mixes the app's checks never see: the chosen folder row `.si[aria-checked="true"]` (ui.css:85, the hue mixed into transparent with `--hp` text), the filled chip, `.url-show`, `.kcap`, and the status lines `.status.ok` and `.status.bad`. Each is measured on the light screenshots of S24.3.6: 4.5:1 for text, 3:1 for icons and the focus ring. A pair below that goes to the maintainer before the build is called done.
+
+S24.3.5 Widths: the popup is 360 px wide (ui.css:114); the options page is one column (ui.css:127). The extension does not run on a phone.
+
+S24.3.6 Tests.
+- tools/extension.test.mjs, new test "ui.css has a light block with the app's light values": it reads extras/extension/ui.css and web/app.css. Every custom property the light block of ui.css sets, `--hover` and `--picked-fill` included, equals the same property in app.css's `:root[data-theme="light"]` block. Every custom property of ui.css's `:root` that the app's light block also defines is in the extension's light block. Every `var(--x)` used in ui.css names a property ui.css defines (this catches an undefined `--hover`). popup.html and options.html carry `content="dark light"`. It fails before the change.
+- Flow test, step 02.19, extension loaded unpacked (as in FT 0.1.12), context colour scheme light: popup background rgb(250, 248, 243), options background rgb(244, 241, 234), `color-scheme` light; dark: rgb(25, 25, 28) and rgb(10, 10, 11), as in 0.1.12. Screenshots of the popup (folder list open with a folder chosen, duplicate line, setup notice, the plain http notice of S23.1.8) and the options (status ok, status bad, the http warning) in both schemes, measured as in S24.3.4.
+- By hand, before the release: Brave and Firefox, system light and dark, switched while the popup is open.
+- Closes flow step 02.19.
+- The extension version moves to 0.1.13 with the release (S23.23.1); the manifest check in tools/extension.test.mjs enforces it.
+
+S24.3.7 Security: none.
+
+### 24.4 Sidebar: the folder list shows its scroll bar
+
+S24.4.1 Problem. With More open the folder list shows 4 of 5 folders and scrolls with no visible scroll bar, so the folder below gives no sign (S17.5; flow 04.13, friction: clientHeight 176, scrollHeight 180, scrollbarWidth none). The rule hides it in every state: `.side-tree{...scrollbar-width:none}` and `.side-tree::-webkit-scrollbar{display:none}` (web/app.css:198-199). The actions below show a thin bar when they scroll (app.css:216), and so does the main list (app.css:217).
+
+S24.4.2 Decided behaviour. The folder list shows the same thin scroll bar as the main list wherever it scrolls, with the same colour.
+- In place, keeping the line count (S24.0.1): app.css:198 `scrollbar-width:none` becomes `scrollbar-width:thin`. Line 199, `.side-tree::-webkit-scrollbar{display:none}`, becomes `.side-tree{scrollbar-color:var(--line-2) transparent}`. The WebKit rule has to go: with it, Safari and WebKit hide the bar whatever `scrollbar-width` says.
+- Provisional, proposed: in every state, not only with More open. Reason: it is the same element and the same defect (a long folder list scrolls without a sign with More closed too); limiting it would need `.side:has(.side-foot.open) .side-tree` for no gain.
+- The icon rail (720 to 999 px, app.css:1444) gets the same bar. Its tree has 12 px side padding (`--s-6`), so a classic thin bar does not cover the icons; the width scan at 768 and 900 checks it.
+
+S24.4.3 What the user sees depends on the system's scroll bar setting, as for the main list today. With classic scroll bars (Windows, Linux, macOS set to "Always"), a thin bar shows beside the folder list whenever it holds more than fits. With macOS overlay scroll bars (the default "Automatically based on mouse or trackpad", with a trackpad), the bar shows while scrolling and fades, so at rest there is still no sign. A sign at rest would be a new look and is out of 0.1.13 (S24.14). Provisional, proposed: accept this limit for 0.1.13.
+
+S24.4.4 "More stays open after a reload" is not a bug. It is a stored choice, like sort and layout: the toggle writes `pinned.foot` (web/js/actions.js:215), the state reads it at load (web/js/state.js:74), S22.1 records it, it came with "sidebar actions fold away" (7a9f986, 16.10.2026), and the UI test checks that "the choice is remembered" (tools/ui-test.mjs:309-316). The friction of 04.13 was the hidden scroll bar in the squeezed list, which S24.4.2 addresses. Not changed. Provisional, proposed: keep.
+
+S24.4.5 Visible texts: none. Accessibility: the list stays a scroll area for the wheel, the trackpad, keyboard focus moving through the rows, and drag (drag.js:108). Light and dark: `--line-2` in each theme (app.css:15, 1540). Phone: no sidebar, no change.
+
+S24.4.6 Tests.
+- tools/ui-test.mjs, in the existing check of More at about 800 px high (tools/ui-test.mjs:2125-2130), add: with More open and the tree scrolling, `getComputedStyle(tree).scrollbarWidth === 'thin'` in Chromium, WebKit and Firefox; and no rule in the page's stylesheets has a selector with `.side-tree::-webkit-scrollbar` (read through `document.styleSheets`). No width measurement: Playwright starts headless Chromium with `--hide-scrollbars`, so `offsetWidth - clientWidth` is 0 whatever the CSS says.
+- The width scan: the sidebar at 768, 900, 1024, 1180, 1440 and 1920 differs from 0.1.12 only in the tree's scroll bar; names keep their ellipsis; rail icons are whole.
+- `npm run check:tokens` passes.
+- Closes flow step 04.13 (works with classic scroll bars; the step text names the macOS overlay case).
+
+S24.4.7 Security: none.
+
+### 24.5 Phone: a one time tip about holding a card
+
+S24.5.1 Problem. On the phone nothing says that holding a card selects it (S17.6; flow 04.15, friction: no "hold" text, no visible more button on cards). The hold is 450 ms (S15.8; web/js/drag.js:164-171), released into `heldAction` (drag.js:185).
+
+S24.5.2 Decided behaviour (the maintainer's pick): shown once on the phone after the first few cards exist, text exactly "Tip: hold a card to select it.", closed with a tap, never shown again in that browser.
+
+S24.5.3 Where. The first block inside `.bd`, the scrolling content of the phone view, in every view where it shows. renderPhoneMain builds `.bd` as the folder section (in a folder view) followed by phoneBody (web/js/render.js:364); the tip goes before both, so in a folder view it sits above the subfolder tiles, and in the other views above the notices and the view row. It is in the normal flow: it pushes the content down by its own height and scrolls away with it. It is never fixed, absolute or over the bottom bar, the tabs, the head or any card, so it never covers content.
+
+S24.5.4 When it is drawn. All of these:
+- the phone layout (below 720 px, `isPhone()`, util.js:53);
+- a view with bookmark cards: Dashboard (gallery), Inbox, All bookmarks or a folder, with at least one card drawn; not Folders, Settings or Trash, not an empty state, not the skeleton while loading;
+- at least 3 live bookmarks the browser can see (`live().length >= 3`; links in locked folders are not in the state, S8.33). Provisional, proposed: 3. Reason: with one or two cards there is little to select; three is the smallest count where selecting several makes sense.
+- and either the stored flag is not set, or the flag was set in this page while this view was showing (S24.5.5).
+
+S24.5.5 Never again, without a jump.
+- The flag `pinned.tip-hold` is written through the existing helper (`store.set('tip-hold', 1)`, util.js:59-62) when the tip is tapped anywhere (its text or its close button), and when selecting starts by any way: a hold released into `heldAction` (drag.js:185) or Select in the view row. Provisional, proposed: any start of selecting ends the tip. Reason: the user has done what the tip says.
+- A tap closes the tip at once (the user asked for it to go).
+- When selecting starts, the tip stays drawn, so no card moves under the user's finger while they select, and the bar does not appear above a jumping list. The page remembers the view the flag was set in (`ui.tipView`); the tip is dropped at the next change of view (a tab, a folder, Settings) or the next load. The selection bar is at the bottom (S5.32), so the kept tip covers nothing.
+- In a private window without storage the helper swallows the error (util.js:61): the tip goes for that page and may show again at the next load. Accepted.
+
+S24.5.6 Look. Three directions for the maintainer's pick, before the build:
+- A: the phone notice layout of `.pnotice` (app.css:881-884: margins, 48 px minimum height, radius, gap, padding, `--t-body` text) with neutral colours from existing tokens instead of the notice's red: background `var(--card-tint)`, border `1px solid var(--card-rim)`, text `var(--ink)`, no icon, the existing close button at its right (`ib weak` with `i-close`, 44 by 44, as in every sheet head, sheets.js:213).
+- B: the text as a quiet line in the section label style (`.pglbl`) with the same close button.
+- C: the text inside the view row (`.vbar`), left of Select, with the close button.
+Provisional, proposed: A, since it is the app's existing shape for a message on the phone. Look, the maintainer's check. A new class `.ptip`, written beside the `.pnotice` rules on existing lines where it can be.
+
+S24.5.7 Visible and spoken texts.
+- Tip, exactly: "Tip: hold a card to select it." (the maintainer's text).
+- Close button spoken name: "Close tip" (wording, the maintainer's check).
+- The tip is a `div` with `role="note"`, not a landmark: a complementary landmark inside the main area is flagged by axe (best practice rule landmark-complementary-is-top-level) and would list a landmark for one sentence. A screen reader reads "Tip: hold a card to select it." then "Close tip, button".
+
+S24.5.8 Accessibility.
+- No live region: the tip is part of the view when it draws, not an announcement.
+- Focus: when the tip is closed from its button by keyboard or a screen reader, focus moves to the first card of the view (`#pmain article[data-id] .pt-in`), or to `#pmain` when there is none.
+- Touch target: the whole tip closes on tap; the close button is 44 by 44 (`--tap`).
+- VoiceOver users select with a double tap and hold; the words still hold. Checked in the VoiceOver pass of S24.0.5.
+- No animation at all.
+
+S24.5.9 Light and dark: `--card-tint`, `--card-rim` and `--ink` in each theme (app.css:62-66, 16; 1562-1563, 1541). Widths: 320 to 719 px; one or two lines at 320 px, the text wraps and the box grows, never cut. Never on the desktop, the icon rail, the share page or the save page.
+
+S24.5.10 Tests.
+- tools/ui-test.mjs: every context below 720 px gets `addInitScript(() => localStorage.setItem('pinned.tip-hold', '1'))`, so the existing phone checks run as in 0.1.12: the phone context at tools/ui-test.mjs:1127 and the second phone context at :1988 (390 by 844, touch), and any other phone width context. The width scan of S24.0.5 does the same, except its one screen "phone tip".
+- New check in a fresh phone context without the flag: after login with at least 3 bookmarks, `#pmain .bd > .ptip:first-child` is visible on Dashboard and Inbox and in a folder with subfolders (above the folder section), reads "Tip: hold a card to select it.", has `role="note"`, and is neither `position: fixed` nor `absolute`; it is absent on Folders and Settings; a tap on it removes it and sets `pinned.tip-hold`; after a reload it is absent.
+- Second fresh context: a hold on a card (the `hold` helper, tools/ui-test.mjs:1237) starts selecting and sets the flag; the tip is still there and the first card's top has not moved (same `getBoundingClientRect().top` before and after); after Done and a switch to the Inbox tab, the tip is gone and stays gone after a reload.
+- Third: with 2 bookmarks (route stub of /api/state) the tip is absent.
+- At 320 px the tip has no horizontal overflow and its text is not clipped.
+- A desktop context at 1440 never has `.ptip`.
+- Reset for any test or by hand: `localStorage.removeItem('pinned.tip-hold')` and reload, or a fresh browser context.
+- axe: tools/ui-test.mjs has no axe run. The axe script of the flow test (axe 4.14, FT 0.1.12 Counts 6) adds the screen "phone Dashboard with the tip" at 390 and 320, light and dark, Chromium and WebKit, with the tags wcag2a, wcag2aa, wcag21a, wcag21aa and best-practice: 0 violations.
+- Closes flow step 04.15.
+
+S24.5.11 Security: none. Nothing goes to the server; the flag is per browser.
+
+### 24.6 Login with a second factor: moved out of 0.1.13
+
+S24.6.1 Moved out on 06.11.2026. A wrong code still empties both fields (S17.8; docs/known-issues.md). The design weighed for it, a server side login step that keeps hidden which factor was wrong, waits for a later version with its own review, tests and audit points, so that the login is not changed shortly before a launch. The points of 24.15 and 24.16 marked "S24.6" wait with it.
+
+### 24.7 Signed in: rows of the same browser are told apart
+
+S24.7.1 Problem. Rows of one browser kind read the same: "Chrome on macOS / Signed in on 4 Nov, last used just now" on every row, only "This browser" differs (S17.9; flow 08.8, friction). The row shows the name, the sign in day and the last use (web/js/sheets.js:253).
+
+S24.7.2 What the server already stores per session: `agent` (the short name made at login, browserName, internal/server/sessions.go:120-163), `created_at` and `used_at` in Unix seconds, and `expires_at` (internal/store/sessions.go:11-17, 27). `/api/sessions` sends id, browser, created_at, used_at and current (sessions.go:15-21, 47). Nothing else is stored: no address, no full User-Agent.
+
+S24.7.3 Decided behaviour. Each row shows, from data the server already sends:
+- line one, the browser name as today: "Chrome on macOS";
+- line two for another browser: "Signed in on 4 Nov at 14:32, last used just now" (wording, the maintainer's check);
+- line two for this browser: "This browser, signed in on 4 Nov at 14:32" (wording, the maintainer's check).
+- The time is the browser's local time, 24 hour, `HH:MM`, written as the Dashboard writes a time (web/js/home.js:18). The day is `fmtDay` as today (util.js:89), with the year for an earlier year: "4 Nov 2025 at 14:32".
+- The last use stays as today (`ago`, sheets.js:174-177). It is recorded at most once an hour (server.go:295), so it cannot tell apart two browsers used in the same hour; the sign in minute can.
+- Order unchanged: last used first (store/sessions.go:44).
+- Two sessions of one kind signed in within the same minute still read the same and are told apart only by their place in the list. Accepted: it needs two logins of one browser kind within a minute, and more would need new stored data.
+- Sessions carried over by migration 9 (spec section 4c) got the upgrade time as `created_at` and an empty agent, shown as "Browser" (sheets.js:246). Their time is the upgrade, not a sign in, and two of them read the same. Accepted: they end with their idle or absolute limit (S8.8).
+
+S24.7.4 The sign out names. Today every Sign out button of a same kind row is spoken "Sign out Chrome on macOS" (sheets.js:253) and the confirm label reads "Sign out Chrome on macOS" (sheets.js:252), so neither says which one.
+- Button spoken name: "Sign out Chrome on macOS, signed in on 4 Nov at 14:32" (wording, the maintainer's check). The visible word stays "Sign out".
+- Confirm label, visible: "Sign out Chrome on macOS, signed in on 4 Nov at 14:32" (wording, the maintainer's check). "Sign out all others" is unchanged.
+- The toasts "Signed out" and "Other browsers signed out" are unchanged.
+
+S24.7.5 No new data, no schema change. A browser version, an address or a device name would need new stored data, and an address is personal data the app does not keep today (docs/security.md:162 lists what a session keeps). Not proposed, so no upgrade test and no copy before upgrade are needed for this change.
+
+S24.7.6 Accessibility. The row text is plain text read in order; the button names differ per row. Light and dark unchanged. Widths: line two grows by " at 14:32". At 320 px the phone sheet's row text wraps inside `.tk-m` beside the button (app.css:575); the width scan checks no clipping and no overlap with Sign out at 320, 360 and 390, and in the 392 px desktop dialog.
+
+S24.7.7 Tests.
+- internal/server, new TestSessionsJSONCarriesTheSignInSecond (sessions_test.go): two logins of one User-Agent 61 seconds apart (the store's clock moved) list two rows with the same `browser` and `created_at` values 61 apart. It pins what the page reads.
+- tools/ui-test.mjs, the Signed in check (tools/ui-test.mjs:836) adds: with a second context logged in, each row's line two matches `^(This browser, signed in|Signed in) on \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)( \d{4})? at \d\d:\d\d(, last used .+)?$`. With `/api/sessions` routed to two rows of "Chrome on macOS" signed in at 09:05 and 14:32 local, the rows read "Signed in on <day> at 09:05, last used ..." and "Signed in on <day> at 14:32, last used ...", and the two Sign out buttons have different spoken names. The routed part runs in contexts with `timezoneId` UTC and America/Los_Angeles, and the times shown are local in each.
+- Closes flow step 08.8.
+
+S24.7.8 Security. No change to what is stored or sent; the sheet shows only what `/api/sessions` already sends to a logged in browser. The release audit notes for V7.4.3 that the list now tells sessions apart by sign in time.
+
+### 24.8 A browser signed out elsewhere hides the links promptly
+
+S24.8.1 Problem. A browser signed out from another browser keeps showing its folders and cards until its window gets focus or it sends a request (S17.10; flow 08.11, friction: "before focus: 13 sidebar rows still shown; after focus event url=/login?next=%2F"). Today the app looks only on focus and when the tab becomes visible, by reloading the state at most once per 1.5 s (web/js/app.js:47-48; S22.4), and on any request that gets 401 (api.js:15-17).
+
+S24.8.2 Decided behaviour. While the app page is visible, it asks the server every 30 seconds whether its session still holds. When it does not, the page goes to the login at once, as a 401 does today.
+- The check is `GET /health` (internal/server/pages.go:240-251). It answers `{"ok":true,"version":...}` with a live session and `{"ok":true}` without one (TestHealthWithSession, internal/server/hardening_test.go:323). It checks the session with `loggedIn(nil, r)`, which returns before any renewal or use record (server.go:279-281), so the check does not keep an idle session alive. It counts live bookmarks (`SELECT COUNT(*)`, internal/store/bookmarks.go:147-150) and returns no data.
+- The page leaves only on a 200 answer whose body parses as JSON, has `ok === true`, and has no `version` key (`!('version' in h)`). Then it goes to `/login?next=<path, query and hash>` with `location.href`, as api.js:16 does.
+- Anything else does nothing: a `version` key; no answer; any status other than 200; a body that is not JSON (a proxy's login page reached through a redirect, a 502 page); JSON without `ok:true`. Reachability stays the job of the state load and its notice (S5.20).
+- The timer runs only while `document.visibilityState === 'visible'`: started at load and on `visibilitychange` to visible, stopped on `visibilitychange` to hidden. The focus and visible reloads stay (app.js:47-48), so a tab coming back finds out at once, as today. On `pageshow` with `persisted` (a page restored from the back forward cache) the check runs at once.
+- Only the app page (`data-page="app"`); not the save page, How to save, the share page or the login.
+- Provisional, proposed: every 30 seconds, through `/health`. Reasons: 30 s keeps the worst case under a minute for a browser left in view, at 120 small requests an hour per visible tab; 60 s halves that if the maintainer prefers. `/health` already tells a live session from none, is tested, needs no new route (S24.0.3), and is on the Umbrel proxy whitelist (umbrel/docker-compose.yml:10), so the check is not caught by the Umbrel login.
+
+S24.8.3 Cost. Per visible app tab: one GET every 30 seconds, an answer of about 40 bytes, one session lookup and one `COUNT(*)` over the bookmarks. Nothing while hidden, which covers a locked phone screen. A start page left open and in view on a phone or tablet keeps the radio waking every 30 seconds. The time of `/health` on the 100000 link database is measured in the release run and becomes a budget; this spec claims no number.
+
+S24.8.4 What the user sees. Within 30 seconds of being signed out elsewhere, or of the session's end by a changed APP_PASSWORD (S8.1), a browser in view leaves the app for the login page; after logging in it returns to where it was (`next`). Text typed in an open sheet is lost within those 30 seconds, not only at the next action as today; its save would fail anyway. Accepted.
+
+S24.8.5 Visible texts: none new. Accessibility: the page change is a navigation; screen readers announce the new title "Log in" (login.html:13). Light and dark, phone and desktop: no visual change.
+
+S24.8.6 Tests.
+- internal/server, new TestHealthDoesNotRenewTheSession (hardening_test.go): with the store's clock moved past an hour and past a day since the last renewal, five `GET /health` with the session cookie leave `used_at` and `expires_at` unchanged and set no cookie.
+- internal/server, new TestHealthAfterSignOutHasNoVersion (sessions_test.go): browser A ends browser B with `DELETE /api/sessions/{id}` and the app password; B's `GET /health` answers `{"ok":true}` with no `version` key.
+- tools/ui-test.mjs, new check "a browser signed out elsewhere leaves for the login while in view": the main desktop page is A and stays signed in; a new context B logs in and opens the Dashboard with `page.clock.install()`; A ends only B with `DELETE /api/sessions/{id}` and the app password (not Sign out all others, which would also end the main page's other contexts); B gets no focus event; after `clock.runFor(30000)` B's URL is `/login?next=%2F` and no card is in B's page.
+- Hidden: in a fresh B, `Object.defineProperty(document, 'visibilityState', { get: () => 'hidden' })` and the same for `document.hidden`, then `document.dispatchEvent(new Event('visibilitychange'))`; during `clock.runFor(60000)` no request to `/health` is made.
+- Proxy answers: in a fresh B, `/health` routed to a 200 HTML page, then to a 502, then to `{"ok":true,"version":""}`: after 30 s each time, B stays on the app.
+- Flow test step 08.11: the signed out browser left in view goes to the login within 30 seconds, without a focus event. Closes flow step 08.11.
+
+S24.8.7 Security, for the release audit. This change touches sessions. Re-check: V7.3.1 (idle limit), the poll does not extend a session (TestHealthDoesNotRenewTheSession); V7.4.3 and V7.4.5 (ending other sessions) now take effect on screen within 30 seconds; `/health` exposes nothing more than today (TestHealthHasNoCount, internal/server/access_test.go:193).
+
+### 24.9 API tokens: the form stays for a second token
+
+S24.9.1 Problem. After Create the token sheet shows the new token and the form is gone; a second token needs the sheet closed and opened again (S17.11; flow 09.4, friction). tokensHTML draws either the new token or the form (web/js/sheets.js:214-217).
+
+S24.9.2 Decided behaviour. After Create the sheet shows the new token block (name, value, Copy, "Copy it now. It is not shown again.", the next step line) and below it the New token form, empty and ready.
+- tokensHTML draws the token block when `s.created` is set, and the form always.
+- On success, tokenCreate (sheets.js:226-233) empties the form's name and app password fields before it calls tokensLoad. Required: tokensLoad carries typed values over its redraw (sheets.js:208-211) and would otherwise put the used name and password back.
+- Focus goes to Copy, as today (sheets.js:230).
+- A second Create replaces the token block with the new token. The first token's value is no longer shown, as when the sheet is closed today; its row stays in the list below.
+- Provisional, proposed: the app password field starts empty for the second token. Reason: every token is made after the app password again (S8.23; V7.5.1), and the password should not stay in the page after its use. The cost is typing it again.
+- A wrong password on the second token keeps the name and focuses the password, as for the first (sheets.js:231-232); the shown token block stays.
+- Revoking the shown token removes its block, as today (sheets.js:236).
+
+S24.9.3 Visible texts: none new. "New token", "Extension on my laptop", "App password", "Create", the token block texts and the empty state sentence are as today (sheets.js:214-220).
+
+S24.9.4 Accessibility. Focus order: Close, the token value (tabindex 0, "Token"), Copy, the name field, the app password, Create, then the list. The next step line is a plain paragraph and takes no focus. The form keeps its labels (`aria-label="Token name"`, `"App password"`). On the desktop the name field is not autofocused after Create (focus is on Copy); `data-autofocus` (sheets.js:216) applies only when the sheet opens.
+
+S24.9.5 Light and dark: unchanged styles. Phone: the sheet is a bottom sheet bound to 60 percent of the visible height (app.css:632); with the token block and the form it is taller and its body scrolls, the token block first and in view after Create. The width scan gets a screen "token created" at 320, 390 and 1440: nothing cut, Copy in view.
+
+S24.9.6 Tests.
+- internal/server, new TestTwoTokensInARow (tokens_test.go): two `POST /api/tokens` with the app password in one session, both 201 with different tokens, both listed, both answer on `/api/folders`. It passes before and after; it pins what the sheet relies on.
+- tools/ui-test.mjs, the token check (tools/ui-test.mjs:801) adds: after the first Create, `form[data-token]` is present with empty name and password and focus is on Copy; a second name and the password, Create; the token block shows the second name and value; the list holds both; both are revoked at the end. The next step check (tools/ui-test.mjs:2133) still passes.
+- Closes flow step 09.4.
+
+S24.9.7 Security, for the release audit. This change touches tokens. Re-check V7.5.1: each token still needs the app password (TestCreatingATokenAsksForTheAppPassword, internal/server/tokens_test.go:296); the password field is emptied after success; the token value is shown once and only in the page (S8.23).
+
+### 24.10 Release steps and release notes
+
+S24.10.1 CHANGELOG.md gets "## 0.1.13" above 0.1.12, with the date on the day the maintainer sets (S23.20.1). Under "### Fixes" (wording, the maintainer's check), the nine lines listed in 24.15, items 13 to 21.
+
+S24.10.2 docs/known-issues.md: the nine lines of 0.1.12 these changes close (lines 5 to 13) go; the 0.1.10 line (line 14) stays; the heading names 0.1.13.
+
+S24.10.3 extras/extension/manifest.json version 0.1.13 (S23.23.1). README.md and extras/vps/setup.sh version pins move to v0.1.13, with tools/setup.test.sh in the same commit (S23.20.2).
+
+S24.10.4 The earlier sections of the spec are brought in line in the same round: S5.6 (the code only page), S5.22, S5.29, S8 (a new subsection 8i for the login step, S24.6.4), S11 (S24.3), S14 (no new event; the step value is never logged), S16 (the cookie rows of V3.3.x and the V6.3.x rows name loginstep.go), S17.2 to S17.6 and S17.8 to S17.11 (each a pointer to S24), S22.1 (the key `pinned.tip-hold`), S22.4 (the visible poll), S22.7. docs/security.md gets the cookie and stored secret rows of S24.6.10. design/wireframes: flows_data.py step texts 01.5, 02.2, 02.19, 04.13, 04.15, 08.3, 08.8, 08.11, 09.4, and the screens add-noscheme (design/wireframes/build.py:354), sessions, sessions-confirm (build.py:577-578), a token created screen, a login code only screen and a phone screen with the tip. The Storybook fixtures that hold the old texts or layout are captured again: design/storybook/fixtures/screens/desk-sessions.json, desk-tokens.json (the form below a new token) and desk-login-error.json (the countdown).
+
+### 24.11 Files each change touches
+
+- S24.1: web/js/app.js (bootLogin), web/login.html (the hidden live region), tools/ui-test.mjs. util.js waitSecs and waitText are reused unchanged.
+- S24.2: web/js/util.js (addScheme, the copied localHost), web/js/sheets.js (checkUrl, doSave, the error text), tools/ui-test.mjs, tools/extension.test.mjs.
+- S24.3: extras/extension/ui.css (line 8 and the light block after line 156), extras/extension/popup.html, extras/extension/options.html, tools/extension.test.mjs, extras/extension/manifest.json (version).
+- S24.4: web/app.css:198-199, design/tokens/*.json if check:tokens asks, tools/ui-test.mjs.
+- S24.5: web/js/render.js (renderPhoneMain and the tip), web/js/actions.js (the close action, the flag on Select), web/js/drag.js (heldAction sets the flag), web/js/state.js (`ui.tipView`), web/app.css (`.ptip`, on existing lines where it can be), design/tokens/parts.json for the new rule, tools/ui-test.mjs, the flow test's axe script.
+- S24.6: internal/server/loginstep.go (new), internal/server/pages.go (loginForm, loginPage, the placeholders), internal/server/server.go (checkLoginTried returns the password result; the Server struct holds the map), web/login.html (the kept line, the placeholders), web/js/app.js (bootLogin when the password field is hidden), internal/server/loginstep_test.go (new), a test for safeNext, tools/ui-test.mjs, docs/security.md.
+- S24.7: web/js/sheets.js (sessionsHTML), tools/ui-test.mjs, internal/server/sessions_test.go.
+- S24.8: web/js/app.js (bootApp), tools/ui-test.mjs, internal/server/hardening_test.go, internal/server/sessions_test.go.
+- S24.9: web/js/sheets.js (tokensHTML, tokenCreate), tools/ui-test.mjs, internal/server/tokens_test.go.
+- S24.10: CHANGELOG.md, docs/known-issues.md, README.md, extras/vps/setup.sh, tools/setup.test.sh, docs/spec.md, docs/security.md, design/wireframes/flows_data.py and the files it generates, the Storybook fixtures named in S24.10.4.
+- Outside the repo: the items record (S24.0.4).
+
+No file under internal/store changes.
+
+### 24.12 Pre-build checks
+
+Settled before the build starts, not in the release run:
+- S24.6.8: the password manager check on a build of the login step (Safari with iCloud Keychain, Brave, Firefox).
+- S24.5.6 and S24.6.5: the look of the tip (three directions) and of the code only page, shown to the maintainer.
+- S24.3.2: screenshots of the extension in light, for the maintainer's look check, with the contrast of S24.3.4 measured.
+- 24.15: every new text shown to him.
+
+### 24.13 Open release item: DE and EN
+
+The release checklist asks that every visible text is ready for DE and EN. The app has no string catalogue and shows EN only, as in 0.1.12. This spec does not drop that line on its own: it goes to the maintainer as an open release item before the 0.1.13 tag, with the proposal "not met in 0.1.13, EN only; a string catalogue is its own item later". Until then the release gate notes it as open.
+
+### 24.14 What stays out of 0.1.13
+
+- Flow step 11.3: 0.1.10 cannot name the backup copy (S17.12, docs/known-issues.md:14); 0.1.10 cannot learn more.
+- Any server change other than the login step of S24.6: no new route, no change to `/api/login`, `/health`, `/api/sessions` or `/api/tokens` answers, no new stored session data, no schema change.
+- Probing an address for https and then http in the app (the extension keeps its probe).
+- A bulb or a stored theme choice in the extension; syncing the app's choice to the extension.
+- A sign at rest that the folder list scrolls on macOS overlay scroll bars (S24.4.3).
+- Tips other than the hold tip; tips on the desktop or the icon rail.
+- Keeping the password after a wrong try without a second factor (the ticket is the second factor case).
+- Device names, addresses or browser versions in Signed in.
+- Push or server sent events for sign out; a poll on the save, share or How to save pages.
+- The items of S23.18.4 and S23.4.6 that wait for the maintainer's word.
+
+### 24.15 All new or changed user facing texts
+
+Exactly as they show. Each was the maintainer's check and was approved on 06.11.2026; item 4 is the maintainer's own text.
+
+1. Login, spoken at the end of a wait (hidden live region): "You can try again now."
+2. Login, the figure in the wait sentences counts down; the sentences stay "Wrong password. Wait N before the next try.", "Wrong password or code. Wait N before the next try." and "Too many tries. Wait N, then try again."
+3. Add sheet and save page error: "Enter an address, such as example.com or 10.0.0.5:9000." (replaces "Enter a full address starting with http or https.")
+4. Phone tip: "Tip: hold a card to select it." (the maintainer's text)
+5. Phone tip, close button spoken name: "Close tip"
+6. (S24.6, moved out) Login with a second factor after a refused try, the line above the code field: "Password kept from your last try. Type it again"
+7. Signed in, another browser: "Signed in on 4 Nov at 14:32, last used just now" (replaces "Signed in on 4 Nov, last used just now")
+8. Signed in, this browser: "This browser, signed in on 4 Nov at 14:32" (replaces "This browser, signed in on 4 Nov")
+9. Signed in, an earlier year: "Signed in on 4 Nov 2025 at 14:32, last used 3 days ago"
+10. Signed in, Sign out button spoken name: "Sign out Chrome on macOS, signed in on 4 Nov at 14:32" (replaces "Sign out Chrome on macOS")
+11. Signed in, confirm label: "Sign out Chrome on macOS, signed in on 4 Nov at 14:32" (replaces "Sign out Chrome on macOS")
+12. docs/known-issues.md: the list shortened to the 0.1.10 line, under a 0.1.13 heading.
+13. CHANGELOG 0.1.13: "After too many wrong passwords, the wait on the login page counts down."
+14. CHANGELOG 0.1.13: "An address typed without http or https in the app, such as example.com, is saved with https://, and an address on your own network, such as 192.168.1.5:9000, with http://."
+15. CHANGELOG 0.1.13: "The browser extension follows light and dark mode."
+16. CHANGELOG 0.1.13: "The folder list in the sidebar shows a scroll bar when it scrolls."
+17. CHANGELOG 0.1.13: "On the phone, a tip says once that holding a card selects it."
+18. (S24.6, moved out) CHANGELOG: "With a login code, a wrong code no longer makes you type the password again."
+19. CHANGELOG 0.1.13: "Signed in shows the time each browser signed in, so two browsers of the same kind can be told apart."
+20. CHANGELOG 0.1.13: "A browser signed out from another one goes to the login page within half a minute, also while it stays in view."
+21. CHANGELOG 0.1.13: "After creating an API token, the form stays for the next one."
+
+Text 3 of the first draft ("Too many tries ..." on the fifth wrong code) is gone: the login stays a form post and keeps today's words.
+
+### 24.16 Provisional picks, each with the proposed answer
+
+1. S24.1.2: during a wait, Log in disabled and the fields editable. Proposed: yes.
+2. S24.2.4: own network hosts get `http://`, other hosts `https://`, by the extension's list and way of reading the host. Proposed: yes.
+3. S24.3.2: the extension's `.kcap` in light gets a light inset instead of the app's dark one. Proposed: the light inset.
+4. S24.4.2: the folder list scroll bar in every state, not only with More open. Proposed: every state.
+5. S24.4.3: on macOS overlay scroll bars the bar shows only while scrolling. Proposed: accept for 0.1.13.
+6. S24.4.4: More staying open after a reload is a stored choice, not a bug. Proposed: keep.
+7. S24.5.4: the tip shows from 3 live bookmarks. Proposed: 3.
+8. S24.5.5: any start of selecting ends the tip, and the tip stays drawn until the next change of view. Proposed: yes.
+9. S24.5.6: the tip's look. Proposed: direction A, the neutral notice.
+10. (S24.6, moved out) S24.6.3: the remembered login step that hides which factor was wrong (B), not a code only page after a right password (A). Proposed: B.
+11. (S24.6, moved out) S24.6.6: a post without a password and without a valid step makes no new step. Proposed: yes.
+12. S24.8.2: a check every 30 seconds through `GET /health` while visible. Proposed: 30 s; 60 s if the maintainer prefers half the requests.
+13. S24.9.2: the app password field empty for the second token. Proposed: empty.
+14. S24.13: DE and EN. Proposed: record in decisions.md that 0.1.13 is EN only and the string catalogue is its own later item.
+
+### 24.17 Review findings and where each is settled
+
+| Finding | Kind | Settled in |
+|---|---|---|
+| 1 api() drops Retry-After | Must fix | S24.1.2, S24.6.3: no script login; the only source is the `wait` value |
+| 2 alert role not put back | Must fix | S24.1.4, test in S24.1.6 |
+| 3 wrong test value at 119 s | Must fix | S24.1.6 |
+| 4 `--hover` undefined in ui.css | Must fix | S24.3.2 (set in both themes), test in S24.3.6 |
+| 5 password managers and script login | Must fix | S24.6.3 (form post kept, login step), S24.6.8 (hand check before the build), S24.12 |
+| 6 items evidence path | Must fix | S24.0.4, S24.11 |
+| 7 fetch to POST /login | Should fix | Superseded by S24.6.3: no script at all; today's words kept (24.15 note) |
+| 8 tip jumps when selecting starts | Should fix | S24.5.5, test in S24.5.10 |
+| 9 aside landmark, no axe home | Should fix | S24.5.7 (`role="note"`), S24.5.10 (flow test axe script, tags named) |
+| 10 flag missing in other phone contexts | Should fix | S24.0.5, S24.5.10 |
+| 11 host read like the extension | Should fix | S24.2.3 rule 5, test in S24.2.8 |
+| 12 `http//` and `https//` typos | Should fix | S24.2.3 rule 3, test in S24.2.8 |
+| 13 poll on proxy answers | Should fix | S24.8.2, test in S24.8.6 |
+| 14 hidden scroll bars in headless Chromium | Should fix | S24.4.6 |
+| 15 test signs out the main page; visibility stub | Should fix | S24.8.6 |
+| 16 VoiceOver pass | Should fix | S24.0.5 |
+| 17 DE and EN line dropped without a decision | Should fix | S24.13, S24.16 item 14 |
+| 18 contrast of the extension's mixes | Should fix | S24.3.4, S24.3.6 |
+| 19 next step line takes no focus | Should fix | S24.9.2 (sentence dropped), S24.9.4 |
+| 20 migration 9 sessions | Note, acted | S24.7.3 |
+| 21 tip after the folder section | Note, acted | S24.5.3 (before the folder section) |
+| 22 `.tbtn` hover veil not an app value | Note, acted | S24.3.2 (`--picked-fill`) |
+| 23 existing check value and stub shape | Note, acted | S24.2.8 |
+| 24 build.py line, more fixtures | Note, acted | S24.10.4 |
+| 25 battery cost of the poll | Note, acted | S24.8.3, S24.16 item 12 (60 s offered) |
+| 26 `performance.now()` during sleep | Note, acted | S24.1.2 (`Date.now()` deadline, clamped) |
+| 27 typed text lost within 30 s | Note, acted | S24.8.4 (stated and accepted) |
