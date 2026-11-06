@@ -1409,6 +1409,7 @@ S24.3.2 Decided behaviour. Both pages follow `prefers-color-scheme`. In light th
   - `.tbtn:hover` (ui.css:39), a green veil in dark: `var(--picked-fill)`, the app's light green veil (app.css:1556). No colour the app does not already use.
   - `.kcap` (ui.css:145-146): background `var(--hover)`, inset shadow `inset 0 -2px 0 var(--line-2)` instead of `rgba(0,0,0,.35)`, which reads as a dark smear on paper. Look, the maintainer's check: the app's own `.kcap` keeps its dark values in light (app.css:232-233), so this one rule is a judgement, not a copy. Provisional, proposed: the light inset.
   - `.sv-ph .ph-in` and `.sv-ph::after` (ui.css:53-54) keep their white veils, as the app does in light (app.css:792-793).
+- Changed after release audit 6 (F-180): the `.flist` background keeps its white veil in light instead of `var(--hover)`; with the grey tint the chosen row's text was 4.47:1 for rose and 4.48:1 for lilac, with the veil every hue is at 4.86:1 or more.
 - popup.html:5 and options.html:6: `content="dark"` becomes `content="dark light"`, so the browser's own scroll bars and form parts follow.
 - In light the Save button is the app's light primary: ink `#1b1a17` with paper text `#f4f1ea`. Text buttons are the light green `#167a4a`.
 - A change of the system setting while the popup or options is open switches at once (a media query, no script).
