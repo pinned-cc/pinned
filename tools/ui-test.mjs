@@ -2603,7 +2603,13 @@ async function release0113(browser, engine) {
       assert(await p.locator('#pmain .ptip').count() === 1, 'the tip went while selecting');
       assert(Math.abs(await top() - t0) < 1, `the content under the tip moved by ${await top() - t0} px`);
       /* a tap on the tip while selecting closes the tip and keeps the selection */
-      await step('tap on the tip', p.locator('#pmain .ptip span').tap()); await step('the tip goes after the tap', gone(p.locator('#pmain .ptip'), 10000));
+      const at = await p.evaluate(() => { const r = document.querySelector('#pmain .ptip span').getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, e = document.elementFromPoint(x, y);
+        window.__clicks = []; document.addEventListener('click', ev => window.__clicks.push((ev.target.className || ev.target.tagName) + (ev.defaultPrevented ? ' prevented' : '')), true);
+        window.__ptr = []; ['pointerdown', 'pointerup', 'touchstart', 'touchend'].forEach(t => document.addEventListener(t, ev => window.__ptr.push(t), true));
+        return { x: Math.round(x), y: Math.round(y), hit: e && (e.className || e.tagName), vh: innerHeight }; });
+      await step('tap on the tip', p.locator('#pmain .ptip span').tap());
+      try { await gone(p.locator('#pmain .ptip'), 10000); }
+      catch (e) { const d = await p.evaluate(() => ({ clicks: window.__clicks, ptr: window.__ptr, sel: window.Pinned.U.selecting, sup: Math.round(window.Pinned.U.suppressClick - performance.now()) })); throw new Error('the tip goes after the tap: ' + JSON.stringify({ at, ...d })); }
       assert(await p.locator('#pbulkwrap .pbulk').isVisible(), 'a tap on the tip ended the selection');
       await step('Done', p.tap('#pmain [data-a="select"][aria-pressed="true"]')); await step('the selection bar goes', gone(p.locator('#pbulkwrap .pbulk'), 10000));
       await p.tap('#pmain .ptab[data-tab="dashboard"]'); await p.waitForTimeout(250); await p.tap('#pmain .ptab[data-tab="inbox"]'); await p.waitForTimeout(250);
