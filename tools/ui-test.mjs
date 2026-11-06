@@ -2068,7 +2068,7 @@ async function flowFixes(browser, engine) {
   const openFolder = async f => { await page.click(`#side .sf[data-fid="${f.id}"]`); await until(page, n => (document.querySelector('#tbwrap h2') || {}).textContent === n, f.name, 'folder view'); };
 
   await check('login page: a wait says the time the server sent; the wrong try that starts it says both', async () => {
-    const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }), lp = await c.newPage();
+    const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }); await c.clock.install(); const lp = await c.newPage();
     for (const [q, want] of [['error=1&wait=30', 'Wrong password. Wait 30 seconds before the next try.'], ['error=wait&wait=75', 'Too many tries. Wait 75 seconds, then try again.'], ['error=wait&wait=600', 'Too many tries. Wait 10 minutes, then try again.'], ['error=1&wait=1e9', 'Wrong password.'], ['error=1&wait=-5', 'Wrong password.'], ['error=wait&wait=Infinity', 'Too many tries. Wait a little, then try again.'], ['error=wait&wait=99999999', 'Too many tries. Wait a little, then try again.'], ['error=wait&wait=12abc', 'Too many tries. Wait a little, then try again.'], ['error=wait', 'Too many tries. Wait 30 seconds, then try again.']]) {
       await lp.goto(`${BASE}/login?${q}`); const got = (await lp.textContent('#login-err')).trim(); assert(got === want, q + ': ' + got); }
     await c.close();
@@ -2076,13 +2076,13 @@ async function flowFixes(browser, engine) {
 
   await check('Add sheet: the error about the address goes as soon as the address is typed again', async () => {
     await page.click('#side [data-view="inbox"]'); await page.click('#tbwrap .add'); await sheetOpen(page);
-    await page.fill('#sheet [data-f=url]', 'example.com'); await page.click('#sheet [data-a="save-go"]');
-    await visible(page.locator('#sheet .fld-err', { hasText: 'Enter a full address' }));
+    await page.fill('#sheet [data-f=url]', 'ftp://example.com'); await page.click('#sheet [data-a="save-go"]');
+    await visible(page.locator('#sheet .fld-err', { hasText: 'Enter an address' }));
     /* the caret waits at the end of the address, so typing goes on from there (End on macOS scrolls, it does not move it) */
     await page.keyboard.type('/x');
     await gone(page.locator('#sheet .fld-err'));
     assert(await page.evaluate(() => document.activeElement && document.activeElement.dataset.f === 'url'), 'the caret left the address');
-    assert(await page.inputValue('#sheet [data-f=url]') === 'example.com/x', 'typing after the error landed elsewhere: ' + await page.inputValue('#sheet [data-f=url]'));
+    assert(await page.inputValue('#sheet [data-f=url]') === 'ftp://example.com/x', 'typing after the error landed elsewhere: ' + await page.inputValue('#sheet [data-f=url]'));
     await page.keyboard.press('Escape'); await sheetClosed(page);
   });
 
@@ -2411,6 +2411,207 @@ async function release0112(browser, engine) {
   await cleanup(page); await ctx.close();
 }
 
+/* 0.1.13 (spec S24): the wait counts down, an address gets its scheme, the folder list scroll bar, the phone tip,
+   Signed in rows told apart, a browser signed out elsewhere leaves while in view, the token form stays */
+async function release0113(browser, engine) {
+  console.log(`\n${engine}, 0.1.13`);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'en-US' });
+  const page = await ctx.newPage();
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await login(page); await cleanup(page); await seed(page); await page.reload(); await visible(page.locator('#side .si'));
+
+  await check('S24.1 login page: the wait counts down to zero, then Log in works again; the address forgets the error', async () => {
+    const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }); await c.clock.install(); const lp = await c.newPage();
+    try {
+      const err = async () => (await lp.textContent('#login-err')).trim();
+      await lp.goto(`${BASE}/login?next=%2Fx&error=1&wait=3`);
+      assert(await err() === 'Wrong password. Wait 3 seconds before the next try.', 'start: ' + await err());
+      assert(await lp.locator('button[type=submit]').isDisabled(), 'Log in is not disabled during the wait');
+      assert(await lp.getAttribute('#login-err', 'role') === 'alert', 'the first message is not an alert');
+      await c.clock.runFor(1000); assert(await err() === 'Wrong password. Wait 2 seconds before the next try.', 'after 1 s: ' + await err());
+      assert(await lp.getAttribute('#login-err', 'role') === null, 'the ticks are announced: role is still alert');
+      await lp.fill('input[name=password]', 'typed ahead'); assert(await lp.inputValue('input[name=password]') === 'typed ahead', 'the password field is not editable during the wait');
+      await c.clock.runFor(2000);
+      assert(await err() === '', 'after 3 s the line is not empty: ' + await err());
+      assert(!(await lp.locator('button[type=submit]').isDisabled()), 'Log in is still disabled');
+      assert((await lp.textContent('#login-live')).trim() === 'You can try again now.', 'the closing line was not said');
+      assert(await lp.getAttribute('#login-err', 'role') === 'alert', 'the alert role did not come back');
+      const q = new URL(lp.url()).searchParams; assert(q.get('next') === '/x' && !q.has('error') && !q.has('wait'), 'address: ' + lp.url());
+      await lp.goto(`${BASE}/login?error=wait&wait=125`);
+      assert(await err() === 'Too many tries. Wait 3 minutes, then try again.', '125 s: ' + await err());
+      await c.clock.runFor(5000); assert(await err() === 'Too many tries. Wait 2 minutes, then try again.', '120 s left: ' + await err());
+      await c.clock.runFor(1000); assert(await err() === 'Too many tries. Wait 119 seconds, then try again.', '119 s left: ' + await err());
+      await lp.goto(`${BASE}/login?error=1`); assert(await lp.getAttribute('#login-err', 'role') === 'alert', 'a new message after the wait is not an alert');
+      for (const w of ['1e9', '-5', 'Infinity', '99999999', '12abc']) { await lp.goto(`${BASE}/login?error=1&wait=${encodeURIComponent(w)}`);
+        assert(await err() === 'Wrong password.', w + ': ' + await err()); assert(!(await lp.locator('button[type=submit]').isDisabled()), w + ' started a wait'); }
+    } finally { await c.close(); }
+  });
+
+  await check('S24.2 Add sheet: an address without a scheme is saved with one, http:// on the own network; the rest is refused', async () => {
+    const sent = [];
+    await page.route('**/api/bookmarks', async r => { if (r.request().method() !== 'POST') return r.fallback(); const b = r.request().postDataJSON(); sent.push(b.url);
+      r.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ id: 999990 + sent.length, title: b.title, url: b.url, folder_id: null, position: 0, created_at: Math.floor(Date.now() / 1000), updated_at: Math.floor(Date.now() / 1000) }) }); });
+    try {
+      await page.click('#side [data-view="inbox"]');
+      const open = async () => { await page.click('#tbwrap .add'); await sheetOpen(page); };
+      const want = [['example.com', 'https://example.com'], ['localhost:8080', 'http://localhost:8080'], ['192.168.1.5:9000', 'http://192.168.1.5:9000'], ['10.1:9000', 'http://10.1:9000'], ['nas.local', 'http://nas.local'], ['[::1]:9095', 'http://[::1]:9095'], ['nas.tailnet.ts.net', 'https://nas.tailnet.ts.net']];
+      for (const [typed, url] of want) { await open(); await page.fill('#sheet [data-f=url]', typed); await page.click('#sheet [data-a="save-go"]'); await sheetClosed(page);
+        assert(sent[sent.length - 1] === url, `${typed} was sent as ${sent[sent.length - 1]}`); }
+      const n = sent.length;
+      for (const typed of ['mailto:a@b.c', 'javascript:alert(1)', 'user@host', 'https//example.com', 'http//nas']) { await open(); await page.fill('#sheet [data-f=url]', typed); await page.click('#sheet [data-a="save-go"]');
+        await visible(page.locator('#sheet .fld-err', { hasText: 'Enter an address, such as example.com or 10.0.0.5:9000.' }));
+        await page.keyboard.press('Escape'); await sheetClosed(page); }
+      assert(sent.length === n, 'a refused address was sent: ' + sent.slice(n).join(', '));
+    } finally { await page.unroute('**/api/bookmarks'); }
+  });
+
+  await check('S24.4 sidebar: the folder list shows a thin scroll bar; no rule hides it in WebKit', async () => {
+    const g = await page.evaluate(() => { const t = document.querySelector('#side .side-tree'); const hid = [];
+      for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) if (r.selectorText && r.selectorText.includes('.side-tree::-webkit-scrollbar')) hid.push(r.selectorText); }
+      return { w: getComputedStyle(t).scrollbarWidth, hid }; });
+    assert(g.w === 'thin', 'scrollbar-width: ' + g.w); assert(!g.hid.length, 'a rule hides it: ' + g.hid.join(', '));
+  });
+
+  await check('S24.7 Signed in: each row says the minute it signed in, local time; Sign out names differ', async () => {
+    const other = await browser.newContext({ viewport: { width: 1440, height: 900 } }), op = await other.newPage();
+    try {
+      await login(op);
+      await openFoot(page); await page.click('#side [data-a="sessions"]'); await sheetOpen(page); await visible(page.locator('#sheet .tk-row', { hasText: 'This browser' }));
+      await until(page, () => document.querySelectorAll('#sheet .tk-row').length >= 2, null, 'two rows');
+      const rows = (await page.locator('#sheet .tk-row .tk-m').allTextContents()).map(x => x.trim());
+      const re = /^(This browser, signed in|Signed in) on \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)( \d{4})? at \d\d:\d\d(, last used .+)?$/;
+      assert(rows.every(r => re.test(r)), 'rows: ' + JSON.stringify(rows));
+      await page.keyboard.press('Escape'); await sheetClosed(page);
+    } finally { await other.close(); }
+    for (const tz of ['UTC', 'America/Los_Angeles']) {
+      const c = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: tz, storageState: await ctx.storageState() }), p = await c.newPage();
+      try {
+        await p.goto(BASE + '/'); await visible(p.locator('#side .si'));
+        const [a, b] = await p.evaluate(() => [[9, 5], [14, 32]].map(([h, m]) => { const d = new Date(); d.setHours(h, m, 0, 0); return Math.floor(d / 1000); }));
+        const now = Math.floor(Date.now() / 1000);
+        await p.route('**/api/sessions', r => r.request().method() === 'GET' ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
+          { id: 990001, browser: 'Safari on macOS', created_at: now - 60, used_at: now, current: true },
+          { id: 990002, browser: 'Chrome on macOS', created_at: a, used_at: now - 30, current: false },
+          { id: 990003, browser: 'Chrome on macOS', created_at: b, used_at: now - 30, current: false }]) }) : r.fallback());
+        await openFoot(p); await p.click('#side [data-a="sessions"]'); await sheetOpen(p); await until(p, () => document.querySelectorAll('#sheet .tk-row').length === 3, null, 'three rows');
+        const m = (await p.locator('#sheet .tk-row .tk-m').allTextContents()).map(x => x.trim());
+        assert(/^Signed in on \d{1,2} \w{3}( \d{4})? at 09:05, last used just now$/.test(m[1]) && /^Signed in on \d{1,2} \w{3}( \d{4})? at 14:32, last used just now$/.test(m[2]), tz + ': ' + JSON.stringify(m));
+        const names = await p.locator('#sheet [data-a="ss-end"]').evaluateAll(bs => bs.map(x => x.getAttribute('aria-label')));
+        assert(names.length === 2 && names[0] !== names[1] && /^Sign out Chrome on macOS, signed in on .+ at 09:05$/.test(names[0]), tz + ' names: ' + JSON.stringify(names));
+        await p.locator('#sheet [data-a="ss-end"]').first().click();
+        await until(p, () => /^Sign out Chrome on macOS, signed in on .+ at 09:05$/.test((document.querySelector('#sheet form[data-session] .sh-lbl') || {}).textContent || ''), null, 'the confirm label names the sign in time');
+      } finally { await c.close(); }
+    }
+  });
+
+  await check('S24.8 a browser signed out elsewhere leaves for the login within 30 s while in view; hidden, it asks nothing; proxy answers keep it', async () => {
+    const mk = async () => { const c = await browser.newContext({ viewport: { width: 1280, height: 800 } }); await c.clock.install(); const p = await c.newPage(); await login(p); await visible(p.locator('#side .si')); return [c, p]; };
+    let [c, b] = await mk();
+    try {
+      const mine = (await apiIn(b, 'GET', '/api/sessions')).data.find(x => x.current);
+      const r = await apiIn(page, 'DELETE', `/api/sessions/${mine.id}`, { password: PASSWORD }); assert(r.status < 300, 'ending B: ' + r.status);
+      await c.clock.runFor(31000);
+      await until(b, () => location.pathname === '/login', null, 'B did not leave for the login');
+      assert(new URL(b.url()).searchParams.get('next') === '/', 'next: ' + b.url());
+      assert(!(await b.locator('article[data-id]').count()), 'cards still in B');
+    } finally { await c.close(); }
+    [c, b] = await mk();
+    try {
+      let asked = 0; b.on('request', q => { if (new URL(q.url()).pathname === '/health') asked++; });
+      await b.evaluate(() => { Object.defineProperty(document, 'visibilityState', { get: () => 'hidden', configurable: true }); Object.defineProperty(document, 'hidden', { get: () => true, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
+      await c.clock.runFor(60000); await b.waitForTimeout(200);
+      assert(asked === 0, `asked /health ${asked} times while hidden`);
+    } finally { await c.close(); }
+    [c, b] = await mk();
+    try {
+      for (const res of [{ status: 200, contentType: 'text/html', body: '<html>proxy login</html>' }, { status: 502, contentType: 'text/html', body: 'bad gateway' }, { status: 200, contentType: 'application/json', body: '{"ok":true,"version":""}' }]) {
+        await b.route('**/health', r => r.fulfill(res)); await c.clock.runFor(31000); await b.waitForTimeout(200);
+        assert(new URL(b.url()).pathname === '/', `left the app on ${res.status} ${res.body}`); await b.unroute('**/health'); }
+    } finally { await c.close(); }
+  });
+
+  await check('S24.9 API tokens: after Create the form stays, empty, for a second token; Copy has focus', async () => {
+    await openFoot(page); await page.click('#side [data-a="tokens"]'); await sheetOpen(page);
+    const made = async name => { await page.fill('#sheet form[data-token] input[name=name]', name); await page.fill('#sheet form[data-token] input[name=password]', PASSWORD);
+      await page.press('#sheet form[data-token] input[name=password]', 'Enter'); await until(page, n => (document.querySelector('#sheet .tk-new .sh-lbl') || {}).textContent === n, name, 'the new token ' + name); };
+    await made(`ui-test token A ${stamp}`);
+    assert(await page.locator('#sheet form[data-token]').count() === 1, 'the form is gone after Create');
+    { const nv = await page.inputValue("#sheet form[data-token] input[name=name]"), pv = await page.inputValue("#sheet form[data-token] input[name=password]"); assert(nv === "" && pv === "", "the form is not empty: " + JSON.stringify([nv, pv.length])); }
+    assert(await page.evaluate(() => document.activeElement && document.activeElement.dataset.a === 'tk-copy'), 'Copy has no focus');
+    const first = (await page.textContent('#sheet .tk-val')).trim();
+    await made(`ui-test token B ${stamp}`);
+    assert((await page.textContent('#sheet .tk-val')).trim() !== first, 'the second token shows the first value');
+    await until(page, s => [...document.querySelectorAll('#sheet .tk-row .tk-n')].filter(n => n.textContent.includes(s)).length === 2, stamp, 'both tokens listed');
+    await shot(page, `${engine}-0113-token-second`);
+    await page.keyboard.press('Escape'); await sheetClosed(page); await cleanup(page);
+  });
+
+  await check('no script errors', async () => assert(!errors.length, errors.join('; ')));
+
+  /* the phone tip: its own contexts, made with { tip: true } */
+  const phoneCtx = async (w = 390) => { const c = await browser.newContext({ tip: true, viewport: { width: w, height: 844 }, hasTouch: true, locale: 'en-US', ...(engine !== 'firefox' ? { isMobile: true } : {}), storageState: { cookies: (await ctx.storageState()).cookies, origins: [] } }); return [c, await c.newPage()]; };
+  await seed(page);
+  const f = (await apiIn(page, 'POST', '/api/folders', { name: `ui-test tipf ${stamp}`, parent_id: null })).data;
+  await apiIn(page, 'POST', '/api/folders', { name: `ui-test tipsub ${stamp}`, parent_id: f.id });
+  await apiIn(page, 'POST', '/api/bookmarks', { title: `ui-test tip card ${stamp}`, url: `https://ui-test.example/${stamp}/tip`, folder_id: f.id });
+  await check('S24.5 phone tip: first in the view on Dashboard, Inbox and a folder, a note in the flow; not on Folders or Settings; a tap ends it for good', async () => {
+    const [c, p] = await phoneCtx();
+    try {
+      await p.goto(BASE + '/'); const tip = p.locator('#pmain .bd > .ptip:first-child'); await visible(tip);
+      const g = await tip.evaluate(t => ({ text: t.querySelector('span').textContent, role: t.getAttribute('role'), pos: getComputedStyle(t).position, close: t.querySelector('button').getAttribute('aria-label') }));
+      assert(g.text === 'Tip: hold a card to select it.' && g.role === 'note' && g.pos === 'static' && g.close === 'Close tip', JSON.stringify(g));
+      await shot(p, `${engine}-0113-phone-tip`);
+      await p.tap('#pmain .ptab[data-tab="inbox"]'); await visible(tip);
+      await p.tap('#pmain .ptab[data-tab="folders"]'); await p.waitForTimeout(300); assert(!(await p.locator('#pmain .ptip').count()), 'tip on Folders');
+      await p.locator(`#pmain [data-ftile="${f.id}"]`).first().tap(); await visible(tip);
+      assert(await p.evaluate(() => { const t = document.querySelector('#pmain .bd > .ptip'); return !!t && !!t.nextElementSibling; }), 'the tip is not above the folder section');
+      await p.evaluate(() => { window.Pinned.U.view = 'settings'; window.Pinned.render(); }); await p.waitForTimeout(200); assert(!(await p.locator('#pmain .ptip').count()), 'tip on Settings');
+      await p.evaluate(() => { window.Pinned.U.view = 'inbox'; window.Pinned.render(); }); await visible(tip);
+      await tip.locator('span').tap(); await gone(p.locator('#pmain .ptip'));
+      assert(await p.evaluate(() => localStorage.getItem('pinned.tip-hold')) === '1', 'the flag is not set');
+      await p.reload(); await visible(p.locator('#pmain article[data-id]')); assert(!(await p.locator('#pmain .ptip').count()), 'the tip is back after a reload');
+    } finally { await c.close(); }
+  });
+  await check('S24.5 phone tip: a hold that starts selecting ends it, nothing moves; it goes at the next view', async () => {
+    const [c, p] = await phoneCtx();
+    try {
+      await p.goto(BASE + '/'); await p.tap('#pmain .ptab[data-tab="inbox"]'); await visible(p.locator('#pmain .bd > .ptip')); await visible(p.locator('#pmain article.pt .pt-in'));
+      const top = () => p.evaluate(() => document.querySelector('#pmain .bd > .ptip').nextElementSibling.getBoundingClientRect().top);
+      const t0 = await top();
+      await p.evaluate(async () => { const el = document.querySelector('#pmain article.pt .pt-in'), r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        const fire = (type, target) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 42, pointerType: 'touch', isPrimary: true, button: 0, clientX: x, clientY: y }));
+        fire('pointerdown', document.elementFromPoint(x, y) || el); await new Promise(f => setTimeout(f, 600)); fire('pointerup', document); });
+      await visible(p.locator('#pbulkwrap .pbulk')); await p.waitForTimeout(400);
+      assert(await p.evaluate(() => localStorage.getItem('pinned.tip-hold')) === '1', 'the flag is not set by the hold');
+      assert(await p.locator('#pmain .ptip').count() === 1, 'the tip went while selecting');
+      assert(Math.abs(await top() - t0) < 1, `the content under the tip moved by ${await top() - t0} px`);
+      await p.tap('#pmain [data-a="select"][aria-pressed="true"]'); await gone(p.locator('#pbulkwrap .pbulk'));
+      await p.tap('#pmain .ptab[data-tab="dashboard"]'); await p.waitForTimeout(250); await p.tap('#pmain .ptab[data-tab="inbox"]'); await p.waitForTimeout(250);
+      assert(!(await p.locator('#pmain .ptip').count()), 'the tip is still there after a change of view');
+      await p.reload(); await visible(p.locator('#pmain article[data-id]')); assert(!(await p.locator('#pmain .ptip').count()), 'the tip is back after a reload');
+    } finally { await c.close(); }
+  });
+  await check('S24.5 phone tip: none with 2 bookmarks; at 320 px whole, nothing overflows; never on the desktop', async () => {
+    let [c, p] = await phoneCtx();
+    try {
+      await p.route('**/api/state', async r => { const res = await r.fetch(), j = await res.json(); let n = 0; j.bookmarks = j.bookmarks.filter(b => !b.deleted_at && n++ < 2); r.fulfill({ response: res, json: j }); });
+      await p.goto(BASE + '/'); await p.tap('#pmain .ptab[data-tab="inbox"]').catch(() => {}); await p.waitForTimeout(600);
+      assert(!(await p.locator('#pmain .ptip').count()), 'tip with 2 bookmarks');
+    } finally { await c.close(); }
+    [c, p] = await phoneCtx(320);
+    try {
+      await p.goto(BASE + '/'); await p.tap('#pmain .ptab[data-tab="inbox"]'); const tip = p.locator('#pmain .bd > .ptip'); await visible(tip);
+      const g = await tip.evaluate(t => { const s = t.querySelector('span'), r = t.getBoundingClientRect(); return { right: r.right, vw: document.documentElement.clientWidth, sw: document.documentElement.scrollWidth, clip: s.scrollWidth > s.clientWidth + 1 || s.scrollHeight > s.clientHeight + 1 }; });
+      assert(g.right <= g.vw && g.sw <= g.vw && !g.clip, '320: ' + JSON.stringify(g));
+      await shot(p, `${engine}-0113-phone-tip-320`);
+    } finally { await c.close(); }
+    const d = await browser.newContext({ tip: true, viewport: { width: 1440, height: 900 }, storageState: { cookies: (await ctx.storageState()).cookies, origins: [] } }), dp = await d.newPage();
+    try { await dp.goto(BASE + '/'); await visible(dp.locator('#side .si')); await dp.waitForTimeout(300); assert(!(await dp.locator('.ptip').count()), 'tip on the desktop'); } finally { await d.close(); }
+  });
+
+  await cleanup(page); await ctx.close();
+}
+
 const pw = await loadPlaywright();
 for (const engine of ['chromium', 'webkit', 'firefox']) {
   if (only && only !== engine) continue;
@@ -2419,7 +2620,11 @@ for (const engine of ['chromium', 'webkit', 'firefox']) {
   /* a browser that does not start is a failure of the run, and the other engines still run */
   try { browser = await pw[engine].launch({ timeout: 60000, ...(engine === 'firefox' && process.env.PW_FIREFOX_CHANNEL ? { channel: process.env.PW_FIREFOX_CHANNEL } : {}) }); }
   catch (e) { failures++; console.log(`  FAIL  ${engine} did not start\n        ${String(e.message || e).split('\n')[0]}`); continue; }
-  try { await desktop(browser, engine); await flowFixes(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); await release0112(browser, engine); } finally { await browser.close(); }
+  /* 0.1.13: the one-time phone tip is ended in every context, so the checks run on the screens of 0.1.12; a context made with { tip: true } shows it */
+  { const nc = browser.newContext.bind(browser);
+    browser.newContext = async (o = {}) => { const { tip, ...rest } = o; const c = await nc(rest); if (!tip) await c.addInitScript(() => { try { localStorage.setItem('pinned.tip-hold', '1'); } catch (e) { /* no storage */ } }); return c; }; }
+  if (process.env.UI_SECTION === '0113') { try { await release0113(browser, engine); } finally { await browser.close(); } continue; }
+  try { await desktop(browser, engine); await flowFixes(browser, engine); await phone(browser, engine); await narrow(browser, engine); await oneSearch(browser, engine); await barParity(browser, engine); await release0112(browser, engine); await release0113(browser, engine); } finally { await browser.close(); }
 }
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures ? 1 : 0);

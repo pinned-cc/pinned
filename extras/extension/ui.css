@@ -5,7 +5,7 @@
   --ground:#0a0a0b;--screen:#101012;--surface:#161618;--surface-up:#1d1d20;--sheet:#19191c;--fold:#131315;
   --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.12);
   --ink:#f0f0f0;--ink-weak:#9a9a9f;--accent:#5fd39a;--accent-ink:#04150c;--accent-soft:#b5efd0;--danger:#ff9a9a;
-  --tile-blank:#2a2a2e;--press:rgba(255,255,255,.06);--focus-field:0 0 0 3px rgba(95,211,154,.22);
+  --tile-blank:#2a2a2e;--press:rgba(255,255,255,.06);--hover:rgba(255,255,255,.04);--picked-fill:rgba(95,211,154,.08);--focus-field:0 0 0 3px rgba(95,211,154,.22);
   --ease-out:cubic-bezier(.23,1,.32,1);
   --ease-soft:cubic-bezier(.16,1,.3,1);--ease-glide:cubic-bezier(.22,1,.36,1);--ease-draw:cubic-bezier(.65,0,.35,1);
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -154,3 +154,24 @@ body.popup .flist{flex:0 1 auto;min-height:88px;max-height:none}
 .sv-acts .tbtn{align-self:flex-start;margin-left:-4px;padding:0 4px}
 body.popup .sv-pick{align-self:flex-start}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* light: the app's own light colours (web/app.css :root[data-theme="light"]), when the system is in light mode */
+@media (prefers-color-scheme: light){
+  :root{
+    color-scheme:light;
+    --ground:#f4f1ea;--screen:#f4f1ea;--surface:#faf8f3;--surface-up:#fdfcf8;--sheet:#faf8f3;--fold:#f7f4ee;
+    --line:rgba(27,26,23,.10);--line-2:rgba(27,26,23,.16);
+    --ink:#1b1a17;--ink-weak:#6b675e;--accent:#1b1a17;--accent-ink:#f4f1ea;--accent-soft:#167a4a;--danger:#b42318;
+    --tile-blank:#ebe7dd;--hover:rgba(27,26,23,.045);--press:rgba(27,26,23,.07);--focus-field:0 0 0 3px rgba(22,122,74,.16);--picked-fill:rgba(22,122,74,.07);
+    --cyan:#2f7d93;--cyan-p:#28697c;--coral:#c0573c;--coral-p:#9d4731;--lilac:#6a58b0;--lilac-p:#6452ac;
+    --lime:#6a8a24;--lime-p:#516a1c;--mint:#167a4a;--mint-p:#146d42;--rose:#b14d7a;--rose-p:#9a436a;
+    --tray:#167a4a;--tray-p:#146d42;--plain:#6b675e;--plain-p:#1b1a17;
+  }
+  .fld-in,.fmini .v{background:rgba(255,255,255,.7)}
+  .fmini.fill .v{background:color-mix(in srgb,var(--h) 16%,var(--fold))}
+  .fav{box-shadow:inset 0 0 0 1px var(--line)}
+  .ib:hover,.si:not([aria-checked="true"]):hover,.opt-acts .btn:hover,.flist,.url-show{background:var(--hover)}
+  .flist{scrollbar-color:var(--line-2) transparent}
+  body.popup{box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+  .tbtn:hover{background:var(--picked-fill)}
+  .kcap{background:var(--hover);box-shadow:inset 0 -2px 0 var(--line-2)}
+}

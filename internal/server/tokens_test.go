@@ -311,3 +311,22 @@ func TestCreatingATokenAsksForTheAppPassword(t *testing.T) {
 	e.expect("POST", "/api/login", map[string]string{"password": "pw"}, 429)
 	e.wantEvent("reauth.wait", 1)
 }
+
+// 0.1.13, S24.9: the token sheet keeps its form for a second token; the
+// server makes two in a row in one session, each with the app password.
+func TestTwoTokensInARow(t *testing.T) {
+	e := newEnv(t, Config{})
+	e.login()
+	a, b := e.newToken("laptop"), e.newToken("script")
+	if a == b {
+		t.Fatal("the same token twice")
+	}
+	if list := decode[[]tokenJSON](t, e.expect("GET", "/api/tokens", nil, 200)); len(list) != 2 {
+		t.Fatalf("tokens %+v", list)
+	}
+	for _, tk := range []string{a, b} {
+		if resp := e.bearer("GET", "/api/folders", tk, nil); resp.StatusCode != 200 {
+			t.Fatalf("token answers %d", resp.StatusCode)
+		}
+	}
+}

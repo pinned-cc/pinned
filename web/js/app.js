@@ -14,7 +14,7 @@ import { installSelect } from './select.js';
 import { bmHead, checkUrl, doneHTML, fHead, grab, installSheets, layer, lockHTML, newSave, openSheet, openTokens, rowsHTML, saveActs, saveHTML, shareHTML, textHead, tokensHTML } from './sheets.js';
 import { data, layers, load, setData, ui } from './state.js';
 import { toast } from './toast.js';
-import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE, tooMany, waitText } from './util.js';
+import { byId, copy, ic, installIconFallback, PHONE_MQ, SPRITE, tooMany, waitSecs, waitText } from './util.js';
 
 /* document and window listeners, in the order they always ran: pointer handlers on the same event
    depend on it (a drag start resets the click suppression the others set) */
@@ -46,6 +46,14 @@ function bootApp() {
   fetch('/health', { credentials: 'same-origin' }).then(r => r.json()).then(h => { if (h && h.version) { ui.version = h.version; render(); } }).catch(() => {});
   let last = 0; const refresh = () => { if (Date.now() - last < 1500 || document.hidden) return; last = Date.now(); load(); };
   addEventListener('focus', refresh); document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  /* signed out elsewhere: while the page is in view, /health is asked every 30 s. Only its plain answer for no session
+     ({"ok":true} without a version) leaves for the login; no answer, a proxy page or an error do nothing. */
+  let poll = null;
+  const check = () => fetch('/health', { credentials: 'same-origin', cache: 'no-store' }).then(r => r.status === 200 ? r.json() : null)
+    .then(h => { if (h && typeof h === 'object' && h.ok === true && !('version' in h)) location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search + location.hash); }).catch(() => {});
+  const watch = () => { clearInterval(poll); poll = document.visibilityState === 'visible' ? setInterval(check, 30000) : null; };
+  document.addEventListener('visibilitychange', watch); watch();
+  addEventListener('pageshow', e => { if (e.persisted) { check(); watch(); } });
   PHONE_MQ.addEventListener ? PHONE_MQ.addEventListener('change', () => render()) : PHONE_MQ.addListener(() => render());
   byId('import-file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; doImport(f); });
 }
@@ -78,9 +86,26 @@ function bootLogin() {
   const code = byId('login-code'), twoStep = code && !code.hidden;
   /* error=1 with wait: that wrong try started the wait, so it says both */
   const wrong = twoStep ? 'Wrong password or code.' : 'Wrong password.';
-  const w = waitText(p.get('wait'));
-  if (p.get('error')) err.textContent = p.get('error') === 'wait' ? tooMany(p.get('wait') || 30)
-    : w ? `${wrong} Wait ${w} before the next try.` : twoStep ? wrong + ' A code works once: wait for the next one.' : wrong;
+  const kind = p.get('error'), secs = waitSecs(p.get('wait'));
+  const say = left => kind === 'wait' ? tooMany(left) : `${wrong} Wait ${waitText(left)} before the next try.`;
+  if (kind) err.textContent = secs ? say(secs) : kind === 'wait' ? tooMany(p.get('wait') || 30)
+    : twoStep ? wrong + ' A code works once: wait for the next one.' : wrong;
+  /* the address said its error once: a reload shows the plain form, and the server tells a new try the real time left */
+  if (kind || p.has('wait')) { const q = new URLSearchParams(); if (p.has('next')) q.set('next', p.get('next')); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+  /* the wait counts down to the deadline the server gave; Date.now(), so a sleep or a background tab comes back right */
+  if (kind && secs) {
+    const btn = f.querySelector('button'), live = byId('login-live'), end = Date.now() + secs * 1000;
+    btn.disabled = true;
+    let shown = secs;
+    const tick = () => {
+      const left = Math.min(secs, Math.max(0, Math.ceil((end - Date.now()) / 1000)));
+      /* the ticks are not announced: the alert role goes before the first one and comes back for the next message */
+      if (left !== shown) err.removeAttribute('role');
+      if (left > 0) { if (left !== shown) { shown = left; err.textContent = say(left); } setTimeout(tick, 250); return; }
+      err.textContent = ''; err.setAttribute('role', 'alert'); btn.disabled = false; if (live) live.textContent = 'You can try again now.';
+    };
+    setTimeout(tick, 250);
+  }
   /* the form posts to /login; the server redirects back with error=1, or error=wait with the seconds left in wait */
   /* with a second factor, Enter in the password moves on to the code instead of sending the form without it */
   f.addEventListener('submit', e => { if (twoStep && !f.elements.code.value.trim()) { e.preventDefault(); f.elements.code.focus(); return; } f.querySelector('button').disabled = true; });

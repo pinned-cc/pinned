@@ -3,7 +3,7 @@
 import { api } from './api.js';
 import { closeMenu, menuOrSheet, openMenu, selItems, tileMenu } from './menu.js';
 import { openPalette } from './palette.js';
-import { deskBody, markImportBusy, render, showAll, switchLayout } from './render.js';
+import { deskBody, endTip, markImportBusy, render, showAll, switchLayout } from './render.js';
 import { FPICK, emptySpace, exitSelect, pickRange, selSync, toggle } from './select.js';
 import { atMove, checkUrl, closeSheet, doSave, fillSheet, fitTa, newSave, openAddTo, openReleases, openSessions, openSheet, openTokens, patchSave, renameSheet, shareCopy, shareLock, shareNative, sharePassword, sharePatch, shareToggle, shareUnlock, sessionsAsk, sessionsSubmit, sheetEl, submitLock, tokenCopy, tokenCreate, tokenRevoke } from './sheets.js';
 import { FSORTS, SORTS, bm, chain, count, data, descSet, fid, folderById, foldersSel, hidesRecent, isLocked, layers, live, load, loadQuiet, lockedAt, ownLock, run, selectables, setFsort, setSort, ui } from './state.js';
@@ -211,7 +211,10 @@ export function onClick(e) {
     case 'add': layers.save = newSave({ folder: typeof ui.view === 'number' ? ui.view : undefined }); openSheet({ type: 'save' }); break;
     case 'sort': sortMenu(a, sortItems()); break;
     case 'fsort': sortMenu(a, fsortItems()); break;
-    case 'select': if (ui.selecting) exitSelect(); else { ui.selecting = true; ui.picked.clear(); selSync(); } break;
+    case 'select': if (ui.selecting) exitSelect(); else { endTip(); ui.selecting = true; ui.picked.clear(); selSync(); } break;
+    /* the phone tip goes at once and for good; closed from its button by keyboard, focus moves to the first card */
+    case 'tip-close': { endTip(); ui.tipView = null; const tip = a.closest('.ptip'), kb = !e.detail && a.tagName === 'BUTTON'; if (tip) tip.remove();
+      if (kb) { const m = byId('pmain'), c = m && m.querySelector('article[data-id] .pt-in'); if (c) c.focus(); else if (m) { m.tabIndex = -1; m.focus(); } } break; }
     case 'foot': { ui.footOpen = !ui.footOpen; store.set('foot', ui.footOpen ? 'open' : ''); const f = a.closest('.side-foot');
       f.classList.toggle('open', ui.footOpen); a.setAttribute('aria-expanded', ui.footOpen); break; }
     case 'sel-all': selectables().forEach(id => ui.picked.add(id)); selSync(); break;

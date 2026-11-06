@@ -354,6 +354,15 @@ export function phoneBulk() { const n = ui.picked.size, dis = n ? '' : 'disabled
     : ui.view === 'trash'
     ? `<button type="button" class="bb" data-a="bulk-restore" ${dis}>${ic('restore')}Restore</button><button type="button" class="bb warn" data-a="bulk-purge" ${dis}>${ic('trash')}Delete</button>`
     : `<button type="button" class="bb" data-a="bulk-move" ${dis}>${ic('move')}Move</button><button type="button" class="bb" data-a="bulk-copy" ${dis}>${ic('link')}Copy</button><button type="button" class="bb" data-a="bulk-share" ${dis}>${ic('share')}Share</button><button type="button" class="bb warn" data-a="bulk-trash" ${dis}>${ic('trash')}Trash</button><button type="button" class="bb" data-a="sel-more" aria-haspopup="menu" aria-label="More actions" ${dis}>${ic('more')}More</button>`) + `</div>`; }
+/* the phone tip, once per browser: holding a card selects it. Shown from 3 bookmarks in a view with cards; ended by a tap on
+   it or by any start of selecting (endTip). Ended in this page, it stays drawn in that view, so no card moves under the finger. */
+let tipEnded = !!store.get('tip-hold', 0);
+export function endTip() { if (tipEnded) return; tipEnded = true; ui.tipView = ui.view; store.set('tip-hold', 1); }
+const tipHTML = () => {
+  if (!data.has || live().length < 3 || !(ui.view === 'dashboard' || ui.view === 'inbox' || ui.view === 'all' || typeof ui.view === 'number')) return '';
+  if (tipEnded && ui.tipView !== ui.view) { ui.tipView = null; return ''; }
+  return `<div class="ptip" role="note" data-a="tip-close"><span>Tip: hold a card to select it.</span><button type="button" class="ib weak" data-a="tip-close" aria-label="Close tip">${ic('close')}</button></div>`;
+};
 let phoneMainView = null;
 const KEEP = '.ptbar, .vbar, .phead, .gal-hr';
 export function renderPhoneMain() {
@@ -361,7 +370,9 @@ export function renderPhoneMain() {
   const oi = m.querySelector('.ptab-ind'), from = oi && oi.offsetWidth ? { x: oi.offsetLeft + (oi._x || 0), w: oi.offsetWidth } : null;
   const st = ui.view === 'settings';
   const tabbed = PHONE_TABS.includes(ui.view);
-  const fresh = Object.assign(document.createElement('template'), { innerHTML: (st ? '' : phoneRecents()) + (st ? '' : backLink('pback')) + phoneTop() + `<div class="bd">${st || tabbed ? '' : folderSection(true)}${phoneBody()}</div>` }).content;
+  const fresh = Object.assign(document.createElement('template'), { innerHTML: (st ? '' : phoneRecents()) + (st ? '' : backLink('pback')) + phoneTop() + `<div class="bd">${st ? '' : tipHTML()}${st || tabbed ? '' : folderSection(true)}${phoneBody()}</div>` }).content;
+  /* no card drawn (an empty view, the skeleton): no tip */
+  { const t = fresh.querySelector('.bd > .ptip'); if (t && !fresh.querySelector('.bd article[data-id]')) t.remove(); }
   /* the title row, the tabs and the view row are the same elements when nothing in them changed, so a tick or a hold redraws nothing up there; Select only flips its state */
   const sig = e => { const c = e.cloneNode(true); c.querySelectorAll('[data-a="select"]').forEach(b => { b.removeAttribute('aria-pressed'); b.removeAttribute('aria-label'); }); return c.outerHTML; }, old = [...m.querySelectorAll(KEEP)];
   fresh.querySelectorAll(KEEP).forEach((e, i) => { const o = old[i], s = sig(e);
