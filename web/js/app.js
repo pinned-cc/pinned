@@ -95,14 +95,16 @@ function bootLogin() {
   /* the wait counts down to the deadline the server gave; Date.now(), so a sleep or a background tab comes back right */
   if (kind && secs) {
     const btn = f.querySelector('button'), live = byId('login-live'), end = Date.now() + secs * 1000;
-    btn.disabled = true; setTimeout(() => err.removeAttribute('role'), 0);
+    /* Log in waits only for the password limiter's own waits (at most 10 minutes); a longer wait (the code backoff, or a
+       link made up to show one) counts down with the button usable, and the server still refuses a try during a real wait */
+    const hold = secs <= 600; if (hold) btn.disabled = true; setTimeout(() => err.removeAttribute('role'), 0);
     let shown = secs;
     const tick = () => {
       const left = Math.min(secs, Math.max(0, Math.ceil((end - Date.now()) / 1000)));
       /* the ticks are not announced: the alert role goes before the first one and comes back for the next message */
       if (left !== shown) err.removeAttribute('role');
       if (left > 0) { if (left !== shown) { shown = left; err.textContent = say(left); } setTimeout(tick, 250); return; }
-      err.textContent = ''; err.setAttribute('role', 'alert'); btn.disabled = false; if (live) live.textContent = 'You can try again now.';
+      err.textContent = ''; err.setAttribute('role', 'alert'); if (hold) btn.disabled = false; if (live) live.textContent = 'You can try again now.';
     };
     setTimeout(tick, 250);
   }

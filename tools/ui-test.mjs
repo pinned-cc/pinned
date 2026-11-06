@@ -2442,6 +2442,10 @@ async function release0113(browser, engine) {
       await c.clock.runFor(5000); assert(await err() === 'Too many tries. Wait 2 minutes, then try again.', '120 s left: ' + await err());
       await c.clock.runFor(1000); assert(await err() === 'Too many tries. Wait 119 seconds, then try again.', '119 s left: ' + await err());
       await lp.goto(`${BASE}/login?error=1`); assert(await lp.getAttribute('#login-err', 'role') === 'alert', 'a new message after the wait is not an alert');
+      /* longer than the password limiter ever waits (a made up link, or the code backoff): it counts down, Log in stays usable */
+      for (const w of ['601', '86400']) { await lp.goto(`${BASE}/login?error=wait&wait=${w}`);
+        assert(!(await lp.locator('button[type=submit]').isDisabled()), `wait=${w} disabled Log in`); }
+      await lp.goto(`${BASE}/login?error=wait&wait=600`); assert(await lp.locator('button[type=submit]').isDisabled(), 'wait=600 did not disable Log in');
       for (const w of ['1e9', '-5', 'Infinity', '99999999', '12abc']) { await lp.goto(`${BASE}/login?error=1&wait=${encodeURIComponent(w)}`);
         assert(await err() === 'Wrong password.', w + ': ' + await err()); assert(!(await lp.locator('button[type=submit]').isDisabled()), w + ' started a wait'); }
     } finally { await c.close(); }
