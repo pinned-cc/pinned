@@ -1489,7 +1489,7 @@ S24.5.7 Visible and spoken texts.
 S24.5.8 Accessibility.
 - No live region: the tip is part of the view when it draws, not an announcement.
 - Focus: when the tip is closed while focus is in it, focus moves to the first card of the view (`#pmain article[data-id] :is(.pt-in, .g-in)`, the Dashboard's cards being `.g-in`; corrected after the flow test), or to `#pmain` when there is none.
-- Touch target: the whole tip closes on tap; the close button is 44 by 44 (`--tap`).
+- Touch target: the whole tip closes on tap; the close button is 44 by 44 (`--tap`). The tip carries `cursor:pointer`: WebKit on a phone (iOS Safari) sends a tap's click to a plain box only when it is marked clickable; without it, a tap on the text did nothing (found by the CI WebKit run, 06.11).
 - VoiceOver users select with a double tap and hold; the words still hold. Checked in the VoiceOver pass of S24.0.5.
 - No animation at all.
 
