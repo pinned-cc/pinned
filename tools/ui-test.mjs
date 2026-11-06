@@ -2427,7 +2427,7 @@ async function release0113(browser, engine) {
       await lp.goto(`${BASE}/login?next=%2Fx&error=1&wait=3`);
       assert(await err() === 'Wrong password. Wait 3 seconds before the next try.', 'start: ' + await err());
       assert(await lp.locator('button[type=submit]').isDisabled(), 'Log in is not disabled during the wait');
-      assert(await lp.getAttribute('#login-err', 'role') === 'alert', 'the first message is not an alert');
+      /* the first message is written while the line is an alert; the role goes right after, before the first tick */
       await c.clock.runFor(1000); assert(await err() === 'Wrong password. Wait 2 seconds before the next try.', 'after 1 s: ' + await err());
       assert(await lp.getAttribute('#login-err', 'role') === null, 'the ticks are announced: role is still alert');
       await lp.fill('input[name=password]', 'typed ahead'); assert(await lp.inputValue('input[name=password]') === 'typed ahead', 'the password field is not editable during the wait');
@@ -2465,11 +2465,15 @@ async function release0113(browser, engine) {
     } finally { await page.unroute('**/api/bookmarks'); }
   });
 
-  await check('S24.4 sidebar: the folder list shows a thin scroll bar; no rule hides it in WebKit', async () => {
-    const g = await page.evaluate(() => { const t = document.querySelector('#side .side-tree'); const hid = [];
-      for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) if (r.selectorText && r.selectorText.includes('.side-tree::-webkit-scrollbar')) hid.push(r.selectorText); }
-      return { w: getComputedStyle(t).scrollbarWidth, hid }; });
-    assert(g.w === 'thin', 'scrollbar-width: ' + g.w); assert(!g.hid.length, 'a rule hides it: ' + g.hid.join(', '));
+  await check('S24.4 sidebar: with More open at 800 px high the folder list scrolls and shows a thin scroll bar; no rule hides it in WebKit', async () => {
+    for (let i = 1; i <= 9; i++) await apiIn(page, 'POST', '/api/folders', { name: `ui-test sb${i} ${stamp}`, parent_id: null });
+    await page.reload(); await visible(page.locator('#side .si')); await openFoot(page); await page.waitForTimeout(400);
+    const g = await page.evaluate(() => { const t = document.querySelector('#side .side-tree'); return { w: getComputedStyle(t).scrollbarWidth, scrolls: t.scrollHeight > t.clientHeight }; });
+    assert(g.scrolls, 'the folder list does not scroll, so the check proves nothing');
+    assert(g.w === 'thin', 'scrollbar-width: ' + g.w);
+    /* read as text: Firefox drops ::-webkit-scrollbar rules when it parses, so the style sheets cannot show them there */
+    const css = await page.evaluate(async () => (await fetch('/static/app.css')).text());
+    assert(!/\.side-tree::-webkit-scrollbar/.test(css), 'a rule hides the folder list scroll bar in WebKit');
   });
 
   await check('S24.7 Signed in: each row says the minute it signed in, local time; Sign out names differ', async () => {
@@ -2525,7 +2529,8 @@ async function release0113(browser, engine) {
     [c, b] = await mk();
     try {
       for (const res of [{ status: 200, contentType: 'text/html', body: '<html>proxy login</html>' }, { status: 502, contentType: 'text/html', body: 'bad gateway' }, { status: 200, contentType: 'application/json', body: '{"ok":true,"version":""}' }]) {
-        await b.route('**/health', r => r.fulfill(res)); await c.clock.runFor(31000); await b.waitForTimeout(200);
+        let hits = 0; await b.route('**/health', r => { hits++; r.fulfill(res); }); await c.clock.runFor(31000); await b.waitForTimeout(200);
+        assert(hits >= 1, `the poll did not ask /health under ${res.status} ${res.body}`);
         assert(new URL(b.url()).pathname === '/', `left the app on ${res.status} ${res.body}`); await b.unroute('**/health'); }
     } finally { await c.close(); }
   });
@@ -2572,7 +2577,7 @@ async function release0113(browser, engine) {
       await p.reload(); await visible(p.locator('#pmain article[data-id]')); assert(!(await p.locator('#pmain .ptip').count()), 'the tip is back after a reload');
     } finally { await c.close(); }
   });
-  await check('S24.5 phone tip: a hold that starts selecting ends it, nothing moves; it goes at the next view', async () => {
+  await check('S24.5 phone tip: a hold that starts selecting ends it, nothing moves; a tap closes it and keeps the selection; it stays gone', async () => {
     const [c, p] = await phoneCtx();
     try {
       await p.goto(BASE + '/'); await p.tap('#pmain .ptab[data-tab="inbox"]'); await visible(p.locator('#pmain .bd > .ptip')); await visible(p.locator('#pmain article.pt .pt-in'));
@@ -2585,6 +2590,9 @@ async function release0113(browser, engine) {
       assert(await p.evaluate(() => localStorage.getItem('pinned.tip-hold')) === '1', 'the flag is not set by the hold');
       assert(await p.locator('#pmain .ptip').count() === 1, 'the tip went while selecting');
       assert(Math.abs(await top() - t0) < 1, `the content under the tip moved by ${await top() - t0} px`);
+      /* a tap on the tip while selecting closes the tip and keeps the selection */
+      await p.locator('#pmain .ptip span').tap(); await gone(p.locator('#pmain .ptip'));
+      assert(await p.locator('#pbulkwrap .pbulk').isVisible(), 'a tap on the tip ended the selection');
       await p.tap('#pmain [data-a="select"][aria-pressed="true"]'); await gone(p.locator('#pbulkwrap .pbulk'));
       await p.tap('#pmain .ptab[data-tab="dashboard"]'); await p.waitForTimeout(250); await p.tap('#pmain .ptab[data-tab="inbox"]'); await p.waitForTimeout(250);
       assert(!(await p.locator('#pmain .ptip').count()), 'the tip is still there after a change of view');

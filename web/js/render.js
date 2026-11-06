@@ -357,7 +357,7 @@ export function phoneBulk() { const n = ui.picked.size, dis = n ? '' : 'disabled
 /* the phone tip, once per browser: holding a card selects it. Shown from 3 bookmarks in a view with cards; ended by a tap on
    it or by any start of selecting (endTip). Ended in this page, it stays drawn in that view, so no card moves under the finger. */
 let tipEnded = !!store.get('tip-hold', 0);
-export function endTip() { if (tipEnded) return; tipEnded = true; ui.tipView = ui.view; store.set('tip-hold', 1); }
+export function endTip(force) { if (tipEnded || (!force && !document.querySelector('#pmain .ptip'))) return; tipEnded = true; ui.tipView = ui.view; store.set('tip-hold', 1); }
 const tipHTML = () => {
   if (!data.has || live().length < 3 || !(ui.view === 'dashboard' || ui.view === 'inbox' || ui.view === 'all' || typeof ui.view === 'number')) return '';
   if (tipEnded && ui.tipView !== ui.view) { ui.tipView = null; return ''; }
@@ -372,7 +372,7 @@ export function renderPhoneMain() {
   const tabbed = PHONE_TABS.includes(ui.view);
   const fresh = Object.assign(document.createElement('template'), { innerHTML: (st ? '' : phoneRecents()) + (st ? '' : backLink('pback')) + phoneTop() + `<div class="bd">${st ? '' : tipHTML()}${st || tabbed ? '' : folderSection(true)}${phoneBody()}</div>` }).content;
   /* no card drawn (an empty view, the skeleton): no tip */
-  { const t = fresh.querySelector('.bd > .ptip'); if (t && !fresh.querySelector('.bd article[data-id]')) t.remove(); }
+  { const t = fresh.querySelector('.bd > .ptip'); if (t && !fresh.querySelector('.bd article[data-id], .bd [data-block]')) t.remove(); }
   /* the title row, the tabs and the view row are the same elements when nothing in them changed, so a tick or a hold redraws nothing up there; Select only flips its state */
   const sig = e => { const c = e.cloneNode(true); c.querySelectorAll('[data-a="select"]').forEach(b => { b.removeAttribute('aria-pressed'); b.removeAttribute('aria-label'); }); return c.outerHTML; }, old = [...m.querySelectorAll(KEEP)];
   fresh.querySelectorAll(KEEP).forEach((e, i) => { const o = old[i], s = sig(e);

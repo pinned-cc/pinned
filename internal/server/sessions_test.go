@@ -197,6 +197,7 @@ func TestBrowserName(t *testing.T) {
 func TestSessionsJSONCarriesTheSignInSecond(t *testing.T) {
 	e := newEnv(t, Config{})
 	start := time.Now()
+	e.st.Now = func() time.Time { return start }
 	one, two := e.browser(uaFirefoxMac), e.browser(uaFirefoxMac)
 	if code := one.do("POST", "/api/login", `{"password":"pw"}`); code != 204 {
 		t.Fatalf("login %d", code)

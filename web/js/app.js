@@ -95,7 +95,7 @@ function bootLogin() {
   /* the wait counts down to the deadline the server gave; Date.now(), so a sleep or a background tab comes back right */
   if (kind && secs) {
     const btn = f.querySelector('button'), live = byId('login-live'), end = Date.now() + secs * 1000;
-    btn.disabled = true;
+    btn.disabled = true; setTimeout(() => err.removeAttribute('role'), 0);
     let shown = secs;
     const tick = () => {
       const left = Math.min(secs, Math.max(0, Math.ceil((end - Date.now()) / 1000)));
