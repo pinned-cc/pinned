@@ -1631,7 +1631,7 @@ Settled before the build starts, not in the release run:
 
 ### 24.13 Open release item: DE and EN
 
-The release checklist asks that every visible text is ready for DE and EN. The app has no string catalogue and shows EN only, as in 0.1.12. This spec does not drop that line on its own: it goes to the maintainer as an open release item before the 0.1.13 tag, with the proposal "not met in 0.1.13, EN only; a string catalogue is its own item later". Until then the release gate notes it as open.
+The release checklist asks that every visible text is ready for DE and EN. The app has no string catalogue and shows EN only, as in 0.1.12. This spec does not drop that line on its own: it goes to the maintainer as an open release item before the 0.1.13 tag, with the proposal "not met in 0.1.13, EN only; a string catalogue is its own item later". Until then the release gate notes it as open. Decided 06.11.2026: not met in 0.1.13, EN only; a string catalogue is its own item later.
 
 ### 24.14 What stays out of 0.1.13
 
