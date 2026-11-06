@@ -2576,7 +2576,10 @@ async function release0113(browser, engine) {
       assert(await p.evaluate(() => { const t = document.querySelector('#pmain .bd > .ptip'); return !!t && !!t.nextElementSibling; }), 'the tip is not above the folder section');
       await p.evaluate(() => { window.Pinned.U.view = 'settings'; window.Pinned.render(); }); await p.waitForTimeout(200); assert(!(await p.locator('#pmain .ptip').count()), 'tip on Settings');
       await p.evaluate(() => { window.Pinned.U.view = 'inbox'; window.Pinned.render(); }); await visible(tip);
-      await tip.locator('span').tap(); await gone(p.locator('#pmain .ptip'));
+      /* closed from its button by keyboard on the Dashboard, focus goes to the first card */
+      await p.evaluate(() => { window.Pinned.U.view = 'dashboard'; window.Pinned.render(); }); await visible(tip);
+      await tip.locator('button').focus(); await p.keyboard.press('Enter'); await gone(p.locator('#pmain .ptip'));
+      assert(await p.evaluate(() => !!document.activeElement.closest('#pmain article[data-id]')), 'focus did not go to the first card: ' + await p.evaluate(() => document.activeElement.className));
       assert(await p.evaluate(() => localStorage.getItem('pinned.tip-hold')) === '1', 'the flag is not set');
       await p.reload(); await visible(p.locator('#pmain article[data-id]')); assert(!(await p.locator('#pmain .ptip').count()), 'the tip is back after a reload');
     } finally { await c.close(); }

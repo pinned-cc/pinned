@@ -174,4 +174,6 @@ body.popup .sv-pick{align-self:flex-start}
   body.popup{box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
   .tbtn:hover{background:var(--picked-fill)}
   .kcap{background:var(--hover);box-shadow:inset 0 -2px 0 var(--line-2)}
+  /* folder icons on paper take the hue's darker shade, as the chosen row's name and tick do, so each keeps 3:1 */
+  .si-ic{color:var(--hp)}
 }

@@ -214,7 +214,7 @@ export function onClick(e) {
     case 'select': if (ui.selecting) exitSelect(); else { endTip(); ui.selecting = true; ui.picked.clear(); selSync(); } break;
     /* the phone tip goes at once and for good; closed from its button by keyboard, focus moves to the first card */
     case 'tip-close': { endTip(true); ui.tipView = null; const tip = a.closest('.ptip'), had = !!tip && tip.contains(document.activeElement); if (tip) tip.remove();
-      if (had) { const m = byId('pmain'), c = m && m.querySelector('article[data-id] .pt-in'); if (c) c.focus(); else if (m) { m.tabIndex = -1; m.focus({ preventScroll: true }); m.addEventListener('blur', () => m.removeAttribute('tabindex'), { once: true }); } } break; }
+      if (had) { const m = byId('pmain'), c = m && m.querySelector('article[data-id] :is(.pt-in, .g-in)'); if (c) c.focus(); else if (m) { m.tabIndex = -1; m.focus({ preventScroll: true }); m.addEventListener('blur', () => m.removeAttribute('tabindex'), { once: true }); } } break; }
     case 'foot': { ui.footOpen = !ui.footOpen; store.set('foot', ui.footOpen ? 'open' : ''); const f = a.closest('.side-foot');
       f.classList.toggle('open', ui.footOpen); a.setAttribute('aria-expanded', ui.footOpen); break; }
     case 'sel-all': selectables().forEach(id => ui.picked.add(id)); selSync(); break;
