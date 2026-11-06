@@ -2472,9 +2472,13 @@ async function release0113(browser, engine) {
   await check('S24.4 sidebar: with More open at 800 px high the folder list scrolls and shows a thin scroll bar; no rule hides it in WebKit', async () => {
     for (let i = 1; i <= 9; i++) await apiIn(page, 'POST', '/api/folders', { name: `ui-test sb${i} ${stamp}`, parent_id: null });
     await page.reload(); await visible(page.locator('#side .si')); await openFoot(page); await page.waitForTimeout(400);
-    const g = await page.evaluate(() => { const t = document.querySelector('#side .side-tree'); return { w: getComputedStyle(t).scrollbarWidth, scrolls: t.scrollHeight > t.clientHeight }; });
+    /* the declared value, from the style sheet: headless Chromium and Firefox hide every scroll bar themselves, so the computed value can read none there */
+    const g = await page.evaluate(() => { const t = document.querySelector('#side .side-tree'); const decl = [];
+      for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) if (r.selectorText === '.side-tree' && r.style.scrollbarWidth) decl.push(r.style.scrollbarWidth); }
+      return { decl, w: getComputedStyle(t).scrollbarWidth, scrolls: t.scrollHeight > t.clientHeight }; });
     assert(g.scrolls, 'the folder list does not scroll, so the check proves nothing');
-    assert(g.w === 'thin', 'scrollbar-width: ' + g.w);
+    assert(g.decl.length && g.decl.every(v => v === 'thin'), 'declared scrollbar-width: ' + JSON.stringify(g.decl));
+    if (engine === 'webkit') assert(g.w === 'thin', 'computed scrollbar-width in WebKit: ' + g.w);
     /* read as text: Firefox drops ::-webkit-scrollbar rules when it parses, so the style sheets cannot show them there */
     const css = await page.evaluate(async () => (await fetch('/static/app.css')).text());
     assert(!/\.side-tree::-webkit-scrollbar/.test(css), 'a rule hides the folder list scroll bar in WebKit');
@@ -2586,24 +2590,25 @@ async function release0113(browser, engine) {
   });
   await check('S24.5 phone tip: a hold that starts selecting ends it, nothing moves; a tap closes it and keeps the selection; it stays gone', async () => {
     const [c, p] = await phoneCtx();
+    const step = async (what, pr) => { try { return await pr; } catch (e) { throw new Error(what + ': ' + String(e.message || e).split('\n')[0]); } };
     try {
-      await p.goto(BASE + '/'); await p.tap('#pmain .ptab[data-tab="inbox"]'); await visible(p.locator('#pmain .bd > .ptip')); await visible(p.locator('#pmain article.pt .pt-in'));
+      await p.goto(BASE + '/'); await step('Inbox tab', p.tap('#pmain .ptab[data-tab="inbox"]')); await step('the tip in the Inbox', visible(p.locator('#pmain .bd > .ptip'), 10000)); await step('a card in the Inbox', visible(p.locator('#pmain article.pt .pt-in'), 10000));
       const top = () => p.evaluate(() => document.querySelector('#pmain .bd > .ptip').nextElementSibling.getBoundingClientRect().top);
       const t0 = await top();
       await p.evaluate(async () => { const el = document.querySelector('#pmain article.pt .pt-in'), r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
         const fire = (type, target) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 42, pointerType: 'touch', isPrimary: true, button: 0, clientX: x, clientY: y }));
         fire('pointerdown', document.elementFromPoint(x, y) || el); await new Promise(f => setTimeout(f, 600)); fire('pointerup', document); });
-      await visible(p.locator('#pbulkwrap .pbulk')); await p.waitForTimeout(400);
+      await step('the hold starts selecting', visible(p.locator('#pbulkwrap .pbulk'), 10000)); await p.waitForTimeout(400);
       assert(await p.evaluate(() => localStorage.getItem('pinned.tip-hold')) === '1', 'the flag is not set by the hold');
       assert(await p.locator('#pmain .ptip').count() === 1, 'the tip went while selecting');
       assert(Math.abs(await top() - t0) < 1, `the content under the tip moved by ${await top() - t0} px`);
       /* a tap on the tip while selecting closes the tip and keeps the selection */
-      await p.locator('#pmain .ptip span').tap(); await gone(p.locator('#pmain .ptip'));
+      await step('tap on the tip', p.locator('#pmain .ptip span').tap()); await step('the tip goes after the tap', gone(p.locator('#pmain .ptip'), 10000));
       assert(await p.locator('#pbulkwrap .pbulk').isVisible(), 'a tap on the tip ended the selection');
-      await p.tap('#pmain [data-a="select"][aria-pressed="true"]'); await gone(p.locator('#pbulkwrap .pbulk'));
+      await step('Done', p.tap('#pmain [data-a="select"][aria-pressed="true"]')); await step('the selection bar goes', gone(p.locator('#pbulkwrap .pbulk'), 10000));
       await p.tap('#pmain .ptab[data-tab="dashboard"]'); await p.waitForTimeout(250); await p.tap('#pmain .ptab[data-tab="inbox"]'); await p.waitForTimeout(250);
       assert(!(await p.locator('#pmain .ptip').count()), 'the tip is still there after a change of view');
-      await p.reload(); await visible(p.locator('#pmain article[data-id]')); assert(!(await p.locator('#pmain .ptip').count()), 'the tip is back after a reload');
+      await p.reload(); await step('a card after the reload', visible(p.locator('#pmain article[data-id]'), 10000)); assert(!(await p.locator('#pmain .ptip').count()), 'the tip is back after a reload');
     } finally { await c.close(); }
   });
   await check('S24.5 phone tip: none with 2 bookmarks; at 320 px whole, nothing overflows; never on the desktop', async () => {
