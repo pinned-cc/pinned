@@ -3,7 +3,7 @@
 # (golang:1.27.3-alpine, multi platform index, looked up 2026-10-30); bump
 # tag and digest together, and keep the go line in go.mod on the same Go.
 # Dependabot proposes the bumps.
-FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280 AS build
 RUN apk add --no-cache ca-certificates tzdata zip
 WORKDIR /src
 COPY go.mod go.sum ./
